@@ -3,2311 +3,478 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#07111f">
 <title>FUTZONE</title>
 
 <style>
 *{box-sizing:border-box}
-
 body{
-margin:0;
-background:#050505;
-color:#fff;
-font-family:Arial,sans-serif;
-padding-bottom:80px
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#07111f;
+  color:#fff;
 }
-
-header{
-background:#000;
-border-bottom:1px solid #222;
-padding:18px;
-text-align:center;
-position:sticky;
-top:0;
-z-index:20
+button{font:inherit}
+.header{
+  position:sticky;
+  top:0;
+  z-index:20;
+  background:#07111f;
+  border-bottom:1px solid #1b2a3d;
+  padding:16px;
 }
-
 .logo{
-font-size:28px;
-font-weight:900;
-color:#168cff
+  font-size:28px;
+  font-weight:900;
+  letter-spacing:1px;
 }
-
-.logo span{color:#fff}
+.logo span{color:#22c55e}
 
 .container{
-padding:15px;
-max-width:900px;
-margin:auto
-}
-
-button{
-border:0;
-border-radius:10px;
-padding:10px 14px;
-background:#168cff;
-color:#fff;
-font-weight:bold
+  max-width:900px;
+  margin:auto;
+  padding:18px 14px 100px;
 }
 
 .filters{
-display:flex;
-gap:8px;
-overflow-x:auto;
-padding:10px 0
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding:8px 0 14px;
 }
-
 .filters button{
-white-space:nowrap;
-background:#151515;
-border:1px solid #333
+  flex:0 0 auto;
+  border:0;
+  border-radius:20px;
+  padding:9px 15px;
+  background:#132238;
+  color:#fff;
 }
-
 .filters button.active{
-background:#168cff;
-border-color:#168cff
+  background:#22c55e;
+  color:#06100b;
+  font-weight:bold;
 }
 
 .card{
-background:#101010;
-border:1px solid #252525;
-border-radius:14px;
-padding:14px;
-margin-bottom:12px
+  background:#101d2d;
+  border:1px solid #1d3047;
+  border-radius:16px;
+  padding:14px;
+  margin-bottom:12px;
 }
-
-.league{
-color:#168cff;
-font-size:13px;
-font-weight:bold;
-margin-bottom:8px
+.game{
+  cursor:pointer;
 }
-
-.teams{
-display:grid;
-grid-template-columns:1fr auto 1fr;
-align-items:center;
-gap:10px
+.game-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:12px;
 }
-
-.team{
-font-weight:bold;
-cursor:pointer
+.competition{
+  color:#8fa3b8;
+  font-size:12px;
 }
-
-.team:last-child{text-align:right}
-
-.team:hover{color:#168cff}
-
-.team-logo{
-width:35px;
-height:35px;
-object-fit:contain;
-vertical-align:middle;
-margin-right:7px
-}
-
-.score{
-font-size:20px;
-font-weight:900;
-white-space:nowrap
-}
-
 .status{
-font-size:12px;
-color:#aaa;
-margin-top:8px
+  font-size:11px;
+  font-weight:bold;
+  padding:5px 8px;
+  border-radius:10px;
+  background:#26364a;
+}
+.status.live{
+  background:#ef4444;
+}
+.teams{
+  display:grid;
+  grid-template-columns:1fr 55px 1fr;
+  align-items:center;
+  gap:8px;
+}
+.team{
+  text-align:center;
+  font-weight:bold;
+}
+.team img{
+  width:45px;
+  height:45px;
+  object-fit:contain;
+  display:block;
+  margin:0 auto 7px;
+}
+.score{
+  text-align:center;
+  font-size:22px;
+  font-weight:900;
+}
+.date{
+  text-align:center;
+  color:#8fa3b8;
+  font-size:12px;
+  margin-top:10px;
 }
 
-.nav{
-position:fixed;
-bottom:0;
-left:0;
-right:0;
-height:65px;
-background:#080808;
-border-top:1px solid #252525;
-display:flex;
-justify-content:space-around;
-align-items:center;
-z-index:30
+.section-title{
+  margin:8px 0 14px;
+  font-size:22px;
 }
 
-.nav button{
-background:none;
-color:#aaa;
-padding:8px
+.empty{
+  text-align:center;
+  padding:35px 15px;
+  color:#8295aa;
 }
 
-.nav button.active{color:#168cff}
+.bottom-nav{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  z-index:30;
+  background:#081321;
+  border-top:1px solid #1b2a3d;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  padding:8px 5px calc(8px + env(safe-area-inset-bottom));
+}
+.bottom-nav button{
+  border:0;
+  background:none;
+  color:#8295aa;
+  padding:7px;
+}
+.bottom-nav button.active{
+  color:#22c55e;
+  font-weight:bold;
+}
 
 .back{
-margin-bottom:15px;
-background:#202020
+  border:0;
+  background:#132238;
+  color:#fff;
+  border-radius:12px;
+  padding:9px 13px;
+  margin-bottom:15px;
+}
+
+.team-header{
+  text-align:center;
+  padding:20px 10px;
+}
+.team-header img{
+  width:85px;
+  height:85px;
+  object-fit:contain;
+}
+.team-header h1{
+  margin:10px 0 4px;
 }
 
 .plantel-grid{
-display:grid;
-grid-template-columns:repeat(2,1fr);
-gap:10px
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
 }
-
 .player{
-background:#151515;
-border:1px solid #292929;
-border-radius:14px;
-padding:12px;
-text-align:center;
-cursor:pointer
+  background:#101d2d;
+  border:1px solid #1d3047;
+  border-radius:15px;
+  padding:14px 8px;
+  text-align:center;
+  cursor:pointer;
 }
-
-.player:hover{
-border-color:#168cff;
-transform:translateY(-2px)
+.player img,
+.player-photo{
+  width:80px;
+  height:80px;
+  object-fit:cover;
+  border-radius:50%;
+  margin:auto auto 8px;
+  display:block;
+  background:#202e3d;
 }
-
-.player img{
-width:80px;
-height:80px;
-object-fit:cover;
-border-radius:50%;
-background:#222;
-margin-bottom:8px
-}
-
 .player-name{
-font-weight:bold;
-font-size:14px
+  font-weight:bold;
+  font-size:14px;
 }
-
 .player-info{
-color:#999;
-font-size:12px;
-margin-top:5px
+  color:#8fa3b8;
+  font-size:11px;
+  margin-top:5px;
 }
 
 .player-profile{
-text-align:center;
-padding:10px
+  text-align:center;
 }
-
 .player-profile img{
-width:150px;
-height:150px;
-border-radius:50%;
-object-fit:cover;
-background:#181818;
-border:3px solid #168cff
+  width:150px;
+  height:150px;
+  object-fit:cover;
+  border-radius:50%;
+  background:#1c2b3c;
 }
-
-.position{
-color:#168cff;
-font-weight:bold
+.player-profile h1{
+  margin-bottom:5px;
 }
-
 .info-box{
-background:#111;
-border:1px solid #292929;
-border-radius:14px;
-margin-top:20px;
-overflow:hidden
+  background:#101d2d;
+  border:1px solid #1d3047;
+  border-radius:15px;
+  padding:15px;
+  margin-top:15px;
+  text-align:left;
 }
-
 .info-row{
-display:flex;
-justify-content:space-between;
-padding:14px;
-border-bottom:1px solid #222
+  display:flex;
+  justify-content:space-between;
+  padding:9px 0;
+  border-bottom:1px solid #1d3047;
 }
-
 .info-row:last-child{border-bottom:0}
 
-.info-label{color:#888}
-
-.info-value{font-weight:bold}
-
-.empty{
-text-align:center;
-color:#777;
-padding:30px
-}
-
 .table-wrap{
-overflow-x:auto
+  overflow-x:auto;
 }
-
 table{
-width:100%;
-min-width:430px;
-border-collapse:collapse;
-background:#101010
+  width:100%;
+  border-collapse:collapse;
+  min-width:560px;
 }
-
 th,td{
-padding:10px 6px;
-border-bottom:1px solid #252525;
-text-align:center;
-font-size:13px
+  padding:10px 7px;
+  border-bottom:1px solid #1d3047;
+  text-align:center;
+  font-size:13px;
+}
+th{
+  color:#8fa3b8;
+  font-size:11px;
+}
+td.team-cell{
+  text-align:left;
+  font-weight:bold;
+}
+.team-table-logo{
+  width:27px;
+  height:27px;
+  object-fit:contain;
+  vertical-align:middle;
+  margin-right:7px;
 }
 
-th{color:#168cff}
-
-@media(max-width:500px){
-
-.plantel-grid{
-grid-template-columns:repeat(2,1fr)
+.favorite{
+  float:right;
+  border:0;
+  background:none;
+  color:#8295aa;
+  font-size:23px;
 }
+.favorite.on{color:#facc15}
 
-.player img{
-width:70px;
-height:70px
-}
+h2{margin-top:0}
 
+@media(min-width:650px){
+  .plantel-grid{grid-template-columns:repeat(4,1fr)}
 }
 </style>
 </head>
 
 <body>
 
-<header>
-<div class="logo">FUT<span>ZONE</span></div>
+<header class="header">
+  <div class="logo">FUT<span>ZONE</span></div>
 </header>
 
-<div class="container" id="app"></div>
+<main class="container" id="app"></main>
 
-<div class="nav">
-
-<button id="navJogos" onclick="mostrarJogos()">
-⚽<br>Jogos
-</button>
-
-<button id="navTabelas" onclick="mostrarTabelas()">
-📊<br>Tabelas
-</button>
-
-<button id="navFav" onclick="mostrarFavoritos()">
-⭐<br>Favoritos
-</button>
-
-</div>
+<nav class="bottom-nav">
+  <button id="navJogos" class="active" onclick="mostrarJogos()">⚽<br>Jogos</button>
+  <button id="navTabelas" onclick="mostrarTabelas()">📊<br>Tabelas</button>
+  <button id="navFav" onclick="mostrarFavoritos()">⭐<br>Favoritos</button>
+</nav>
 
 <script>
-
-let jogos=[];
-let ligaAtual="Todos";
-let filtroAtual="Todos";
-let equipaAtual=null;
+/* =========================================================
+   FUTZONE
+========================================================= */
 
 const ligas=[
-
-{
-nome:"Portugal",
-arquivo:"data/primeira-liga.json"
-},
-
-{
-nome:"Inglaterra",
-arquivo:"data/premier-league.json"
-},
-
-{
-nome:"Espanha",
-arquivo:"data/la-liga.json"
-},
-
-{
-nome:"Itália",
-arquivo:"data/serie-a.json"
-},
-
-{
-nome:"Alemanha",
-arquivo:"data/bundesliga.json"
-}
-
+  {
+    nome:"Portugal",
+    arquivo:"data/primeira-liga.json"
+  },
+  {
+    nome:"Inglaterra",
+    arquivo:"data/premier-league.json"
+  },
+  {
+    nome:"Espanha",
+    arquivo:"data/la-liga.json"
+  },
+  {
+    nome:"Itália",
+    arquivo:"data/serie-a.json"
+  },
+  {
+    nome:"Alemanha",
+    arquivo:"data/bundesliga.json"
+  }
 ];
 
+let jogos=[];
+let ligaAtual="Todas";
+let filtroAtual="Todos";
+let equipaAtual=null;
+let favoritos=JSON.parse(localStorage.getItem("futzone-favoritos")||"[]");
 
-/* =========================
-   SEGURANÇA
-========================= */
+/* =========================================================
+   UTILITÁRIOS
+========================================================= */
 
 function esc(v){
-
-return String(v??"")
-.replaceAll("&","&amp;")
-.replaceAll("<","&lt;")
-.replaceAll(">","&gt;")
-.replaceAll('"',"&quot;")
-.replaceAll("'","&#039;");
-
+  return String(v??"")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
 }
-
-
-function normalizar(texto){
-
-return String(texto||"")
-.toLowerCase()
-.normalize("NFD")
-.replace(/[\u0300-\u036f]/g,"")
-.replace(/[^a-z0-9]/g,"");
-
-}
-
-
-/* =========================
-   ALIASES DE EQUIPAS
-========================= */
-
-const aliasesEquipas={
-
-"fcporto":[
-"fcporto",
-"porto",
-"futebolclubedoporto"
-],
-
-"sportingcp":[
-"sportingcp",
-"sporting",
-"sportingclubedeportugal"
-],
-
-"benfica":[
-"benfica",
-"slbenfica",
-"slbenfica"
-],
-
-"braga":[
-"braga",
-"scbraga",
-"sportingbraga"
-],
-
-"vitoriaguimaraes":[
-"vitoriaguimaraes",
-"vitoriasc",
-"vitoriadeguimaraes"
-],
-
-"boavista":[
-"boavista",
-"boavistafc"
-],
-
-"famalicao":[
-"famalicao",
-"fcfamalicao"
-],
-
-"estoril":[
-"estoril",
-"estorilpraia"
-],
-
-"arouca":[
-"arouca",
-"fcarouca"
-],
-
-"rioave":[
-"rioave",
-"rioavefc"
-],
-
-"moreirense":[
-"moreirense",
-"moreirensefc"
-],
-
-"estorilpraia":[
-"estoril",
-"estorilpraia"
-],
-
-"gilvicente":[
-"gilvicente",
-"gilvicentefc"
-],
-
-"nacional":[
-"nacional",
-"nacionalmadeira",
-"cdnacional"
-],
-
-"avssad":[
-"avsad",
-"avssad",
-"vilafrancax",
-"vilafranquense"
-],
-
-"alverca":[
-"alverca",
-"fcalverca"
-],
-
-"tacadel":[
-"tacadel",
-"taca"
-]
-
-};
-
-
-function nomesEquipaCorrespondem(nome1,nome2){
-
-const a=normalizar(nome1);
-const b=normalizar(nome2);
-
-if(!a||!b)
-return false;
-
-if(a===b)
-return true;
-
-if(a.includes(b)||b.includes(a))
-return true;
-
-for(const grupo of Object.values(aliasesEquipas)){
-
-if(grupo.includes(a)&&grupo.includes(b))
-return true;
-
-}
-
-return false;
-
-}
-
-
-/* =========================
-   EQUIPAS
-========================= */
 
 function obterCompeticao(j){
-
-return j?.competitions?.[0]||{};
-
+  return j?.competitions?.[0] || {};
 }
-
 
 function obterEquipas(j){
 
-let c=obterCompeticao(j).competitors;
+  let c=obterCompeticao(j).competitors;
 
-if(!Array.isArray(c))
-c=j?.competitors;
+  if(!Array.isArray(c)){
+    c=j?.competitors;
+  }
 
-if(!Array.isArray(c))
-c=[];
+  if(!Array.isArray(c)) c=[];
 
-return{
+  let home=c.find(x=>x.homeAway==="home") || c[0] || {};
+  let away=c.find(x=>x.homeAway==="away") || c[1] || {};
 
-home:
-c.find(x=>x.homeAway==="home")||
-c[0]||
-{},
-
-away:
-c.find(x=>x.homeAway==="away")||
-c[1]||
-{}
-
-};
-
+  return {home,away};
 }
-
 
 function nomeEquipa(c){
-
-return(
-
-c?.team?.displayName||
-c?.team?.shortDisplayName||
-c?.team?.name||
-c?.displayName||
-c?.name||
-null
-
-);
-
+  return (
+    c?.team?.displayName ||
+    c?.team?.shortDisplayName ||
+    c?.team?.name ||
+    c?.displayName ||
+    c?.name ||
+    null
+  );
 }
-
 
 function nomeEquipaSeguro(c,j,home){
 
-const nome=nomeEquipa(c);
+  let nome=nomeEquipa(c);
 
-if(nome)
-return nome;
+  if(nome) return nome;
 
-if(j?.name){
+  if(j?.name){
 
-const partes=j.name.split(" at ");
+    let partes=j.name.split(" at ");
 
-if(partes.length===2)
-return home?partes[1]:partes[0];
+    if(partes.length===2){
+      return home ? partes[1] : partes[0];
+    }
 
+  }
+
+  return "Equipa";
 }
-
-return"Equipa";
-
-}
-
 
 function idEquipa(c){
-
-return(
-
-c?.team?.id||
-c?.id||
-null
-
-);
-
+  return (
+    c?.team?.id ||
+    c?.id ||
+    null
+  );
 }
-
 
 function logoEquipa(c){
-
-return(
-
-c?.team?.logo||
-c?.team?.logos?.[0]?.href||
-c?.logo||
-c?.logos?.[0]?.href||
-""
-
-);
-
+  return (
+    c?.team?.logo ||
+    c?.team?.logos?.[0]?.href ||
+    c?.logo ||
+    c?.logos?.[0]?.href ||
+    ""
+  );
 }
-
-
-/* =========================
-   JOGOS
-========================= */
 
 function resultado(c){
 
-if(c?.score===undefined||c?.score===null)
-return"-";
+  if(c?.score===undefined || c?.score===null)
+    return "-";
 
-if(typeof c.score==="object")
-return c.score.displayValue||c.score.value||"-";
+  if(typeof c.score==="object")
+    return c.score.displayValue || c.score.value || "-";
 
-return c.score;
-
+  return c.score;
 }
-
 
 function estadoJogo(j){
 
-const s=obterCompeticao(j)?.status?.type;
+  const s=obterCompeticao(j)?.status?.type;
 
-if(s?.state==="in")
-return"LIVE";
+  if(s?.state==="in")
+    return "LIVE";
 
-if(s?.completed||s?.state==="post")
-return"RESULTADO";
+  if(s?.completed || s?.state==="post")
+    return "RESULTADO";
 
-return"PRÓXIMO";
-
+  return "PRÓXIMO";
 }
-
 
 function dataJogo(j){
 
-if(!j?.date)
-return"";
+  if(!j?.date) return "";
 
-try{
+  try{
 
-return new Date(j.date).toLocaleString(
-"pt-PT",
-{
-day:"2-digit",
-month:"2-digit",
-hour:"2-digit",
-minute:"2-digit"
-}
-);
-
-}catch(e){
-
-return j.date;
-
-}
-
-}
-
-
-/* =========================
-   CARREGAR JOGOS
-========================= */
-
-async function carregar(){
-
-jogos=[];
-
-for(const liga of ligas){
-
-try{
-
-const r=await fetch(
-liga.arquivo+"?v="+Date.now()
-);
-
-if(!r.ok)
-continue;
-
-const d=await r.json();
-
-let lista=[];
-
-if(Array.isArray(d?.events))
-lista=d.events;
-
-else if(Array.isArray(d))
-lista=d;
-
-lista.forEach(j=>{
-
-j.__liga=liga.nome;
-jogos.push(j);
-
-});
-
-}catch(e){
-
-console.log(
-"Erro jogos",
-liga.arquivo,
-e
-);
-
-}
-
-}
-
-mostrarJogos();
-
-}
-
-
-/* =========================
-   MOSTRAR JOGOS
-========================= */
-
-function mostrarJogos(){
-
-document.getElementById("navJogos").classList.add("active");
-document.getElementById("navTabelas").classList.remove("active");
-document.getElementById("navFav").classList.remove("active");
-
-document.getElementById("app").innerHTML=`
-
-<h2>⚽ Jogos</h2>
-
-<div class="filters">
-
-${
-["Todos","LIVE","Próximos","Resultados"].map(x=>`
-
-<button
-class="${filtroAtual===x?"active":""}"
-onclick="filtroAtual='${x}';mostrarJogos()">
-
-${x}
-
-</button>
-
-`).join("")
-}
-
-</div>
-
-<div class="filters">
-
-${
-["Todos",...ligas.map(x=>x.nome)].map(x=>`
-
-<button
-class="${ligaAtual===x?"active":""}"
-onclick="ligaAtual='${x}';mostrarJogos()">
-
-${x}
-
-</button>
-
-`).join("")
-}
-
-</div>
-
-<div id="lista"></div>
-
-`;
-
-const lista=jogos.filter(j=>{
-
-const ligaOK=
-ligaAtual==="Todos"||
-j.__liga===ligaAtual;
-
-const estado=estadoJogo(j);
-
-const filtroOK=
-filtroAtual==="Todos"||
-(filtroAtual==="LIVE"&&estado==="LIVE")||
-(filtroAtual==="Próximos"&&estado==="PRÓXIMO")||
-(filtroAtual==="Resultados"&&estado==="RESULTADO");
-
-return ligaOK&&filtroOK;
-
-});
-
-const div=document.getElementById("lista");
-
-if(!lista.length){
-
-div.innerHTML=
-'<div class="empty">Não há jogos disponíveis.</div>';
-
-return;
-
-}
-
-div.innerHTML=
-lista.map(jogoCard).join("");
-
-}
-
-
-/* =========================
-   CARTÃO DO JOGO
-========================= */
-
-function jogoCard(j){
-
-const e=obterEquipas(j);
-
-const hn=nomeEquipaSeguro(e.home,j,true);
-const an=nomeEquipaSeguro(e.away,j,false);
-
-const hid=idEquipa(e.home);
-const aid=idEquipa(e.away);
-
-const hl=logoEquipa(e.home);
-const al=logoEquipa(e.away);
-
-const estado=estadoJogo(j);
-
-return`
-
-<div class="card">
-
-<div class="league">
-${esc(j.__liga)}
-</div>
-
-<div class="teams">
-
-<div class="team"
-
-onclick="abrirEquipaPorId(
-'${esc(hid||"")}',
-'${esc(hn)}',
-'${esc(j.__liga)}',
-'${esc(hl)}'
-)">
-
-${
-hl
-?`<img class="team-logo" src="${esc(hl)}">`
-:""
-}
-
-${esc(hn)}
-
-</div>
-
-<div class="score">
-
-${esc(resultado(e.home))}
--
-${esc(resultado(e.away))}
-
-</div>
-
-<div class="team"
-
-onclick="abrirEquipaPorId(
-'${esc(aid||"")}',
-'${esc(an)}',
-'${esc(j.__liga)}',
-'${esc(al)}'
-)">
-
-${
-al
-?`<img class="team-logo" src="${esc(al)}">`
-:""
-}
-
-${esc(an)}
-
-</div>
-
-</div>
-
-<div class="status">
-
-${
-estado==="LIVE"
-?"🔴 AO VIVO"
-:estado
-}
-
-${
-j.date
-?" • "+esc(dataJogo(j))
-:""
-}
-
-</div>
-
-</div>
-
-`;
-
-}
-
-
-/* =========================
-   EQUIPA
-========================= */
-
-function abrirEquipaPorId(
-id,
-name,
-league,
-logo
-){
-
-equipaAtual={
-id:id,
-name:name,
-league:league,
-logo:logo
-};
-
-mostrarEquipa();
-
-}
-
-
-async function mostrarEquipa(){
-
-document.getElementById("app").innerHTML=`
-
-<button class="back" id="voltar">
-← Voltar
-</button>
-
-<div style="text-align:center">
-
-${
-equipaAtual.logo
-?`
-
-<img
-src="${esc(equipaAtual.logo)}"
-style="
-width:80px;
-height:80px;
-object-fit:contain">
-
-`
-:""
-}
-
-<h2>
-${esc(equipaAtual.name)}
-</h2>
-
-<div class="league">
-${esc(equipaAtual.league)}
-</div>
-
-</div>
-
-<h3>👥 Plantel</h3>
-
-<div id="plantel">
-
-<div class="empty">
-A carregar plantel...
-</div>
-
-</div>
-
-<h3>⚽ Jogos</h3>
-
-<div id="jogos-equipa"></div>
-
-`;
-
-document.getElementById("voltar").onclick=
-mostrarJogos;
-
-
-/* Procurar jogos pelo ID OU nome */
-
-const relacionados=jogos.filter(j=>{
-
-const e=obterEquipas(j);
-
-const idHome=idEquipa(e.home);
-const idAway=idEquipa(e.away);
-
-const nomeHome=nomeEquipa(e.home);
-const nomeAway=nomeEquipa(e.away);
-
-return(
-
-String(idHome)===String(equipaAtual.id)||
-String(idAway)===String(equipaAtual.id)||
-nomesEquipaCorrespondem(
-nomeHome,
-equipaAtual.name
-)||
-nomesEquipaCorrespondem(
-nomeAway,
-equipaAtual.name
-)
-
-);
-
-});
-
-document.getElementById("jogos-equipa").innerHTML=
-
-relacionados.length
-?
-relacionados.map(jogoCard).join("")
-:
-'<div class="empty">Sem jogos encontrados.</div>';
-
-await carregarPlantel();
-
-}
-
-
-/* =========================
-   IDADE
-========================= */
-
-function calcularIdade(dataNascimento){
-
-if(!dataNascimento)
-return"-";
-
-const data=new Date(dataNascimento);
-
-if(isNaN(data.getTime()))
-return"-";
-
-const hoje=new Date();
-
-let idade=
-hoje.getFullYear()-
-data.getFullYear();
-
-const mes=
-hoje.getMonth()-
-data.getMonth();
-
-if(
-mes<0||
-(
-mes===0&&
-hoje.getDate()<data.getDate()
-)
-){
-
-idade--;
-
-}
-
-return idade;
-
-}
-
-
-/* =========================
-   PLANTÉIS
-========================= */
-
-async function carregarPlantel(){
-
-try{
-
-const resposta=await fetch(
-"data/planteis.json?v="+Date.now()
-);
-
-if(!resposta.ok)
-throw new Error(
-"Não foi possível carregar planteis.json"
-);
-
-const dados=await resposta.json();
-
-let plantel=null;
-
-
-/* =========================
-   1 — PROCURAR PELO ID
-========================= */
-
-if(
-dados &&
-!Array.isArray(dados)
-){
-
-const entrada=
-dados[String(equipaAtual.id)];
-
-if(entrada){
-
-plantel=
-entrada.players||
-entrada.roster||
-entrada.squad||
-[];
-
-}
-
-}
-
-
-/* =========================
-   2 — PROCURAR PELO NOME
-========================= */
-
-if(
-!plantel &&
-dados &&
-!Array.isArray(dados)
-){
-
-const entradas=
-Object.values(dados);
-
-const encontrada=
-entradas.find(item=>{
-
-if(!item)
-return false;
-
-const nomeDB=
-item.name||
-item.strTeam||
-item.teamName||
-"";
-
-return nomesEquipaCorrespondem(
-nomeDB,
-equipaAtual.name
-);
-
-});
-
-if(encontrada){
-
-plantel=
-encontrada.players||
-encontrada.roster||
-encontrada.squad||
-[];
-
-}
-
-}
-
-
-/* =========================
-   3 — ARRAY
-========================= */
-
-if(
-Array.isArray(dados)&&
-!plantel
-){
-
-const encontrada=
-dados.find(item=>{
-
-if(!item)
-return false;
-
-const nomeDB=
-item.name||
-item.strTeam||
-item.teamName||
-"";
-
-return(
-
-String(item.id)===
-String(equipaAtual.id)||
-nomesEquipaCorrespondem(
-nomeDB,
-equipaAtual.name
-)
-
-);
-
-});
-
-if(encontrada){
-
-plantel=
-encontrada.players||
-encontrada.roster||
-encontrada.squad||
-[];
-
-}
-
-}
-
-
-/* =========================
-   SEM PLANTEL
-========================= */
-
-if(!plantel){
-
-document.getElementById("plantel").innerHTML=
-'<div class="empty">Plantel não disponível.</div>';
-
-return;
-
-}
-
-
-if(!Array.isArray(plantel))
-plantel=Object.values(plantel);
-
-
-if(!plantel.length){
-
-document.getElementById("plantel").innerHTML=
-'<div class="empty">Plantel vazio.</div>';
-
-return;
-
-}
-
-
-/* =========================
-   CARTÕES DOS JOGADORES
-========================= */
-
-let html=
-'<div class="plantel-grid">';
-
-
-plantel.forEach((p,i)=>{
-
-const nome=
-p.name||
-p.strPlayer||
-p.displayName||
-p.fullName||
-"Jogador";
-
-
-const numero=
-p.number||
-p.strNumber||
-p.jersey||
-p.jerseyNumber||
-"-";
-
-
-const posicao=
-p.position||
-p.strPosition||
-p.positionName||
-"-";
-
-
-/*
-IMPORTANTE:
-TheSportsDB guarda muitas vezes
-a data de nascimento dentro de p.age.
-*/
-
-const nascimento=
-p.age||
-p.dateBorn||
-p.dateOfBirth||
-p.birthDate||
-"";
-
-
-const idade=
-calcularIdade(nascimento);
-
-
-const nacionalidade=
-p.nationality||
-p.strNationality||
-p.country||
-"-";
-
-
-const foto=
-p.photo||
-p.strThumb||
-p.strCutout||
-p.headshot||
-p.image||
-"";
-
-
-const jogador={
-
-id:
-p.id||
-p.idPlayer||
-p.playerId||
-i,
-
-name:nome,
-
-number:numero,
-
-position:posicao,
-
-age:idade,
-
-nationality:nacionalidade,
-
-photo:foto
-
-};
-
-
-html+=`
-
-<div class="player"
-
-onclick='abrirJogador(${JSON.stringify(jogador)})'>
-
-${
-foto
-?
-
-`
-
-<img
-src="${esc(foto)}"
-onerror="this.style.display='none'">
-
-`
-
-:
-
-`
-
-<div style="
-width:80px;
-height:80px;
-border-radius:50%;
-background:#222;
-margin:auto auto 8px;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:30px">
-
-⚽
-
-</div>
-
-`
-
-}
-
-<div class="player-name">
-
-${esc(nome)}
-
-</div>
-
-<div class="player-info">
-
-#${esc(numero)}
-•
-${esc(posicao)}
-
-</div>
-
-</div>
-
-`;
-
-});
-
-
-html+=
-'</div>';
-
-
-document.getElementById("plantel").innerHTML=
-html;
-
-
-}catch(e){
-
-console.log(
-"Erro plantel:",
-e
-);
-
-const div=
-document.getElementById("plantel");
-
-if(div){
-
-div.innerHTML=
-'<div class="empty">Não foi possível carregar o plantel.</div>';
-
-}
-
-}
-
-}
-
-
-/* =========================
-   JOGADOR
-========================= */
-
-function abrirJogador(p){
-
-document.getElementById("app").innerHTML=`
-
-<button
-class="back"
-id="voltarJogador">
-
-← Voltar ao plantel
-
-</button>
-
-<div class="player-profile">
-
-${
-p.photo
-?
-
-`
-
-<img
-src="${esc(p.photo)}"
-onerror="this.style.display='none'">
-
-`
-
-:
-
-`
-
-<div style="
-width:150px;
-height:150px;
-border-radius:50%;
-background:#181818;
-border:3px solid #168cff;
-margin:auto;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:60px">
-
-⚽
-
-</div>
-
-`
-
-}
-
-<h1>
-${esc(p.name)}
-</h1>
-
-<div class="position">
-${esc(p.position)}
-</div>
-
-<div class="info-box">
-
-<div class="info-row">
-
-<span class="info-label">
-Número
-</span>
-
-<span class="info-value">
-#${esc(p.number)}
-</span>
-
-</div>
-
-
-<div class="info-row">
-
-<span class="info-label">
-Posição
-</span>
-
-<span class="info-value">
-${esc(p.position)}
-</span>
-
-</div>
-
-
-<div class="info-row">
-
-<span class="info-label">
-Idade
-</span>
-
-<span class="info-value">
-${esc(p.age)}
-</span>
-
-</div>
-
-
-<div class="info-row">
-
-<span class="info-label">
-Nacionalidade
-</span>
-
-<span class="info-value">
-${esc(p.nationality)}
-</span>
-
-</div>
-
-</div>
-
-</div>
-
-`;
-
-document.getElementById(
-"voltarJogador"
-).onclick=mostrarEquipa;
-
-}
-
-
-/* =========================
-   CLASSIFICAÇÃO
-========================= */
-
-function encontrarListaClassificacao(obj){
-
-if(!obj)
-return null;
-
-
-/* ARRAY */
-
-if(Array.isArray(obj)){
-
-const pareceTabela=
-obj.some(x=>
-x&&(
-x.team||
-x.stats||
-x.teamId||
-x.points!==undefined||
-x.wins!==undefined||
-x.losses!==undefined||
-x.gamesPlayed!==undefined
-)
-);
-
-if(pareceTabela)
-return obj;
-
-
-for(const item of obj){
-
-const resultado=
-encontrarListaClassificacao(item);
-
-if(resultado)
-return resultado;
-
-}
-
-return null;
-
-}
-
-
-/* OBJECTO */
-
-if(typeof obj!=="object")
-return null;
-
-
-/*
-ESTRUTURA ESPN:
-standings -> entries
-*/
-
-if(
-obj.entries &&
-Array.isArray(obj.entries)
-){
-
-return obj.entries;
-
-}
-
-
-/*
-ESTRUTURA:
-standings -> object -> entries
-*/
-
-if(obj.standings){
-
-const resultado=
-encontrarListaClassificacao(
-obj.standings
-);
-
-if(resultado)
-return resultado;
-
-}
-
-
-/*
-children
-*/
-
-if(Array.isArray(obj.children)){
-
-for(const child of obj.children){
-
-const resultado=
-encontrarListaClassificacao(
-child
-);
-
-if(resultado)
-return resultado;
-
-}
-
-}
-
-
-/*
-groups
-*/
-
-if(Array.isArray(obj.groups)){
-
-for(const group of obj.groups){
-
-const resultado=
-encontrarListaClassificacao(
-group
-);
-
-if(resultado)
-return resultado;
-
-}
-
-}
-
-
-/*
-teams
-*/
-
-if(obj.teams){
-
-const resultado=
-encontrarListaClassificacao(
-obj.teams
-);
-
-if(resultado)
-return resultado;
+    return new Date(j.date).toLocaleString("pt-PT",{
+      day:"2-digit",
+      month:"2-digit",
+      hour:"2-digit",
+      minute:"2-digit"
+    });
 
-}
-
-
-/*
-items
-*/
-
-if(obj.items){
-
-const resultado=
-encontrarListaClassificacao(
-obj.items
-);
-
-if(resultado)
-return resultado;
-
-}
-
-
-/*
-rows
-*/
-
-if(obj.rows){
-
-const resultado=
-encontrarListaClassificacao(
-obj.rows
-);
-
-if(resultado)
-return resultado;
-
-}
-
-
-/*
-data
-*/
-
-if(obj.data){
-
-const resultado=
-encontrarListaClassificacao(
-obj.data
-);
-
-if(resultado)
-return resultado;
-
-}
-
-
-/*
-content
-*/
-
-if(obj.content){
-
-const resultado=
-encontrarListaClassificacao(
-obj.content
-);
-
-if(resultado)
-return resultado;
-
-}
-
-
-/*
-league
-*/
-
-if(obj.league){
-
-const resultado=
-encontrarListaClassificacao(
-obj.league
-);
-
-if(resultado)
-return resultado;
-
-}
-
-
-return null;
-
-}
-
-
-/* =========================
-   ESTATÍSTICAS
-========================= */
-
-function encontrarStat(e,numeros){
-
-if(!e)
-return"-";
-
-
-if(Array.isArray(e.stats)){
-
-for(const s of e.stats){
-
-const nome=
-String(
-s.name||
-s.shortDisplayName||
-s.abbreviation||
-""
-)
-.toLowerCase()
-.replace(/\s/g,"")
-.replace(/_/g,"");
-
-
-if(
-numeros.some(n=>
-nome===n||
-nome.includes(n)
-)
-){
-
-return(
-
-s.displayValue!==undefined
-?
-s.displayValue
-:
-s.value!==undefined
-?
-s.value
-:
-"-"
-
-);
-
-}
-
-}
-
-}
-
-
-/* procurar diretamente */
-
-for(const n of numeros){
-
-if(e[n]!==undefined)
-return e[n];
-
-}
-
-
-/* procurar dentro de team */
-
-if(e.team){
-
-for(const n of numeros){
-
-if(e.team[n]!==undefined)
-return e.team[n];
-
-}
-
-}
-
-
-return"-";
-
-}
-
-
-/* =========================
-   ESTATÍSTICAS DA TABELA
-========================= */
-
-function valorPontos(e){
-
-return encontrarStat(
-e,
-[
-"points",
-"pts",
-"pontos"
-]
-);
-
-}
-
-
-function valorJogos(e){
-
-return encontrarStat(
-e,
-[
-"gamesplayed",
-"gp",
-"played",
-"jogos"
-]
-);
-
-}
-
-
-function valorVitorias(e){
-
-return encontrarStat(
-e,
-[
-"wins",
-"w",
-"vitorias"
-]
-);
-
-}
-
-
-function valorEmpates(e){
-
-return encontrarStat(
-e,
-[
-"ties",
-"draws",
-"draw",
-"empates",
-"e"
-]
-);
-
-}
-
-
-function valorDerrotas(e){
-
-return encontrarStat(
-e,
-[
-"losses",
-"l",
-"derrotas",
-"d"
-]
-);
-
-}
-
-
-/* =========================
-   TABELAS
-========================= */
-
-async function mostrarTabelas(){
-
-document.getElementById(
-"navJogos"
-).classList.remove("active");
-
-document.getElementById(
-"navTabelas"
-).classList.add("active");
-
-document.getElementById(
-"navFav"
-).classList.remove("active");
-
-
-document.getElementById("app").innerHTML=`
-
-<h2>📊 Tabelas</h2>
-
-<div class="filters">
-
-${
-ligas.map(l=>`
-
-<button
-onclick="carregarTabelaUnica('${esc(l.nome)}')">
-
-${esc(l.nome)}
-
-</button>
-
-`).join("")
-}
-
-</div>
-
-<div id="tabelas">
-
-<div class="empty">
-A carregar classificações...
-</div>
-
-</div>
-
-`;
-
-
-/*
-Primeiro tentar carregar todas
-*/
-
-let html="";
+  }catch(e){
 
+    return j.date;
 
-for(const liga of ligas){
-
-try{
-
-const ficheiro=
-liga.arquivo.replace(
-".json",
-"-classificacao.json"
-);
-
-
-const r=await fetch(
-ficheiro+"?v="+Date.now()
-);
-
-
-if(!r.ok)
-continue;
-
-
-const d=await r.json();
-
-
-const entries=
-encontrarListaClassificacao(d);
-
-
-if(entries&&entries.length){
-
-html+=criarTabela(
-liga.nome,
-entries
-);
-
-}
-
-}catch(e){
-
-console.log(
-"Erro classificação",
-liga.nome,
-e
-);
-
-}
-
-}
-
-
-document.getElementById(
-"tabelas"
-).innerHTML=
-
-html||
-
-'<div class="empty">Tabelas indisponíveis.</div>';
-
-}
-
-
-/* =========================
-   TABELA ÚNICA
-========================= */
-
-async function carregarTabelaUnica(nome){
-
-const liga=
-ligas.find(
-x=>x.nome===nome
-);
-
-
-if(!liga)
-return;
-
-
-const div=
-document.getElementById("tabelas");
-
-
-if(!div)
-return;
-
-
-div.innerHTML=
-'<div class="empty">A carregar...</div>';
-
-
-try{
-
-const ficheiro=
-liga.arquivo.replace(
-".json",
-"-classificacao.json"
-);
-
-
-const r=await fetch(
-ficheiro+"?v="+Date.now()
-);
-
-
-if(!r.ok)
-throw new Error("Tabela");
-
-
-const d=await r.json();
-
-
-const entries=
-encontrarListaClassificacao(d);
-
-
-if(
-!entries||
-!entries.length
-){
-
-div.innerHTML=
-'<div class="empty">Classificação indisponível.</div>';
-
-return;
-
-}
-
-
-div.innerHTML=
-criarTabela(
-liga.nome,
-entries
-);
-
-
-}catch(e){
-
-console.log(e);
-
-div.innerHTML=
-'<div class="empty">Erro ao carregar classificação.</div>';
-
-}
-
-}
-
-
-/* =========================
-   CRIAR TABELA
-========================= */
-
-function criarTabela(nome,entries){
-
-return`
-
-<div class="card">
-
-<div class="league">
-${esc(nome)}
-</div>
-
-<div class="table-wrap">
-
-<table>
-
-<tr>
-
-<th>#</th>
-<th>Equipa</th>
-<th>J</th>
-<th>V</th>
-<th>E</th>
-<th>D</th>
-<th>Pts</th>
-
-</tr>
-
-${
-entries.map((e,i)=>{
-
-const t=
-e.team||
-e;
-
-
-const id=
-t.id||
-e.teamId||
-"";
-
-
-const nomeTabela=
-t.displayName||
-t.name||
-t.shortDisplayName||
-e.name||
-"Equipa";
-
-
-const logo=
-t.logo||
-t.logos?.[0]?.href||
-"";
-
-
-return`
-
-<tr>
-
-<td>
-${i+1}
-</td>
-
-<td
-class="team"
-
-onclick="abrirEquipaPorId(
-'${esc(id)}',
-'${esc(nomeTabela)}',
-'${esc(nome)}',
-'${esc(logo)}'
-)">
-
-${
-logo
-?
-
-`
-
-<img
-src="${esc(logo)}"
-style="
-width:22px;
-height:22px;
-object-fit:contain;
-vertical-align:middle;
-margin-right:5px">
-
-`
-
-:""
+  }
 }
 
-${esc(nomeTabela)}
+function normalizar(texto){
 
-</td>
-
-<td>
-${esc(valorJogos(e))}
-</td>
-
-<td>
-${esc(valorVitorias(e))}
-</td>
-
-<td>
-${esc(valorEmpates(e))}
-</td>
-
-<td>
-${esc(valorDerrotas(e))}
-</td>
-
-<td>
-<b>
-${esc(valorPontos(e))}
-</b>
-</td>
-
-</tr>
-
-`;
-
-}).join("")
-}
-
-</table>
-
-</div>
-
-</div>
-
-`;
-
-}
-
-
-/* =========================
-   FAVORITOS
-========================= */
-
-function mostrarFavoritos(){
-
-document.getElementById(
-"navJogos"
-).classList.remove("active");
-
-document.getElementById(
-"navTabelas"
-).classList.remove("active");
-
-document.getElementById(
-"navFav"
-).classList.add("active");
-
-
-document.getElementById("app").innerHTML=`
-
-<h2>⭐ Favoritos</h2>
-
-<div class="card">
-
-<div class="empty">
-
-Favoritos em breve.
-
-</div>
-
-</div>
-
-`;
-
+  return String(texto||"")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-z0-9]/g,"");
 }
-
-
-/* =========================
-   INICIAR
-========================= */
 
-mostrarJogos();
+/* =========================================================
+   ALIASES DE EQUIPAS
+========================================================= */
 
-carregar();
+const ALIASES_EQUIPAS={
 
-</script>
+  "bayernmunich":[
+    "bayernmunchen",
+    "fcbayernmunich",
+    "fcbayern"
+  ],
 
-</body>
-</html>
+  "bayernmunchen":[
+    "bayernmunich",
+    "fcbayern",
+    "
