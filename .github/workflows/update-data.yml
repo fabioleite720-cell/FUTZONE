@@ -16,81 +16,40 @@ jobs:
       - name: Baixar código
         uses: actions/checkout@v4
 
-      - name: Buscar dados
+      - name: Buscar dados Footballdata
         env:
-          API_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          API_KEY: ${{ secrets.FOOTBALLDATA_API_KEY }}
         run: |
           mkdir -p data
 
-          echo "A testar API-Football..."
+          echo "A atualizar FUTZONE..."
 
           curl -sS \
-            -H "x-apisports-key: $API_KEY" \
-            "https://v3.football.api-sports.io/fixtures?league=94&season=2026" \
-            -o data/primeira-liga.json
-
-          sleep 5
-
-          curl -sS \
-            -H "x-apisports-key: $API_KEY" \
-            "https://v3.football.api-sports.io/fixtures?league=39&season=2026" \
+            -H "Authorization: Bearer $API_KEY" \
+            "https://footballdata.io/api/v1/leagues/15/matches" \
             -o data/premier-league.json
 
-          sleep 5
-
           curl -sS \
-            -H "x-apisports-key: $API_KEY" \
-            "https://v3.football.api-sports.io/fixtures?league=140&season=2026" \
-            -o data/la-liga.json
-
-          sleep 5
-
-          curl -sS \
-            -H "x-apisports-key: $API_KEY" \
-            "https://v3.football.api-sports.io/fixtures?league=135&season=2026" \
-            -o data/serie-a.json
-
-          sleep 5
-
-          curl -sS \
-            -H "x-apisports-key: $API_KEY" \
-            "https://v3.football.api-sports.io/fixtures?league=78&season=2026" \
-            -o data/bundesliga.json
-
-          sleep 5
-
-          curl -sS \
-            -H "x-apisports-key: $API_KEY" \
-            "https://v3.football.api-sports.io/standings?league=94&season=2026" \
-            -o data/classificacao.json
-
-          sleep 5
-
-          curl -sS \
-            -H "x-apisports-key: $API_KEY" \
-            "https://v3.football.api-sports.io/standings?league=39&season=2026" \
+            -H "Authorization: Bearer $API_KEY" \
+            "https://footballdata.io/api/v1/leagues/15/standings" \
             -o data/premier-league-classificacao.json
 
-          sleep 5
+          curl -sS \
+            -H "Authorization: Bearer $API_KEY" \
+            "https://footballdata.io/api/v1/fixtures/upcoming?limit=100" \
+            -o data/proximos.json
 
           curl -sS \
-            -H "x-apisports-key: $API_KEY" \
-            "https://v3.football.api-sports.io/standings?league=140&season=2026" \
-            -o data/la-liga-classificacao.json
-
-          sleep 5
+            -H "Authorization: Bearer $API_KEY" \
+            "https://footballdata.io/api/v1/fixtures/live" \
+            -o data/live.json
 
           curl -sS \
-            -H "x-apisports-key: $API_KEY" \
-            "https://v3.football.api-sports.io/standings?league=135&season=2026" \
-            -o data/serie-a-classificacao.json
+            -H "Authorization: Bearer $API_KEY" \
+            "https://footballdata.io/api/v1/fixtures/results?limit=100" \
+            -o data/resultados.json
 
-          sleep 5
-
-          curl -sS \
-            -H "x-apisports-key: $API_KEY" \
-            "https://v3.football.api-sports.io/standings?league=78&season=2026" \
-            -o data/bundesliga-classificacao.json
+          echo "Dados atualizados."
 
       - name: Guardar dados
         run: |
