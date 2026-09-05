@@ -16,87 +16,89 @@ jobs:
       - name: Baixar código
         uses: actions/checkout@v4
 
-      - name: Testar API
+      - name: Buscar dados
         env:
-          API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
-        run: |
-          echo "A testar a API Football-Data..."
-          curl -sS -w "\nHTTP_STATUS:%{http_code}\n" \
-            -H "X-Auth-Token: $API_KEY" \
-            "https://api.football-data.org/v4/competitions/PPL/standings"
-
-      - name: Buscar jogos
-        env:
-          API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
+          API_KEY: ${{ secrets.API_FOOTBALL_KEY }}
         run: |
           mkdir -p data
 
-          curl --fail-with-body -s \
-            -H "X-Auth-Token: $API_KEY" \
-            "https://api.football-data.org/v4/competitions/PPL/matches" \
+          echo "A testar API-Football..."
+
+          curl -sS \
+            -H "x-apisports-key: $API_KEY" \
+            "https://v3.football.api-sports.io/fixtures?league=94&season=2026" \
             -o data/primeira-liga.json
-          sleep 12
 
-          curl --fail-with-body -s \
-            -H "X-Auth-Token: $API_KEY" \
-            "https://api.football-data.org/v4/competitions/PL/matches" \
+          sleep 5
+
+          curl -sS \
+            -H "x-apisports-key: $API_KEY" \
+            "https://v3.football.api-sports.io/fixtures?league=39&season=2026" \
             -o data/premier-league.json
-          sleep 12
 
-          curl --fail-with-body -s \
-            -H "X-Auth-Token: $API_KEY" \
-            "https://api.football-data.org/v4/competitions/PD/matches" \
+          sleep 5
+
+          curl -sS \
+            -H "x-apisports-key: $API_KEY" \
+            "https://v3.football.api-sports.io/fixtures?league=140&season=2026" \
             -o data/la-liga.json
-          sleep 12
 
-          curl --fail-with-body -s \
-            -H "X-Auth-Token: $API_KEY" \
-            "https://api.football-data.org/v4/competitions/SA/matches" \
+          sleep 5
+
+          curl -sS \
+            -H "x-apisports-key: $API_KEY" \
+            "https://v3.football.api-sports.io/fixtures?league=135&season=2026" \
             -o data/serie-a.json
-          sleep 12
 
-          curl --fail-with-body -s \
-            -H "X-Auth-Token: $API_KEY" \
-            "https://api.football-data.org/v4/competitions/BL1/matches" \
+          sleep 5
+
+          curl -sS \
+            -H "x-apisports-key: $API_KEY" \
+            "https://v3.football.api-sports.io/fixtures?league=78&season=2026" \
             -o data/bundesliga.json
 
-      - name: Buscar classificações
-        env:
-          API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
-        run: |
-          curl --fail-with-body -s \
-            -H "X-Auth-Token: $API_KEY" \
-            "https://api.football-data.org/v4/competitions/PPL/standings" \
+          sleep 5
+
+          curl -sS \
+            -H "x-apisports-key: $API_KEY" \
+            "https://v3.football.api-sports.io/standings?league=94&season=2026" \
             -o data/classificacao.json
-          sleep 12
 
-          curl --fail-with-body -s \
-            -H "X-Auth-Token: $API_KEY" \
-            "https://api.football-data.org/v4/competitions/PL/standings" \
+          sleep 5
+
+          curl -sS \
+            -H "x-apisports-key: $API_KEY" \
+            "https://v3.football.api-sports.io/standings?league=39&season=2026" \
             -o data/premier-league-classificacao.json
-          sleep 12
 
-          curl --fail-with-body -s \
-            -H "X-Auth-Token: $API_KEY" \
-            "https://api.football-data.org/v4/competitions/PD/standings" \
+          sleep 5
+
+          curl -sS \
+            -H "x-apisports-key: $API_KEY" \
+            "https://v3.football.api-sports.io/standings?league=140&season=2026" \
             -o data/la-liga-classificacao.json
-          sleep 12
 
-          curl --fail-with-body -s \
-            -H "X-Auth-Token: $API_KEY" \
-            "https://api.football-data.org/v4/competitions/SA/standings" \
+          sleep 5
+
+          curl -sS \
+            -H "x-apisports-key: $API_KEY" \
+            "https://v3.football.api-sports.io/standings?league=135&season=2026" \
             -o data/serie-a-classificacao.json
-          sleep 12
 
-          curl --fail-with-body -s \
-            -H "X-Auth-Token: $API_KEY" \
-            "https://api.football-data.org/v4/competitions/BL1/standings" \
+          sleep 5
+
+          curl -sS \
+            -H "x-apisports-key: $API_KEY" \
+            "https://v3.football.api-sports.io/standings?league=78&season=2026" \
             -o data/bundesliga-classificacao.json
 
       - name: Guardar dados
         run: |
           git config user.name "FUTZONE"
           git config user.email "futzone@users.noreply.github.com"
+
           git add data/
+
           git diff --cached --quiet || git commit -m "Atualizar dados FUTZONE"
+
           git push
