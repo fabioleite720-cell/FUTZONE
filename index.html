@@ -703,3 +703,146 @@ async function mostrarTabelas(){
   <div class="empty">A carregar...</div>
  </div>
  `;
+
+ let html="";
+
+ for(const liga of ligas){
+
+  try{
+
+   const r=await fetch(
+    liga.arquivo.replace(".json","-classificacao.json")
+    +"?v="+Date.now()
+   );
+
+   if(!r.ok)continue;
+
+   const d=await r.json();
+
+   let entries=procurarEntries(d);
+
+   if(!entries.length)continue;
+
+   html+=criarTabela(liga.nome,entries);
+
+  }catch(e){}
+
+ }
+
+ document.getElementById("tabelas").innerHTML=
+ html||'<div class="empty">Tabelas indisponíveis.</div>';
+}
+
+function procurarEntries(d){
+
+ if(Array.isArray(d))return d;
+
+ if(Array.isArray(d.entries))return d.entries;
+
+ if(Array.isArray(d.standings))return d.standings;
+
+ if(d.children){
+  for(const c of d.children){
+   const x=procurarEntries(c);
+   if(x.length)return x;
+  }
+ }
+
+ return [];
+}
+
+function stat(e,n){
+
+ if(e.stats){
+
+  const s=e.stats.find(x=>
+   x.name===n||x.shortDisplayName===n
+  );
+
+  if(s)return s.value??s.displayValue??"-";
+ }
+
+ return e[n]??"-";
+}
+
+function criarTabela(nome,entries){
+
+ return `
+
+ <div class="card">
+
+ <div class="league">${esc(nome)}</div>
+
+ <table>
+
+ <tr>
+  <th>#</th>
+  <th>Equipa</th>
+  <th>J</th>
+  <th>V</th>
+  <th>E</th>
+  <th>D</th>
+  <th>Pts</th>
+ </tr>
+
+ ${entries.map((e,i)=>{
+
+  const t=e.team||e;
+
+  return `
+  <tr>
+
+   <td>${i+1}</td>
+
+   <td class="team"
+    onclick='abrirEquipa(${JSON.stringify({
+     id:t.id,
+     name:t.name||t.displayName||"Equipa",
+     league:nome
+    })})'>
+    ${esc(t.name||t.displayName||"Equipa")}
+   </td>
+
+   <td>${esc(stat(e,"gamesPlayed"))}</td>
+   <td>${esc(stat(e,"wins"))}</td>
+   <td>${esc(stat(e,"ties")||stat(e,"draws"))}</td>
+   <td>${esc(stat(e,"losses"))}</td>
+   <td><b>${esc(stat(e,"points"))}</b></td>
+
+  </tr>
+  `;
+
+ }).join("")}
+
+ </table>
+ </div>
+ `;
+}
+
+/* FAVORITOS */
+
+function mostrarFavoritos(){
+
+ document.getElementById("navJogos").classList.remove("active");
+ document.getElementById("navTabelas").classList.remove("active");
+ document.getElementById("navFav").classList.add("active");
+
+ document.getElementById("app").innerHTML=`
+
+ <h2>⭐ Favoritos</h2>
+
+ <div class="card">
+  <div class="empty">
+   Sistema de favoritos em breve.
+  </div>
+ </div>
+
+ `;
+}
+
+carregar();
+
+</script>
+
+</body>
+</html>
