@@ -845,7 +845,208 @@ function criarTabela(codigo,dados){
    EQUIPA
 ========================= */
 
-function mostrarEquipa(){
+async function mostrarEquipa(){
+
+ if(!equipaAtual){
+  pagina="jogos";
+  render();
+  return;
+ }
+
+ const nome=equipaAtual.nome;
+ const codigo=equipaAtual.liga;
+ const id=equipaAtual.id;
+
+ app.innerHTML=`
+  <div class="team-page">
+   <div class="team-cover">
+
+    <button class="back" id="voltar">
+     ← Voltar
+    </button>
+
+    <div class="team-name">
+     ${esc(nome)}
+    </div>
+
+    <div class="team-league">
+     ${esc(LIGAS[codigo]?.nome || "")}
+    </div>
+
+   </div>
+
+   <div class="team-games">
+
+    <div class="section-title">
+     👥 Plantel
+    </div>
+
+    <div id="plantel">
+     <div class="loading">
+      A carregar jogadores...
+     </div>
+    </div>
+
+    <div class="section-title">
+     ⚽ Jogos da equipa
+    </div>
+
+    <div id="jogos-equipa"></div>
+
+   </div>
+  </div>
+ `;
+
+ document
+  .getElementById("voltar")
+  .addEventListener("click",()=>{
+   pagina="jogos";
+   equipaAtual=null;
+   render();
+  });
+
+ /* JOGOS */
+
+ const relacionados=jogos.filter(j=>{
+
+  if(j.__liga!==codigo)return false;
+
+  const c=j.competitions &&
+  j.competitions[0];
+
+  if(!c || !c.competitors)return false;
+
+  return c.competitors.some(x=>
+   equipaId(x.team)===id ||
+   equipaNome(x.team)===nome
+  );
+
+ });
+
+ let jogosHTML="";
+
+ relacionados
+ .sort((a,b)=>{
+  const da=dataJogo(a);
+  const db=dataJogo(b);
+
+  if(!da||!db)return 0;
+
+  return da-db;
+ })
+ .forEach(j=>{
+  jogosHTML+=jogoCard(j);
+ });
+
+ document
+  .getElementById("jogos-equipa")
+  .innerHTML=
+   jogosHTML ||
+   '<div class="empty">Sem jogos disponíveis.</div>';
+
+
+ /* PLANTEL */
+
+ try{
+
+  const resposta=await fetch(
+   "data/planteis.json?v="+Date.now()
+  );
+
+  if(!resposta.ok)
+   throw new Error("Plantéis indisponíveis");
+
+  const dados=await resposta.json();
+
+  const plantel=dados[id];
+
+  if(!plantel ||
+     !plantel.jogadores ||
+     !plantel.jogadores.length){
+
+   document
+    .getElementById("plantel")
+    .innerHTML=
+     '<div class="empty">Plantel não disponível.</div>';
+
+   return;
+  }
+
+  let html="";
+
+  plantel.jogadores.forEach(jogador=>{
+
+   const foto=
+    jogador.foto ||
+    "";
+
+   html+=`
+    <div class="player-card">
+
+     <div class="player-photo">
+      ${
+       foto
+       ? `<img src="${esc(foto)}"
+              alt="${esc(jogador.nome)}">`
+       : "👤"
+      }
+     </div>
+
+     <div class="player-info">
+
+      <div class="player-name">
+       ${esc(jogador.nome)}
+      </div>
+
+      <div class="player-details">
+
+       ${
+        jogador.numero
+        ? "🔢 "+esc(jogador.numero)+" · "
+        : ""
+       }
+
+       ${
+        jogador.posicao
+        ? "⚽ "+esc(jogador.posicao)
+        : ""
+       }
+
+      </div>
+
+      ${
+       jogador.nacionalidade
+       ? `
+        <div class="player-country">
+         🌍 ${esc(jogador.nacionalidade)}
+        </div>
+       `
+       : ""
+      }
+
+     </div>
+
+    </div>
+   `;
+
+  });
+
+  document
+   .getElementById("plantel")
+   .innerHTML=html;
+
+ }catch(e){
+
+  console.log(e);
+
+  document
+   .getElementById("plantel")
+   .innerHTML=
+    '<div class="empty">Não foi possível carregar o plantel.</div>';
+
+ }
+
+}
 
  if(!equipaAtual){
   pagina="jogos";
