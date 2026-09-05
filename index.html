@@ -1090,4 +1090,419 @@ return null;
 
 }
 
-if(typeof
+if(typeof obj!=="object")
+return null;
+
+if(
+obj.entries&&
+Array.isArray(obj.entries)
+)
+return obj.entries;
+
+if(
+obj.standings&&
+typeof obj.standings==="object"
+){
+
+const resultado=
+encontrarListaClassificacao(obj.standings);
+
+if(resultado)
+return resultado;
+
+}
+
+if(Array.isArray(obj.children)){
+
+for(const child of obj.children){
+
+const resultado=
+encontrarListaClassificacao(child);
+
+if(resultado)
+return resultado;
+
+}
+
+}
+
+for(const chave of[
+"teams",
+"items",
+"rows",
+"groups"
+]){
+
+if(obj[chave]){
+
+const resultado=
+encontrarListaClassificacao(obj[chave]);
+
+if(resultado)
+return resultado;
+
+}
+
+}
+
+return null;
+
+}
+
+/* ESTATÍSTICAS */
+
+function encontrarStat(e,numeros){
+
+if(!e)
+return"-";
+
+if(Array.isArray(e.stats)){
+
+for(const s of e.stats){
+
+const nome=String(
+s.name||
+s.shortDisplayName||
+s.abbreviation||
+""
+).toLowerCase().replace(/\s/g,"");
+
+if(
+numeros.some(n=>
+nome===n||
+nome.includes(n)
+)
+){
+
+return(
+s.value!==undefined
+?s.value
+:s.displayValue!==undefined
+?s.displayValue
+:"-"
+);
+
+}
+
+}
+
+}
+
+for(const n of numeros){
+
+if(e[n]!==undefined)
+return e[n];
+
+}
+
+return"-";
+
+}
+
+function valorPontos(e){
+return encontrarStat(e,["points","pts","pontos"]);
+}
+
+function valorJogos(e){
+return encontrarStat(e,["gamesplayed","gp","played","jogos"]);
+}
+
+function valorVitorias(e){
+return encontrarStat(e,["wins","w","vitorias"]);
+}
+
+function valorEmpates(e){
+return encontrarStat(e,["ties","draws","draw","d","empates"]);
+}
+
+function valorDerrotas(e){
+return encontrarStat(e,["losses","l","derrotas"]);
+}
+
+/* TABELAS */
+
+async function mostrarTabelas(){
+
+document.getElementById("navJogos").classList.remove("active");
+document.getElementById("navTabelas").classList.add("active");
+document.getElementById("navFav").classList.remove("active");
+
+document.getElementById("app").innerHTML=`
+
+<h2>📊 Tabelas</h2>
+
+<div class="filters">
+
+${
+ligas.map(l=>`
+
+<button
+onclick="carregarTabelaUnica('${esc(l.nome)}')">
+
+${esc(l.nome)}
+
+</button>
+
+`).join("")
+}
+
+</div>
+
+<div id="tabelas">
+
+<div class="empty">
+A carregar classificações...
+</div>
+
+</div>
+
+`;
+
+let html="";
+
+for(const liga of ligas){
+
+try{
+
+const ficheiro=
+liga.arquivo.replace(
+".json",
+"-classificacao.json"
+);
+
+const r=await fetch(
+ficheiro+"?v="+Date.now()
+);
+
+if(!r.ok)
+continue;
+
+const d=await r.json();
+
+const entries=
+encontrarListaClassificacao(d);
+
+if(entries&&entries.length){
+
+html+=criarTabela(
+liga.nome,
+entries
+);
+
+}
+
+}catch(e){
+
+console.log(
+"Erro classificação",
+liga.nome,
+e
+);
+
+}
+
+}
+
+document.getElementById("tabelas").innerHTML=
+html||
+'<div class="empty">Tabelas indisponíveis.</div>';
+
+}
+
+async function carregarTabelaUnica(nome){
+
+const liga=ligas.find(
+x=>x.nome===nome
+);
+
+if(!liga)return;
+
+const div=document.getElementById("tabelas");
+
+if(!div)return;
+
+div.innerHTML=
+'<div class="empty">A carregar...</div>';
+
+try{
+
+const ficheiro=
+liga.arquivo.replace(
+".json",
+"-classificacao.json"
+);
+
+const r=await fetch(
+ficheiro+"?v="+Date.now()
+);
+
+if(!r.ok)
+throw new Error("Tabela");
+
+const d=await r.json();
+
+const entries=
+encontrarListaClassificacao(d);
+
+if(!entries||!entries.length){
+
+div.innerHTML=
+'<div class="empty">Classificação indisponível.</div>';
+
+return;
+
+}
+
+div.innerHTML=
+criarTabela(
+liga.nome,
+entries
+);
+
+}catch(e){
+
+console.log(e);
+
+div.innerHTML=
+'<div class="empty">Erro ao carregar classificação.</div>';
+
+}
+
+}
+
+function criarTabela(nome,entries){
+
+return`
+
+<div class="card">
+
+<div class="league">
+${esc(nome)}
+</div>
+
+<div class="table-wrap">
+
+<table>
+
+<tr>
+<th>#</th>
+<th>Equipa</th>
+<th>J</th>
+<th>V</th>
+<th>E</th>
+<th>D</th>
+<th>Pts</th>
+</tr>
+
+${
+entries.map((e,i)=>{
+
+const t=e.team||e;
+
+const id=
+t.id||
+e.teamId||
+"";
+
+const nomeTabela=
+t.displayName||
+t.name||
+t.shortDisplayName||
+e.name||
+"Equipa";
+
+const logo=
+t.logo||
+t.logos?.[0]?.href||
+"";
+
+return`
+
+<tr>
+
+<td>${i+1}</td>
+
+<td
+class="team"
+onclick="abrirEquipaPorId(
+'${esc(id)}',
+'${esc(nomeTabela)}',
+'${esc(nome)}',
+'${esc(logo)}'
+)">
+
+${
+logo
+?`
+<img
+src="${esc(logo)}"
+style="
+width:22px;
+height:22px;
+object-fit:contain;
+vertical-align:middle;
+margin-right:5px">
+`
+:""
+}
+
+${esc(nomeTabela)}
+
+</td>
+
+<td>${esc(valorJogos(e))}</td>
+<td>${esc(valorVitorias(e))}</td>
+<td>${esc(valorEmpates(e))}</td>
+<td>${esc(valorDerrotas(e))}</td>
+<td><b>${esc(valorPontos(e))}</b></td>
+
+</tr>
+
+`;
+
+}).join("")
+}
+
+</table>
+
+</div>
+
+</div>
+
+`;
+
+}
+
+/* FAVORITOS */
+
+function mostrarFavoritos(){
+
+document.getElementById("navJogos").classList.remove("active");
+document.getElementById("navTabelas").classList.remove("active");
+document.getElementById("navFav").classList.add("active");
+
+document.getElementById("app").innerHTML=`
+
+<h2>⭐ Favoritos</h2>
+
+<div class="card">
+
+<div class="empty">
+Favoritos em breve.
+</div>
+
+</div>
+
+`;
+
+}
+
+/* INICIAR */
+
+mostrarJogos();
+carregar();
+
+</script>
+
+</body>
+</html>
