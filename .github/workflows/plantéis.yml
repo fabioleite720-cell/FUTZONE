@@ -13,258 +13,173 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Baixar codigo
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Criar planteis
+      - name: Criar ficheiro de planteis
         run: |
           python3 <<'PY'
           import json
           import urllib.request
-          import time
+          import urllib.parse
 
           ligas = [
-              ("por.1", "primeira-liga.json", "Portugal"),
-              ("eng.1", "premier-league.json", "Inglaterra"),
-              ("esp.1", "la-liga.json", "Espanha"),
-              ("ita.1", "serie-a.json", "Italia"),
-              ("ger.1", "bundesliga.json", "Alemanha")
+              ("por.1", "Portugal"),
+              ("eng.1", "Inglaterra"),
+              ("esp.1", "Espanha"),
+              ("ita.1", "Italia"),
+              ("ger.1", "Alemanha")
           ]
-
-          equipas = {}
-
-          for league, ficheiro, nome_liga in ligas:
-
-              try:
-                  with open(
-                      "data/" + ficheiro,
-                      "r",
-                      encoding="utf-8"
-                  ) as f:
-                      dados = json.load(f)
-
-                  for evento in dados.get("events", []):
-
-                      for comp in evento.get(
-                          "competitions", []
-                      ):
-
-                          for item in comp.get(
-                              "competitors", []
-                          ):
-
-                              team = item.get(
-                                  "team", {}
-                              )
-
-                              tid = str(
-                                  team.get("id", "")
-                              )
-
-                              if tid:
-                                  equipas[tid] = {
-                                      "id": tid,
-                                      "nome":
-                                          team.get(
-                                              "displayName"
-                                          )
-                                          or team.get(
-                                              "name"
-                                          )
-                                          or "Equipa",
-                                      "liga":
-                                          nome_liga,
-                                      "league":
-                                          league
-                                  }
-
-              except Exception as erro:
-                  print(
-                      "Erro em",
-                      ficheiro,
-                      erro
-                  )
-
-          print(
-              "Equipas encontradas:",
-              len(equipas)
-          )
 
           resultado = {}
 
-          for tid, equipa in equipas.items():
-
-              url = (
-                  "https://site.api.espn.com/apis/site/v2/"
-                  "sports/soccer/"
-                  + equipa["league"]
-                  + "/teams/"
-                  + tid
-                  + "/roster"
+          def buscar(url):
+              req = urllib.request.Request(
+                  url,
+                  headers={
+                      "User-Agent": "Mozilla/5.0",
+                      "Accept": "application/json"
+                  }
               )
 
-              print(
-                  "A procurar:",
-                  equipa["nome"]
-              )
+              with urllib.request.urlopen(
+                  req,
+                  timeout=30
+              ) as r:
+                  return json.load(r)
+
+          for league, nome_liga in ligas:
+
+              print("A procurar jogadores:", nome_liga)
 
               try:
 
-                  req = urllib.request.Request(
-                      url,
-                      headers={
-                          "User-Agent":
-                          "Mozilla/5.0 FUTZONE"
-                      }
+                  url = (
+                      "https://sports.core.api.espn.com/v3/"
+                      "sports/soccer/"
+                      + league
+                      + "/athletes"
+                      "?limit=1000&active=true"
                   )
 
-                  with urllib.request.urlopen(
-                      req,
-                      timeout=30
-                  ) as resposta:
+                  dados = buscar(url)
 
-                      dados = json.load(
-                          resposta
-                      )
-
-                  jogadores = []
-
-                  atletas = dados.get(
-                      "athletes",
-                      []
+                  atletas = (
+                      dados.get("items")
+                      or dados.get("athletes")
+                      or []
                   )
-
-                  for grupo in atletas:
-
-                      lista = []
-
-                      if isinstance(
-                          grupo,
-                          dict
-                      ):
-
-                          if isinstance(
-                              grupo.get("items"),
-                              list
-                          ):
-                              lista = grupo["items"]
-
-                          elif grupo.get("id"):
-                              lista = [grupo]
-
-                      for jogador in lista:
-
-                          posicao = jogador.get(
-                              "position"
-                          )
-
-                          if isinstance(
-                              posicao,
-                              dict
-                          ):
-                              posicao = (
-                                  posicao.get(
-                                      "displayName"
-                                  )
-                                  or posicao.get(
-                                      "name"
-                                  )
-                              )
-
-                          nacionalidade = (
-                              jogador.get(
-                                  "birthPlace",
-                                  {}
-                              )
-                          )
-
-                          if isinstance(
-                              nacionalidade,
-                              dict
-                          ):
-                              nacionalidade = (
-                                  nacionalidade.get(
-                                      "country"
-                                  )
-                              )
-                          else:
-                              nacionalidade = None
-
-                          foto = jogador.get(
-                              "headshot"
-                          )
-
-                          if isinstance(
-                              foto,
-                              dict
-                          ):
-                              foto = foto.get(
-                                  "href"
-                              )
-
-                          jogadores.append({
-                              "id":
-                                  jogador.get(
-                                      "id"
-                                  ),
-
-                              "name":
-                                  jogador.get(
-                                      "fullName"
-                                  )
-                                  or jogador.get(
-                                      "displayName"
-                                  )
-                                  or "Jogador",
-
-                              "number":
-                                  jogador.get(
-                                      "jersey"
-                                  ),
-
-                              "position":
-                                  posicao
-                                  or "-",
-
-                              "age":
-                                  jogador.get(
-                                      "age"
-                                  )
-                                  or "-",
-
-                              "nationality":
-                                  nacionalidade
-                                  or "-",
-
-                              "photo":
-                                  foto
-                                  or ""
-                          })
-
-                  resultado[tid] = {
-                      "id": tid,
-                      "name": equipa["nome"],
-                      "league": equipa["liga"],
-                      "players": jogadores
-                  }
 
                   print(
-                      "  Jogadores:",
-                      len(jogadores)
+                      "Jogadores encontrados:",
+                      len(atletas)
                   )
+
+                  for jogador in atletas:
+
+                      if not isinstance(jogador, dict):
+                          continue
+
+                      jogador_id = jogador.get("id")
+
+                      if not jogador_id:
+                          continue
+
+                      nome = (
+                          jogador.get("fullName")
+                          or jogador.get("displayName")
+                          or jogador.get("shortName")
+                          or "Jogador"
+                      )
+
+                      pos = jogador.get("position")
+
+                      if isinstance(pos, dict):
+                          pos = (
+                              pos.get("displayName")
+                              or pos.get("name")
+                              or "-"
+                          )
+
+                      foto = jogador.get("headshot")
+
+                      if isinstance(foto, dict):
+                          foto = foto.get("href")
+
+                      # Alguns dados da ESPN vêm dentro
+                      # de objetos de referência.
+                      equipa = jogador.get("team")
+
+                      if isinstance(equipa, dict):
+                          equipa_id = equipa.get("id")
+                          equipa_nome = (
+                              equipa.get("displayName")
+                              or equipa.get("name")
+                          )
+                      else:
+                          equipa_id = None
+                          equipa_nome = None
+
+                      if not equipa_id:
+                          continue
+
+                      if str(equipa_id) not in resultado:
+
+                          resultado[str(equipa_id)] = {
+                              "id": str(equipa_id),
+                              "name":
+                                  equipa_nome
+                                  or "Equipa",
+                              "league":
+                                  nome_liga,
+                              "players": []
+                          }
+
+                      resultado[
+                          str(equipa_id)
+                      ]["players"].append({
+
+                          "id":
+                              str(jogador_id),
+
+                          "name":
+                              nome,
+
+                          "number":
+                              jogador.get("jersey")
+                              or "-",
+
+                          "position":
+                              pos
+                              or "-",
+
+                          "age":
+                              jogador.get("age")
+                              or "-",
+
+                          "nationality":
+                              jogador.get(
+                                  "nationality"
+                              )
+                              or "-",
+
+                          "photo":
+                              foto
+                              or ""
+                      })
 
               except Exception as erro:
 
                   print(
-                      "  ERRO:",
+                      "ERRO:",
+                      nome_liga,
                       erro
                   )
 
-              time.sleep(0.2)
-
           if not resultado:
+
               raise Exception(
-                  "Nenhum plantel foi obtido."
+                  "Nenhum jogador encontrado."
               )
 
           with open(
@@ -280,20 +195,36 @@ jobs:
                   indent=2
               )
 
+          total = sum(
+              len(x["players"])
+              for x in resultado.values()
+          )
+
           print(
-              "PLANTEIS CRIADOS:",
+              "Equipas:",
               len(resultado)
           )
+
+          print(
+              "Jogadores:",
+              total
+          )
+
+          if total == 0:
+
+              raise Exception(
+                  "O ficheiro foi criado mas não contém jogadores."
+              )
 
           PY
 
       - name: Verificar ficheiro
         run: |
           test -s data/planteis.json
-          echo "planteis.json criado:"
+          echo "planteis.json criado com sucesso"
           wc -c data/planteis.json
 
-      - name: Guardar no GitHub
+      - name: Guardar alterações
         run: |
           git config user.name "FUTZONE"
           git config user.email "futzone@users.noreply.github.com"
