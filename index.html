@@ -164,7 +164,7 @@ h2{font-size:20px;margin:22px 0 12px}
 <div class="match">
 <div class="match-info">
 <span>FUTZONE</span>
-<span>Dados em breve</span>
+<span>div id="jogos-reais">A carregar jogos...</div></span>
 </div>
 <div class="teams">
 <div class="team">⚽<br>Equipa Casa</div>
@@ -263,3 +263,28 @@ h2{font-size:20px;margin:22px 0 12px}
 
 
 <nav class="bottom">³
+<script>
+fetch('data/primeira-liga.json')
+.then(r => r.json())
+.then(data => {
+  const jogos = document.getElementById('jogos-reais');
+
+  if (!data.matches || data.matches.length === 0) {
+    jogos.innerHTML = 'Não há jogos disponíveis.';
+    return;
+  }
+
+  jogos.innerHTML = data.matches.slice(0, 10).map(jogo => `
+    <div style="background:white;padding:15px;border-radius:15px;margin:10px 0">
+      <strong>${jogo.homeTeam.name}</strong>
+      <div style="text-align:center">VS</div>
+      <strong>${jogo.awayTeam.name}</strong>
+      <small>${new Date(jogo.utcDate).toLocaleString('pt-PT')}</small>
+    </div>
+  `).join('');
+})
+.catch(() => {
+  document.getElementById('jogos-reais').innerHTML =
+    'Erro ao carregar jogos.';
+});
+</script>
