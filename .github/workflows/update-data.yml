@@ -16,29 +16,48 @@ jobs:
       - name: Baixar código
         uses: actions/checkout@v4
 
-      - name: Buscar jogos Primeira Liga
+      - name: Buscar jogos das ligas
         env:
           API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
         run: |
           mkdir -p data
-          curl -s \
-            -H "X-Auth-Token: $API_KEY" \
-            "https://api.football-data.org/v4/competitions/PPL/matches?status=SCHEDULED" \
-            -o data/primeira-liga.json
 
-      - name: Buscar classificação Primeira Liga
+          curl -s -H "X-Auth-Token: $API_KEY" "https://api.football-data.org/v4/competitions/PPL/matches?status=SCHEDULED" -o data/primeira-liga.json
+          sleep 7
+
+          curl -s -H "X-Auth-Token: $API_KEY" "https://api.football-data.org/v4/competitions/PL/matches?status=SCHEDULED" -o data/premier-league.json
+          sleep 7
+
+          curl -s -H "X-Auth-Token: $API_KEY" "https://api.football-data.org/v4/competitions/PD/matches?status=SCHEDULED" -o data/la-liga.json
+          sleep 7
+
+          curl -s -H "X-Auth-Token: $API_KEY" "https://api.football-data.org/v4/competitions/SA/matches?status=SCHEDULED" -o data/serie-a.json
+          sleep 7
+
+          curl -s -H "X-Auth-Token: $API_KEY" "https://api.football-data.org/v4/competitions/BL1/matches?status=SCHEDULED" -o data/bundesliga.json
+
+      - name: Buscar classificações
         env:
           API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
         run: |
-          curl -s \
-            -H "X-Auth-Token: $API_KEY" \
-            "https://api.football-data.org/v4/competitions/PPL/standings" \
-            -o data/classificacao.json
+          curl -s -H "X-Auth-Token: $API_KEY" "https://api.football-data.org/v4/competitions/PPL/standings" -o data/classificacao.json
+          sleep 7
+
+          curl -s -H "X-Auth-Token: $API_KEY" "https://api.football-data.org/v4/competitions/PL/standings" -o data/premier-league-classificacao.json
+          sleep 7
+
+          curl -s -H "X-Auth-Token: $API_KEY" "https://api.football-data.org/v4/competitions/PD/standings" -o data/la-liga-classificacao.json
+          sleep 7
+
+          curl -s -H "X-Auth-Token: $API_KEY" "https://api.football-data.org/v4/competitions/SA/standings" -o data/serie-a-classificacao.json
+          sleep 7
+
+          curl -s -H "X-Auth-Token: $API_KEY" "https://api.football-data.org/v4/competitions/BL1/standings" -o data/bundesliga-classificacao.json
 
       - name: Guardar dados
         run: |
           git config user.name "FUTZONE"
           git config user.email "futzone@users.noreply.github.com"
           git add data/
-          git diff --cached --quiet || git commit -m "Atualizar jogos e classificação"
+          git diff --cached --quiet || git commit -m "Atualizar jogos e classificacoes"
           git push
