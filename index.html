@@ -1,11 +1,8 @@
-<!DOCTYPE html>
-<html lang="pt-PT">
+<!DOCTYPE html><html lang="pt-PT">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>FUTZONE</title>
-
-<style>
+<title>FUTZONE</title><style>
 *{box-sizing:border-box}
 
 body{
@@ -250,24 +247,13 @@ th{color:#168cff}
  .plantel-grid{grid-template-columns:repeat(2,1fr)}
  .player img{width:70px;height:70px}
 }
-</style>
-</head>
-
-<body>
-
-<header>
+</style></head><body><header>
  <div class="logo">FUT<span>ZONE</span></div>
-</header>
-
-<div class="container" id="app"></div>
-
-<div class="nav">
+</header><div class="container" id="app"></div><div class="nav">
  <button id="navJogos" onclick="mostrarJogos()">⚽<br>Jogos</button>
  <button id="navTabelas" onclick="mostrarTabelas()">📊<br>Tabelas</button>
  <button id="navFav" onclick="mostrarFavoritos()">⭐<br>Favoritos</button>
-</div>
-
-<script>
+</div><script>
 
 let jogos=[];
 let ligaAtual="Todos";
@@ -283,7 +269,7 @@ const ligas=[
 ];
 
 /* =========================
-   SEGURANÇA HTML
+   SEGURANÇA
 ========================= */
 
 function esc(v){
@@ -295,8 +281,16 @@ function esc(v){
  .replaceAll("'","&#039;");
 }
 
+function normalizar(texto){
+ return String(texto||"")
+ .toLowerCase()
+ .normalize("NFD")
+ .replace(/[\u0300-\u036f]/g,"")
+ .replace(/[^a-z0-9]/g,"");
+}
+
 /* =========================
-   DADOS DOS JOGOS
+   EQUIPAS
 ========================= */
 
 function obterCompeticao(j){
@@ -307,25 +301,28 @@ function obterEquipas(j){
 
  let c=obterCompeticao(j).competitors;
 
- if(!Array.isArray(c)){
+ if(!Array.isArray(c))
    c=j?.competitors;
- }
 
- if(!Array.isArray(c)) c=[];
+ if(!Array.isArray(c))
+   c=[];
 
- let home=c.find(x=>x.homeAway==="home") || c[0] || {};
- let away=c.find(x=>x.homeAway==="away") || c[1] || {};
+ let home=
+   c.find(x=>x.homeAway==="home") ||
+   c[0] ||
+   {};
+
+ let away=
+   c.find(x=>x.homeAway==="away") ||
+   c[1] ||
+   {};
 
  return {home,away};
 }
 
-/* MUITO IMPORTANTE:
-   aceita várias estruturas possíveis
-*/
-
 function nomeEquipa(c){
 
- return (
+ return(
    c?.team?.displayName ||
    c?.team?.shortDisplayName ||
    c?.team?.name ||
@@ -339,16 +336,15 @@ function nomeEquipaSeguro(c,j,home){
 
  let nome=nomeEquipa(c);
 
- if(nome) return nome;
+ if(nome)
+   return nome;
 
- /* fallback pelo nome do próprio jogo */
  if(j?.name){
 
    let partes=j.name.split(" at ");
 
-   if(partes.length===2){
-     return home ? partes[1] : partes[0];
-   }
+   if(partes.length===2)
+     return home?partes[1]:partes[0];
  }
 
  return "Equipa";
@@ -356,7 +352,7 @@ function nomeEquipaSeguro(c,j,home){
 
 function idEquipa(c){
 
- return (
+ return(
    c?.team?.id ||
    c?.id ||
    null
@@ -365,7 +361,7 @@ function idEquipa(c){
 
 function logoEquipa(c){
 
- return (
+ return(
    c?.team?.logo ||
    c?.team?.logos?.[0]?.href ||
    c?.logo ||
@@ -374,13 +370,21 @@ function logoEquipa(c){
  );
 }
 
+/* =========================
+   JOGOS
+========================= */
+
 function resultado(c){
 
- if(c?.score===undefined || c?.score===null)
+ if(c?.score===undefined||c?.score===null)
    return "-";
 
  if(typeof c.score==="object")
-   return c.score.displayValue || c.score.value || "-";
+   return(
+     c.score.displayValue||
+     c.score.value||
+     "-"
+   );
 
  return c.score;
 }
@@ -392,7 +396,7 @@ function estadoJogo(j){
  if(s?.state==="in")
    return "LIVE";
 
- if(s?.completed || s?.state==="post")
+ if(s?.completed||s?.state==="post")
    return "RESULTADO";
 
  return "PRÓXIMO";
@@ -400,7 +404,8 @@ function estadoJogo(j){
 
 function dataJogo(j){
 
- if(!j?.date) return "";
+ if(!j?.date)
+   return "";
 
  try{
 
@@ -436,7 +441,8 @@ async function carregar(){
        liga.arquivo+"?v="+Date.now()
      );
 
-     if(!r.ok) continue;
+     if(!r.ok)
+       continue;
 
      const d=await r.json();
 
@@ -444,14 +450,12 @@ async function carregar(){
 
      if(Array.isArray(d?.events))
        lista=d.events;
-
      else if(Array.isArray(d))
        lista=d;
 
      lista.forEach(j=>{
 
        j.__liga=liga.nome;
-
        jogos.push(j);
 
      });
@@ -463,7 +467,6 @@ async function carregar(){
        liga.arquivo,
        e
      );
-
    }
  }
 
@@ -485,64 +488,66 @@ function mostrarJogos(){
  document.getElementById("navFav")
  .classList.remove("active");
 
- let html=`
+ document.getElementById("app").innerHTML=`
 
  <h2>⚽ Jogos</h2>
 
  <div class="filters">
 
- ${["Todos","LIVE","Próximos","Resultados"]
- .map(x=>`
+ ${
+   ["Todos","LIVE","Próximos","Resultados"]
+   .map(x=>`
 
- <button
- class="${filtroAtual===x?"active":""}"
- onclick="filtroAtual='${x}';mostrarJogos()">
+   <button
+     class="${filtroAtual===x?"active":""}"
+     onclick="filtroAtual='${x}';mostrarJogos()">
 
- ${x}
+     ${x}
 
- </button>
+   </button>
 
- `).join("")}
+   `).join("")
+ }
 
  </div>
 
  <div class="filters">
 
- ${["Todos",...ligas.map(x=>x.nome)]
- .map(x=>`
+ ${
+   ["Todos",...ligas.map(x=>x.nome)]
+   .map(x=>`
 
- <button
- class="${ligaAtual===x?"active":""}"
- onclick="ligaAtual='${x}';mostrarJogos()">
+   <button
+     class="${ligaAtual===x?"active":""}"
+     onclick="ligaAtual='${x}';mostrarJogos()">
 
- ${x}
+     ${x}
 
- </button>
+   </button>
 
- `).join("")}
+   `).join("")
+ }
 
  </div>
 
  <div id="lista"></div>
  `;
 
- document.getElementById("app").innerHTML=html;
-
  let lista=jogos.filter(j=>{
 
-   let ligaOK=
-     ligaAtual==="Todos" ||
+   const ligaOK=
+     ligaAtual==="Todos"||
      j.__liga===ligaAtual;
 
-   let estado=estadoJogo(j);
+   const estado=estadoJogo(j);
 
-   let filtroOK=
-     filtroAtual==="Todos" ||
-     (filtroAtual==="LIVE" && estado==="LIVE") ||
-     (filtroAtual==="Próximos" && estado==="PRÓXIMO") ||
-     (filtroAtual==="Resultados" && estado==="RESULTADO");
+   const filtroOK=
+     filtroAtual==="Todos"||
+     (filtroAtual==="LIVE"&&estado==="LIVE")||
+     (filtroAtual==="Próximos"&&estado==="PRÓXIMO")||
+     (filtroAtual==="Resultados"&&estado==="RESULTADO");
 
-   return ligaOK && filtroOK;
+   return ligaOK&&filtroOK;
  });
 
  const div=document.getElementById("lista");
@@ -581,58 +586,71 @@ function jogoCard(j){
 
  <div class="card">
 
-   <div class="league">
-     ${esc(j.__liga)}
-   </div>
+ <div class="league">
+   ${esc(j.__liga)}
+ </div>
 
-   <div class="teams">
+ <div class="teams">
 
-     <div class="team"
-       onclick="abrirEquipaPorId('${esc(hid||"")}','${esc(hn)}','${esc(j.__liga)}','${esc(hl)}')">
+ <div class="team"
+ onclick="abrirEquipaPorId(
+ '${esc(hid||"")}',
+ '${esc(hn)}',
+ '${esc(j.__liga)}',
+ '${esc(hl)}'
+ )">
 
-       ${
-         hl
-         ? `<img class="team-logo" src="${esc(hl)}">`
-         : ""
-       }
+ ${
+   hl
+   ?`<img class="team-logo" src="${esc(hl)}">`
+   :""
+ }
 
-       ${esc(hn)}
-
-     </div>
-
-     <div class="score">
-       ${esc(hs)} - ${esc(as)}
-     </div>
-
-     <div class="team"
-       onclick="abrirEquipaPorId('${esc(aid||"")}','${esc(an)}','${esc(j.__liga)}','${esc(al)}')">
-
-       ${
-         al
-         ? `<img class="team-logo" src="${esc(al)}">`
-         : ""
-       }
-
-       ${esc(an)}
-
-     </div>
-
-   </div>
-
-   <div class="status">
-
-     ${
-       estado==="LIVE"
-       ? "🔴 AO VIVO"
-       : estado
-     }
-
-     ${j.date ? " • "+esc(dataJogo(j)) : ""}
-
-   </div>
+ ${esc(hn)}
 
  </div>
 
+ <div class="score">
+ ${esc(hs)} - ${esc(as)}
+ </div>
+
+ <div class="team"
+ onclick="abrirEquipaPorId(
+ '${esc(aid||"")}',
+ '${esc(an)}',
+ '${esc(j.__liga)}',
+ '${esc(al)}'
+ )">
+
+ ${
+   al
+   ?`<img class="team-logo" src="${esc(al)}">`
+   :""
+ }
+
+ ${esc(an)}
+
+ </div>
+
+ </div>
+
+ <div class="status">
+
+ ${
+   estado==="LIVE"
+   ?"🔴 AO VIVO"
+   :estado
+ }
+
+ ${
+   j.date
+   ?" • "+esc(dataJogo(j))
+   :""
+ }
+
+ </div>
+
+ </div>
  `;
 }
 
@@ -640,7 +658,12 @@ function jogoCard(j){
    EQUIPA
 ========================= */
 
-function abrirEquipaPorId(id,name,league,logo){
+function abrirEquipaPorId(
+ id,
+ name,
+ league,
+ logo
+){
 
  equipaAtual={
    id:id,
@@ -655,7 +678,6 @@ function abrirEquipaPorId(id,name,league,logo){
 function abrirEquipa(e){
 
  equipaAtual=e;
-
  mostrarEquipa();
 }
 
@@ -675,14 +697,13 @@ async function mostrarEquipa(){
    `<img
       src="${esc(equipaAtual.logo)}"
       style="width:80px;height:80px;object-fit:contain">`
-   :
-   ""
+   :""
  }
 
  <h2>${esc(equipaAtual.name)}</h2>
 
  <div class="league">
-   ${esc(equipaAtual.league)}
+ ${esc(equipaAtual.league)}
  </div>
 
  </div>
@@ -690,15 +711,14 @@ async function mostrarEquipa(){
  <h3>👥 Plantel</h3>
 
  <div id="plantel">
-   <div class="empty">
-     A carregar plantel...
-   </div>
+ <div class="empty">
+ A carregar plantel...
+ </div>
  </div>
 
  <h3>⚽ Jogos</h3>
 
  <div id="jogos-equipa"></div>
-
  `;
 
  document.getElementById("voltar")
@@ -708,29 +728,279 @@ async function mostrarEquipa(){
 
    const e=obterEquipas(j);
 
-   return (
+   return(
      String(idEquipa(e.home))===
-     String(equipaAtual.id)
-     ||
+     String(equipaAtual.id)||
      String(idEquipa(e.away))===
      String(equipaAtual.id)
    );
-
  });
 
  document.getElementById("jogos-equipa").innerHTML=
-   relacionados.length
-   ?
-   relacionados.map(jogoCard).join("")
-   :
-   '<div class="empty">Sem jogos encontrados.</div>';
+ relacionados.length
+ ?
+ relacionados.map(jogoCard).join("")
+ :
+ '<div class="empty">Sem jogos encontrados.</div>';
 
  await carregarPlantel();
 }
 
 /* =========================
-   PLANTEL
+   PLANTÉIS
 ========================= */
+
+function extrairPlantel(entrada){
+
+ if(!entrada)
+   return null;
+
+ if(Array.isArray(entrada))
+   return entrada;
+
+ if(Array.isArray(entrada.players))
+   return entrada.players;
+
+ if(Array.isArray(entrada.roster))
+   return entrada.roster;
+
+ if(Array.isArray(entrada.squad))
+   return entrada.squad;
+
+ if(entrada.players&&typeof entrada.players==="object")
+   return Object.values(entrada.players);
+
+ if(entrada.roster&&typeof entrada.roster==="object")
+   return Object.values(entrada.roster);
+
+ return null;
+}
+
+function nomesAlternativos(nome){
+
+ const n=normalizar(nome);
+
+ const mapa={
+
+   "sportingcp":[
+     "sporting",
+     "sportingcp",
+     "sportingclubedeportugal"
+   ],
+
+   "sportingclubedeportugal":[
+     "sporting",
+     "sportingcp"
+   ],
+
+   "braga":[
+     "braga",
+     "sportingclubedebraga",
+     "scbraga"
+   ],
+
+   "bayernmunich":[
+     "bayernmunich",
+     "bayernmunchen",
+     "fcbayern",
+     "bayern"
+   ],
+
+   "internazionale":[
+     "internazionale",
+     "inter",
+     "intermilan",
+     "internazionale"
+   ],
+
+   "intermilan":[
+     "internazionale",
+     "inter",
+     "intermilan"
+   ],
+
+   "estrelamadora":[
+     "estrela",
+     "estrelamadora",
+     "cfestrelamadora"
+   ],
+
+   "cdnacional":[
+     "cdnacional",
+     "nacional",
+     "cdnacionalmadeira"
+   ]
+ };
+
+ return [
+   n,
+   ...(mapa[n]||[])
+ ];
+}
+
+function encontrarPlantel(dados){
+
+ const nomes=nomesAlternativos(
+   equipaAtual.name
+ );
+
+ const ids=[
+   String(equipaAtual.id||""),
+   String(equipaAtual.id||"").trim()
+ ];
+
+ /* ID direto */
+ if(dados&&!Array.isArray(dados)){
+
+   for(const id of ids){
+
+     if(dados[id]){
+
+       const p=extrairPlantel(dados[id]);
+
+       if(p&&p.length)
+         return p;
+     }
+   }
+ }
+
+ /* Procurar em qualquer entrada */
+ let entradas=[];
+
+ if(Array.isArray(dados))
+   entradas=dados;
+ else if(dados&&typeof dados==="object")
+   entradas=Object.values(dados);
+
+ for(const entrada of entradas){
+
+   if(!entrada)
+     continue;
+
+   const id=String(
+     entrada.id||
+     entrada.idTeam||
+     entrada.teamId||
+     ""
+   );
+
+   if(id&&ids.includes(id)){
+
+     const p=extrairPlantel(entrada);
+
+     if(p&&p.length)
+       return p;
+   }
+
+   const nomesDB=[
+
+     entrada.name,
+     entrada.strTeam,
+     entrada.teamName,
+     entrada.displayName,
+     entrada.shortDisplayName
+
+   ].filter(Boolean).map(normalizar);
+
+   const corresponde=nomesDB.some(db=>
+     nomes.some(n=>
+       db===n||
+       db.includes(n)||
+       n.includes(db)
+     )
+   );
+
+   if(corresponde){
+
+     const p=extrairPlantel(entrada);
+
+     if(p&&p.length)
+       return p;
+   }
+ }
+
+ /* Pesquisa recursiva */
+ function procurar(obj){
+
+   if(!obj||typeof obj!=="object")
+     return null;
+
+   const p=extrairPlantel(obj);
+
+   if(p&&p.length){
+
+     const nomeDB=normalizar(
+       obj.name||
+       obj.strTeam||
+       obj.teamName||
+       ""
+     );
+
+     if(
+       !nomeDB||
+       nomes.some(n=>
+         nomeDB===n||
+         nomeDB.includes(n)||
+         n.includes(nomeDB)
+       )
+     )
+       return p;
+   }
+
+   for(const chave of Object.keys(obj)){
+
+     const resultado=procurar(obj[chave]);
+
+     if(resultado)
+       return resultado;
+   }
+
+   return null;
+ }
+
+ return procurar(dados);
+}
+
+function idadeJogador(p){
+
+ if(p.age)
+   return p.age;
+
+ const nascimento=
+   p.dateBorn||
+   p.dateOfBirth||
+   p.birthDate||
+   "";
+
+ if(!nascimento)
+   return "-";
+
+ const data=new Date(nascimento);
+
+ if(isNaN(data.getTime()))
+   return "-";
+
+ const hoje=new Date();
+
+ let idade=
+   hoje.getFullYear()-
+   data.getFullYear();
+
+ const mes=
+   hoje.getMonth()-
+   data.getMonth();
+
+ if(
+   mes<0||
+   (
+     mes===0&&
+     hoje.getDate()<data.getDate()
+   )
+ )
+   idade--;
+
+ return idade>=0?idade:"-";
+}
 
 async function carregarPlantel(){
 
@@ -740,250 +1010,157 @@ async function carregarPlantel(){
      "data/planteis.json?v="+Date.now()
    );
 
-   if(!r.ok) throw new Error("Plantel");
+   if(!r.ok)
+     throw new Error("Plantel");
 
    const dados=await r.json();
 
-   const normalizar=(texto)=>{
-     return String(texto || "")
-       .toLowerCase()
-       .normalize("NFD")
-       .replace(/[\u0300-\u036f]/g,"")
-       .replace(/[^a-z0-9]/g,"");
-   };
-
-   const nomeAtual=normalizar(equipaAtual.name);
-
-   let plantel=null;
-
-   /* Procurar pelo ID */
-   if(dados && !Array.isArray(dados)){
-
-     const entrada=dados[String(equipaAtual.id)];
-
-     if(entrada){
-
-       plantel=
-         entrada.players ||
-         entrada.roster ||
-         entrada;
-     }
-   }
-
-   /* Procurar pelo nome da equipa */
-   if(!plantel && dados && !Array.isArray(dados)){
-
-     const entradas=Object.values(dados);
-
-     const encontrada=entradas.find(x=>{
-
-       if(!x) return false;
-
-       const nomeDB=normalizar(
-         x.name ||
-         x.strTeam ||
-         x.teamName ||
-         ""
-       );
-
-       return (
-         nomeDB===nomeAtual ||
-         nomeDB.includes(nomeAtual) ||
-         nomeAtual.includes(nomeDB)
-       );
-     });
-
-     if(encontrada){
-
-       plantel=
-         encontrada.players ||
-         encontrada.roster ||
-         encontrada.squad ||
-         [];
-     }
-   }
-
-   /* Formato em array */
-   if(Array.isArray(dados) && !plantel){
-
-     const encontrada=dados.find(x=>{
-
-       if(!x) return false;
-
-       const nomeDB=normalizar(
-         x.name ||
-         x.strTeam ||
-         x.teamName ||
-         ""
-       );
-
-       return (
-         String(x.id)===
-         String(equipaAtual.id) ||
-         nomeDB===nomeAtual ||
-         nomeDB.includes(nomeAtual) ||
-         nomeAtual.includes(nomeDB)
-       );
-     });
-
-     if(encontrada){
-
-       plantel=
-         encontrada.players ||
-         encontrada.roster ||
-         encontrada.squad ||
-         [];
-     }
-   }
+   let plantel=encontrarPlantel(dados);
 
    if(!plantel){
 
-     document.getElementById("plantel").innerHTML=
+     document.getElementById("plantel")
+     .innerHTML=
        '<div class="empty">Plantel não disponível.</div>';
 
      return;
    }
 
-   if(!Array.isArray(plantel))
-     plantel=Object.values(plantel);
+   plantel=plantel.filter(p=>{
+
+     const pos=String(
+       p.position||
+       p.strPosition||
+       ""
+     ).toLowerCase();
+
+     return(
+       !pos.includes("manager")&&
+       !pos.includes("coach")
+     );
+   });
 
    if(!plantel.length){
 
-     document.getElementById("plantel").innerHTML=
+     document.getElementById("plantel")
+     .innerHTML=
        '<div class="empty">Plantel vazio.</div>';
 
      return;
    }
 
-   document.getElementById("plantel").innerHTML=`
+   document.getElementById("plantel")
+   .innerHTML=`
 
    <div class="plantel-grid">
 
    ${
      plantel.map((p,i)=>{
 
-       let idade="-";
-
-       const nascimento=
-         p.dateBorn ||
-         p.dateOfBirth ||
-         p.birthDate ||
-         "";
-
-       if(nascimento){
-
-         const data=new Date(nascimento);
-
-         if(!isNaN(data.getTime())){
-
-           const hoje=new Date();
-
-           idade=
-             hoje.getFullYear()-
-             data.getFullYear();
-
-           const mes=
-             hoje.getMonth()-
-             data.getMonth();
-
-           if(
-             mes<0 ||
-             (
-               mes===0 &&
-               hoje.getDate()<data.getDate()
-             )
-           ){
-             idade--;
-           }
-         }
-       }
-
        const jogador={
 
          id:
-           p.id ||
-           p.idPlayer ||
-           p.playerId ||
+           p.id||
+           p.idPlayer||
+           p.playerId||
            i,
 
          name:
-           p.name ||
-           p.strPlayer ||
-           p.displayName ||
-           p.fullName ||
+           p.name||
+           p.strPlayer||
+           p.displayName||
+           p.fullName||
            "Jogador",
 
          number:
-           p.number ||
-           p.strNumber ||
-           p.jersey ||
-           p.jerseyNumber ||
+           p.number||
+           p.strNumber||
+           p.jersey||
+           p.jerseyNumber||
            "-",
 
          position:
-           p.position ||
-           p.strPosition ||
-           p.positionName ||
-           "-",
+           typeof p.position==="object"
+           ?
+           (
+             p.position.displayName||
+             p.position.name||
+             "-"
+           )
+           :
+           (
+             p.position||
+             p.strPosition||
+             p.positionName||
+             "-"
+           ),
 
-         age:
-           p.age ||
-           idade,
+         age:idadeJogador(p),
 
          nationality:
-           p.nationality ||
-           p.strNationality ||
-           p.country ||
-           "-",
+           typeof p.nationality==="object"
+           ?
+           (
+             p.nationality.displayName||
+             p.nationality.name||
+             "-"
+           )
+           :
+           (
+             p.nationality||
+             p.strNationality||
+             p.country||
+             "-"
+           ),
 
          photo:
-           p.photo ||
-           p.strThumb ||
-           p.strCutout ||
-           p.headshot ||
-           p.image ||
+           p.photo||
+           p.strThumb||
+           p.strCutout||
+           p.headshot||
+           p.image||
            ""
        };
 
-       return `
+       return`
 
        <div class="player"
-         onclick='abrirJogador(${JSON.stringify(jogador)})'>
+       onclick='abrirJogador(${JSON.stringify(jogador)})'>
 
-         ${
-           jogador.photo
+       ${
+         jogador.photo
 
-           ?
+         ?
 
-           `<img
-             src="${esc(jogador.photo)}"
-             onerror="this.style.display='none'">`
+         `<img
+           src="${esc(jogador.photo)}"
+           onerror="this.style.display='none'">`
 
-           :
+         :
 
-           `<div style="
-             width:80px;
-             height:80px;
-             border-radius:50%;
-             background:#222;
-             margin:auto auto 8px;
-             display:flex;
-             align-items:center;
-             justify-content:center;
-             font-size:30px">
-             ⚽
-           </div>`
-         }
+         `<div style="
+           width:80px;
+           height:80px;
+           border-radius:50%;
+           background:#222;
+           margin:auto auto 8px;
+           display:flex;
+           align-items:center;
+           justify-content:center;
+           font-size:30px">
+           ⚽
+         </div>`
+       }
 
-         <div class="player-name">
-           ${esc(jogador.name)}
-         </div>
+       <div class="player-name">
+       ${esc(jogador.name)}
+       </div>
 
-         <div class="player-info">
-           #${esc(jogador.number)}
-           •
-           ${esc(jogador.position)}
-         </div>
+       <div class="player-info">
+       #${esc(jogador.number)}
+       •
+       ${esc(jogador.position)}
+       </div>
 
        </div>
 
@@ -999,10 +1176,12 @@ async function carregarPlantel(){
 
    console.log(e);
 
-   document.getElementById("plantel").innerHTML=
+   document.getElementById("plantel")
+   .innerHTML=
      '<div class="empty">Não foi possível carregar o plantel.</div>';
  }
 }
+
 /* =========================
    JOGADOR
 ========================= */
@@ -1022,8 +1201,9 @@ function abrirJogador(p){
 
    ?
 
-   `<img src="${esc(p.photo)}"
-      onerror="this.style.display='none'">`
+   `<img
+     src="${esc(p.photo)}"
+     onerror="this.style.display='none'">`
 
    :
 
@@ -1045,43 +1225,42 @@ function abrirJogador(p){
  <h1>${esc(p.name)}</h1>
 
  <div class="position">
-   ${esc(p.position)}
+ ${esc(p.position)}
  </div>
 
  <div class="info-box">
 
-   <div class="info-row">
-     <span class="info-label">Número</span>
-     <span class="info-value">
-       #${esc(p.number)}
-     </span>
-   </div>
+ <div class="info-row">
+ <span class="info-label">Número</span>
+ <span class="info-value">
+ #${esc(p.number)}
+ </span>
+ </div>
 
-   <div class="info-row">
-     <span class="info-label">Posição</span>
-     <span class="info-value">
-       ${esc(p.position)}
-     </span>
-   </div>
+ <div class="info-row">
+ <span class="info-label">Posição</span>
+ <span class="info-value">
+ ${esc(p.position)}
+ </span>
+ </div>
 
-   <div class="info-row">
-     <span class="info-label">Idade</span>
-     <span class="info-value">
-       ${esc(p.age)}
-     </span>
-   </div>
+ <div class="info-row">
+ <span class="info-label">Idade</span>
+ <span class="info-value">
+ ${esc(p.age)}
+ </span>
+ </div>
 
-   <div class="info-row">
-     <span class="info-label">Nacionalidade</span>
-     <span class="info-value">
-       ${esc(p.nationality)}
-     </span>
-   </div>
-
+ <div class="info-row">
+ <span class="info-label">Nacionalidade</span>
+ <span class="info-value">
+ ${esc(p.nationality)}
+ </span>
  </div>
 
  </div>
 
+ </div>
  `;
 
  document.getElementById("voltarJogador")
@@ -1091,6 +1270,209 @@ function abrirJogador(p){
 /* =========================
    TABELAS
 ========================= */
+
+function encontrarListaClassificacao(obj){
+
+ if(!obj)
+   return null;
+
+ if(Array.isArray(obj)){
+
+   if(
+     obj.length&&
+     obj.some(x=>
+       x&&(
+         x.team||
+         x.stats||
+         x.teamId||
+         x.points!==undefined||
+         x.wins!==undefined||
+         x.losses!==undefined
+       )
+     )
+   )
+     return obj;
+
+   for(const x of obj){
+
+     const resultado=
+       encontrarListaClassificacao(x);
+
+     if(resultado)
+       return resultado;
+   }
+
+   return null;
+ }
+
+ if(typeof obj!=="object")
+   return null;
+
+ /* formatos comuns */
+ for(const chave of [
+   "entries",
+   "standings",
+   "teams",
+   "items",
+   "rows"
+ ]){
+
+   if(Array.isArray(obj[chave])){
+
+     const resultado=
+       encontrarListaClassificacao(
+         obj[chave]
+       );
+
+     if(resultado)
+       return resultado;
+   }
+ }
+
+ /* children do ESPN */
+ if(Array.isArray(obj.children)){
+
+   for(const child of obj.children){
+
+     const resultado=
+       encontrarListaClassificacao(child);
+
+     if(resultado)
+       return resultado;
+   }
+ }
+
+ /* procurar recursivamente */
+ for(const chave of Object.keys(obj)){
+
+   const valor=obj[chave];
+
+   if(
+     valor&&
+     typeof valor==="object"
+   ){
+
+     const resultado=
+       encontrarListaClassificacao(valor);
+
+     if(resultado)
+       return resultado;
+   }
+ }
+
+ return null;
+}
+
+function encontrarStat(e,numeros){
+
+ if(!e)
+   return "-";
+
+ if(Array.isArray(e.stats)){
+
+   for(const s of e.stats){
+
+     const nome=String(
+       s.name||
+       s.shortDisplayName||
+       s.abbreviation||
+       ""
+     ).toLowerCase();
+
+     if(
+       numeros.some(n=>
+         nome===n||
+         nome.includes(n)
+       )
+     ){
+
+       return(
+         s.value!==undefined
+         ?s.value
+         :
+         s.displayValue!==undefined
+         ?s.displayValue
+         :
+         "-"
+       );
+     }
+   }
+ }
+
+ for(const n of numeros){
+
+   if(e[n]!==undefined)
+     return e[n];
+ }
+
+ return "-";
+}
+
+function valorPontos(e){
+
+ const valor=encontrarStat(
+   e,
+   [
+     "points",
+     "pts",
+     "pontos"
+   ]
+ );
+
+ return valor;
+}
+
+function valorJogos(e){
+
+ return encontrarStat(
+   e,
+   [
+     "gamesplayed",
+     "games played",
+     "gp",
+     "played",
+     "jogos"
+   ]
+ );
+}
+
+function valorVitorias(e){
+
+ return encontrarStat(
+   e,
+   [
+     "wins",
+     "w",
+     "vitorias"
+   ]
+ );
+}
+
+function valorEmpates(e){
+
+ return encontrarStat(
+   e,
+   [
+     "ties",
+     "draws",
+     "draw",
+     "d",
+     "empates"
+   ]
+ );
+}
+
+function valorDerrotas(e){
+
+ return encontrarStat(
+   e,
+   [
+     "losses",
+     "l",
+     "derrotas"
+   ]
+ );
+}
 
 async function mostrarTabelas(){
 
@@ -1107,8 +1489,29 @@ async function mostrarTabelas(){
 
  <h2>📊 Tabelas</h2>
 
+ <div class="filters">
+
+ ${
+   ligas.map(l=>`
+
+   <button
+     onclick="carregarTabelaUnica('${esc(l.nome)}')">
+
+     ${esc(l.nome)}
+
+   </button>
+
+   `).join("")
+ }
+
+ </div>
+
  <div id="tabelas">
-   <div class="empty">A carregar...</div>
+
+ <div class="empty">
+ A carregar classificações...
+ </div>
+
  </div>
 
  `;
@@ -1129,69 +1532,94 @@ async function mostrarTabelas(){
        ficheiro+"?v="+Date.now()
      );
 
-     if(!r.ok) continue;
+     if(!r.ok)
+       continue;
 
      const d=await r.json();
 
-     const entries=procurarEntries(d);
+     const entries=
+       encontrarListaClassificacao(d);
 
-     if(entries.length)
+     if(entries&&entries.length){
+
        html+=criarTabela(
          liga.nome,
          entries
        );
+     }
 
-   }catch(e){}
+   }catch(e){
+
+     console.log(
+       "Erro classificação",
+       liga.nome,
+       e
+     );
+   }
  }
 
  document.getElementById("tabelas")
  .innerHTML=
-   html ||
+   html||
    '<div class="empty">Tabelas indisponíveis.</div>';
 }
 
-function procurarEntries(d){
+async function carregarTabelaUnica(nome){
 
- if(Array.isArray(d))
-   return d;
+ const liga=ligas.find(
+   x=>x.nome===nome
+ );
 
- if(Array.isArray(d?.entries))
-   return d.entries;
+ if(!liga)
+   return;
 
- if(Array.isArray(d?.standings))
-   return d.standings;
+ const div=document.getElementById("tabelas");
 
- if(Array.isArray(d?.children)){
+ if(!div)
+   return;
 
-   for(const c of d.children){
+ div.innerHTML=
+   '<div class="empty">A carregar...</div>';
 
-     const x=procurarEntries(c);
+ try{
 
-     if(x.length)
-       return x;
-   }
- }
+   const ficheiro=
+     liga.arquivo.replace(
+       ".json",
+       "-classificacao.json"
+     );
 
- return [];
-}
-
-function stat(e,n){
-
- if(Array.isArray(e?.stats)){
-
-   const s=e.stats.find(x=>
-     x.name===n ||
-     x.shortDisplayName===n ||
-     x.abbreviation===n
+   const r=await fetch(
+     ficheiro+"?v="+Date.now()
    );
 
-   if(s)
-     return s.value ??
-            s.displayValue ??
-            "-";
- }
+   if(!r.ok)
+     throw new Error("Tabela");
 
- return e?.[n] ?? "-";
+   const d=await r.json();
+
+   const entries=
+     encontrarListaClassificacao(d);
+
+   if(!entries||!entries.length){
+
+     div.innerHTML=
+       '<div class="empty">Classificação indisponível.</div>';
+
+     return;
+   }
+
+   div.innerHTML=
+     criarTabela(
+       liga.nome,
+       entries
+     );
+
+ }catch(e){
+
+   div.innerHTML=
+     '<div class="empty">Erro ao carregar classificação.</div>';
+ }
 }
 
 function criarTabela(nome,entries){
@@ -1201,95 +1629,112 @@ function criarTabela(nome,entries){
  <div class="card">
 
  <div class="league">
-   ${esc(nome)}
+ ${esc(nome)}
  </div>
+
+ <div style="overflow-x:auto">
 
  <table>
 
  <tr>
-   <th>#</th>
-   <th>Equipa</th>
-   <th>J</th>
-   <th>V</th>
-   <th>E</th>
-   <th>D</th>
-   <th>Pts</th>
+ <th>#</th>
+ <th>Equipa</th>
+ <th>J</th>
+ <th>V</th>
+ <th>E</th>
+ <th>D</th>
+ <th>Pts</th>
  </tr>
 
  ${
- entries.map((e,i)=>{
+   entries.map((e,i)=>{
 
-   const t=e.team || e;
+     const t=e.team||e;
 
-   const id=
-     t.id ||
-     e.teamId ||
-     "";
+     const id=
+       t.id||
+       e.teamId||
+       "";
 
-   const nome=
-     t.displayName ||
-     t.name ||
-     "Equipa";
+     const nomeEquipaTabela=
+       t.displayName||
+       t.name||
+       t.shortDisplayName||
+       e.name||
+       "Equipa";
 
-   const logo=
-     t.logo ||
-     t.logos?.[0]?.href ||
-     "";
+     const logo=
+       t.logo||
+       t.logos?.[0]?.href||
+       "";
 
-   return`
+     return`
 
-   <tr>
+     <tr>
 
-   <td>${i+1}</td>
+     <td>
+     ${i+1}
+     </td>
 
-   <td
-     class="team"
-     onclick="abrirEquipaPorId(
+     <td
+       class="team"
+       onclick="abrirEquipaPorId(
        '${esc(id)}',
-       '${esc(nome)}',
+       '${esc(nomeEquipaTabela)}',
        '${esc(nome)}',
        '${esc(logo)}'
-     )">
+       )">
 
-     ${esc(nome)}
+       ${
+         logo
+         ?
+         `<img
+           src="${esc(logo)}"
+           style="
+             width:22px;
+             height:22px;
+             object-fit:contain;
+             vertical-align:middle;
+             margin-right:5px">`
+         :
+         ""
+       }
 
-   </td>
+       ${esc(nomeEquipaTabela)}
 
-   <td>
-     ${esc(stat(e,"gamesPlayed"))}
-   </td>
+     </td>
 
-   <td>
-     ${esc(stat(e,"wins"))}
-   </td>
+     <td>
+     ${esc(valorJogos(e))}
+     </td>
 
-   <td>
-     ${esc(
-       stat(e,"ties")!=="-"
-       ?stat(e,"ties")
-       :stat(e,"draws")
-     )}
-   </td>
+     <td>
+     ${esc(valorVitorias(e))}
+     </td>
 
-   <td>
-     ${esc(stat(e,"losses"))}
-   </td>
+     <td>
+     ${esc(valorEmpates(e))}
+     </td>
 
-   <td>
-     <b>${esc(stat(e,"points"))}</b>
-   </td>
+     <td>
+     ${esc(valorDerrotas(e))}
+     </td>
 
-   </tr>
+     <td>
+     <b>${esc(valorPontos(e))}</b>
+     </td>
 
-   `;
+     </tr>
+     `;
 
- }).join("")
+   }).join("")
  }
 
  </table>
 
  </div>
 
+ </div>
  `;
 }
 
@@ -1315,11 +1760,10 @@ function mostrarFavoritos(){
  <div class="card">
 
  <div class="empty">
-   Favoritos em breve.
+ Favoritos em breve.
  </div>
 
  </div>
-
  `;
 }
 
@@ -1330,7 +1774,5 @@ function mostrarFavoritos(){
 mostrarJogos();
 carregar();
 
-</script>
-
-</body>
+</script></body>
 </html>
