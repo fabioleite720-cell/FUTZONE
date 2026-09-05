@@ -2,145 +2,35 @@
 <html lang="pt-PT">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#07111f">
 <title>FUTZONE ⚽</title>
 
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-
-body{
-font-family:Arial,sans-serif;
-background:#f4f6f8;
-color:#101820;
-padding-bottom:75px
-}
-
-header{
-background:#07111f;
-color:white;
-padding:22px 18px;
-text-align:center
-}
-
-header h1{font-size:30px}
-header p{margin-top:6px;opacity:.8}
-
-main{
-max-width:700px;
-margin:auto;
-padding:16px
-}
-
-.card{
-background:white;
-border-radius:16px;
-padding:16px;
-margin-bottom:16px;
-box-shadow:0 3px 12px rgba(0,0,0,.08)
-}
-
-h2{
-margin-bottom:14px;
-font-size:20px
-}
-
-.league-buttons{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:10px
-}
-
-button{
-border:0;
-border-radius:12px;
-padding:13px 8px;
-background:#07111f;
-color:white;
-font-size:15px;
-font-weight:bold;
-cursor:pointer
-}
-
+*{box-sizing:border-box}
+body{font-family:Arial,sans-serif;margin:0;background:#f4f6f8;color:#111;padding-bottom:20px}
+header{background:#07111f;color:white;text-align:center;padding:24px}
+header h1{margin:0;font-size:30px}
+header p{margin:7px 0 0;opacity:.8}
+main{max-width:700px;margin:auto;padding:15px}
+.card{background:white;border-radius:16px;padding:15px;margin-bottom:15px;box-shadow:0 3px 12px #0001}
+h2{margin:0 0 14px;font-size:20px}
+.leagues{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+button{padding:12px 7px;border:0;border-radius:10px;background:#07111f;color:white;font-weight:bold;font-size:14px}
 button.active{background:#1769aa}
-
-.match{
-border:1px solid #e3e7eb;
-border-radius:12px;
-padding:12px;
-margin-bottom:10px;
-background:#fafbfc
-}
-
-.date{
-font-size:12px;
-color:#68737d;
-margin-bottom:7px
-}
-
-.teams{
-font-weight:bold;
-line-height:1.5
-}
-
-.score{
-font-size:20px;
-font-weight:bold;
-margin-top:5px
-}
-
-.resultado{
-border-left:4px solid #1769aa
-}
-
+.match{border:1px solid #e1e5e9;border-radius:12px;padding:12px;margin:8px 0}
+.date{font-size:12px;color:#68737d;margin-bottom:8px}
+.team{display:flex;align-items:center;gap:10px;font-weight:bold;margin:7px 0}
+.team img{width:32px;height:32px;object-fit:contain}
+.score{text-align:center;font-size:20px;font-weight:bold;margin:5px}
 .table-wrap{overflow-x:auto}
-
-table{
-width:100%;
-border-collapse:collapse;
-font-size:13px
-}
-
-th,td{
-padding:9px 5px;
-border-bottom:1px solid #e6e9ec;
-text-align:center
-}
-
-th:nth-child(2),
-td:nth-child(2){text-align:left}
-
-.loading{
-text-align:center;
-padding:20px;
-color:#68737d
-}
-
-nav{
-position:fixed;
-bottom:0;
-left:0;
-right:0;
-height:65px;
-background:#07111f;
-display:flex;
-justify-content:space-around;
-align-items:center;
-z-index:10
-}
-
-nav button{
-background:transparent;
-padding:8px;
-font-size:12px
-}
-
-footer{
-text-align:center;
-color:#68737d;
-font-size:11px;
-padding:15px
-}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px 5px;border-bottom:1px solid #e5e5e5;text-align:center}
+th:nth-child(2),td:nth-child(2){text-align:left}
+.table-team{display:flex;align-items:center;gap:7px}
+.table-team img{width:25px;height:25px;object-fit:contain}
+.loading{text-align:center;padding:20px;color:#68737d}
+footer{text-align:center;font-size:11px;color:#68737d;padding:15px}
 </style>
 </head>
 
@@ -156,25 +46,25 @@ padding:15px
 <section class="card">
 <h2>🏆 Competições</h2>
 
-<div class="league-buttons">
+<div class="leagues">
 
-<button class="active" onclick="selecionarLiga('PPL','Primeira Liga',this)">
+<button class="active" onclick="liga('PPL','Primeira Liga',this)">
 🇵🇹 Primeira Liga
 </button>
 
-<button onclick="selecionarLiga('PL','Premier League',this)">
+<button onclick="liga('PL','Premier League',this)">
 🏴 Premier League
 </button>
 
-<button onclick="selecionarLiga('PD','La Liga',this)">
+<button onclick="liga('PD','La Liga',this)">
 🇪🇸 La Liga
 </button>
 
-<button onclick="selecionarLiga('SA','Serie A',this)">
+<button onclick="liga('SA','Serie A',this)">
 🇮🇹 Serie A
 </button>
 
-<button onclick="selecionarLiga('BL1','Bundesliga',this)">
+<button onclick="liga('BL1','Bundesliga',this)">
 🇩🇪 Bundesliga
 </button>
 
@@ -182,24 +72,18 @@ padding:15px
 </section>
 
 <section class="card">
-<h2 id="tituloResultados">🔴 Resultados — Primeira Liga</h2>
-<div id="resultados" class="loading">
-A carregar resultados...
-</div>
+<h2 id="rt">🔴 Resultados — Primeira Liga</h2>
+<div id="resultados" class="loading">A carregar...</div>
 </section>
 
 <section class="card">
-<h2 id="tituloJogos">⚽ Próximos jogos — Primeira Liga</h2>
-<div id="jogos" class="loading">
-A carregar jogos...
-</div>
+<h2 id="jt">⚽ Próximos jogos — Primeira Liga</h2>
+<div id="jogos" class="loading">A carregar...</div>
 </section>
 
 <section class="card">
-<h2 id="tituloTabela">📊 Classificação — Primeira Liga</h2>
-<div id="classificacao" class="loading">
-A carregar classificação...
-</div>
+<h2 id="ct">📊 Classificação — Primeira Liga</h2>
+<div id="tabela" class="loading">A carregar...</div>
 </section>
 
 </main>
@@ -208,246 +92,153 @@ A carregar classificação...
 Data provided by football-data.org
 </footer>
 
-<nav>
-<button onclick="window.scrollTo({top:0,behavior:'smooth'})">
-🏠<br>Início
-</button>
-
-<button onclick="document.getElementById('jogos').scrollIntoView({behavior:'smooth'})">
-⚽<br>Jogos
-</button>
-
-<button onclick="document.querySelector('.league-buttons').scrollIntoView({behavior:'smooth'})">
-🏆<br>Ligas
-</button>
-
-<button onclick="document.getElementById('classificacao').scrollIntoView({behavior:'smooth'})">
-📊<br>Tabela
-</button>
-</nav>
-
 <script>
 
-const ligas={
-
-PPL:{
-nome:"Primeira Liga",
-jogos:"data/primeira-liga.json",
-tabela:"data/classificacao.json"
-},
-
-PL:{
-nome:"Premier League",
-jogos:"data/premier-league.json",
-tabela:"data/premier-league-classificacao.json"
-},
-
-PD:{
-nome:"La Liga",
-jogos:"data/la-liga.json",
-tabela:"data/la-liga-classificacao.json"
-},
-
-SA:{
-nome:"Serie A",
-jogos:"data/serie-a.json",
-tabela:"data/serie-a-classificacao.json"
-},
-
-BL1:{
-nome:"Bundesliga",
-jogos:"data/bundesliga.json",
-tabela:"data/bundesliga-classificacao.json"
-}
-
+const dados={
+PPL:['data/primeira-liga.json','data/classificacao.json','Primeira Liga'],
+PL:['data/premier-league.json','data/premier-league-classificacao.json','Premier League'],
+PD:['data/la-liga.json','data/la-liga-classificacao.json','La Liga'],
+SA:['data/serie-a.json','data/serie-a-classificacao.json','Serie A'],
+BL1:['data/bundesliga.json','data/bundesliga-classificacao.json','Bundesliga']
 };
 
-async function selecionarLiga(codigo,nome,botao){
+function escudo(team){
+return team.crest ||
+'https://via.placeholder.com/40?text=⚽';
+}
 
-document.querySelectorAll(".league-buttons button")
-.forEach(b=>b.classList.remove("active"));
+function equipa(team){
+return `
+<div class="team">
+<img src="${escudo(team)}" alt="">
+<span>${team.name}</span>
+</div>
+`;
+}
 
-botao.classList.add("active");
+async function liga(codigo,nome,botao){
 
-document.getElementById("tituloResultados").textContent=
-"🔴 Resultados — "+nome;
+document.querySelectorAll('.leagues button')
+.forEach(b=>b.classList.remove('active'));
 
-document.getElementById("tituloJogos").textContent=
-"⚽ Próximos jogos — "+nome;
+botao.classList.add('active');
 
-document.getElementById("tituloTabela").textContent=
-"📊 Classificação — "+nome;
+document.getElementById('rt').textContent='🔴 Resultados — '+nome;
+document.getElementById('jt').textContent='⚽ Próximos jogos — '+nome;
+document.getElementById('ct').textContent='📊 Classificação — '+nome;
 
-document.getElementById("resultados").innerHTML=
-'<div class="loading">A carregar resultados...</div>';
-
-document.getElementById("jogos").innerHTML=
-'<div class="loading">A carregar jogos...</div>';
-
-document.getElementById("classificacao").innerHTML=
-'<div class="loading">A carregar classificação...</div>';
-
-const liga=ligas[codigo];
+document.getElementById('resultados').innerHTML='A carregar...';
+document.getElementById('jogos').innerHTML='A carregar...';
+document.getElementById('tabela').innerHTML='A carregar...';
 
 try{
 
-const respostas=await Promise.all([
-fetch(liga.jogos+"?t="+Date.now()),
-fetch(liga.tabela+"?t="+Date.now())
-]);
+const j=await fetch(dados[codigo][0]+'?t='+Date.now());
+const jogos=await j.json();
 
-const jogos=await respostas[0].json();
-const tabela=await respostas[1].json();
+const t=await fetch(dados[codigo][1]+'?t='+Date.now());
+const tabela=await t.json();
 
 mostrarResultados(jogos);
 mostrarJogos(jogos);
 mostrarTabela(tabela);
 
-}catch(erro){
+}catch(e){
 
-document.getElementById("resultados").innerHTML=
-"Não foi possível carregar os resultados.";
+document.getElementById('resultados').innerHTML='Erro ao carregar resultados.';
+document.getElementById('jogos').innerHTML='Erro ao carregar jogos.';
+document.getElementById('tabela').innerHTML='Erro ao carregar classificação.';
 
-document.getElementById("jogos").innerHTML=
-"Não foi possível carregar os jogos.";
-
-document.getElementById("classificacao").innerHTML=
-"Não foi possível carregar a classificação.";
 }
 
 }
 
 function mostrarResultados(dados){
 
-const container=document.getElementById("resultados");
-
-if(!dados.matches){
-container.innerHTML="Resultados indisponíveis.";
-return;
-}
-
-const resultados=dados.matches
-.filter(jogo=>jogo.status==="FINISHED")
+const lista=dados.matches
+.filter(x=>x.status==='FINISHED')
 .sort((a,b)=>new Date(b.utcDate)-new Date(a.utcDate))
 .slice(0,15);
 
-if(resultados.length===0){
-
-container.innerHTML="Ainda não existem resultados.";
-
+if(!lista.length){
+document.getElementById('resultados').innerHTML='Ainda não existem resultados.';
 return;
 }
 
-container.innerHTML=resultados.map(jogo=>{
+document.getElementById('resultados').innerHTML=lista.map(x=>{
 
-const data=new Date(jogo.utcDate);
+const d=new Date(x.utcDate);
 
-return`
-
-<div class="match resultado">
+return `
+<div class="match">
 
 <div class="date">
-${data.toLocaleDateString("pt-PT")}
+${d.toLocaleDateString('pt-PT')}
 </div>
 
-<div class="teams">
-${jogo.homeTeam.name}
-<br>
-${jogo.awayTeam.name}
-</div>
+${equipa(x.homeTeam)}
 
 <div class="score">
-${jogo.score.fullTime.home}
--
-${jogo.score.fullTime.away}
+${x.score.fullTime.home} - ${x.score.fullTime.away}
 </div>
 
-</div>
+${equipa(x.awayTeam)}
 
+</div>
 `;
 
-}).join("");
+}).join('');
 
 }
 
 function mostrarJogos(dados){
 
-const container=document.getElementById("jogos");
+const agora=new Date();
 
-if(!dados.matches){
-
-container.innerHTML="Jogos indisponíveis.";
-
-return;
-}
-
-const jogos=dados.matches
-.filter(jogo=>jogo.status!=="FINISHED")
+const lista=dados.matches
+.filter(x=>x.status!=='FINISHED')
+.filter(x=>new Date(x.utcDate)>=agora)
 .sort((a,b)=>new Date(a.utcDate)-new Date(b.utcDate))
 .slice(0,15);
 
-if(jogos.length===0){
-
-container.innerHTML="Não existem próximos jogos.";
-
+if(!lista.length){
+document.getElementById('jogos').innerHTML='Não existem próximos jogos.';
 return;
 }
 
-container.innerHTML=jogos.map(jogo=>{
+document.getElementById('jogos').innerHTML=lista.map(x=>{
 
-const data=new Date(jogo.utcDate);
+const d=new Date(x.utcDate);
 
-return`
-
+return `
 <div class="match">
 
 <div class="date">
-${data.toLocaleDateString("pt-PT")} —
-${data.toLocaleTimeString("pt-PT",{
-hour:"2-digit",
-minute:"2-digit"
-})}
+${d.toLocaleDateString('pt-PT')} —
+${d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})}
 </div>
 
-<div class="teams">
-${jogo.homeTeam.name}
-<br>
-🆚
-<br>
-${jogo.awayTeam.name}
-</div>
+${equipa(x.homeTeam)}
+
+<div style="text-align:center;font-weight:bold">🆚</div>
+
+${equipa(x.awayTeam)}
 
 </div>
-
 `;
 
-}).join("");
+}).join('');
 
 }
 
 function mostrarTabela(dados){
 
-const container=document.getElementById("classificacao");
+const s=dados.standings.find(x=>x.type==='TOTAL')||dados.standings[0];
 
-if(!dados.standings||!dados.standings.length){
-
-container.innerHTML="Classificação indisponível.";
-
-return;
-}
-
-const tabela=
-dados.standings.find(s=>s.type==="TOTAL")||
-dados.standings[0];
-
-container.innerHTML=`
-
+document.getElementById('tabela').innerHTML=`
 <div class="table-wrap">
-
 <table>
-
 <thead>
-
 <tr>
 <th>#</th>
 <th>Equipa</th>
@@ -455,44 +246,32 @@ container.innerHTML=`
 <th>V</th>
 <th>Pts</th>
 </tr>
-
 </thead>
-
 <tbody>
 
-${tabela.table.map(equipa=>`
-
+${s.table.map(x=>`
 <tr>
-
-<td>${equipa.position}</td>
-
-<td>${equipa.team.name}</td>
-
-<td>${equipa.playedGames}</td>
-
-<td>${equipa.won}</td>
-
-<td><strong>${equipa.points}</strong></td>
-
+<td>${x.position}</td>
+<td>
+<div class="table-team">
+<img src="${escudo(x.team)}" alt="">
+<span>${x.team.name}</span>
+</div>
+</td>
+<td>${x.playedGames}</td>
+<td>${x.won}</td>
+<td><b>${x.points}</b></td>
 </tr>
-
-`).join("")}
+`).join('')}
 
 </tbody>
-
 </table>
-
 </div>
-
 `;
 
 }
 
-selecionarLiga(
-"PPL",
-"Primeira Liga",
-document.querySelector(".league-buttons button")
-);
+liga('PPL','Primeira Liga',document.querySelector('.leagues button'));
 
 </script>
 
