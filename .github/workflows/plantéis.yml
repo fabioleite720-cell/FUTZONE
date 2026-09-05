@@ -1,0 +1,219 @@
+name: Atualizar plantéis FUTZONE
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 3 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  planteis:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Preparar
+        run: |
+          mkdir -p data
+          echo '{}' > data/planteis.json
+
+      - name: Recolher equipas
+        run: |
+          python3 <<'PY'
+          import json
+          import urllib.request
+          import time
+
+          ficheiros = [
+              ("por", "primeira-liga.json"),
+              ("eng", "premier-league.json"),
+              ("esp", "la-liga.json"),
+              ("ita", "serie-a.json"),
+              ("ger", "bundesliga.json")
+          ]
+
+          equipas = {}
+
+          for liga, ficheiro in ficheiros:
+              try:
+                  with open("data/" + ficheiro, "r", encoding="utf-8") as f:
+                      dados = json.load(f)
+
+                  for evento in dados.get("events", []):
+                      for comp in evento.get("competitions", []):
+                          for item in comp.get("competitors", []):
+                              team = item.get("team", {})
+
+                              tid = str(team.get("id", ""))
+
+                              if tid:
+                                  equipas[tid] = {
+                                      "id": tid,
+                                      "nome": team.get("displayName", ""),
+                                      "liga": liga
+                                  }
+
+              except Exception as e:
+                  print("Erro:", ficheiro, e)
+
+          print("Equipas encontradas:", len(equipas))
+
+          with open("/tmp/equipas.json", "w", encoding="utf-8") as f:
+              json.dump(equipas, f, ensure_ascii=False)
+
+          PY
+
+      - name: Obter plantéis
+        run: |
+          python3 <<'PY'
+          import json
+          import urllib.request
+          import time
+
+          with open("/tmp/equipas.json", "r", encoding="utf-8") as f:
+              equipas = json.load(f)
+
+          resultado = {}
+
+          for tid, equipa in equipas.items():
+
+              liga = equipa["liga"]
+
+              url = (
+                  "https://site.api.espn.com/apis/site/v2/"
+                  "sports/soccer/" + {
+                      "por": "por.1",
+                      "eng": "eng.1",
+                      "esp": "esp.1",
+                      "ita": "ita.1",
+                      "ger": "ger.1"
+                  }[liga] +
+                  "/teams/" + tid + "/roster"
+              )
+
+              print("⚽", equipa["nome"])
+
+              try:
+
+                  req = urllib.request.Request(
+                      url,
+                      headers={"User-Agent": "FUTZONE"}
+                  )
+
+                  with urllib.request.urlopen(req, timeout=20) as r:
+                      dados = json.load(r)
+
+                  jogadores = []
+
+                  for grupo in dados.get("athletes", []):
+
+                      if isinstance(grupo, dict) and "items" in grupo:
+
+                          for jogador in grupo.get("items", []):
+
+                              jogadores.append({
+                                  "id": jogador.get("id"),
+                                  "nome": jogador.get("fullName")
+                                      or jogador.get("displayName")
+                                      or "",
+                                  "numero": jogador.get("jersey"),
+                                  "posicao": (
+                                      jogador.get("position", {})
+                                      .get("displayName")
+                                      if isinstance(
+                                          jogador.get("position"), dict
+                                      )
+                                      else jogador.get("position")
+                                  ),
+                                  "idade": jogador.get("age"),
+                                  "nacionalidade": (
+                                      jogador.get("birthPlace", {})
+                                      .get("country")
+                                      if isinstance(
+                                          jogador.get("birthPlace"), dict
+                                      )
+                                      else None
+                                  ),
+                                  "foto": (
+                                      jogador.get("headshot", {})
+                                      .get("href")
+                                      if isinstance(
+                                          jogador.get("headshot"), dict
+                                      )
+                                      else None
+                                  )
+                              })
+
+                      elif isinstance(grupo, dict):
+
+                          jogadores.append({
+                              "id": grupo.get("id"),
+                              "nome": grupo.get("fullName")
+                                  or grupo.get("displayName")
+                                  or "",
+                              "numero": grupo.get("jersey"),
+                              "posicao": (
+                                  grupo.get("position", {})
+                                  .get("displayName")
+                                  if isinstance(
+                                      grupo.get("position"), dict
+                                  )
+                                  else grupo.get("position")
+                              ),
+                              "idade": grupo.get("age"),
+                              "nacionalidade": None,
+                              "foto": (
+                                  grupo.get("headshot", {})
+                                  .get("href")
+                                  if isinstance(
+                                      grupo.get("headshot"), dict
+                                  )
+                                  else None
+                              )
+                          })
+
+                  resultado[tid] = {
+                      "id": tid,
+                      "nome": equipa["nome"],
+                      "liga": liga,
+                      "jogadores": jogadores
+                  }
+
+                  print("   jogadores:", len(jogadores))
+
+              except Exception as e:
+                  print("   ERRO:", e)
+
+              time.sleep(0.2)
+
+          with open(
+              "data/planteis.json",
+              "w",
+              encoding="utf-8"
+          ) as f:
+              json.dump(
+                  resultado,
+                  f,
+                  ensure_ascii=False,
+                  indent=2
+              )
+
+          print("Plantéis guardados:", len(resultado))
+
+          PY
+
+      - name: Guardar plantéis
+        run: |
+          git config user.name "FUTZONE"
+          git config user.email "futzone@users.noreply.github.com"
+
+          git add data/planteis.json
+
+          git diff --cached --quiet || \
+          git commit -m "FUTZONE - plantéis e jogadores atualizados"
+
+          git push
