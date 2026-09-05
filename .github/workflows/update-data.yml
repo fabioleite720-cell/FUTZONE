@@ -3,7 +3,7 @@ name: Atualizar dados FUTZONE
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 */12 * * *"
+    - cron: "0 */6 * * *"
 
 permissions:
   contents: write
@@ -16,48 +16,60 @@ jobs:
       - name: Baixar código
         uses: actions/checkout@v4
 
-      - name: Buscar jogos das 5 ligas
+      - name: Buscar dados das 5 ligas
         run: |
           mkdir -p data
 
-          echo "🇵🇹 Primeira Liga"
-          curl -sS "https://site.api.espn.com/apis/site/v2/sports/soccer/por.1/scoreboard?limit=1000" \
-            -o data/primeira-liga.json
+          HOJE=$(date -u +%Y%m%d)
+          ONTEM=$(date -u -d "3 days ago" +%Y%m%d)
+          FUTURO=$(date -u -d "14 days" +%Y%m%d)
 
-          echo "🏴 Premier League"
-          curl -sS "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?limit=1000" \
-            -o data/premier-league.json
+          echo "📅 Período: $ONTEM até $FUTURO"
 
-          echo "🇪🇸 La Liga"
-          curl -sS "https://site.api.espn.com/apis/site/v2/sports/soccer/esp.1/scoreboard?limit=1000" \
-            -o data/la-liga.json
+          buscar_jogos() {
+            LIGA=$1
+            FICHEIRO=$2
 
-          echo "🇮🇹 Serie A"
-          curl -sS "https://site.api.espn.com/apis/site/v2/sports/soccer/ita.1/scoreboard?limit=1000" \
-            -o data/serie-a.json
+            echo "⚽ A procurar $LIGA"
 
-          echo "🇩🇪 Bundesliga"
-          curl -sS "https://site.api.espn.com/apis/site/v2/sports/soccer/ger.1/scoreboard?limit=1000" \
-            -o data/bundesliga.json
+            curl -sS \
+              "https://site.api.espn.com/apis/site/v2/sports/soccer/$LIGA/scoreboard?dates=$ONTEM-$FUTURO&limit=1000" \
+              -o "data/$FICHEIRO"
 
-          echo "📊 Classificações"
+            if [ ! -s "data/$FICHEIRO" ]; then
+              echo "[]" > "data/$FICHEIRO"
+            fi
+          }
 
-          curl -sS "https://site.api.espn.com/apis/v2/sports/soccer/por.1/standings" \
+          buscar_jogos "por.1" "primeira-liga.json"
+          buscar_jogos "eng.1" "premier-league.json"
+          buscar_jogos "esp.1" "la-liga.json"
+          buscar_jogos "ita.1" "serie-a.json"
+          buscar_jogos "ger.1" "bundesliga.json"
+
+          echo "📊 A atualizar classificações..."
+
+          curl -sS \
+            "https://site.api.espn.com/apis/v2/sports/soccer/por.1/standings" \
             -o data/classificacao.json
 
-          curl -sS "https://site.api.espn.com/apis/v2/sports/soccer/eng.1/standings" \
+          curl -sS \
+            "https://site.api.espn.com/apis/v2/sports/soccer/eng.1/standings" \
             -o data/premier-league-classificacao.json
 
-          curl -sS "https://site.api.espn.com/apis/v2/sports/soccer/esp.1/standings" \
+          curl -sS \
+            "https://site.api.espn.com/apis/v2/sports/soccer/esp.1/standings" \
             -o data/la-liga-classificacao.json
 
-          curl -sS "https://site.api.espn.com/apis/v2/sports/soccer/ita.1/standings" \
+          curl -sS \
+            "https://site.api.espn.com/apis/v2/sports/soccer/ita.1/standings" \
             -o data/serie-a-classificacao.json
 
-          curl -sS "https://site.api.espn.com/apis/v2/sports/soccer/ger.1/standings" \
+          curl -sS \
+            "https://site.api.espn.com/apis/v2/sports/soccer/ger.1/standings" \
             -o data/bundesliga-classificacao.json
 
-          echo "✅ Dados das 5 ligas descarregados."
+          echo "✅ Dados descarregados."
 
       - name: Guardar dados
         run: |
@@ -66,6 +78,7 @@ jobs:
 
           git add data/
 
-          git diff --cached --quiet || git commit -m "FUTZONE - dados das 5 ligas"
+          git diff --cached --quiet || \
+          git commit -m "FUTZONE - jogos e classificacoes atualizados"
 
           git push
