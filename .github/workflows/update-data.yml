@@ -16,7 +16,7 @@ jobs:
       - name: Baixar código
         uses: actions/checkout@v4
 
-      - name: Buscar Primeira Liga
+      - name: Buscar jogos Primeira Liga
         env:
           API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
         run: |
@@ -26,10 +26,19 @@ jobs:
             "https://api.football-data.org/v4/competitions/PPL/matches?status=SCHEDULED" \
             -o data/primeira-liga.json
 
+      - name: Buscar classificação Primeira Liga
+        env:
+          API_KEY: ${{ secrets.FOOTBALL_DATA_API_KEY }}
+        run: |
+          curl -s \
+            -H "X-Auth-Token: $API_KEY" \
+            "https://api.football-data.org/v4/competitions/PPL/standings" \
+            -o data/classificacao.json
+
       - name: Guardar dados
         run: |
           git config user.name "FUTZONE"
           git config user.email "futzone@users.noreply.github.com"
-          git add data/primeira-liga.json
-          git diff --cached --quiet || git commit -m "Atualizar jogos Primeira Liga"
+          git add data/
+          git diff --cached --quiet || git commit -m "Atualizar jogos e classificação"
           git push
