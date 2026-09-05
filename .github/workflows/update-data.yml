@@ -16,80 +16,48 @@ jobs:
       - name: Baixar código
         uses: actions/checkout@v4
 
-      - name: Buscar dados
-        env:
-          API_KEY: ${{ secrets.FOOTBALLDATA_API_KEY }}
+      - name: Buscar jogos das 5 ligas
         run: |
           mkdir -p data
 
-          echo "A procurar ligas..."
-
-          curl -sS \
-            -H "Authorization: Bearer $API_KEY" \
-            "https://footballdata.io/api/v1/leagues" \
-            -o data/leagues.json
-
-          echo "A procurar Primeira Liga..."
-
-          curl -sS \
-            -H "Authorization: Bearer $API_KEY" \
-            "https://footballdata.io/api/v1/leagues/94/matches?limit=100" \
+          echo "🇵🇹 Primeira Liga"
+          curl -sS "https://site.api.espn.com/apis/site/v2/sports/soccer/por.1/scoreboard?limit=1000" \
             -o data/primeira-liga.json
 
-          curl -sS \
-            -H "Authorization: Bearer $API_KEY" \
-            "https://footballdata.io/api/v1/leagues/94/standings" \
-            -o data/classificacao.json
-
-          echo "A procurar Premier League..."
-
-          curl -sS \
-            -H "Authorization: Bearer $API_KEY" \
-            "https://footballdata.io/api/v1/leagues/15/matches?limit=100" \
+          echo "🏴 Premier League"
+          curl -sS "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?limit=1000" \
             -o data/premier-league.json
 
-          curl -sS \
-            -H "Authorization: Bearer $API_KEY" \
-            "https://footballdata.io/api/v1/leagues/15/standings" \
-            -o data/premier-league-classificacao.json
-
-          echo "A procurar La Liga..."
-
-          curl -sS \
-            -H "Authorization: Bearer $API_KEY" \
-            "https://footballdata.io/api/v1/leagues/16/matches?limit=100" \
+          echo "🇪🇸 La Liga"
+          curl -sS "https://site.api.espn.com/apis/site/v2/sports/soccer/esp.1/scoreboard?limit=1000" \
             -o data/la-liga.json
 
-          curl -sS \
-            -H "Authorization: Bearer $API_KEY" \
-            "https://footballdata.io/api/v1/leagues/16/standings" \
-            -o data/la-liga-classificacao.json
-
-          echo "A procurar Serie A..."
-
-          curl -sS \
-            -H "Authorization: Bearer $API_KEY" \
-            "https://footballdata.io/api/v1/leagues/17/matches?limit=100" \
+          echo "🇮🇹 Serie A"
+          curl -sS "https://site.api.espn.com/apis/site/v2/sports/soccer/ita.1/scoreboard?limit=1000" \
             -o data/serie-a.json
 
-          curl -sS \
-            -H "Authorization: Bearer $API_KEY" \
-            "https://footballdata.io/api/v1/leagues/17/standings" \
-            -o data/serie-a-classificacao.json
-
-          echo "A procurar Bundesliga..."
-
-          curl -sS \
-            -H "Authorization: Bearer $API_KEY" \
-            "https://footballdata.io/api/v1/leagues/18/matches?limit=100" \
+          echo "🇩🇪 Bundesliga"
+          curl -sS "https://site.api.espn.com/apis/site/v2/sports/soccer/ger.1/scoreboard?limit=1000" \
             -o data/bundesliga.json
 
-          curl -sS \
-            -H "Authorization: Bearer $API_KEY" \
-            "https://footballdata.io/api/v1/leagues/18/standings" \
+          echo "📊 Classificações"
+
+          curl -sS "https://site.api.espn.com/apis/v2/sports/soccer/por.1/standings" \
+            -o data/classificacao.json
+
+          curl -sS "https://site.api.espn.com/apis/v2/sports/soccer/eng.1/standings" \
+            -o data/premier-league-classificacao.json
+
+          curl -sS "https://site.api.espn.com/apis/v2/sports/soccer/esp.1/standings" \
+            -o data/la-liga-classificacao.json
+
+          curl -sS "https://site.api.espn.com/apis/v2/sports/soccer/ita.1/standings" \
+            -o data/serie-a-classificacao.json
+
+          curl -sS "https://site.api.espn.com/apis/v2/sports/soccer/ger.1/standings" \
             -o data/bundesliga-classificacao.json
 
-          echo "Dados atualizados."
+          echo "✅ Dados das 5 ligas descarregados."
 
       - name: Guardar dados
         run: |
@@ -98,6 +66,6 @@ jobs:
 
           git add data/
 
-          git diff --cached --quiet || git commit -m "Atualizar dados das 5 ligas"
+          git diff --cached --quiet || git commit -m "FUTZONE - dados das 5 ligas"
 
           git push
