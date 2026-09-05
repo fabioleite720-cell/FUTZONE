@@ -14,19 +14,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Criar planteis
+      - name: Criar planteis com TheSportsDB
         run: |
           python3 <<'PY'
           import json
           import urllib.request
+          import urllib.parse
           import time
 
-          ligas = [
-              ("por.1", "Portugal"),
-              ("eng.1", "Inglaterra"),
-              ("esp.1", "Espanha"),
-              ("ita.1", "Italia"),
-              ("ger.1", "Alemanha")
+          BASE = "https://www.thesportsdb.com/api/v1/json/123"
+
+          ficheiros = [
+              ("primeira-liga.json", "Portugal"),
+              ("premier-league.json", "Inglaterra"),
+              ("la-liga.json", "Espanha"),
+              ("serie-a.json", "Italia"),
+              ("bundesliga.json", "Alemanha")
           ]
 
           resultado = {}
@@ -40,23 +43,19 @@ jobs:
                   }
               )
 
-              with urllib.request.urlopen(req, timeout=20) as r:
+              with urllib.request.urlopen(req, timeout=30) as r:
                   return json.load(r)
 
-          for liga, nome_liga in ligas:
+          for ficheiro, pais in ficheiros:
 
+              print("")
               print("================================")
-              print("LIGA:", nome_liga)
+              print("LIGA:", pais)
               print("================================")
 
               with open(
-                  "data/" + {
-                      "por.1": "primeira-liga.json",
-                      "eng.1": "premier-league.json",
-                      "esp.1": "la-liga.json",
-                      "ita.1": "serie-a.json",
-                      "ger.1": "bundesliga.json"
-                  }[liga],
+                  "data/" + ficheiro,
+                  "r",
                   encoding="utf-8"
               ) as f:
                   dados = json.load(f)
@@ -71,7 +70,11 @@ jobs:
 
                           team = c.get("team", {})
 
-                          tid = team.get("id") or c.get("id")
+                          tid = (
+                              team.get("id")
+                              or c.get("id")
+                          )
+
                           nome = (
                               team.get("displayName")
                               or team.get("name")
@@ -80,127 +83,167 @@ jobs:
                           if tid and nome:
                               equipas[str(tid)] = nome
 
-              print("Equipas:", len(equipas))
+              print("Equipas encontradas:", len(equipas))
 
-              for tid, nome_equipa in equipas.items():
+              for _, nome_equipa in equipas.items():
 
-                  url = (
-                      "https://site.api.espn.com/apis/site/v2/"
-                      "sports/soccer/"
-                      + liga
-                      + "/teams/"
-                      + tid
-                      + "?enable=roster"
-                  )
+                  print("A procurar:", nome_equipa)
 
                   try:
 
+                      nome_url = urllib.parse.quote(
+                          nome_equipa.replace(" ", "_")
+                      )
+
+                      url = (
+                          BASE
+                          + "/searchteams.php?t="
+                          + nome_url
+                      )
+
                       dados_equipa = buscar(url)
 
-                      athletes = (
-                          dados_equipa.get("athletes")
-                          or dados_equipa.get("team", {}).get("athletes")
+                      teams = dados_equipa.get("teams") or []
+
+                      if not teams:
+                          print(
+                              "  SEM EQUIPA:",
+                              nome_equipa
+                          )
+                          time.sleep(2.2)
+                          continue
+
+                      equipa = teams[0]
+
+                      id_team = equipa.get("idTeam")
+
+                      if not id_team:
+                          print(
+                              "  SEM ID:",
+                              nome_equipa
+                          )
+                          time.sleep(2.2)
+                          continue
+
+                      print(
+                          "  ID TheSportsDB:",
+                          id_team
+                      )
+
+                      time.sleep(2.2)
+
+                      url_players = (
+                          BASE
+                          + "/lookup_all_players.php?id="
+                          + str(id_team)
+                      )
+
+                      dados_players = buscar(url_players)
+
+                      players = (
+                          dados_players.get("player")
                           or []
                       )
 
-                      if not athletes:
-                          print(
-                              "Sem jogadores:",
-                              nome_equipa
-                          )
-                          continue
-
                       jogadores = []
 
-                      for p in athletes:
+                      for p in players:
 
                           if not isinstance(p, dict):
                               continue
 
-                          jogador_id = p.get("id")
-
-                          nome = (
-                              p.get("fullName")
-                              or p.get("displayName")
-                              or p.get("shortName")
-                              or "Jogador"
+                          jogador_id = (
+                              p.get("idPlayer")
+                              or p.get("id")
                           )
 
-                          if not jogador_id:
+                          nome = (
+                              p.get("strPlayer")
+                              or p.get("strPlayerAlternate")
+                          )
+
+                          if not jogador_id or not nome:
                               continue
-
-                          pos = p.get("position")
-
-                          if isinstance(pos, dict):
-                              pos = (
-                                  pos.get("displayName")
-                                  or pos.get("name")
-                                  or "-"
-                              )
-
-                          headshot = p.get("headshot")
-
-                          if isinstance(headshot, dict):
-                              headshot = headshot.get("href")
 
                           jogadores.append({
                               "id": str(jogador_id),
                               "name": nome,
                               "number": (
-                                  p.get("jersey")
-                                  or p.get("jerseyNumber")
+                                  p.get("strNumber")
                                   or "-"
                               ),
-                              "position": pos or "-",
-                              "age": p.get("age") or "-",
+                              "position": (
+                                  p.get("strPosition")
+                                  or "-"
+                              ),
+                              "age": (
+                                  p.get("dateBorn")
+                                  or "-"
+                              ),
                               "nationality": (
-                                  p.get("nationality")
+                                  p.get("strNationality")
                                   or "-"
                               ),
-                              "photo": headshot or ""
+                              "photo": (
+                                  p.get("strThumb")
+                                  or p.get("strCutout")
+                                  or ""
+                              )
                           })
 
                       if jogadores:
 
-                          resultado[tid] = {
-                              "id": tid,
-                              "name": nome_equipa,
-                              "league": nome_liga,
+                          resultado[str(id_team)] = {
+                              "id": str(id_team),
+                              "name": (
+                                  equipa.get("strTeam")
+                                  or nome_equipa
+                              ),
+                              "league": pais,
                               "players": jogadores
                           }
 
                           print(
-                              "OK:",
-                              nome_equipa,
-                              "-",
+                              "  OK:",
                               len(jogadores),
                               "jogadores"
+                          )
+
+                      else:
+
+                          print(
+                              "  SEM JOGADORES:",
+                              nome_equipa
                           )
 
                   except Exception as erro:
 
                       print(
-                          "ERRO:",
+                          "  ERRO:",
                           nome_equipa,
                           "-",
                           erro
                       )
 
-                  time.sleep(0.2)
+                  time.sleep(2.2)
 
-          total = sum(
-              len(x["players"])
-              for x in resultado.values()
+          total_equipas = len(resultado)
+
+          total_jogadores = sum(
+              len(e["players"])
+              for e in resultado.values()
           )
 
+          print("")
           print("================================")
-          print("EQUIPAS COM PLANTEL:", len(resultado))
-          print("TOTAL JOGADORES:", total)
+          print("RESULTADO FINAL")
+          print("Equipas:", total_equipas)
+          print("Jogadores:", total_jogadores)
           print("================================")
 
-          if total == 0:
+          if total_jogadores == 0:
               raise Exception(
-                  "Nenhum jogador foi obtido."
+                  "Nenhum jogador foi encontrado."
               )
 
           with open(
@@ -208,21 +251,26 @@ jobs:
               "w",
               encoding="utf-8"
           ) as f:
+
               json.dump(
                   resultado,
                   f,
                   ensure_ascii=False,
                   indent=2
               )
+
+          print(
+              "data/planteis.json criado com sucesso."
+          )
           PY
 
-      - name: Guardar ficheiro
+      - name: Guardar alterações
         run: |
           git config user.name "FUTZONE"
           git config user.email "futzone@users.noreply.github.com"
 
           git add data/planteis.json
 
-          git commit -m "FUTZONE - atualizar planteis" || true
+          git commit -m "FUTZONE - actualizar planteis" || true
 
           git push
