@@ -16,28 +16,30 @@ jobs:
       - name: Baixar código
         uses: actions/checkout@v4
 
-      - name: Buscar dados Footballdata
+      - name: Buscar dados
         env:
           API_KEY: ${{ secrets.FOOTBALLDATA_API_KEY }}
         run: |
           mkdir -p data
 
-          echo "A atualizar FUTZONE..."
+          echo "A procurar competições..."
 
           curl -sS \
             -H "Authorization: Bearer $API_KEY" \
-            "https://footballdata.io/api/v1/leagues/15/matches" \
-            -o data/premier-league.json
+            "https://footballdata.io/api/v1/leagues" \
+            -o data/leagues.json
 
-          curl -sS \
-            -H "Authorization: Bearer $API_KEY" \
-            "https://footballdata.io/api/v1/leagues/15/standings" \
-            -o data/premier-league-classificacao.json
+          echo "A procurar jogos..."
 
           curl -sS \
             -H "Authorization: Bearer $API_KEY" \
             "https://footballdata.io/api/v1/fixtures/upcoming?limit=100" \
             -o data/proximos.json
+
+          curl -sS \
+            -H "Authorization: Bearer $API_KEY" \
+            "https://footballdata.io/api/v1/fixtures/today?limit=100" \
+            -o data/hoje.json
 
           curl -sS \
             -H "Authorization: Bearer $API_KEY" \
@@ -48,6 +50,18 @@ jobs:
             -H "Authorization: Bearer $API_KEY" \
             "https://footballdata.io/api/v1/fixtures/results?limit=100" \
             -o data/resultados.json
+
+          echo "A procurar jogos das competições..."
+
+          curl -sS \
+            -H "Authorization: Bearer $API_KEY" \
+            "https://footballdata.io/api/v1/leagues/15/matches?limit=100" \
+            -o data/premier-league.json
+
+          curl -sS \
+            -H "Authorization: Bearer $API_KEY" \
+            "https://footballdata.io/api/v1/leagues/15/standings" \
+            -o data/premier-league-classificacao.json
 
           echo "Dados atualizados."
 
