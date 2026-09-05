@@ -3,7 +3,7 @@ name: Atualizar dados FUTZONE
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "0 */12 * * *"
 
 permissions:
   contents: write
@@ -22,36 +22,26 @@ jobs:
         run: |
           mkdir -p data
 
-          echo "A procurar competições..."
+          echo "A procurar ligas..."
 
           curl -sS \
             -H "Authorization: Bearer $API_KEY" \
             "https://footballdata.io/api/v1/leagues" \
             -o data/leagues.json
 
-          echo "A procurar jogos..."
+          echo "A procurar Primeira Liga..."
 
           curl -sS \
             -H "Authorization: Bearer $API_KEY" \
-            "https://footballdata.io/api/v1/fixtures/upcoming?limit=100" \
-            -o data/proximos.json
+            "https://footballdata.io/api/v1/leagues/94/matches?limit=100" \
+            -o data/primeira-liga.json
 
           curl -sS \
             -H "Authorization: Bearer $API_KEY" \
-            "https://footballdata.io/api/v1/fixtures/today?limit=100" \
-            -o data/hoje.json
+            "https://footballdata.io/api/v1/leagues/94/standings" \
+            -o data/classificacao.json
 
-          curl -sS \
-            -H "Authorization: Bearer $API_KEY" \
-            "https://footballdata.io/api/v1/fixtures/live" \
-            -o data/live.json
-
-          curl -sS \
-            -H "Authorization: Bearer $API_KEY" \
-            "https://footballdata.io/api/v1/fixtures/results?limit=100" \
-            -o data/resultados.json
-
-          echo "A procurar jogos das competições..."
+          echo "A procurar Premier League..."
 
           curl -sS \
             -H "Authorization: Bearer $API_KEY" \
@@ -63,6 +53,42 @@ jobs:
             "https://footballdata.io/api/v1/leagues/15/standings" \
             -o data/premier-league-classificacao.json
 
+          echo "A procurar La Liga..."
+
+          curl -sS \
+            -H "Authorization: Bearer $API_KEY" \
+            "https://footballdata.io/api/v1/leagues/16/matches?limit=100" \
+            -o data/la-liga.json
+
+          curl -sS \
+            -H "Authorization: Bearer $API_KEY" \
+            "https://footballdata.io/api/v1/leagues/16/standings" \
+            -o data/la-liga-classificacao.json
+
+          echo "A procurar Serie A..."
+
+          curl -sS \
+            -H "Authorization: Bearer $API_KEY" \
+            "https://footballdata.io/api/v1/leagues/17/matches?limit=100" \
+            -o data/serie-a.json
+
+          curl -sS \
+            -H "Authorization: Bearer $API_KEY" \
+            "https://footballdata.io/api/v1/leagues/17/standings" \
+            -o data/serie-a-classificacao.json
+
+          echo "A procurar Bundesliga..."
+
+          curl -sS \
+            -H "Authorization: Bearer $API_KEY" \
+            "https://footballdata.io/api/v1/leagues/18/matches?limit=100" \
+            -o data/bundesliga.json
+
+          curl -sS \
+            -H "Authorization: Bearer $API_KEY" \
+            "https://footballdata.io/api/v1/leagues/18/standings" \
+            -o data/bundesliga-classificacao.json
+
           echo "Dados atualizados."
 
       - name: Guardar dados
@@ -72,6 +98,6 @@ jobs:
 
           git add data/
 
-          git diff --cached --quiet || git commit -m "Atualizar dados FUTZONE"
+          git diff --cached --quiet || git commit -m "Atualizar dados das 5 ligas"
 
           git push
