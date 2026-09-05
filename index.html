@@ -740,60 +740,105 @@ async function carregarPlantel(){
      "data/planteis.json?v="+Date.now()
    );
 
-   if(!r.ok)
-     throw new Error("Plantel");
+   if(!r.ok) throw new Error("Plantel");
 
    const dados=await r.json();
 
+   const normalizar=(texto)=>{
+     return String(texto || "")
+       .toLowerCase()
+       .normalize("NFD")
+       .replace(/[\u0300-\u036f]/g,"")
+       .replace(/[^a-z0-9]/g,"");
+   };
+
+   const nomeAtual=normalizar(equipaAtual.name);
+
    let plantel=null;
 
-   /* formato:
-      {"437":[...]}
-   */
-
+   /* Procurar pelo ID */
    if(dados && !Array.isArray(dados)){
 
-     plantel=
-       dados[String(equipaAtual.id)];
+     const entrada=dados[String(equipaAtual.id)];
 
-     /* formato:
-        {teams:[...]}
-     */
-
-     if(!plantel && Array.isArray(dados.teams)){
-
-       const t=dados.teams.find(x=>
-         String(x.id)===
-         String(equipaAtual.id)
-       );
+     if(entrada){
 
        plantel=
-         t?.players ||
-         t?.roster;
+         entrada.players ||
+         entrada.roster ||
+         entrada;
      }
-
    }
 
-   /* formato:
-      [{id:"437",players:[]}]
-   */
+   /* Procurar pelo nome da equipa */
+   if(!plantel && dados && !Array.isArray(dados)){
 
+     const entradas=Object.values(dados);
+
+     const encontrada=entradas.find(x=>{
+
+       if(!x) return false;
+
+       const nomeDB=normalizar(
+         x.name ||
+         x.strTeam ||
+         x.teamName ||
+         ""
+       );
+
+       return (
+         nomeDB===nomeAtual ||
+         nomeDB.includes(nomeAtual) ||
+         nomeAtual.includes(nomeDB)
+       );
+     });
+
+     if(encontrada){
+
+       plantel=
+         encontrada.players ||
+         encontrada.roster ||
+         encontrada.squad ||
+         [];
+     }
+   }
+
+   /* Formato em array */
    if(Array.isArray(dados) && !plantel){
 
-     const t=dados.find(x=>
-       String(x.id)===
-       String(equipaAtual.id)
-     );
+     const encontrada=dados.find(x=>{
 
-     plantel=
-       t?.players ||
-       t?.roster;
+       if(!x) return false;
+
+       const nomeDB=normalizar(
+         x.name ||
+         x.strTeam ||
+         x.teamName ||
+         ""
+       );
+
+       return (
+         String(x.id)===
+         String(equipaAtual.id) ||
+         nomeDB===nomeAtual ||
+         nomeDB.includes(nomeAtual) ||
+         nomeAtual.includes(nomeDB)
+       );
+     });
+
+     if(encontrada){
+
+       plantel=
+         encontrada.players ||
+         encontrada.roster ||
+         encontrada.squad ||
+         [];
+     }
    }
 
    if(!plantel){
 
-     document.getElementById("plantel")
-     .innerHTML=
+     document.getElementById("plantel").innerHTML=
        '<div class="empty">Plantel não disponível.</div>';
 
      return;
@@ -804,83 +849,103 @@ async function carregarPlantel(){
 
    if(!plantel.length){
 
-     document.getElementById("plantel")
-     .innerHTML=
+     document.getElementById("plantel").innerHTML=
        '<div class="empty">Plantel vazio.</div>';
 
      return;
    }
 
-   document.getElementById("plantel")
-   .innerHTML=`
+   document.getElementById("plantel").innerHTML=`
 
    <div class="plantel-grid">
 
    ${
      plantel.map((p,i)=>{
 
+       let idade="-";
+
+       const nascimento=
+         p.dateBorn ||
+         p.dateOfBirth ||
+         p.birthDate ||
+         "";
+
+       if(nascimento){
+
+         const data=new Date(nascimento);
+
+         if(!isNaN(data.getTime())){
+
+           const hoje=new Date();
+
+           idade=
+             hoje.getFullYear()-
+             data.getFullYear();
+
+           const mes=
+             hoje.getMonth()-
+             data.getMonth();
+
+           if(
+             mes<0 ||
+             (
+               mes===0 &&
+               hoje.getDate()<data.getDate()
+             )
+           ){
+             idade--;
+           }
+         }
+       }
+
        const jogador={
 
          id:
            p.id ||
+           p.idPlayer ||
            p.playerId ||
            i,
 
          name:
            p.name ||
+           p.strPlayer ||
            p.displayName ||
            p.fullName ||
            "Jogador",
 
          number:
            p.number ||
+           p.strNumber ||
            p.jersey ||
            p.jerseyNumber ||
            "-",
 
          position:
-           typeof p.position==="object"
-           ?
-           (
-             p.position.displayName ||
-             p.position.name ||
-             "-"
-           )
-           :
-           (
-             p.position ||
-             p.positionName ||
-             "-"
-           ),
+           p.position ||
+           p.strPosition ||
+           p.positionName ||
+           "-",
 
          age:
            p.age ||
-           "-",
+           idade,
 
          nationality:
-           typeof p.nationality==="object"
-           ?
-           (
-             p.nationality.displayName ||
-             p.nationality.name ||
-             "-"
-           )
-           :
-           (
-             p.nationality ||
-             p.country ||
-             "-"
-           ),
+           p.nationality ||
+           p.strNationality ||
+           p.country ||
+           "-",
 
          photo:
            p.photo ||
+           p.strThumb ||
+           p.strCutout ||
            p.headshot ||
            p.image ||
-           p.headshot?.href ||
            ""
        };
 
-       return`
+       return `
 
        <div class="player"
          onclick='abrirJogador(${JSON.stringify(jogador)})'>
@@ -934,12 +999,10 @@ async function carregarPlantel(){
 
    console.log(e);
 
-   document.getElementById("plantel")
-   .innerHTML=
+   document.getElementById("plantel").innerHTML=
      '<div class="empty">Não foi possível carregar o plantel.</div>';
  }
 }
-
 /* =========================
    JOGADOR
 ========================= */
