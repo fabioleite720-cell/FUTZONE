@@ -43,7 +43,7 @@ header{
 button{
  border:0;
  border-radius:10px;
- padding:10px 14px;
+ padding:11px 15px;
  background:#168cff;
  color:#fff;
  font-weight:bold;
@@ -67,7 +67,7 @@ button{
  color:#168cff;
  font-weight:bold;
  font-size:14px;
- margin-bottom:15px
+ margin-bottom:18px
 }
 
 .teams{
@@ -92,7 +92,8 @@ button{
 
 .score{
  font-size:32px;
- font-weight:900
+ font-weight:900;
+ white-space:nowrap
 }
 
 .status{
@@ -102,6 +103,15 @@ button{
 
 .live{
  color:#ff3030
+}
+
+.live-dot{
+ display:inline-block;
+ width:9px;
+ height:9px;
+ background:#ff3030;
+ border-radius:50%;
+ margin-right:5px
 }
 
 .section{
@@ -123,7 +133,7 @@ button{
  display:flex;
  gap:10px;
  align-items:center;
- padding:12px 14px;
+ padding:13px 14px;
  border-bottom:1px solid #222
 }
 
@@ -133,8 +143,15 @@ button{
 
 .minute{
  width:45px;
+ min-width:45px;
  font-weight:bold;
  color:#aaa
+}
+
+.event-icon{
+ font-size:20px;
+ width:25px;
+ min-width:25px
 }
 
 .event-text{
@@ -142,13 +159,20 @@ button{
 }
 
 .scorer{
- font-weight:bold
+ font-weight:bold;
+ font-size:15px
 }
 
 .assist{
  color:#888;
  font-size:12px;
- margin-top:3px
+ margin-top:4px
+}
+
+.event-team{
+ color:#666;
+ font-size:11px;
+ margin-top:4px
 }
 
 .stat{
@@ -165,16 +189,19 @@ button{
 
 .stat-name{
  color:#888;
- font-size:12px
+ font-size:12px;
+ padding:0 8px
 }
 
-.home-stat,.away-stat{
+.home-stat,
+.away-stat{
  font-weight:bold
 }
 
 .info-row{
  display:flex;
  justify-content:space-between;
+ gap:15px;
  padding:13px 14px;
  border-bottom:1px solid #222
 }
@@ -196,6 +223,12 @@ button{
  text-align:center;
  padding:35px;
  color:#888
+}
+
+.empty{
+ text-align:center;
+ padding:20px;
+ color:#777
 }
 
 .error{
@@ -249,48 +282,138 @@ function esc(v){
  .replaceAll("'","&#039;");
 }
 
+
+/* EQUIPAS */
+
 function obterEquipas(c){
+
  const lista=c?.competitors || [];
 
  return {
    home:lista.find(x=>x.homeAway==="home") || lista[0] || {},
    away:lista.find(x=>x.homeAway==="away") || lista[1] || {}
  };
+
 }
 
+
 function nomeEquipa(c){
+
  return c?.team?.displayName ||
         c?.team?.shortDisplayName ||
         c?.team?.name ||
         "Equipa";
+
 }
 
+
 function logoEquipa(c){
+
  return c?.team?.logo ||
         c?.team?.logos?.[0]?.href ||
         "";
+
 }
 
+
+/* MINUTO */
+
 function minuto(p){
+
  if(p?.clock?.displayValue)
    return p.clock.displayValue;
 
- if(p?.clock?.value!=null)
-   return Math.floor(Number(p.clock.value)/60)+"'";
+ if(p?.clock?.value!=null){
+
+   const segundos=Number(p.clock.value);
+
+   if(!isNaN(segundos))
+     return Math.floor(segundos/60)+"'";
+
+ }
 
  return "";
+
 }
 
+
+/* JOGADORES */
+
 function nomeAtleta(a){
+
+ if(!a) return "";
+
  return a?.displayName ||
         a?.fullName ||
         a?.shortName ||
+        a?.athlete?.displayName ||
+        a?.athlete?.fullName ||
         "";
+
 }
+
+
+/*
+ Procura jogadores em vários formatos
+ possíveis usados pela ESPN.
+*/
+
+function obterAtletas(p){
+
+ let lista=[];
+
+ const fontes=[
+   p?.athletesInvolved,
+   p?.athletes,
+   p?.participants
+ ];
+
+ fontes.forEach(f=>{
+
+   if(Array.isArray(f))
+     lista.push(...f);
+
+ });
+
+ if(p?.scorer)
+   lista.push(p.scorer);
+
+ if(p?.assist)
+   lista.push(p.assist);
+
+ if(p?.assistants && Array.isArray(p.assistants))
+   lista.push(...p.assistants);
+
+ const nomes=[];
+ const vistos=new Set();
+
+ lista.forEach(a=>{
+
+   const nome=nomeAtleta(a);
+
+   if(nome && !vistos.has(nome)){
+
+     vistos.add(nome);
+     nomes.push(nome);
+
+   }
+
+ });
+
+ return nomes;
+
+}
+
+
+/* TIPO DE EVENTO */
 
 function tipoEvento(p){
 
- if(p?.scoringPlay)
+ if(
+   p?.scoringPlay ||
+   p?.scoreValue ||
+   p?.scoring
+ )
    return "⚽";
 
  if(p?.redCard)
@@ -302,10 +425,14 @@ function tipoEvento(p){
  const t=String(
    p?.type?.text ||
    p?.type?.description ||
+   p?.text ||
    ""
  ).toLowerCase();
 
- if(t.includes("substitut"))
+ if(
+   t.includes("substitut") ||
+   t.includes("substitution")
+ )
    return "🔄";
 
  if(t.includes("yellow"))
@@ -315,50 +442,94 @@ function tipoEvento(p){
    return "🟥";
 
  return "•";
+
 }
+
+
+/* TEXTO DO EVENTO */
 
 function textoEvento(p){
 
- const atletas=Array.isArray(p?.athletesInvolved)
-   ? p.athletesInvolved
-   : [];
+ const atletas=obterAtletas(p);
 
- const nomes=atletas
-   .map(nomeAtleta)
-   .filter(Boolean);
+ const ehGolo=
+   p?.scoringPlay ||
+   p?.scoreValue ||
+   p?.scoring;
 
- if(p?.scoringPlay){
+ if(ehGolo){
 
-   const marcador=nomes[0] || "Marcador";
+   const marcador=
+     atletas[0] ||
+     p?.scorer?.displayName ||
+     "Golo";
 
-   const assist=nomes.length>1
-     ? nomes.slice(1).join(", ")
-     : "";
+   let assist="";
+
+   if(atletas.length>1)
+     assist=atletas.slice(1).join(", ");
+
+   if(!assist && p?.assist?.displayName)
+     assist=p.assist.displayName;
 
    return `
-     <div class="scorer">${esc(marcador)}</div>
-     ${assist
-       ? `<div class="assist">Assistência: ${esc(assist)}</div>`
-       : ""}
+     <div class="scorer">
+       ${esc(marcador)}
+     </div>
+
+     ${
+       assist
+       ? `<div class="assist">
+            Assistência: ${esc(assist)}
+          </div>`
+       : ""
+     }
    `;
+
  }
 
- if(nomes.length)
-   return `<div>${esc(nomes.join(", "))}</div>`;
 
- return `<div>${esc(
+ if(atletas.length){
+
+   return `
+     <div>
+       ${esc(atletas.join(", "))}
+     </div>
+   `;
+
+ }
+
+
+ const texto=
+   p?.text ||
    p?.type?.text ||
    p?.type?.description ||
-   "Evento"
- )}</div>`;
+   "Evento";
+
+ return `<div>${esc(texto)}</div>`;
+
 }
 
+
+/* ESTATÍSTICAS */
+
 function valorStat(v){
- if(v==null) return "-";
- if(typeof v==="object")
-   return v.displayValue ?? v.value ?? "-";
+
+ if(v==null)
+   return "-";
+
+ if(typeof v==="object"){
+
+   return v.displayValue ??
+          v.value ??
+          "-";
+
+ }
+
  return v;
+
 }
+
 
 function criarStats(boxscore,home,away){
 
@@ -368,29 +539,48 @@ function criarStats(boxscore,home,away){
 
  jogadores.forEach(grupo=>{
 
-   const team=grupo?.team?.id;
+   const teamId=grupo?.team?.id;
 
-   if(!team) return;
+   if(!teamId)
+     return;
 
    (grupo.statistics || []).forEach(s=>{
 
-     (s.statistics || []).forEach(item=>{
+     const lista=s?.statistics || [];
 
-       if(!item.name) return;
+     lista.forEach(item=>{
 
-       if(!estatisticas[item.name])
+       if(!item?.name)
+         return;
+
+       if(!estatisticas[item.name]){
+
          estatisticas[item.name]={
            home:"-",
            away:"-"
          };
 
-       const v=valorStat(item.value);
+       }
 
-       if(String(team)===String(home.team?.id))
-         estatisticas[item.name].home=v;
+       const valor=valorStat(item.value);
 
-       if(String(team)===String(away.team?.id))
-         estatisticas[item.name].away=v;
+       if(
+         String(teamId)===
+         String(home?.team?.id)
+       ){
+
+         estatisticas[item.name].home=valor;
+
+       }
+
+       if(
+         String(teamId)===
+         String(away?.team?.id)
+       ){
+
+         estatisticas[item.name].away=valor;
+
+       }
 
      });
 
@@ -398,15 +588,25 @@ function criarStats(boxscore,home,away){
 
  });
 
+
  const nomes={
+
    possessionPct:"Posse de bola",
+
    totalShots:"Remates",
+
    shotsOnTarget:"Remates à baliza",
+
    wonCorners:"Cantos",
+
    foulsCommitted:"Faltas",
+
    yellowCards:"Cartões amarelos",
+
    redCards:"Cartões vermelhos"
+
  };
+
 
  const linhas=Object.keys(nomes)
    .filter(k=>estatisticas[k])
@@ -416,27 +616,51 @@ function criarStats(boxscore,home,away){
 
      return `
        <div class="stat">
-         <div class="home-stat">${esc(s.home)}</div>
-         <div class="stat-name">${esc(nomes[k])}</div>
-         <div class="away-stat">${esc(s.away)}</div>
+
+         <div class="home-stat">
+           ${esc(s.home)}
+         </div>
+
+         <div class="stat-name">
+           ${esc(nomes[k])}
+         </div>
+
+         <div class="away-stat">
+           ${esc(s.away)}
+         </div>
+
        </div>
      `;
 
-   }).join("");
+   })
+   .join("");
+
 
  return linhas ||
-   `<div class="loading">Estatísticas não disponíveis.</div>`;
+   `<div class="empty">
+      Estatísticas não disponíveis.
+    </div>`;
+
 }
+
+
+/* CARREGAR */
 
 async function carregar(){
 
  if(!eventoId){
 
    document.getElementById("app").innerHTML=
-     `<div class="error">❌ Não foi indicado nenhum jogo.</div>`;
+     `
+     <div class="error">
+       ❌ Não foi indicado nenhum jogo.
+     </div>
+     `;
 
    return;
+
  }
+
 
  try{
 
@@ -446,114 +670,329 @@ async function carregar(){
      +"/summary?event="
      +encodeURIComponent(eventoId);
 
-   const r=await fetch(url);
 
-   if(!r.ok)
-     throw new Error("Erro ESPN "+r.status);
+   const resposta=await fetch(url,{
+     cache:"no-store"
+   });
 
-   const d=await r.json();
 
-   const competencia=d?.header?.competitions?.[0] ||
-                      d?.competitions?.[0] ||
-                      {};
+   if(!resposta.ok)
+     throw new Error(
+       "Erro ESPN "+resposta.status
+     );
 
-   const equipas=obterEquipas(competencia);
+
+   const d=await resposta.json();
+
+
+   /* COMPETIÇÃO */
+
+   const competencia=
+     d?.header?.competitions?.[0] ||
+     d?.competitions?.[0] ||
+     {};
+
+
+   const equipas=
+     obterEquipas(competencia);
+
 
    const home=equipas.home;
    const away=equipas.away;
 
-   const status=competencia?.status ||
-                 d?.header?.competitions?.[0]?.status ||
-                 {};
 
-   const tipo=status?.type;
+   /* ESTADO */
+
+   const status=
+     competencia?.status || {};
+
+
+   const tipo=status?.type || {};
+
 
    let estado="PRÓXIMO";
 
+
    if(tipo?.state==="in")
      estado="LIVE";
-   else if(tipo?.completed || tipo?.state==="post")
+
+
+   else if(
+     tipo?.completed ||
+     tipo?.state==="post"
+   )
      estado="RESULTADO";
 
+
    let minutoAtual="";
+
 
    if(status?.displayClock)
      minutoAtual=status.displayClock;
 
-   const data=d?.header?.competitions?.[0]?.date ||
-              d?.header?.season?.slug ||
-              "";
+
+   if(
+     !minutoAtual &&
+     status?.period
+   )
+     minutoAtual=
+       "Parte "+status.period;
+
+
+   /* DATA */
+
+   const data=
+     competencia?.date ||
+     d?.header?.competitions?.[0]?.date ||
+     "";
+
+
+   let dataTexto="";
+
+
+   if(data){
+
+     const dataObj=new Date(data);
+
+     if(!isNaN(dataObj.getTime())){
+
+       dataTexto=
+         dataObj.toLocaleString(
+           "pt-PT",
+           {
+             day:"2-digit",
+             month:"2-digit",
+             year:"numeric",
+             hour:"2-digit",
+             minute:"2-digit"
+           }
+         );
+
+     }
+
+   }
+
+
+   /* ESTÁDIO */
 
    const venue=
      competencia?.venue?.fullName ||
      competencia?.venue?.address?.city ||
      "";
 
-   const plays=Array.isArray(d?.plays)
+
+   /*
+    IMPORTANTE:
+    A ESPN pode colocar os golos
+    em scoringPlays e não apenas em plays.
+   */
+
+   const plays=
+     Array.isArray(d?.plays)
      ? d.plays
      : [];
 
-   const eventos=plays
-     .filter(p=>
-       p?.scoringPlay ||
-       p?.redCard ||
-       p?.yellowCard ||
-       String(p?.type?.text||"")
-         .toLowerCase()
-         .includes("substitut")
-     )
-     .sort((a,b)=>
-       Number(a?.clock?.value||0)-
-       Number(b?.clock?.value||0)
-     );
 
-   const eventosHTML=eventos.length
-     ? eventos.map(p=>`
-         <div class="event">
-           <div class="minute">${esc(minuto(p))}</div>
-           <div>${tipoEvento(p)}</div>
-           <div class="event-text">
-             ${textoEvento(p)}
-           </div>
-         </div>
-       `).join("")
-     : `<div class="loading">Sem eventos disponíveis.</div>`;
+   const scoringPlays=
+     Array.isArray(d?.scoringPlays)
+     ? d.scoringPlays
+     : [];
 
-   const boxscore=d?.boxscore || {};
 
-   const dataTexto=data
-     ? new Date(data).toLocaleString(
-         "pt-PT",
-         {
-           day:"2-digit",
-           month:"2-digit",
-           year:"numeric",
-           hour:"2-digit",
-           minute:"2-digit"
-         }
+   const todosEventos=[
+     ...plays,
+     ...scoringPlays
+   ];
+
+
+   /* REMOVER DUPLICADOS */
+
+   const vistosEventos=new Set();
+
+
+   const eventos=[];
+
+
+   todosEventos.forEach(p=>{
+
+     const chave=
+       p?.id ||
+       (
+         minuto(p)+"|"+
+         String(p?.text||"")+"|"+
+         String(
+           obterAtletas(p).join(",")
+         )
+       );
+
+
+     if(!vistosEventos.has(chave)){
+
+       vistosEventos.add(chave);
+
+       eventos.push(p);
+
+     }
+
+   });
+
+
+   /* APENAS EVENTOS IMPORTANTES */
+
+   const eventosImportantes=
+     eventos
+     .filter(p=>{
+
+       const texto=
+         String(
+           p?.type?.text ||
+           p?.type?.description ||
+           p?.text ||
+           ""
+         )
+         .toLowerCase();
+
+
+       return(
+         p?.scoringPlay ||
+         p?.scoreValue ||
+         p?.scoring ||
+         p?.redCard ||
+         p?.yellowCard ||
+         texto.includes("substitut") ||
+         texto.includes("substitution") ||
+         texto.includes("yellow") ||
+         texto.includes("red")
+       );
+
+     })
+     .sort((a,b)=>{
+
+       return Number(
+         a?.clock?.value || 0
        )
-     : "";
+       -
+       Number(
+         b?.clock?.value || 0
+       );
+
+     });
+
+
+   /* EVENTOS HTML */
+
+   let eventosHTML=
+     `<div class="empty">
+       Sem eventos disponíveis.
+      </div>`;
+
+
+   if(eventosImportantes.length){
+
+     eventosHTML=
+       eventosImportantes
+       .map(p=>{
+
+         const equipaEvento=
+           p?.team?.displayName ||
+           p?.team?.shortDisplayName ||
+           "";
+
+
+         return `
+           <div class="event">
+
+             <div class="minute">
+               ${esc(minuto(p))}
+             </div>
+
+             <div class="event-icon">
+               ${tipoEvento(p)}
+             </div>
+
+             <div class="event-text">
+
+               ${textoEvento(p)}
+
+               ${
+                 equipaEvento
+                 ? `<div class="event-team">
+                      ${esc(equipaEvento)}
+                    </div>`
+                 : ""
+               }
+
+             </div>
+
+           </div>
+         `;
+
+       })
+       .join("");
+
+   }
+
+
+   /* ESTATÍSTICAS */
+
+   const boxscore=
+     d?.boxscore || {};
+
+
+   /* NOME DA COMPETIÇÃO */
+
+   const nomeCompeticao=
+     d?.header?.league?.name ||
+     nomesLigas[liga] ||
+     liga;
+
+
+   /* LOGOS */
+
+   const logoHome=
+     logoEquipa(home);
+
+
+   const logoAway=
+     logoEquipa(away);
+
+
+   /* RESULTADOS */
+
+   const scoreHome=
+     home?.score ??
+     "-";
+
+
+   const scoreAway=
+     away?.score ??
+     "-";
+
+
+   /* CONSTRUIR PÁGINA */
 
    document.getElementById("app").innerHTML=`
 
      <div class="match">
 
        <div class="competition">
-         ${esc(
-           d?.header?.season?.displayName ||
-           nomesLigas[liga] ||
-           liga
-         )}
+         ${esc(nomeCompeticao)}
        </div>
+
 
        <div class="teams">
 
          <div class="team">
 
            ${
-             logoEquipa(home)
-             ? `<img class="logo-equipa"
-                 src="${esc(logoEquipa(home))}">`
+             logoHome
+             ? `
+               <img
+                 class="logo-equipa"
+                 src="${esc(logoHome)}"
+                 onerror="this.style.display='none'"
+               >
+             `
              : ""
            }
 
@@ -561,28 +1000,31 @@ async function carregar(){
 
          </div>
 
+
          <div>
 
            <div class="score">
-             ${esc(
-               home?.score ??
-               "-"
-             )}
+
+             ${esc(scoreHome)}
              -
-             ${esc(
-               away?.score ??
-               "-"
-             )}
+             ${esc(scoreAway)}
+
            </div>
 
          </div>
 
+
          <div class="team">
 
            ${
-             logoEquipa(away)
-             ? `<img class="logo-equipa"
-                 src="${esc(logoEquipa(away))}">`
+             logoAway
+             ? `
+               <img
+                 class="logo-equipa"
+                 src="${esc(logoAway)}"
+                 onerror="this.style.display='none'"
+               >
+             `
              : ""
            }
 
@@ -592,19 +1034,27 @@ async function carregar(){
 
        </div>
 
+
        <div class="status ${
          estado==="LIVE" ? "live" : ""
        }">
 
          ${
            estado==="LIVE"
-           ? "🔴 LIVE "+esc(minutoAtual)
+           ? `
+             <span class="live-dot"></span>
+             AO VIVO
+             ${minutoAtual
+               ? " • "+esc(minutoAtual)
+               : ""}
+           `
            : esc(estado)
          }
 
        </div>
 
      </div>
+
 
      <div class="section">
 
@@ -614,25 +1064,41 @@ async function carregar(){
          dataTexto
          ? `
            <div class="info-row">
-             <div class="info-label">Data</div>
-             <div class="info-value">${esc(dataTexto)}</div>
+
+             <div class="info-label">
+               📅 Data
+             </div>
+
+             <div class="info-value">
+               ${esc(dataTexto)}
+             </div>
+
            </div>
          `
          : ""
        }
 
+
        ${
          venue
          ? `
            <div class="info-row">
-             <div class="info-label">🏟️ Estádio</div>
-             <div class="info-value">${esc(venue)}</div>
+
+             <div class="info-label">
+               🏟️ Estádio
+             </div>
+
+             <div class="info-value">
+               ${esc(venue)}
+             </div>
+
            </div>
          `
          : ""
        }
 
      </div>
+
 
      <div class="section">
 
@@ -642,43 +1108,83 @@ async function carregar(){
 
      </div>
 
+
      <div class="section">
 
        <h3>📊 Estatísticas</h3>
 
-       ${criarStats(boxscore,home,away)}
+       ${criarStats(
+         boxscore,
+         home,
+         away
+       )}
 
      </div>
 
-     <div style="text-align:center;margin-top:15px">
+
+     <div style="
+       text-align:center;
+       margin-top:15px
+     ">
 
        <button onclick="carregar()">
          🔄 Atualizar detalhes
        </button>
 
      </div>
+
    `;
 
- }catch(e){
 
-   console.error(e);
+ }catch(erro){
+
+   console.error(erro);
+
 
    document.getElementById("app").innerHTML=`
+
      <div class="error">
-       ❌ Não foi possível carregar os detalhes deste jogo.<br><br>
-       ${esc(e.message)}
+
+       ❌ Não foi possível carregar
+       os detalhes deste jogo.
+
+       <br><br>
+
+       ${esc(erro.message)}
+
+       <br><br>
+
+       <button onclick="carregar()">
+         🔄 Tentar novamente
+       </button>
+
      </div>
+
    `;
+
  }
+
 }
+
+
+/* VOLTAR */
 
 function voltar(){
 
- if(history.length>1)
+ if(history.length>1){
+
    history.back();
- else
+
+ }else{
+
    location.href="index.html";
+
+ }
+
 }
+
+
+/* INICIAR */
 
 carregar();
 
