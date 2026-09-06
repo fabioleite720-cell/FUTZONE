@@ -49,12 +49,14 @@
     const cards = Array.from(
       document.querySelectorAll(".card")
     ).filter(function (card) {
+
       return card.querySelector(".teams .team");
+
     });
 
     const lista = jogosVisiveis();
 
-    cards.forEach(function (card, index) {
+    cards.forEach(function (card) {
 
       if (card.dataset.detalhesLigados === "sim") {
         return;
@@ -65,16 +67,84 @@
 
       card.addEventListener("click", function (event) {
 
-        // Se tocar no nome/equipa, mantém o funcionamento
-        // normal da página da equipa.
-        if (event.target.closest(".team")) {
+        /*
+         * Se carregares no nome/logo da equipa,
+         * continua a abrir a página da equipa.
+         */
+        if (
+          event.target.closest &&
+          event.target.closest(".team")
+        ) {
           return;
         }
 
-        const jogo = lista[index];
+        const todosCards = Array.from(
+          document.querySelectorAll(".card")
+        ).filter(function (c) {
+          return c.querySelector(".teams .team");
+        });
+
+        const indice = todosCards.indexOf(card);
+
+        let jogo = lista[indice];
+
+        /*
+         * Se o índice não coincidir, tenta encontrar
+         * o jogo através dos nomes das equipas.
+         */
+        if (!jogo) {
+
+          const equipas =
+            card.querySelectorAll(".teams .team");
+
+          if (equipas.length >= 2) {
+
+            const casa =
+              equipas[0].innerText.trim();
+
+            const fora =
+              equipas[1].innerText.trim();
+
+            jogo = lista.find(function (j) {
+
+              try {
+
+                const e = obterEquipas(j);
+
+                const nomeCasa =
+                  nomeEquipaSeguro(
+                    e.home,
+                    j,
+                    true
+                  );
+
+                const nomeFora =
+                  nomeEquipaSeguro(
+                    e.away,
+                    j,
+                    false
+                  );
+
+                return (
+                  nomeCasa === casa &&
+                  nomeFora === fora
+                );
+
+              } catch (erro) {
+                return false;
+              }
+
+            });
+
+          }
+        }
 
         if (!jogo) {
-          alert("Não foi possível encontrar este jogo.");
+
+          alert(
+            "Não foi possível encontrar este jogo."
+          );
+
           return;
         }
 
@@ -84,23 +154,38 @@
           jogo.eventId;
 
         if (!id) {
-          alert("Este jogo não tem ID.");
+
+          alert(
+            "Este jogo não tem ID."
+          );
+
           return;
         }
 
-        const liga = ligaAPI(jogo.__liga);
+        const liga =
+          ligaAPI(jogo.__liga);
 
         window.location.href =
           "detalhes.html?id=" +
           encodeURIComponent(id) +
           "&liga=" +
           encodeURIComponent(liga);
+
       });
 
     });
   }
 
-  // Liga os cartões quando aparecem.
-  setInterval(ligarCartoes, 500);
+  /*
+   * A página carrega os jogos depois do JavaScript,
+   * por isso verificamos regularmente se apareceram
+   * novos cartões.
+   */
+  ligarCartoes();
+
+  setInterval(
+    ligarCartoes,
+    1000
+  );
 
 })();
