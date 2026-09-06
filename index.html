@@ -281,11 +281,6 @@ th{
  color:#168cff
 }
 
-.forma{
- font-size:11px;
- color:#888
-}
-
 @media(max-width:500px){
 
  .plantel-grid{
@@ -351,11 +346,6 @@ const ligas=[
  {nome:"Alemanha",arquivo:"data/bundesliga.json"}
 ];
 
-
-/* =========================
-   SEGURANÇA
-========================= */
-
 function esc(v){
 
  return String(v ?? "")
@@ -365,11 +355,6 @@ function esc(v){
  .replaceAll('"',"&quot;")
  .replaceAll("'","&#039;");
 }
-
-
-/* =========================
-   NORMALIZAÇÃO DE NOMES
-========================= */
 
 function normalizarNome(nome){
 
@@ -382,11 +367,110 @@ function normalizarNome(nome){
 }
 
 
-function tokensNome(nome){
+/* =========================
+   ALIASES DE EQUIPAS
+========================= */
 
- return normalizarNome(nome)
- .split(/(?=[A-Z])/)
- .filter(Boolean);
+const aliasesEquipas={
+
+ "sportingcp":[
+   "sporting",
+   "sportingclubedeportugal",
+   "sportingcp"
+ ],
+
+ "benfica":[
+   "slbenfica",
+   "benfica",
+   "sportlisboaebenfica"
+ ],
+
+ "portofc":[
+   "fcporto",
+   "porto",
+   "portofutebolclube"
+ ],
+
+ "braga":[
+   "scbraga",
+   "braga",
+   "sportingbraga"
+ ],
+
+ "bayernmunich":[
+   "bayernmunich",
+   "bayernmunchen",
+   "fcbayernmunchen",
+   "bayern"
+ ],
+
+ "inter":[
+   "inter",
+   "intermilan",
+   "internazionale",
+   "intermilano"
+ ],
+
+ "milan":[
+   "acmilan",
+   "milan"
+ ],
+
+ "roma":[
+   "asroma",
+   "roma"
+ ],
+
+ "psg":[
+   "parissaintgermain",
+   "psg"
+ ],
+
+ "manchesterunited":[
+   "manchesterunited",
+   "manutd"
+ ],
+
+ "manchestercity":[
+   "mancity",
+   "manchestercity"
+ ],
+
+ "tottenham":[
+   "tottenham",
+   "tottenhamhotspur"
+ ]
+
+};
+
+
+function nomesEquivalentes(a,b){
+
+ const x=normalizarNome(a);
+ const y=normalizarNome(b);
+
+ if(!x || !y)
+   return false;
+
+ if(x===y)
+   return true;
+
+ for(const grupo of Object.values(aliasesEquipas)){
+
+   if(
+     grupo.includes(x) &&
+     grupo.includes(y)
+   )
+     return true;
+ }
+
+ if(
+   x.includes(y) ||
+   y.includes(x)
+ )
+   return true;
+
+ return false;
 }
 
 
@@ -395,18 +479,15 @@ function tokensNome(nome){
 ========================= */
 
 function obterCompeticao(j){
-
  return j?.competitions?.[0] || {};
 }
-
 
 function obterEquipas(j){
 
  let c=obterCompeticao(j).competitors;
 
- if(!Array.isArray(c)){
+ if(!Array.isArray(c))
    c=j?.competitors;
- }
 
  if(!Array.isArray(c))
    c=[];
@@ -424,7 +505,6 @@ function obterEquipas(j){
  return {home,away};
 }
 
-
 function nomeEquipa(c){
 
  return (
@@ -437,17 +517,16 @@ function nomeEquipa(c){
  );
 }
 
-
 function nomeEquipaSeguro(c,j,home){
 
- let nome=nomeEquipa(c);
+ const nome=nomeEquipa(c);
 
  if(nome)
    return nome;
 
  if(j?.name){
 
-   let partes=j.name.split(" at ");
+   const partes=j.name.split(" at ");
 
    if(partes.length===2)
      return home ? partes[1] : partes[0];
@@ -455,7 +534,6 @@ function nomeEquipaSeguro(c,j,home){
 
  return "Equipa";
 }
-
 
 function idEquipa(c){
 
@@ -465,7 +543,6 @@ function idEquipa(c){
    null
  );
 }
-
 
 function logoEquipa(c){
 
@@ -478,7 +555,6 @@ function logoEquipa(c){
  );
 }
 
-
 function numeroResultado(c){
 
  let valor=c?.score;
@@ -486,19 +562,13 @@ function numeroResultado(c){
  if(valor===undefined || valor===null)
    return null;
 
- if(typeof valor==="object"){
+ if(typeof valor==="object")
+   valor=valor.value ?? valor.displayValue ?? null;
 
-   valor=
-     valor.value ??
-     valor.displayValue ??
-     null;
- }
-
- let n=Number(valor);
+ const n=Number(valor);
 
  return Number.isFinite(n) ? n : null;
 }
-
 
 function resultado(c){
 
@@ -507,18 +577,11 @@ function resultado(c){
  if(valor===undefined || valor===null)
    return "-";
 
- if(typeof valor==="object"){
-
-   return (
-     valor.displayValue ??
-     valor.value ??
-     "-"
-   );
- }
+ if(typeof valor==="object")
+   return valor.displayValue ?? valor.value ?? "-";
 
  return valor;
 }
-
 
 function estadoJogo(j){
 
@@ -532,7 +595,6 @@ function estadoJogo(j){
 
  return "PRÓXIMO";
 }
-
 
 function dataJogo(j){
 
@@ -593,18 +655,13 @@ async function carregar(){
      lista.forEach(j=>{
 
        j.__liga=liga.nome;
-
        jogos.push(j);
 
      });
 
    }catch(e){
 
-     console.log(
-       "Erro ao carregar",
-       liga.arquivo,
-       e
-     );
+     console.log("Erro jogos",e);
    }
  }
 
@@ -613,21 +670,16 @@ async function carregar(){
 
 
 /* =========================
-   JOGOS
+   MOSTRAR JOGOS
 ========================= */
 
 function mostrarJogos(){
 
- document.getElementById("navJogos")
- .classList.add("active");
+ document.getElementById("navJogos").classList.add("active");
+ document.getElementById("navTabelas").classList.remove("active");
+ document.getElementById("navFav").classList.remove("active");
 
- document.getElementById("navTabelas")
- .classList.remove("active");
-
- document.getElementById("navFav")
- .classList.remove("active");
-
- let html=`
+ document.getElementById("app").innerHTML=`
 
  <h2>⚽ Jogos</h2>
 
@@ -672,33 +724,19 @@ function mostrarJogos(){
  <div id="lista"></div>
  `;
 
- document.getElementById("app").innerHTML=html;
+ const lista=jogos.filter(j=>{
 
- let lista=jogos.filter(j=>{
-
-   let ligaOK=
+   const ligaOK=
      ligaAtual==="Todos" ||
      j.__liga===ligaAtual;
 
-   let estado=estadoJogo(j);
+   const estado=estadoJogo(j);
 
-   let filtroOK=
+   const filtroOK=
      filtroAtual==="Todos" ||
-
-     (
-       filtroAtual==="LIVE" &&
-       estado==="LIVE"
-     ) ||
-
-     (
-       filtroAtual==="Próximos" &&
-       estado==="PRÓXIMO"
-     ) ||
-
-     (
-       filtroAtual==="Resultados" &&
-       estado==="RESULTADO"
-     );
+     (filtroAtual==="LIVE" && estado==="LIVE") ||
+     (filtroAtual==="Próximos" && estado==="PRÓXIMO") ||
+     (filtroAtual==="Resultados" && estado==="RESULTADO");
 
    return ligaOK && filtroOK;
  });
@@ -722,11 +760,8 @@ function jogoCard(j){
 
  const e=obterEquipas(j);
 
- const hn=
-   nomeEquipaSeguro(e.home,j,true);
-
- const an=
-   nomeEquipaSeguro(e.away,j,false);
+ const hn=nomeEquipaSeguro(e.home,j,true);
+ const an=nomeEquipaSeguro(e.away,j,false);
 
  const hid=idEquipa(e.home);
  const aid=idEquipa(e.away);
@@ -736,16 +771,11 @@ function jogoCard(j){
 
  const estado=estadoJogo(j);
 
- const hs=resultado(e.home);
- const as=resultado(e.away);
-
  return`
 
  <div class="card">
 
-   <div class="league">
-     ${esc(j.__liga)}
-   </div>
+   <div class="league">${esc(j.__liga)}</div>
 
    <div class="teams">
 
@@ -761,9 +791,9 @@ function jogoCard(j){
        ${
          hl
          ?
-         `<img
-           class="team-logo"
-           src="${esc(hl)}">`
+         `<img class="team-logo"
+           src="${esc(hl)}"
+           onerror="this.style.display='none'">`
          :
          ""
        }
@@ -773,7 +803,9 @@ function jogoCard(j){
      </div>
 
      <div class="score">
-       ${esc(hs)} - ${esc(as)}
+       ${esc(resultado(e.home))}
+       -
+       ${esc(resultado(e.away))}
      </div>
 
      <div
@@ -788,9 +820,9 @@ function jogoCard(j){
        ${
          al
          ?
-         `<img
-           class="team-logo"
-           src="${esc(al)}">`
+         `<img class="team-logo"
+           src="${esc(al)}"
+           onerror="this.style.display='none'">`
          :
          ""
        }
@@ -827,12 +859,7 @@ function jogoCard(j){
    EQUIPA
 ========================= */
 
-function abrirEquipaPorId(
- id,
- name,
- league,
- logo
-){
+function abrirEquipaPorId(id,name,league,logo){
 
  equipaAtual={
    id:id,
@@ -844,11 +871,9 @@ function abrirEquipaPorId(
  mostrarEquipa();
 }
 
-
 function abrirEquipa(e){
 
  equipaAtual=e;
-
  mostrarEquipa();
 }
 
@@ -871,7 +896,8 @@ async function mostrarEquipa(){
      style="
        width:80px;
        height:80px;
-       object-fit:contain">`
+       object-fit:contain"
+   >`
    :
    ""
  }
@@ -895,29 +921,19 @@ async function mostrarEquipa(){
  <h3>⚽ Jogos</h3>
 
  <div id="jogos-equipa"></div>
-
  `;
 
- document.getElementById("voltar")
- .onclick=mostrarJogos;
+ document.getElementById("voltar").onclick=mostrarJogos;
 
 
  const relacionados=jogos.filter(j=>{
 
    const e=obterEquipas(j);
 
-   const hn=
-     normalizarNome(
-       nomeEquipaSeguro(e.home,j,true)
-     );
+   const atual=equipaAtual.name;
 
-   const an=
-     normalizarNome(
-       nomeEquipaSeguro(e.away,j,false)
-     );
-
-   const atual=
-     normalizarNome(equipaAtual.name);
+   const home=nomeEquipaSeguro(e.home,j,true);
+   const away=nomeEquipaSeguro(e.away,j,false);
 
    return (
 
@@ -931,11 +947,11 @@ async function mostrarEquipa(){
 
      ||
 
-     hn===atual
+     nomesEquivalentes(home,atual)
 
      ||
 
-     an===atual
+     nomesEquivalentes(away,atual)
 
    );
 
@@ -945,15 +961,11 @@ async function mostrarEquipa(){
  document.getElementById("jogos-equipa")
  .innerHTML=
 
-   relacionados.length
-
-   ?
-
-   relacionados.map(jogoCard).join("")
-
-   :
-
-   '<div class="empty">Sem jogos encontrados.</div>';
+ relacionados.length
+ ?
+ relacionados.map(jogoCard).join("")
+ :
+ '<div class="empty">Sem jogos encontrados.</div>';
 
 
  await carregarPlantel();
@@ -961,7 +973,7 @@ async function mostrarEquipa(){
 
 
 /* =========================
-   PLANTEL
+   IDADE
 ========================= */
 
 function idadeAPartirData(data){
@@ -990,10 +1002,8 @@ function idadeAPartirData(data){
      mes===0 &&
      hoje.getDate()<d.getDate()
    )
- ){
-
+ )
    idade--;
- }
 
  if(idade<0 || idade>100)
    return "-";
@@ -1047,27 +1057,30 @@ function extrairTexto(valor){
 
 function criarJogador(p,i){
 
- const nascimento=
-   obterDataNascimento(p);
+ const nascimento=obterDataNascimento(p);
 
- const idade=
+ const idadeCalculada=
    idadeAPartirData(nascimento);
 
  let idadeFinal=
-   idade!=="-"
-   ? idade
-   : (
-       p.age &&
-       !/^\d{4}-\d{2}-\d{2}/.test(String(p.age))
-       ? p.age
-       : "-"
-     );
+   idadeCalculada!=="-"
+   ?
+   idadeCalculada
+   :
+   (
+     p.age &&
+     !/^\d{4}-\d{2}-\d{2}/.test(String(p.age))
+     ?
+     p.age
+     :
+     "-"
+   );
 
 
- let foto="";
-
- if(typeof p.photo==="string")
-   foto=p.photo;
+ let foto=
+   typeof p.photo==="string"
+   ? p.photo
+   : "";
 
  if(!foto && typeof p.strThumb==="string")
    foto=p.strThumb;
@@ -1081,14 +1094,11 @@ function criarJogador(p,i){
  if(!foto && typeof p.image==="string")
    foto=p.image;
 
- if(
-   !foto &&
-   typeof p.headshot==="object"
- )
+ if(!foto && typeof p.headshot==="object")
    foto=p.headshot?.href || "";
 
 
- return {
+ return{
 
    id:
      p.id ||
@@ -1127,35 +1137,30 @@ function criarJogador(p,i){
      ) || "-",
 
    photo:foto
-
  };
 }
 
+
+/* =========================
+   ENCONTRAR PLANTEL
+========================= */
 
 function encontrarPlantel(dados){
 
  if(!dados)
    return null;
 
-
  const atualId=
    String(equipaAtual.id || "");
 
-
  const atualNome=
-   normalizarNome(equipaAtual.name);
-
+   equipaAtual.name || "";
 
  const atualLiga=
-   normalizarNome(equipaAtual.league);
-
+   equipaAtual.league || "";
 
  let candidatos=[];
 
-
- /* =========================
-    RECOLHER TODAS AS EQUIPAS
- ========================= */
 
  function recolher(obj){
 
@@ -1164,7 +1169,7 @@ function encontrarPlantel(dados){
 
    if(Array.isArray(obj)){
 
-     obj.forEach(x=>recolher(x));
+     obj.forEach(recolher);
      return;
    }
 
@@ -1186,30 +1191,26 @@ function encontrarPlantel(dados){
      "";
 
 
-   if(temJogadores || nome){
-
+   if(temJogadores || nome)
      candidatos.push(obj);
-   }
 
 
    for(const chave of Object.keys(obj)){
 
+     if(
+       chave==="players" ||
+       chave==="roster" ||
+       chave==="squad"
+     )
+       continue;
+
      const valor=obj[chave];
 
      if(
-       typeof valor==="object" &&
-       valor!==null
-     ){
-
-       if(
-         chave!=="players" &&
-         chave!=="roster" &&
-         chave!=="squad"
-       ){
-
-         recolher(valor);
-       }
-     }
+       valor &&
+       typeof valor==="object"
+     )
+       recolher(valor);
    }
  }
 
@@ -1217,9 +1218,7 @@ function encontrarPlantel(dados){
  recolher(dados);
 
 
- /* =========================
-    PRIMEIRO: ID
- ========================= */
+ /* ID */
 
  let encontrado=
    candidatos.find(x=>
@@ -1243,23 +1242,22 @@ function encontrarPlantel(dados){
  }
 
 
- /* =========================
-    SEGUNDO: NOME EXATO
- ========================= */
+ /* NOME + ALIASES */
 
  encontrado=
    candidatos.find(x=>{
 
-     const nome=
-       normalizarNome(
-         x.name ||
-         x.strTeam ||
-         x.teamName ||
-         x.displayName ||
-         ""
-       );
+     const nomeDB=
+       x.name ||
+       x.strTeam ||
+       x.teamName ||
+       x.displayName ||
+       "";
 
-     return nome===atualNome;
+     return nomesEquivalentes(
+       nomeDB,
+       atualNome
+     );
    });
 
 
@@ -1274,9 +1272,7 @@ function encontrarPlantel(dados){
  }
 
 
- /* =========================
-    TERCEIRO: NOME PARECIDO
- ========================= */
+ /* MELHOR CORRESPONDÊNCIA */
 
  let melhor=null;
  let melhorPontuacao=0;
@@ -1285,49 +1281,34 @@ function encontrarPlantel(dados){
  candidatos.forEach(x=>{
 
    const nomeDB=
-     normalizarNome(
-       x.name ||
-       x.strTeam ||
-       x.teamName ||
-       x.displayName ||
-       ""
-     );
+     x.name ||
+     x.strTeam ||
+     x.teamName ||
+     x.displayName ||
+     "";
 
-
-   if(!nomeDB || !atualNome)
+   if(!nomeDB)
      return;
-
 
    let pontos=0;
 
+   const a=
+     normalizarNome(atualNome);
+
+   const b=
+     normalizarNome(nomeDB);
+
+   if(a===b)
+     pontos+=100;
+
+   if(nomesEquivalentes(a,b))
+     pontos+=80;
 
    if(
-     nomeDB.includes(atualNome) ||
-     atualNome.includes(nomeDB)
-   ){
-
-     pontos+=60;
-   }
-
-
-   const palavrasAtual=
-     atualNome.match(/[a-z]{3,}/g) || [];
-
-   const palavrasDB=
-     nomeDB.match(/[a-z]{3,}/g) || [];
-
-
-   palavrasAtual.forEach(p=>{
-
-     if(
-       palavrasDB.some(
-         x=>x.includes(p)||p.includes(x)
-       )
-     ){
-
-       pontos+=10;
-     }
-   });
+     a.includes(b) ||
+     b.includes(a)
+   )
+     pontos+=40;
 
 
    if(
@@ -1335,16 +1316,17 @@ function encontrarPlantel(dados){
      x.league
    ){
 
-     const ligaDB=
+     const la=
+       normalizarNome(atualLiga);
+
+     const lb=
        normalizarNome(x.league);
 
      if(
-       ligaDB.includes(atualLiga) ||
-       atualLiga.includes(ligaDB)
-     ){
-
-       pontos+=10;
-     }
+       la.includes(lb) ||
+       lb.includes(la)
+     )
+       pontos+=20;
    }
 
 
@@ -1375,6 +1357,10 @@ function encontrarPlantel(dados){
 }
 
 
+/* =========================
+   CARREGAR PLANTEL
+========================= */
+
 async function carregarPlantel(){
 
  try{
@@ -1383,33 +1369,25 @@ async function carregarPlantel(){
      "data/planteis.json?v="+Date.now()
    );
 
-
    if(!r.ok)
      throw new Error("Plantel");
 
-
    const dados=await r.json();
-
 
    let plantel=
      encontrarPlantel(dados);
 
-
    if(!plantel){
 
-     document.getElementById("plantel")
-     .innerHTML=
+     document.getElementById("plantel").innerHTML=
        '<div class="empty">Plantel não disponível.</div>';
 
      return;
    }
 
-
    if(!Array.isArray(plantel))
      plantel=Object.values(plantel);
 
-
-   /* retirar treinadores/entradas vazias */
 
    plantel=
      plantel.filter(p=>
@@ -1425,8 +1403,7 @@ async function carregarPlantel(){
 
    if(!plantel.length){
 
-     document.getElementById("plantel")
-     .innerHTML=
+     document.getElementById("plantel").innerHTML=
        '<div class="empty">Plantel vazio.</div>';
 
      return;
@@ -1437,8 +1414,7 @@ async function carregarPlantel(){
      plantel.map(criarJogador);
 
 
-   document.getElementById("plantel")
-   .innerHTML=`
+   document.getElementById("plantel").innerHTML=`
 
    <div class="plantel-grid">
 
@@ -1458,9 +1434,8 @@ async function carregarPlantel(){
 
            `<img
              src="${esc(jogador.photo)}"
-             onerror="
-               this.style.display='none'
-             ">`
+             onerror="this.style.display='none'"
+           >`
 
            :
 
@@ -1498,13 +1473,9 @@ async function carregarPlantel(){
 
  }catch(e){
 
-   console.log(
-     "Erro plantel:",
-     e
-   );
+   console.log("Erro plantel:",e);
 
-   document.getElementById("plantel")
-   .innerHTML=
+   document.getElementById("plantel").innerHTML=
      '<div class="empty">Não foi possível carregar o plantel.</div>';
  }
 }
@@ -1518,12 +1489,8 @@ function abrirJogador(p){
 
  document.getElementById("app").innerHTML=`
 
- <button
-   class="back"
-   id="voltarJogador">
-
+ <button class="back" id="voltarJogador">
    ← Voltar ao plantel
-
  </button>
 
  <div class="player-profile">
@@ -1535,9 +1502,8 @@ function abrirJogador(p){
 
    `<img
       src="${esc(p.photo)}"
-      onerror="
-        this.style.display='none'
-      ">`
+      onerror="this.style.display='none'"
+   >`
 
    :
 
@@ -1565,51 +1531,29 @@ function abrirJogador(p){
  <div class="info-box">
 
    <div class="info-row">
-     <span class="info-label">
-       Número
-     </span>
-
-     <span class="info-value">
-       #${esc(p.number)}
-     </span>
+     <span class="info-label">Número</span>
+     <span class="info-value">#${esc(p.number)}</span>
    </div>
 
    <div class="info-row">
-     <span class="info-label">
-       Posição
-     </span>
-
-     <span class="info-value">
-       ${esc(p.position)}
-     </span>
+     <span class="info-label">Posição</span>
+     <span class="info-value">${esc(p.position)}</span>
    </div>
 
    <div class="info-row">
-     <span class="info-label">
-       Idade
-     </span>
-
-     <span class="info-value">
-       ${esc(p.age)}
-     </span>
+     <span class="info-label">Idade</span>
+     <span class="info-value">${esc(p.age)}</span>
    </div>
 
    <div class="info-row">
-     <span class="info-label">
-       Nacionalidade
-     </span>
-
-     <span class="info-value">
-       ${esc(p.nationality)}
-     </span>
+     <span class="info-label">Nacionalidade</span>
+     <span class="info-value">${esc(p.nationality)}</span>
    </div>
 
  </div>
 
  </div>
-
  `;
-
 
  document.getElementById("voltarJogador")
  .onclick=mostrarEquipa;
@@ -1622,26 +1566,18 @@ function abrirJogador(p){
 
 async function mostrarTabelas(){
 
- document.getElementById("navJogos")
- .classList.remove("active");
-
- document.getElementById("navTabelas")
- .classList.add("active");
-
- document.getElementById("navFav")
- .classList.remove("active");
-
+ document.getElementById("navJogos").classList.remove("active");
+ document.getElementById("navTabelas").classList.add("active");
+ document.getElementById("navFav").classList.remove("active");
 
  document.getElementById("app").innerHTML=`
 
  <h2>📊 Tabelas</h2>
 
  <div id="tabelas">
-
    <div class="empty">
      A carregar classificações...
    </div>
-
  </div>
 
  `;
@@ -1652,6 +1588,8 @@ async function mostrarTabelas(){
 
  for(const liga of ligas){
 
+   let encontrou=false;
+
    try{
 
      const ficheiro=
@@ -1659,7 +1597,6 @@ async function mostrarTabelas(){
          ".json",
          "-classificacao.json"
        );
-
 
      const r=await fetch(
        ficheiro+"?v="+Date.now()
@@ -1681,10 +1618,9 @@ async function mostrarTabelas(){
            entries
          );
 
-         continue;
+         encontrou=true;
        }
      }
-
 
    }catch(e){
 
@@ -1697,37 +1633,38 @@ async function mostrarTabelas(){
 
 
    /*
-      FALLBACK:
-      construir classificação
-      diretamente pelos jogos
+      Se a classificação ESPN não
+      estiver disponível, calcula
+      pelos resultados existentes.
    */
 
-   const tabela=
-     construirTabelaDosJogos(
-       liga.nome
-     );
+   if(!encontrou){
 
+     const tabela=
+       construirTabelaDosJogos(
+         liga.nome
+       );
 
-   if(tabela.length){
+     if(tabela.length){
 
-     html+=criarTabelaCalculada(
-       liga.nome,
-       tabela
-     );
+       html+=criarTabelaCalculada(
+         liga.nome,
+         tabela
+       );
+     }
    }
 
  }
 
 
- document.getElementById("tabelas")
- .innerHTML=
+ document.getElementById("tabelas").innerHTML=
    html ||
    '<div class="empty">Tabelas indisponíveis.</div>';
 }
 
 
 /* =========================
-   ENCONTRAR ENTRIES ESPN
+   PROCURAR ENTRIES ESPN
 ========================= */
 
 function procurarEntries(d){
@@ -1740,58 +1677,47 @@ function procurarEntries(d){
    return d;
 
 
- /*
-    FORMATO REAL:
-    {
-      leagues:[
-        {
-          standings:[
-            {
-              entries:[]
-            }
-          ]
-        }
-      ]
-    }
- */
-
+ /* entries diretamente */
 
  if(Array.isArray(d.entries))
    return d.entries;
 
 
- if(Array.isArray(d.standings)){
+ /* standings */
 
-   for(const s of d.standings){
+ if(d.standings){
 
-     const x=
-       procurarEntries(s);
+   const x=
+     procurarEntries(d.standings);
 
-     if(x.length)
-       return x;
-   }
+   if(x.length)
+     return x;
  }
 
+
+ /* leagues */
 
  if(Array.isArray(d.leagues)){
 
-   for(const l of d.leagues){
+   for(const league of d.leagues){
 
      const x=
-       procurarEntries(l);
+       procurarEntries(league);
 
      if(x.length)
        return x;
    }
  }
 
+
+ /* children */
 
  if(Array.isArray(d.children)){
 
-   for(const c of d.children){
+   for(const child of d.children){
 
      const x=
-       procurarEntries(c);
+       procurarEntries(child);
 
      if(x.length)
        return x;
@@ -1799,19 +1725,16 @@ function procurarEntries(d){
  }
 
 
- /*
-    procura genericamente
-    por arrays de objetos
- */
+ /* procura recursiva */
 
  for(const chave of Object.keys(d)){
 
    const valor=d[chave];
 
    if(
-     Array.isArray(valor) &&
-     valor.length &&
-     typeof valor[0]==="object"
+     valor &&
+     typeof valor==="object" &&
+     chave!=="team"
    ){
 
      const x=
@@ -1820,7 +1743,6 @@ function procurarEntries(d){
      if(x.length)
        return x;
    }
-
  }
 
  return [];
@@ -1842,7 +1764,6 @@ function stat(e,n){
        x.abbreviation===n
      );
 
-
    if(s){
 
      return (
@@ -1858,10 +1779,7 @@ function stat(e,n){
 
    const s=e.stats[n];
 
-   if(
-     s!==undefined &&
-     s!==null
-   ){
+   if(s!==undefined && s!==null){
 
      if(typeof s==="object"){
 
@@ -1880,10 +1798,6 @@ function stat(e,n){
  return e?.[n] ?? "-";
 }
 
-
-/* =========================
-   NÚMERO ESTATÍSTICO
-========================= */
 
 function numeroStat(e,...nomes){
 
@@ -1907,7 +1821,7 @@ function numeroStat(e,...nomes){
 
 function criarTabela(nomeLiga,entries){
 
- let linhas=
+ const linhas=
    entries.map((e,i)=>{
 
      const t=
@@ -1935,62 +1849,51 @@ function criarTabela(nomeLiga,entries){
        "";
 
 
-     const jogos=
-       numeroStat(
-         e,
-         "gamesPlayed",
-         "played",
-         "gp"
-       );
+     return{
 
+       id:id,
+       nome:nome,
+       logo:logo,
 
-     const vitorias=
-       numeroStat(
-         e,
-         "wins",
-         "win",
-         "w"
-       );
+       jogos:
+         numeroStat(
+           e,
+           "gamesPlayed",
+           "played",
+           "gp"
+         ),
 
+       vitorias:
+         numeroStat(
+           e,
+           "wins",
+           "win",
+           "w"
+         ),
 
-     const empates=
-       numeroStat(
-         e,
-         "ties",
-         "draws",
-         "draw",
-         "d"
-       );
+       empates:
+         numeroStat(
+           e,
+           "ties",
+           "draws",
+           "draw",
+           "d"
+         ),
 
+       derrotas:
+         numeroStat(
+           e,
+           "losses",
+           "loss",
+           "l"
+         ),
 
-     const derrotas=
-       numeroStat(
-         e,
-         "losses",
-         "loss",
-         "l"
-       );
-
-
-     const pontos=
-       numeroStat(
-         e,
-         "points",
-         "pts"
-       );
-
-
-     return {
-
-       id,
-       nome,
-       logo,
-       jogos,
-       vitorias,
-       empates,
-       derrotas,
-       pontos
-
+       pontos:
+         numeroStat(
+           e,
+           "points",
+           "pts"
+         )
      };
 
    });
@@ -2004,7 +1907,7 @@ function criarTabela(nomeLiga,entries){
 
 
 /* =========================
-   CALCULAR TABELA PELOS JOGOS
+   TABELA CALCULADA
 ========================= */
 
 function construirTabelaDosJogos(nomeLiga){
@@ -2020,9 +1923,7 @@ function construirTabelaDosJogos(nomeLiga){
 
  jogosLiga.forEach(j=>{
 
-   const e=
-     obterEquipas(j);
-
+   const e=obterEquipas(j);
 
    const homeNome=
      nomeEquipaSeguro(
@@ -2030,7 +1931,6 @@ function construirTabelaDosJogos(nomeLiga){
        j,
        true
      );
-
 
    const awayNome=
      nomeEquipaSeguro(
@@ -2043,78 +1943,80 @@ function construirTabelaDosJogos(nomeLiga){
    const homeScore=
      numeroResultado(e.home);
 
-
    const awayScore=
      numeroResultado(e.away);
 
 
-   /*
-      Só contar jogos com resultado
-   */
-
    if(
      homeScore===null ||
      awayScore===null
-   ){
-
+   )
      return;
-   }
 
 
    const homeKey=
      normalizarNome(homeNome);
 
-
    const awayKey=
      normalizarNome(awayNome);
-
-
-   if(!homeKey || !awayKey)
-     return;
 
 
    if(!mapa[homeKey]){
 
      mapa[homeKey]={
+
        id:idEquipa(e.home),
+
        nome:homeNome,
+
        logo:logoEquipa(e.home),
+
        jogos:0,
+
        vitorias:0,
+
        empates:0,
+
        derrotas:0,
+
        golosMarcados:0,
+
        golosSofridos:0,
+
        pontos:0
      };
-
    }
 
 
    if(!mapa[awayKey]){
 
      mapa[awayKey]={
+
        id:idEquipa(e.away),
+
        nome:awayNome,
+
        logo:logoEquipa(e.away),
+
        jogos:0,
+
        vitorias:0,
+
        empates:0,
+
        derrotas:0,
+
        golosMarcados:0,
+
        golosSofridos:0,
+
        pontos:0
      };
-
    }
 
 
-   const home=
-     mapa[homeKey];
-
-
-   const away=
-     mapa[awayKey];
+   const home=mapa[homeKey];
+   const away=mapa[awayKey];
 
 
    home.jogos++;
@@ -2165,7 +2067,6 @@ function construirTabelaDosJogos(nomeLiga){
    const gdA=
      a.golosMarcados-a.golosSofridos;
 
-
    const gdB=
      b.golosMarcados-b.golosSofridos;
 
@@ -2175,34 +2076,20 @@ function construirTabelaDosJogos(nomeLiga){
 
 
    if(
-     b.golosMarcados!==
-     a.golosMarcados
-   ){
-
-     return (
-       b.golosMarcados-
-       a.golosMarcados
-     );
-   }
+     b.golosMarcados!==a.golosMarcados
+   )
+     return b.golosMarcados-a.golosMarcados;
 
 
    return a.nome.localeCompare(
      b.nome,
      "pt"
    );
-
  });
 }
 
 
-/* =========================
-   HTML TABELA CALCULADA
-========================= */
-
-function criarTabelaCalculada(
- nomeLiga,
- linhas
-){
+function criarTabelaCalculada(nomeLiga,linhas){
 
  return criarHTMLTabela(
    nomeLiga,
@@ -2212,13 +2099,10 @@ function criarTabelaCalculada(
 
 
 /* =========================
-   HTML FINAL TABELA
+   HTML TABELA
 ========================= */
 
-function criarHTMLTabela(
- nomeLiga,
- linhas
-){
+function criarHTMLTabela(nomeLiga,linhas){
 
  return`
 
@@ -2237,9 +2121,11 @@ function criarHTMLTabela(
        <tr>
 
          <th>#</th>
+
          <th class="team-table">
            Equipa
          </th>
+
          <th>J</th>
          <th>V</th>
          <th>E</th>
@@ -2290,21 +2176,13 @@ function criarHTMLTabela(
 
          </td>
 
-         <td>
-           ${esc(e.jogos)}
-         </td>
+         <td>${esc(e.jogos)}</td>
 
-         <td>
-           ${esc(e.vitorias)}
-         </td>
+         <td>${esc(e.vitorias)}</td>
 
-         <td>
-           ${esc(e.empates)}
-         </td>
+         <td>${esc(e.empates)}</td>
 
-         <td>
-           ${esc(e.derrotas)}
-         </td>
+         <td>${esc(e.derrotas)}</td>
 
          <td class="points">
            ${esc(e.pontos)}
@@ -2333,15 +2211,9 @@ function criarHTMLTabela(
 
 function mostrarFavoritos(){
 
- document.getElementById("navJogos")
- .classList.remove("active");
-
- document.getElementById("navTabelas")
- .classList.remove("active");
-
- document.getElementById("navFav")
- .classList.add("active");
-
+ document.getElementById("navJogos").classList.remove("active");
+ document.getElementById("navTabelas").classList.remove("active");
+ document.getElementById("navFav").classList.add("active");
 
  document.getElementById("app").innerHTML=`
 
@@ -2364,7 +2236,6 @@ function mostrarFavoritos(){
 ========================= */
 
 mostrarJogos();
-
 carregar();
 
 </script>
