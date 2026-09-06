@@ -18,7 +18,7 @@ async function carregarDetalhes() {
     });
 
     const dados = await resposta.json();
-
+document.body.innerHTML += "<pre style='white-space:pre-wrap;font-size:11px'>" + escapar(JSON.stringify(dados, null, 2)) + "</pre>";
     const jogo = dados.header?.competitions?.[0];
 
     if (!jogo) {
