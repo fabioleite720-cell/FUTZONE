@@ -2,8 +2,6 @@ name: Criar planteis FUTZONE
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 4 * * *"
 
 permissions:
   contents: write
@@ -13,98 +11,102 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+
+      - name: Baixar código
         uses: actions/checkout@v4
 
-      - name: Atualizar plantéis FUTZONE
+      - name: Criar planteis
+        env:
+          TSDB_KEY: "123"
         run: |
           python3 <<'PY'
           import json
-          import urllib.request
-          import urllib.parse
-          import time
           import os
-          import re
-          import unicodedata
-
-          BASE = "https://www.thesportsdb.com/api/v1/json/123"
+          import time
+          import urllib.parse
+          import urllib.request
 
           FICHEIROS = [
               ("primeira-liga.json", "Portugal"),
-              ("premier-league.json", "Inglaterra"),
-              ("la-liga.json", "Espanha"),
-              ("serie-a.json", "Italia"),
-              ("bundesliga.json", "Alemanha")
+              ("premier-league.json", "England"),
+              ("la-liga.json", "Spain"),
+              ("serie-a.json", "Italy"),
+              ("bundesliga.json", "Germany")
           ]
 
+          API = "https://www.thesportsdb.com/api/v1/json/123"
+
           def normalizar(texto):
-              texto = str(texto or "").lower()
-              texto = unicodedata.normalize("NFD", texto)
-              texto = "".join(
-                  c for c in texto
-                  if unicodedata.category(c) != "Mn"
+              if not texto:
+                  return ""
+              return "".join(
+                  c.lower()
+                  for c in texto
+                  if c.isalnum()
               )
-              return re.sub(r"[^a-z0-9]", "", texto)
 
           def buscar(url):
-              req = urllib.request.Request(
-                  url,
-                  headers={
-                      "User-Agent": "FUTZONE/1.0",
-                      "Accept": "application/json"
-                  }
-              )
-
-              with urllib.request.urlopen(req, timeout=30) as r:
-                  return json.load(r)
-
-          caminho = "data/planteis.json"
-
-          # -----------------------------------------
-          # CARREGAR PLANTEIS EXISTENTES
-          # -----------------------------------------
-
-          resultado = {}
-
-          if os.path.exists(caminho):
               try:
-                  with open(caminho, "r", encoding="utf-8") as f:
-                      resultado = json.load(f)
-
-                  if not isinstance(resultado, dict):
-                      resultado = {}
-
-                  print(
-                      "Plantéis existentes:",
-                      len(resultado)
+                  req = urllib.request.Request(
+                      url,
+                      headers={"User-Agent": "FUTZONE/1.0"}
                   )
+
+                  with urllib.request.urlopen(
+                      req,
+                      timeout=20
+                  ) as resposta:
+                      return json.loads(
+                          resposta.read().decode("utf-8")
+                      )
 
               except Exception as e:
-                  print(
-                      "Erro a carregar plantéis anteriores:",
-                      e
-                  )
+                  print("ERRO API:", e)
+                  return None
 
           # -----------------------------------------
-          # DESCOBRIR EQUIPAS
+          # CARREGAR PLANTEIS ANTIGOS
+          # -----------------------------------------
+
+          ficheiro_saida = "data/planteis.json"
+
+          try:
+              with open(
+                  ficheiro_saida,
+                  "r",
+                  encoding="utf-8"
+              ) as f:
+                  planteis = json.load(f)
+
+              if not isinstance(planteis, dict):
+                  planteis = {}
+
+          except Exception:
+              planteis = {}
+
+          # -----------------------------------------
+          # ENCONTRAR EQUIPAS NOS JOGOS
           # -----------------------------------------
 
           equipas = {}
 
           for ficheiro, pais in FICHEIROS:
 
+              caminho = "data/" + ficheiro
+
               print("")
               print("================================")
-              print("A ler:", ficheiro)
+              print("A ler:", caminho)
               print("================================")
 
               try:
                   with open(
-                      "data/" + ficheiro,
+                      caminho,
                       "r",
                       encoding="utf-8"
                   ) as f:
                       dados = json.load(f)
+
               except Exception as e:
                   print("Não foi possível ler:", e)
                   continue
@@ -112,7 +114,7 @@ jobs:
               eventos = dados.get("events", [])
 
               if not isinstance(eventos, list):
-                  print("Formato de jogos inválido:", ficheiro)
+                  print("Formato inválido:", ficheiro)
                   continue
 
               for evento in eventos:
@@ -125,7 +127,10 @@ jobs:
                           "competitors", []
                       ):
 
-                          team = c.get("team", {})
+                          team = c.get(
+                              "team",
+                              {}
+                          )
 
                           tid = (
                               team.get("id")
@@ -140,10 +145,45 @@ jobs:
                           )
 
                           if tid and nome:
+
                               equipas[str(tid)] = {
                                   "name": nome,
                                   "league": pais
                               }
+
+          # -----------------------------------------
+          # GARANTIR FC PORTO
+          # -----------------------------------------
+
+          porto_existe = False
+
+          for info in equipas.values():
+
+              n = normalizar(
+                  info.get("name", "")
+              )
+
+              if n in [
+                  "porto",
+                  "fcporto",
+                  "futebolclubeporto",
+                  "futebolclubedoporto",
+                  "portofutebolclube"
+              ]:
+                  porto_existe = True
+                  break
+
+          if not porto_existe:
+
+              print("")
+              print("================================")
+              print("A adicionar FC PORTO manualmente")
+              print("================================")
+
+              equipas["FC_PORTO_FIXO"] = {
+                  "name": "FC Porto",
+                  "league": "Portugal"
+              }
 
           print("")
           print("================================")
@@ -171,33 +211,38 @@ jobs:
 
               # FC PORTO
               if n in [
-                  "fcporto",
                   "porto",
+                  "fcporto",
                   "futebolclubeporto",
-                  "futebolclubedoporto"
+                  "futebolclubedoporto",
+                  "portofutebolclube"
               ]:
+
                   candidatos = [
                       "FC Porto",
-                      "Porto"
+                      "Porto",
+                      "Futebol Clube do Porto"
                   ]
 
               # BENFICA
               elif n in [
                   "benfica",
                   "slbenfica",
-                  "sportlisboabenfica"
+                  "sportlisboaebenfica"
               ]:
+
                   candidatos = [
-                      "SL Benfica",
-                      "Benfica"
+                      "Benfica",
+                      "SL Benfica"
                   ]
 
               # SPORTING
               elif n in [
-                  "sportingcp",
                   "sporting",
+                  "sportingcp",
                   "sportingclubedeportugal"
               ]:
+
                   candidatos = [
                       "Sporting CP",
                       "Sporting"
@@ -209,12 +254,14 @@ jobs:
                   "scbraga",
                   "sportingbraga"
               ]:
+
                   candidatos = [
                       "SC Braga",
                       "Braga"
                   ]
 
               encontrado = None
+              team_id = None
 
               # -----------------------------------------
               # PROCURAR EQUIPA NO THESPORTSDB
@@ -222,286 +269,244 @@ jobs:
 
               for candidato in candidatos:
 
-                  try:
+                  print(
+                      "A procurar:",
+                      candidato
+                  )
 
-                      nome_url = urllib.parse.quote(
+                  url = (
+                      API
+                      + "/searchteams.php?t="
+                      + urllib.parse.quote(candidato)
+                  )
+
+                  dados_equipa = buscar(url)
+
+                  time.sleep(2)
+
+                  if not dados_equipa:
+                      continue
+
+                  teams = dados_equipa.get(
+                      "teams"
+                  )
+
+                  if not isinstance(
+                      teams,
+                      list
+                  ):
+                      continue
+
+                  # Tentar correspondência exata
+                  for team in teams:
+
+                      nome_db = team.get(
+                          "strTeam",
+                          ""
+                      )
+
+                      if normalizar(
+                          nome_db
+                      ) == normalizar(
                           candidato
+                      ):
+
+                          encontrado = team
+                          break
+
+                  # Se não houver exacta,
+                  # usar primeira equipa
+                  if encontrado is None and teams:
+
+                      encontrado = teams[0]
+
+                  if encontrado:
+                      team_id = encontrado.get(
+                          "idTeam"
                       )
+                      break
 
-                      url = (
-                          BASE
-                          + "/searchteams.php?t="
-                          + nome_url
-                      )
-
-                      dados_equipa = buscar(url)
-
-                      teams = (
-                          dados_equipa.get("teams")
-                          or []
-                      )
-
-                      if teams:
-
-                          alvo = normalizar(candidato)
-
-                          # Correspondência exata
-                          for t in teams:
-
-                              nome_teste = normalizar(
-                                  t.get("strTeam")
-                              )
-
-                              if nome_teste == alvo:
-                                  encontrado = t
-                                  break
-
-                          # Se não houver exata
-                          if not encontrado:
-                              encontrado = teams[0]
-
-                          if encontrado.get("idTeam"):
-                              break
-
-                  except Exception as e:
-
-                      print(
-                          "Erro na pesquisa:",
-                          candidato,
-                          e
-                      )
-
-                  # respeitar limite da API
-                  time.sleep(2.2)
-
-              if not encontrado:
+              if not team_id:
 
                   print(
-                      "SEM EQUIPA:",
+                      "⚠️ Equipa não encontrada:",
                       nome_equipa
                   )
 
                   continue
 
-              id_team = encontrado.get("idTeam")
+              print(
+                  "TheSportsDB ID:",
+                  team_id
+              )
 
-              if not id_team:
+              # -----------------------------------------
+              # OBTER JOGADORES
+              # -----------------------------------------
+
+              url_players = (
+                  API
+                  + "/lookup_all_players.php?id="
+                  + urllib.parse.quote(
+                      str(team_id)
+                  )
+              )
+
+              dados_players = buscar(
+                  url_players
+              )
+
+              time.sleep(2)
+
+              if not dados_players:
 
                   print(
-                      "SEM ID:",
+                      "⚠️ Sem resposta de jogadores"
+                  )
+
+                  continue
+
+              players = dados_players.get(
+                  "player"
+              )
+
+              if not isinstance(
+                  players,
+                  list
+              ):
+
+                  print(
+                      "⚠️ Sem jogadores:",
                       nome_equipa
                   )
 
                   continue
 
-              nome_thesportsdb = (
-                  encontrado.get("strTeam")
-                  or nome_equipa
-              )
-
-              print(
-                  "TheSportsDB:",
-                  nome_thesportsdb
-              )
-
-              print(
-                  "ID:",
-                  id_team
-              )
-
-              # -----------------------------------------
-              # PROCURAR JOGADORES
-              # -----------------------------------------
-
-              try:
-
-                  time.sleep(2.2)
-
-                  url_players = (
-                      BASE
-                      + "/lookup_all_players.php?id="
-                      + str(id_team)
-                  )
-
-                  dados_players = buscar(
-                      url_players
-                  )
-
-                  players = (
-                      dados_players.get("player")
-                      or []
-                  )
-
-              except Exception as e:
-
-                  print(
-                      "Erro ao obter jogadores:",
-                      e
-                  )
-
-                  # NÃO apagar plantel anterior
-                  continue
-
-              jogadores = []
-
-              # -----------------------------------------
-              # CONVERTER JOGADORES
-              # -----------------------------------------
+              lista = []
 
               for p in players:
 
-                  if not isinstance(p, dict):
-                      continue
-
-                  jogador_id = (
-                      p.get("idPlayer")
-                      or p.get("id")
-                  )
-
                   nome = (
                       p.get("strPlayer")
-                      or p.get("strPlayerAlternate")
-                  )
+                      or p.get("name")
+                      or ""
+                  ).strip()
 
-                  if not jogador_id or not nome:
+                  if not nome:
                       continue
 
                   posicao = (
                       p.get("strPosition")
-                      or "-"
+                      or p.get("position")
+                      or ""
                   )
 
-                  pos_norm = normalizar(posicao)
-                  nome_norm = normalizar(nome)
-
-                  # Excluir treinadores
-                  if (
-                      "coach" in pos_norm
-                      or "manager" in pos_norm
-                      or "coach" in nome_norm
-                      or "manager" in nome_norm
+                  # Não mostrar treinadores
+                  if any(
+                      palavra in posicao.lower()
+                      for palavra in [
+                          "coach",
+                          "manager",
+                          "managerial"
+                      ]
                   ):
                       continue
 
-                  jogadores.append({
-                      "id": str(jogador_id),
+                  numero = (
+                      p.get("strNumber")
+                      or p.get("number")
+                      or ""
+                  )
 
+                  nascimento = (
+                      p.get("dateBorn")
+                      or p.get("dateOfBirth")
+                      or p.get("birthDate")
+                      or ""
+                  )
+
+                  nacionalidade = (
+                      p.get("strNationality")
+                      or p.get("nationality")
+                      or ""
+                  )
+
+                  foto = (
+                      p.get("strThumb")
+                      or p.get("strCutout")
+                      or p.get("photo")
+                      or ""
+                  )
+
+                  lista.append({
+                      "id": str(
+                          p.get(
+                              "idPlayer",
+                              ""
+                          )
+                      ),
                       "name": nome,
-
-                      "number": (
-                          p.get("strNumber")
-                          or "-"
-                      ),
-
+                      "number": str(numero),
                       "position": posicao,
-
-                      "age": (
-                          p.get("dateBorn")
-                          or "-"
-                      ),
-
-                      "nationality": (
-                          p.get("strNationality")
-                          or "-"
-                      ),
-
-                      "photo": (
-                          p.get("strThumb")
-                          or p.get("strCutout")
-                          or ""
-                      )
+                      "age": nascimento,
+                      "nationality": nacionalidade,
+                      "photo": foto
                   })
 
-              # -----------------------------------------
-              # GUARDAR APENAS SE HOUVER JOGADORES
-              # -----------------------------------------
+              if lista:
 
-              if jogadores:
+                  chave = str(team_id)
 
-                  resultado[str(id_team)] = {
-
-                      "id": str(id_team),
-
-                      "name": nome_thesportsdb,
-
+                  planteis[chave] = {
+                      "id": chave,
+                      "name": (
+                          encontrado.get(
+                              "strTeam"
+                          )
+                          or nome_equipa
+                      ),
                       "league": pais,
-
-                      "espnId": str(espn_id),
-
-                      "players": jogadores
+                      "players": lista
                   }
 
                   print(
-                      "OK:",
-                      len(jogadores),
-                      "jogadores"
+                      "✅ Jogadores:",
+                      len(lista)
                   )
 
               else:
 
                   print(
-                      "SEM JOGADORES:",
-                      nome_equipa
+                      "⚠️ Nenhum jogador válido"
                   )
-
-                  # Não apagar eventual plantel anterior
-
-              time.sleep(2.2)
-
-          # -----------------------------------------
-          # RESULTADO
-          # -----------------------------------------
-
-          total_equipas = len(resultado)
-
-          total_jogadores = sum(
-              len(
-                  e.get("players", [])
-              )
-              for e in resultado.values()
-              if isinstance(e, dict)
-          )
-
-          print("")
-          print("================================")
-          print("RESULTADO FINAL")
-          print("================================")
-          print(
-              "Equipas:",
-              total_equipas
-          )
-          print(
-              "Jogadores:",
-              total_jogadores
-          )
-          print("================================")
-
-          if total_jogadores == 0:
-              raise Exception(
-                  "Nenhum jogador encontrado."
-              )
 
           # -----------------------------------------
           # GUARDAR
           # -----------------------------------------
 
+          os.makedirs(
+              "data",
+              exist_ok=True
+          )
+
           with open(
-              caminho,
+              ficheiro_saida,
               "w",
               encoding="utf-8"
           ) as f:
 
               json.dump(
-                  resultado,
+                  planteis,
                   f,
                   ensure_ascii=False,
                   indent=2
               )
 
-          print(
-              "data/planteis.json atualizado com sucesso."
-          )
-
+          print("")
+          print("================================")
+          print("PLANTEIS GUARDADOS")
+          print("Total:", len(planteis))
+          print("================================")
           PY
 
       - name: Guardar alterações
