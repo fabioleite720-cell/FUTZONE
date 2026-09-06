@@ -2,117 +2,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FUTZONE — Detalhes</title><style>
+<title>FUTZONE — Detalhes</title>
+<style>
 *{box-sizing:border-box}
-
-body{
-margin:0;
-font-family:Arial,sans-serif;
-background:#f4f5f7;
-color:#111;
-}
-
-iframe{
-width:100%;
-height:100vh;
-border:0;
-}
-
-#detalhes{
-display:none;
-position:fixed;
-inset:0;
-background:#f4f5f7;
-z-index:9999;
-overflow:auto;
-}
-
-.topo{
-background:#07111f;
-color:white;
-padding:15px;
-position:sticky;
-top:0;
-z-index:5;
-display:flex;
-align-items:center;
-gap:10px;
-}
-
-.topo button{
-padding:9px 14px;
-border:0;
-border-radius:9px;
-font-size:15px;
-}
-
-.box{
-background:white;
-margin:16px;
-padding:18px;
-border-radius:16px;
-box-shadow:0 3px 12px #0001;
-}
-
-.equipas{
-display:flex;
-justify-content:space-between;
-align-items:center;
-text-align:center;
-gap:8px;
-}
-
-.equipa{
-width:40%;
-font-weight:bold;
-}
-
-.equipa img{
-width:60px;
-height:60px;
-object-fit:contain;
-display:block;
-margin:auto auto 8px;
-}
-
-.resultado{
-font-size:25px;
-font-weight:bold;
-white-space:nowrap;
-}
-
-.badge{
-display:inline-block;
-background:#07111f;
-color:white;
-padding:6px 10px;
-border-radius:20px;
-font-size:13px;
-}
-
-.info{
-margin-top:14px;
-}
-
-.live{
-color:#d60000;
-font-weight:bold;
-}
-
-.evento{
-padding:10px 0;
-border-bottom:1px solid #eee;
-}
-
-.sem-dados{
-color:#777;
-}
-
-#erro{
-color:#b00020;
-font-weight:bold;
-}
-</style></head><body><iframe id="app" src="index.html"></iframe><div id="detalhes"><div class="topo">
+body{margin:0;font-family:Arial,sans-serif;background:#f4f5f7;color:#111}
+iframe{width:100%;height:100vh;border:0}
+#detalhes{display:none;position:fixed;inset:0;background:#f4f5f7;z-index:9999;overflow:auto}
+.topo{background:#07111f;color:white;padding:15px;position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px}
+.topo button{padding:9px 14px;border:0;border-radius:9px;font-size:15px}
+.box{background:white;margin:16px;padding:18px;border-radius:16px;box-shadow:0 3px 12px #0001}
+.equipas{display:flex;justify-content:space-between;align-items:center;text-align:center;gap:8px}
+.equipa{width:40%;font-weight:bold}
+.equipa img{width:60px;height:60px;object-fit:contain;display:block;margin:auto auto 8px}
+.resultado{font-size:25px;font-weight:bold;white-space:nowrap}
+.badge{display:inline-block;background:#07111f;color:white;padding:6px 10px;border-radius:20px;font-size:13px}
+.info{margin-top:14px}
+.live{color:#d60000;font-weight:bold}
+.evento{padding:12px 0;border-bottom:1px solid #eee}
+.evento:last-child{border-bottom:0}
+.evento-top{display:flex;gap:10px;align-items:center}
+.minuto{font-weight:bold;min-width:35px}
+.tipo{font-size:20px}
+.nome-evento{font-weight:bold}
+.assistencia{font-size:13px;color:#666;margin-top:3px}
+.stats{width:100%;border-collapse:collapse;margin-top:10px}
+.stats th{font-size:13px;padding:8px;text-align:center}
+.stats td{padding:10px 4px;border-top:1px solid #eee;text-align:center}
+.stats td:first-child{text-align:left;font-weight:bold}
+.stats td:last-child{text-align:right}
+.sem-dados{color:#777}
+</style>
+</head><body><iframe id="app" src="index.html"></iframe><div id="detalhes"><div class="topo">
 <button onclick="fechar()">← Voltar</button>
 <b>Detalhes do jogo</b>
 </div><div class="box"><div id="competicao" class="badge">Futebol</div><div class="equipas" style="margin-top:20px"><div class="equipa">
@@ -133,7 +53,7 @@ Informação de eventos não disponível para este jogo.
 <div id="estatisticas" class="sem-dados">
 Estatísticas não disponíveis para este jogo.
 </div>
-</div><div class="box" id="erro" style="display:none"></div></div><script>
+</div></div><script>
 
 const frame=document.getElementById("app");
 
@@ -163,39 +83,35 @@ function encontrarJogo(card,jogos){
 
 const textoCard=textoNormal(card.innerText);
 
-if(!textoCard)return null;
-
 let melhor=null;
-let melhorPontuacao=0;
+let pontosMax=0;
 
 for(const jogo of jogos){
 
-const comp=jogo?.competitions?.[0];
-const equipas=comp?.competitors||[];
-
-if(equipas.length<2)continue;
+const c=jogo?.competitions?.[0];
+const equipas=c?.competitors||[];
 
 const casa=equipas.find(x=>x.homeAway==="home");
 const fora=equipas.find(x=>x.homeAway==="away");
 
 if(!casa||!fora)continue;
 
-const nomeCasa=textoNormal(nomeEquipa(casa));
-const nomeFora=textoNormal(nomeEquipa(fora));
-
 let pontos=0;
 
-if(nomeCasa && textoCard.includes(nomeCasa))pontos+=5;
-if(nomeFora && textoCard.includes(nomeFora))pontos+=5;
+const nc=textoNormal(nomeEquipa(casa));
+const nf=textoNormal(nomeEquipa(fora));
 
-const shortCasa=textoNormal(casa?.team?.shortDisplayName);
-const shortFora=textoNormal(fora?.team?.shortDisplayName);
+if(nc&&textoCard.includes(nc))pontos+=10;
+if(nf&&textoCard.includes(nf))pontos+=10;
 
-if(shortCasa && textoCard.includes(shortCasa))pontos+=2;
-if(shortFora && textoCard.includes(shortFora))pontos+=2;
+const sc=textoNormal(casa?.team?.shortDisplayName);
+const sf=textoNormal(fora?.team?.shortDisplayName);
 
-if(pontos>melhorPontuacao){
-melhorPontuacao=pontos;
+if(sc&&textoCard.includes(sc))pontos+=3;
+if(sf&&textoCard.includes(sf))pontos+=3;
+
+if(pontos>pontosMax){
+pontosMax=pontos;
 melhor=jogo;
 }
 
@@ -204,32 +120,178 @@ melhor=jogo;
 return melhor;
 }
 
-function mostrarEventos(jogo){
+function valorTexto(v){
+if(v===undefined||v===null)return"";
+return String(v);
+}
 
-const container=document.getElementById("eventos");
+function nomeJogador(ev){
 
-const competicao=jogo?.competitions?.[0];
+return ev?.athlete?.displayName ||
+ev?.athlete?.fullName ||
+ev?.player?.displayName ||
+ev?.player?.fullName ||
+ev?.participants?.[0]?.athlete?.displayName ||
+ev?.participants?.[0]?.displayName ||
+ev?.participants?.[0]?.athlete?.fullName ||
+ev?.participants?.[0]?.fullName ||
+ev?.text?.split(" - ")[0] ||
+"Jogador";
+}
+
+function nomeAssistencia(ev){
+
+return ev?.assist?.athlete?.displayName ||
+ev?.assist?.displayName ||
+ev?.assists?.[0]?.athlete?.displayName ||
+ev?.assists?.[0]?.displayName ||
+ev?.participants?.find(p=>p?.role==="assist")?.athlete?.displayName ||
+"";
+}
+
+function tipoEvento(ev){
+
+const texto=textoNormal(
+ev?.text||
+ev?.description||
+ev?.type?.text||
+ev?.type?.name||
+""
+);
+
+if(
+texto.includes("goal")||
+texto.includes("golo")||
+texto.includes("score")
+)return"goal";
+
+if(
+texto.includes("yellow")||
+texto.includes("amarelo")||
+texto.includes("yellow card")
+)return"yellow";
+
+if(
+texto.includes("red")||
+texto.includes("vermelho")||
+texto.includes("red card")
+)return"red";
+
+if(
+texto.includes("substitut")||
+texto.includes("substitution")||
+texto.includes("entra")||
+texto.includes("sai")
+)return"sub";
+
+return"other";
+}
+
+function iconeEvento(tipo){
+
+if(tipo==="goal")return"⚽";
+if(tipo==="yellow")return"🟨";
+if(tipo==="red")return"🟥";
+if(tipo==="sub")return"🔄";
+
+return"•";
+}
+
+function textoDescricaoEvento(ev,tipo){
+
+let nome=nomeJogador(ev);
+
+if(tipo==="goal"){
+
+const assist=nomeAssistencia(ev);
+
+return{
+principal:nome,
+extra:assist?"Assistência: "+assist:""
+};
+
+}
+
+if(tipo==="yellow"||tipo==="red"){
+
+return{
+principal:nome,
+extra:""
+};
+
+}
+
+if(tipo==="sub"){
+
+const entra=
+ev?.athlete?.displayName||
+ev?.substitution?.in?.displayName||
+ev?.participants?.find(p=>p?.type==="in")?.athlete?.displayName||
+"";
+
+const sai=
+ev?.substitution?.out?.displayName||
+ev?.participants?.find(p=>p?.type==="out")?.athlete?.displayName||
+"";
+
+if(entra||sai){
+
+return{
+principal:
+(entra?"Entra: "+entra:"")+
+(entra&&sai?" · ":"")+
+(sai?"Sai: "+sai:""),
+extra:""
+};
+
+}
+
+}
+
+return{
+principal:
+ev?.text||
+ev?.description||
+ev?.type?.text||
+"Evento",
+extra:""
+};
+
+}
+
+function obterEventos(jogo){
+
+const c=jogo?.competitions?.[0];
 
 const possiveis=[
-jogo?.competitions?.[0]?.details,
-jogo?.competitions?.[0]?.plays,
-jogo?.competitions?.[0]?.events,
+c?.details,
+c?.plays,
+c?.events,
 jogo?.details,
 jogo?.plays
 ];
 
-let eventos=null;
+for(const lista of possiveis){
 
-for(const x of possiveis){
-if(Array.isArray(x)&&x.length){
-eventos=x;
-break;
-}
+if(Array.isArray(lista)&&lista.length)
+return lista;
+
 }
 
-if(!eventos){
+return[];
+
+}
+
+function mostrarEventos(jogo){
+
+const container=document.getElementById("eventos");
+const eventos=obterEventos(jogo);
+
+if(!eventos.length){
+
 container.innerHTML=
 '<div class="sem-dados">Informação de eventos não disponível para este jogo.</div>';
+
 return;
 }
 
@@ -237,71 +299,142 @@ container.innerHTML="";
 
 for(const ev of eventos){
 
+const tipo=tipoEvento(ev);
+const dados=textoDescricaoEvento(ev,tipo);
+
+const minuto=
+ev?.clock?.displayValue||
+ev?.clock?.value||
+ev?.time||
+"";
+
 const div=document.createElement("div");
 div.className="evento";
 
-const minuto=
-ev?.clock?.displayValue ||
-ev?.clock?.value ||
-ev?.time ||
-"";
-
-const descricao=
-ev?.text ||
-ev?.description ||
-ev?.type?.text ||
-"Evento";
-
-div.textContent=
-(minuto ? minuto+" — " : "")+descricao;
+div.innerHTML=
+'<div class="evento-top">'+
+'<span class="minuto">'+valorTexto(minuto)+'</span>'+
+'<span class="tipo">'+iconeEvento(tipo)+'</span>'+
+'<span class="nome-evento">'+dados.principal+'</span>'+
+'</div>'+
+(dados.extra?
+'<div class="assistencia">'+dados.extra+'</div>'
+:"");
 
 container.appendChild(div);
+
 }
 
+}
+
+function obterEstatisticas(jogo){
+
+const c=jogo?.competitions?.[0];
+const equipas=c?.competitors||[];
+
+return equipas.map(e=>({
+
+nome:nomeEquipa(e),
+
+stats:e?.statistics||[]
+
+}));
+
+}
+
+function encontrarStat(stats,nomes){
+
+for(const s of stats){
+
+const nome=textoNormal(
+s?.name||
+s?.displayName||
+""
+);
+
+for(const n of nomes){
+
+if(nome.includes(textoNormal(n)))
+return s?.displayValue??s?.value??"-";
+
+}
+
+}
+
+return"-";
 }
 
 function mostrarEstatisticas(jogo){
 
 const container=document.getElementById("estatisticas");
 
-const competicao=jogo?.competitions?.[0];
+const dados=obterEstatisticas(jogo);
 
-const stats=
-competicao?.competitors?.flatMap(e=>e.statistics||[]) ||
-jogo?.statistics ||
-[];
+if(dados.length<2){
 
-if(!Array.isArray(stats)||!stats.length){
 container.innerHTML=
 '<div class="sem-dados">Estatísticas não disponíveis para este jogo.</div>';
+
 return;
 }
 
-container.innerHTML="";
+const casa=dados[0];
+const fora=dados[1];
 
-const tabela=document.createElement("div");
+const linhas=[
 
-for(const s of stats){
+["Posse",
+["possessionpct","possession"],
+["possessionpct","possession"]],
 
-const linha=document.createElement("div");
-linha.className="evento";
+["Remates",
+["totalshots","shots"],
+["totalshots","shots"]],
 
-const nome=
-s?.name ||
-s?.displayName ||
-"Estatística";
+["Remates à baliza",
+["shotsontarget"],
+["shotsontarget"]],
 
-const valor=
-s?.displayValue ??
-s?.value ??
-"";
+["Cantos",
+["woncorners","corners"],
+["woncorners","corners"]],
 
-linha.innerHTML="<b>"+nome+"</b>: "+valor;
+["Faltas",
+["foulscommitted","fouls"],
+["foulscommitted","fouls"]],
 
-tabela.appendChild(linha);
+["Assistências",
+["goalassists","assists"],
+["goalassists","assists"]]
+
+];
+
+let html=
+'<table class="stats">'+
+'<thead><tr>'+
+'<th>'+casa.nome+'</th>'+
+'<th>Estatística</th>'+
+'<th>'+fora.nome+'</th>'+
+'</tr></thead><tbody>';
+
+for(const linha of linhas){
+
+const a=encontrarStat(casa.stats,linha[1]);
+const b=encontrarStat(fora.stats,linha[2]);
+
+html+=
+'<tr>'+
+'<td>'+a+'</td>'+
+'<td>'+linha[0]+'</td>'+
+'<td>'+b+'</td>'+
+'</tr>';
+
 }
 
-container.appendChild(tabela);
+html+="</tbody></table>";
+
+container.innerHTML=html;
+
 }
 
 function abrir(jogo){
@@ -326,15 +459,15 @@ document.getElementById("logoFora").src=
 fora?.team?.logo||fora?.logo||"";
 
 document.getElementById("resultado").textContent=
-casa?.score!=null && fora?.score!=null
+casa?.score!=null&&fora?.score!=null
 ?casa.score+" - "+fora.score
 :"-";
 
 document.getElementById("competicao").textContent=
-jogo?.league?.name ||
-jogo?.league?.displayName ||
-c?.league?.name ||
-c?.competition?.name ||
+jogo?.league?.name||
+jogo?.league?.displayName||
+c?.league?.name||
+c?.competition?.name||
 "Futebol";
 
 const s=c?.status?.type;
@@ -342,29 +475,26 @@ const s=c?.status?.type;
 let estado="Próximo";
 
 if(s?.state==="in"){
+
 estado='<span class="live">🔴 LIVE</span>';
 
-if(c?.status?.displayClock){
+if(c?.status?.displayClock)
 estado+=" · "+c.status.displayClock;
-}
+
 }
 else if(s?.completed||s?.state==="post"){
+
 estado="Resultado";
+
 }
 
 document.getElementById("estado").innerHTML=
 "<b>Estado:</b> "+estado;
 
-if(jogo?.date){
-
 document.getElementById("data").innerHTML=
-"<b>📅 Data:</b> "+
-new Date(jogo.date).toLocaleString("pt-PT");
-
-}else{
-
-document.getElementById("data").innerHTML="";
-}
+jogo?.date
+?"<b>📅 Data:</b> "+new Date(jogo.date).toLocaleString("pt-PT")
+:"";
 
 document.getElementById("estadio").innerHTML=
 c?.venue?.fullName
@@ -374,11 +504,10 @@ c?.venue?.fullName
 mostrarEventos(jogo);
 mostrarEstatisticas(jogo);
 
-document.getElementById("erro").style.display="none";
-
 document.getElementById("detalhes").style.display="block";
 
 window.scrollTo(0,0);
+
 }
 
 frame.addEventListener("load",function(){
@@ -397,34 +526,32 @@ const card=e.target.closest(".card");
 
 if(!card)return;
 
-/*
-Não abrir quando estamos a tocar
-numa equipa dentro do cartão.
-*/
 if(e.target.closest(".team"))return;
 
 let jogos=[];
 
 try{
-jogos=frame.contentWindow.eval("jogos")||[];
+
+jogos=
+frame.contentWindow.eval("jogos")||[];
+
 }catch(err){
-console.log("Não foi possível ler jogos:",err);
+
 return;
+
 }
 
-if(!Array.isArray(jogos)||!jogos.length)return;
+if(!Array.isArray(jogos))return;
 
 const jogo=encontrarJogo(card,jogos);
 
-if(jogo){
-abrir(jogo);
-}
+if(jogo)abrir(jogo);
 
 });
 
 }catch(err){
 
-console.log("Erro FUTZONE:",err);
+console.log(err);
 
 }
 
