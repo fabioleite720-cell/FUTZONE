@@ -1,88 +1,48 @@
 (function () {
 
-  function encontrarJogo(card) {
+  function abrirDetalhes(card) {
 
-    // Procurar os nomes das duas equipas no cartão
+    if (!card) return;
+
     const equipas = Array.from(
       card.querySelectorAll(".team")
-    )
-      .map(el => el.textContent.trim())
-      .filter(Boolean);
+    );
 
     if (equipas.length < 2) {
-      console.log("FUTZONE: não encontrei as duas equipas");
-      return null;
+      alert("Não foi possível identificar este jogo.");
+      return;
     }
 
-    const casaTexto = equipas[0];
-    const foraTexto = equipas[1];
+    const casa = equipas[0].textContent.trim();
+    const fora = equipas[1].textContent.trim();
 
-    // Procurar o jogo correspondente nos dados carregados pelo index.html
-    if (typeof jogos === "undefined" || !Array.isArray(jogos)) {
-      console.log("FUTZONE: lista de jogos não disponível");
-      return null;
+    if (typeof jogos === "undefined") {
+      alert("Os jogos ainda estão a carregar.");
+      return;
     }
 
-    return jogos.find(function (jogo) {
+    const jogo = jogos.find(j => {
 
       try {
 
-        const equipasJogo = obterEquipas(jogo);
+        const e = obterEquipas(j);
 
-        const casa = nomeEquipaSeguro(
-          equipasJogo.home,
-          jogo,
-          true
-        );
-
-        const fora = nomeEquipaSeguro(
-          equipasJogo.away,
-          jogo,
-          false
-        );
+        const h = nomeEquipaSeguro(e.home, j, true);
+        const a = nomeEquipaSeguro(e.away, j, false);
 
         return (
-          nomesEquivalentes(casa, casaTexto) &&
-          nomesEquivalentes(fora, foraTexto)
+          nomesEquivalentes(h, casa) &&
+          nomesEquivalentes(a, fora)
         );
 
-      } catch (e) {
+      } catch (erro) {
         return false;
       }
 
-    }) || null;
-  }
-
-
-  function obterLiga(jogo) {
-
-    if (jogo.__liga === "Portugal")
-      return "por.1";
-
-    if (jogo.__liga === "Inglaterra")
-      return "eng.1";
-
-    if (jogo.__liga === "Espanha")
-      return "esp.1";
-
-    if (jogo.__liga === "Itália")
-      return "ita.1";
-
-    if (jogo.__liga === "Alemanha")
-      return "ger.1";
-
-    return "por.1";
-  }
-
-
-  function abrirDetalhes(card) {
-
-    const jogo = encontrarJogo(card);
+    });
 
     if (!jogo) {
-      alert(
-        "Não foi possível encontrar os dados deste jogo. Tenta novamente."
-      );
+      alert("Jogo não encontrado.");
       return;
     }
 
@@ -96,7 +56,16 @@
       return;
     }
 
-    const liga = obterLiga(jogo);
+    const ligas = {
+      "Portugal": "por.1",
+      "Inglaterra": "eng.1",
+      "Espanha": "esp.1",
+      "Itália": "ita.1",
+      "Alemanha": "ger.1"
+    };
+
+    const liga =
+      ligas[jogo.__liga] || "por.1";
 
     window.location.href =
       "detalhes.html?id=" +
@@ -108,53 +77,32 @@
 
   function ligarCartoes() {
 
-    const cards =
-      document.querySelectorAll(".card");
+    document.querySelectorAll(".card").forEach(card => {
 
-    cards.forEach(function (card) {
-
-      if (
-        card.dataset.futzoneDetalhes === "1"
-      ) {
+      if (card.dataset.detalhesLigados)
         return;
-      }
 
-      card.dataset.futzoneDetalhes = "1";
+      card.dataset.detalhesLigados = "1";
 
       card.style.cursor = "pointer";
 
-      card.addEventListener(
-        "click",
-        function (event) {
+      card.addEventListener("click", function (event) {
 
-          // Se tocar no nome da equipa,
-          // continua a abrir a página da equipa
-          if (
-            event.target.closest(".team")
-          ) {
-            return;
-          }
+        // Não interferir no clique da equipa
+        if (event.target.closest(".team"))
+          return;
 
-          abrirDetalhes(card);
+        abrirDetalhes(card);
 
-        }
-      );
+      });
 
     });
 
   }
 
 
-  // Os cartões são criados depois dos jogos
-  // por isso verificamos regularmente
-  setInterval(
-    ligarCartoes,
-    500
-  );
+  setInterval(ligarCartoes, 1000);
 
-
-  // Tentativa inicial
   ligarCartoes();
-
 
 })();
