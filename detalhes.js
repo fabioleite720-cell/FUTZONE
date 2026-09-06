@@ -7,232 +7,326 @@ const API =
 
 const app = document.getElementById("app");
 
-async function carregarDetalhes() {
-  try {
-    app.innerHTML = `
-      <div class="loading">A carregar detalhes...</div>
-    `;
+function esc(v) {
+  return String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
 
-    const resposta = await fetch(API, {
+function nomeJogador(obj) {
+  if (!obj) return "";
+
+  return (
+    obj.displayName ||
+    obj.fullName ||
+    obj.name ||
+    obj.athlete?.displayName ||
+    obj.athlete?.fullName ||
+    ""
+  );
+}
+
+function minutoEvento(p) {
+  return (
+    p.clock?.displayValue ||
+    p.clock?.displayClock ||
+    p.clock?.value ||
+    p.minute ||
+    ""
+  );
+}
+
+function encontrarJogador(p) {
+  if (p.athletesInvolved?.length) {
+    return nomeJogador(p.athletesInvolved[0]);
+  }
+
+  if (p.athlete) {
+    return nomeJogador(p.athlete);
+  }
+
+  if (p.athleteInvolved) {
+    return nomeJogador(p.athleteInvolved);
+  }
+
+  return "";
+}
+
+function encontrarAssistencia(p) {
+  if (p.athletesInvolved?.length > 1) {
+    return nomeJogador(p.athletesInvolved[1]);
+  }
+
+  if (p.assist) {
+    return nomeJogador(p.assist);
+  }
+
+  if (p.assistant) {
+    return nomeJogador(p.assistant);
+  }
+
+  return "";
+}
+
+async function carregarDetalhes() {
+
+  app.innerHTML = `
+    <div style="padding:30px;text-align:center">
+      A carregar...
+    </div>
+  `;
+
+  try {
+
+    const resposta = await fetch(API + "&t=" + Date.now(), {
       cache: "no-store"
     });
 
     const dados = await resposta.json();
-    alert(JSON.stringify(dados.scoringPlays));
-document.body.innerHTML += "<pre style='white-space:pre-wrap;font-size:11px'>" + escapar(JSON.stringify(dados, null, 2)) + "</pre>";
-    const jogo = dados.header?.competitions?.[0];
+
+    const jogo =
+      dados.header?.competitions?.[0] ||
+      dados.competitions?.[0];
 
     if (!jogo) {
-      app.innerHTML = "<p>Não foi possível carregar o jogo.</p>";
+      app.innerHTML = "<p>Jogo não encontrado.</p>";
       return;
     }
 
     const equipas = jogo.competitors || [];
 
-    const casa = equipas.find(e => e.homeAway === "home");
-    const fora = equipas.find(e => e.homeAway === "away");
-
-    const nomeCasa =
-      casa?.team?.displayName ||
-      casa?.team?.shortDisplayName ||
-      "Casa";
-
-    const nomeFora =
-      fora?.team?.displayName ||
-      fora?.team?.shortDisplayName ||
-      "Fora";
-
-    const resultadoCasa = casa?.score ?? "-";
-    const resultadoFora = fora?.score ?? "-";
-
-    const estado = jogo.status?.type?.shortDetail || "";
-
-    // =========================
-    // GOLOS
-    // =========================
-
-    let golos = [];
-
-    if (Array.isArray(dados.scoringPlays)) {
-      golos = dados.scoringPlays;
-    }
-
-    if (!golos.length && Array.isArray(dados.plays)) {
-      golos = dados.plays.filter(p =>
-        p.scoringPlay === true ||
-        p.scoreValue
-      );
-    }
-
-    const htmlGolos = golos.length
-      ? golos.map(golo => {
-
-          const minuto =
-            golo.clock?.displayValue ||
-            golo.clock?.value ||
-            "";
-
-          let jogador = "";
-
-          if (golo.athletesInvolved?.length) {
-            jogador =
-              golo.athletesInvolved[0]?.displayName ||
-              golo.athletesInvolved[0]?.fullName ||
-              "";
-          }
-
-          if (!jogador && golo.text) {
-            jogador = golo.text;
-          }
-
-          let assistencia = "";
-
-          if (golo.athletesInvolved?.length > 1) {
-            assistencia =
-              golo.athletesInvolved[1]?.displayName ||
-              golo.athletesInvolved[1]?.fullName ||
-              "";
-          }
-
-          const equipa =
-            golo.team?.displayName ||
-            golo.team?.shortDisplayName ||
-            "";
-
-          return `
-            <div class="evento golo">
-
-              <div class="evento-minuto">
-                ${minuto ? minuto : ""}
-              </div>
-
-              <div class="evento-info">
-
-                <div class="evento-tipo">
-                  ⚽ GOLO
-                </div>
-
-                <strong>
-                  ${escapar(jogador)}
-                </strong>
-
-                ${
-                  assistencia
-                    ? `<div class="assistencia">
-                        Assistência: ${escapar(assistencia)}
-                       </div>`
-                    : ""
-                }
-
-                ${
-                  equipa
-                    ? `<div class="equipa-golo">
-                        ${escapar(equipa)}
-                       </div>`
-                    : ""
-                }
-
-              </div>
-
-            </div>
-          `;
-        }).join("")
-      : `
-        <div class="sem-eventos">
-          Ainda não existem golos registados.
-        </div>
-      `;
-
-
-    // =========================
-    // OUTROS EVENTOS
-    // =========================
-
-    const plays = Array.isArray(dados.plays)
-      ? dados.plays
-      : [];
-
-    const outrosEventos = plays.filter(p =>
-      p.yellowCard ||
-      p.redCard ||
-      p.substitution
+    const casa = equipas.find(
+      e => e.homeAway === "home"
     );
 
-    const htmlEventos = outrosEventos.length
-      ? outrosEventos.map(evento => {
+    const fora = equipas.find(
+      e => e.homeAway === "away"
+    );
 
-          const minuto =
-            evento.clock?.displayValue || "";
+    const nomeCasa =
+      casa?.team?.displayName || "Casa";
 
-          let tipo = "";
+    const nomeFora =
+      fora?.team?.displayName || "Fora";
 
-          if (evento.yellowCard) tipo = "🟨 Cartão amarelo";
-          if (evento.redCard) tipo = "🟥 Cartão vermelho";
-          if (evento.substitution) tipo = "🔄 Substituição";
+    const scoreCasa =
+      casa?.score ?? "-";
 
-          const texto =
-            evento.text ||
-            evento.type?.text ||
-            "";
+    const scoreFora =
+      fora?.score ?? "-";
 
-          return `
-            <div class="evento">
-
-              <div class="evento-minuto">
-                ${escapar(minuto)}
-              </div>
-
-              <div class="evento-info">
-                <strong>${tipo}</strong>
-                <div>${escapar(texto)}</div>
-              </div>
-
-            </div>
-          `;
-        }).join("")
-      : `
-        <div class="sem-eventos">
-          Sem outros eventos registados.
-        </div>
-      `;
-
-
-    // =========================
-    // ESTÁDIO
-    // =========================
+    const estado =
+      jogo.status?.type?.shortDetail ||
+      jogo.status?.type?.detail ||
+      "";
 
     const estadio =
       dados.gameInfo?.venue?.fullName ||
-      dados.gameInfo?.venue?.address?.city ||
+      dados.header?.competitions?.[0]?.venue?.fullName ||
       "";
 
+    /*
+     * TODOS OS EVENTOS
+     */
 
-    // =========================
-    // DATA
-    // =========================
+    let plays = [];
 
-    const data =
-      jogo.date
-        ? new Date(jogo.date).toLocaleString(
-            "pt-PT",
-            {
-              day: "2-digit",
-              month: "2-digit",
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit"
+    if (Array.isArray(dados.plays)) {
+      plays = dados.plays;
+    }
+
+    if (
+      Array.isArray(dados.scoringPlays)
+    ) {
+      plays = [
+        ...plays,
+        ...dados.scoringPlays
+      ];
+    }
+
+    /*
+     * REMOVER DUPLICADOS
+     */
+
+    const vistos = new Set();
+
+    plays = plays.filter(p => {
+
+      const chave =
+        p.id ||
+        (
+          minutoEvento(p) +
+          "|" +
+          (p.text || "") +
+          "|" +
+          encontrarJogador(p)
+        );
+
+      if (vistos.has(chave)) {
+        return false;
+      }
+
+      vistos.add(chave);
+      return true;
+    });
+
+    /*
+     * GOLOS
+     */
+
+    const golos = plays.filter(p =>
+      p.scoringPlay === true ||
+      p.scoreValue > 0 ||
+      p.type?.id === "goal" ||
+      p.type?.text?.toLowerCase().includes("goal") ||
+      p.type?.text?.toLowerCase().includes("golo")
+    );
+
+    let htmlGolos = "";
+
+    if (golos.length) {
+
+      htmlGolos = golos.map(p => {
+
+        const jogador =
+          encontrarJogador(p);
+
+        const assistencia =
+          encontrarAssistencia(p);
+
+        const minuto =
+          minutoEvento(p);
+
+        const texto =
+          p.text || "";
+
+        return `
+          <div class="card">
+
+            <div style="
+              font-size:14px;
+              font-weight:bold;
+              margin-bottom:8px;
+            ">
+              ${esc(minuto)}
+            </div>
+
+            <div style="
+              font-size:18px;
+              font-weight:bold;
+            ">
+              ⚽ ${esc(
+                jogador || texto || "Golo"
+              )}
+            </div>
+
+            ${
+              assistencia
+                ? `
+                  <div style="
+                    margin-top:6px;
+                    font-size:14px;
+                  ">
+                    Assistência: 
+                    <b>${esc(assistencia)}</b>
+                  </div>
+                `
+                : ""
             }
-          )
-        : "";
 
+          </div>
+        `;
 
-    // =========================
-    // HTML
-    // =========================
+      }).join("");
+
+    } else {
+
+      htmlGolos = `
+        <div class="card">
+          Ainda não existem golos
+          detalhados para este jogo.
+        </div>
+      `;
+
+    }
+
+    /*
+     * OUTROS EVENTOS
+     */
+
+    const outros = plays.filter(p => {
+
+      const tipo =
+        (
+          p.type?.text ||
+          p.text ||
+          ""
+        ).toLowerCase();
+
+      return (
+        p.yellowCard ||
+        p.redCard ||
+        p.substitution ||
+        tipo.includes("yellow") ||
+        tipo.includes("red card") ||
+        tipo.includes("substitution")
+      );
+
+    });
+
+    let htmlEventos = "";
+
+    if (outros.length) {
+
+      htmlEventos = outros.map(p => {
+
+        const texto =
+          p.text ||
+          p.type?.text ||
+          "Evento";
+
+        return `
+          <div class="card">
+
+            <b>
+              ${esc(
+                minutoEvento(p)
+              )}
+            </b>
+
+            <div style="margin-top:6px">
+              ${esc(texto)}
+            </div>
+
+          </div>
+        `;
+
+      }).join("");
+
+    } else {
+
+      htmlEventos = `
+        <div class="card">
+          Sem outros eventos.
+        </div>
+      `;
+
+    }
+
+    /*
+     * PÁGINA
+     */
 
     app.innerHTML = `
 
-      <div class="topo">
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        gap:10px;
+        margin-bottom:15px;
+      ">
 
         <button onclick="history.back()">
           ← Voltar
@@ -244,85 +338,87 @@ document.body.innerHTML += "<pre style='white-space:pre-wrap;font-size:11px'>" +
 
       </div>
 
+      <div class="card">
 
-      <div class="cabecalho-jogo">
-
-        <div class="competicao">
-          ${escapar(
+        <div style="
+          text-align:center;
+          font-size:14px;
+          margin-bottom:15px;
+        ">
+          ${esc(
             dados.header?.league?.name ||
             "Futebol"
           )}
         </div>
 
-        <div class="equipas">
+        <div style="
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          text-align:center;
+          gap:10px;
+        ">
 
-          <div class="equipa">
-            <strong>${escapar(nomeCasa)}</strong>
+          <div style="flex:1">
+            <b>${esc(nomeCasa)}</b>
           </div>
 
-          <div class="resultado">
-
-            <span>${escapar(resultadoCasa)}</span>
-
-            <b>-</b>
-
-            <span>${escapar(resultadoFora)}</span>
-
+          <div style="
+            font-size:28px;
+            font-weight:bold;
+          ">
+            ${esc(scoreCasa)}
+            -
+            ${esc(scoreFora)}
           </div>
 
-          <div class="equipa">
-            <strong>${escapar(nomeFora)}</strong>
+          <div style="flex:1">
+            <b>${esc(nomeFora)}</b>
           </div>
 
         </div>
 
-        <div class="estado">
-          ${escapar(estado)}
+        <div style="
+          text-align:center;
+          margin-top:12px;
+        ">
+          ${esc(estado)}
         </div>
-
-        ${
-          data
-            ? `<div class="data">${escapar(data)}</div>`
-            : ""
-        }
 
         ${
           estadio
-            ? `<div class="estadio">
-                🏟️ ${escapar(estadio)}
-               </div>`
+            ? `
+              <div style="
+                text-align:center;
+                margin-top:10px;
+                font-size:14px;
+              ">
+                🏟️ ${esc(estadio)}
+              </div>
+            `
             : ""
         }
 
       </div>
 
 
-      <section class="secao">
+      <h2>⚽ Golos</h2>
 
-        <h2>⚽ Golos</h2>
-
-        ${htmlGolos}
-
-      </section>
+      ${htmlGolos}
 
 
-      <section class="secao">
+      <h2>📋 Eventos</h2>
 
-        <h2>📋 Eventos</h2>
-
-        ${htmlEventos}
-
-      </section>
+      ${htmlEventos}
 
     `;
-  }
 
-  catch (erro) {
+  } catch (erro) {
 
     console.error(erro);
 
     app.innerHTML = `
-      <div class="erro">
+      <div class="card">
         Erro ao carregar os detalhes.
         <br><br>
         <button onclick="carregarDetalhes()">
@@ -330,23 +426,8 @@ document.body.innerHTML += "<pre style='white-space:pre-wrap;font-size:11px'>" +
         </button>
       </div>
     `;
+
   }
 }
-
-
-// =========================
-// ESCAPAR HTML
-// =========================
-
-function escapar(valor) {
-
-  return String(valor ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
 
 carregarDetalhes();
