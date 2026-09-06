@@ -13,7 +13,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -22,14 +21,12 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Instalar dependencias
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install requests
+      - name: Instalar requests
+        run: python -m pip install requests
 
-      - name: Atualizar dados FUTZONE
+      - name: Atualizar dados
         run: |
-          python <<'PY'
+          python - <<'PY'
           import requests
           import json
           import os
@@ -38,20 +35,20 @@ jobs:
 
           os.makedirs("data", exist_ok=True)
 
-          session = requests.Session()
-          session.headers.update({
-              "User-Agent": "FUTZONE/1.0"
-          })
-
           TSDB_KEY = "123"
 
-          LIGAS = {
+          ligas = {
               "por.1": "primeira-liga",
               "eng.1": "premier-league",
               "esp.1": "la-liga",
               "ita.1": "serie-a",
               "ger.1": "bundesliga"
           }
+
+          sessao = requests.Session()
+          sessao.headers.update({
+              "User-Agent": "FUTZONE"
+          })
 
           def normalizar(texto):
               texto = str(texto or "")
@@ -66,41 +63,49 @@ jobs:
                   if c.isalnum()
               )
 
-          def buscar(url):
+          def obter(url):
               try:
-                  resposta = session.get(
-                      url,
-                      timeout=30
-                  )
+                  r = sessao.get(url, timeout=30)
 
-                  print(
-                      resposta.status_code,
-                      url
-                  )
+                  if r.status_code == 200:
+                      return r.json()
 
-                  if resposta.status_code == 200:
-                      return resposta.json()
+                  print("HTTP", r.status_code)
 
-              except Exception as erro:
-                  print("ERRO:", erro)
+              except Exception as e:
+                  print("ERRO:", e)
 
               return None
 
-          # =====================================================
-          # CLASSIFICACOES
-          # =====================================================
+          def encontrar_entries(obj):
+              if isinstance(obj, dict):
 
-          print("")
-          print("======================================")
+                  if isinstance(obj.get("entries"), list):
+                      return obj["entries"]
+
+                  if isinstance(obj.get("standings"), list):
+                      for item in obj["standings"]:
+                          resultado = encontrar_entries(item)
+                          if resultado:
+                              return resultado
+
+                  if isinstance(obj.get("children"), list):
+                      for item in obj["children"]:
+                          resultado = encontrar_entries(item)
+                          if resultado:
+                              return resultado
+
+              return []
+
+          print("================================")
           print("ATUALIZAR CLASSIFICACOES")
-          print("======================================")
+          print("================================")
 
           equipas = []
 
-          for liga, ficheiro in LIGAS.items():
+          for liga, nome_ficheiro in ligas.items():
 
-              print("")
-              print("Liga:", liga)
+              print("A atualizar:", liga)
 
               url = (
                   "https://site.api.espn.com/apis/v2/"
@@ -109,58 +114,21 @@ jobs:
                   "/standings"
               )
 
-              dados = buscar(url)
+              dados = obter(url)
 
               if not dados:
-                  print("ERRO: nao foi possivel obter dados")
+                  print("ERRO:", liga)
                   continue
 
-              entries = []
-
-              def procurar(obj):
-
-                  if isinstance(obj, dict):
-
-                      if isinstance(
-                          obj.get("entries"),
-                          list
-                      ):
-                          return obj["entries"]
-
-                      if isinstance(
-                          obj.get("standings"),
-                          list
-                      ):
-                          for item in obj["standings"]:
-                              resultado = procurar(item)
-
-                              if resultado:
-                                  return resultado
-
-                      if isinstance(
-                          obj.get("children"),
-                          list
-                      ):
-                          for item in obj["children"]:
-                              resultado = procurar(item)
-
-                              if resultado:
-                                  return resultado
-
-                  return []
-
-              entries = procurar(dados)
+              entries = encontrar_entries(dados)
 
               if not entries:
-                  print(
-                      "ERRO: classificacao vazia para",
-                      liga
-                  )
+                  print("SEM CLASSIFICACAO:", liga)
                   continue
 
               caminho = (
                   "data/"
-                  + ficheiro
+                  + nome_ficheiro
                   + "-classificacao.json"
               )
 
@@ -169,11 +137,8 @@ jobs:
                   "w",
                   encoding="utf-8"
               ) as f:
-
                   json.dump(
-                      {
-                          "entries": entries
-                      },
+                      {"entries": entries},
                       f,
                       ensure_ascii=False,
                       indent=2
@@ -187,10 +152,7 @@ jobs:
 
               for entrada in entries:
 
-                  team = entrada.get(
-                      "team",
-                      {}
-                  )
+                  team = entrada.get("team", {})
 
                   nome = (
                       team.get("displayName")
@@ -200,150 +162,101 @@ jobs:
                   )
 
                   if nome:
-
                       equipas.append({
                           "name": nome,
-                          "league": ficheiro
+                          "liga": nome_ficheiro
                       })
 
-          # =====================================================
-          # PLANTEIS
-          # =====================================================
-
-          print("")
-          print("======================================")
+          print("================================")
           print("ATUALIZAR PLANTEIS")
-          print("======================================")
+          print("================================")
 
           planteis = {}
 
           for equipa in equipas:
 
               nome = equipa["name"]
-              liga = equipa["league"]
+              liga = equipa["liga"]
 
-              print("")
               print("Equipa:", nome)
 
-              pesquisas = [
-                  nome
-              ]
+              pesquisas = [nome]
 
-              # Aliases
-              n = normalizar(nome)
+              nome_normalizado = normalizar(nome)
 
-              if n == "fcporto":
-                  pesquisas = [
-                      "FC Porto",
-                      "Porto"
-                  ]
+              if nome_normalizado == "fcporto":
+                  pesquisas = ["FC Porto", "Porto"]
 
-              elif n in [
-                  "sportingcp",
-                  "sporting"
-              ]:
-                  pesquisas = [
-                      "Sporting CP",
-                      "Sporting"
-                  ]
+              elif nome_normalizado == "sportingcp":
+                  pesquisas = ["Sporting CP", "Sporting"]
 
-              elif n in [
-                  "benfica",
-                  "slbenfica"
-              ]:
-                  pesquisas = [
-                      "Benfica",
-                      "SL Benfica"
-                  ]
+              elif nome_normalizado in ["benfica", "slbenfica"]:
+                  pesquisas = ["Benfica", "SL Benfica"]
 
-              equipa_tsdb = None
+              equipa_db = None
 
               for pesquisa in pesquisas:
 
                   url = (
-                      "https://www.thesportsdb.com/"
-                      "api/v1/json/"
+                      "https://www.thesportsdb.com/api/v1/json/"
                       + TSDB_KEY
                       + "/searchteams.php?t="
-                      + requests.utils.quote(
-                          pesquisa
-                      )
+                      + requests.utils.quote(pesquisa)
                   )
 
-                  dados = buscar(url)
+                  dados = obter(url)
 
                   if dados and dados.get("teams"):
 
-                      alvo = normalizar(
-                          pesquisa
-                      )
+                      alvo = normalizar(pesquisa)
 
                       for t in dados["teams"]:
 
-                          nome_tsdb = normalizar(
+                          nome_db = normalizar(
                               t.get("strTeam")
                           )
 
-                          if nome_tsdb == alvo:
-
-                              equipa_tsdb = t
+                          if nome_db == alvo:
+                              equipa_db = t
                               break
 
-                      if not equipa_tsdb:
+                      if equipa_db is None:
+                          equipa_db = dados["teams"][0]
 
-                          equipa_tsdb = dados["teams"][0]
+                      break
 
-                      if equipa_tsdb:
-                          break
+                  time.sleep(1)
 
-                  time.sleep(2)
-
-              if not equipa_tsdb:
-
-                  print(
-                      "NAO ENCONTRADA:",
-                      nome
-                  )
-
+              if equipa_db is None:
+                  print("NAO ENCONTRADA:", nome)
                   continue
 
-              tsdb_id = equipa_tsdb.get(
-                  "idTeam"
-              )
+              id_equipa = equipa_db.get("idTeam")
 
-              nome_tsdb = equipa_tsdb.get(
-                  "strTeam"
-              )
+              if not id_equipa:
+                  print("SEM ID:", nome)
+                  continue
 
               print(
                   "TheSportsDB:",
-                  nome_tsdb,
-                  tsdb_id
+                  equipa_db.get("strTeam"),
+                  id_equipa
               )
-
-              if not tsdb_id:
-                  continue
 
               url = (
-                  "https://www.thesportsdb.com/"
-                  "api/v1/json/"
+                  "https://www.thesportsdb.com/api/v1/json/"
                   + TSDB_KEY
                   + "/lookup_all_players.php?id="
-                  + str(tsdb_id)
+                  + str(id_equipa)
               )
 
-              dados_players = buscar(url)
+              dados_jogadores = obter(url)
 
-              if not dados_players:
-                  print(
-                      "SEM PLANTEL:",
-                      nome
-                  )
+              if not dados_jogadores:
+                  print("SEM PLANTEL:", nome)
                   continue
 
-              lista = dados_players.get(
-                  "player"
-              ) or []
+              lista = dados_jogadores.get("player") or []
 
               jogadores = []
 
@@ -363,93 +276,96 @@ jobs:
                       continue
 
                   jogadores.append({
-
-                      "id":
-                          p.get("idPlayer")
-                          or "",
-
-                      "name":
-                          p.get("strPlayer")
-                          or "Jogador",
-
-                      "number":
-                          p.get("strNumber")
-                          or "",
-
-                      "position":
-                          posicao,
-
-                      "age":
-                          p.get("dateBorn")
-                          or "",
-
-                      "nationality":
-                          p.get("strNationality")
-                          or "",
-
-                      "photo":
+                      "id": p.get("idPlayer") or "",
+                      "name": p.get("strPlayer") or "Jogador",
+                      "number": p.get("strNumber") or "",
+                      "position": posicao,
+                      "age": p.get("dateBorn") or "",
+                      "nationality": p.get("strNationality") or "",
+                      "photo": (
                           p.get("strCutout")
                           or p.get("strThumb")
                           or ""
+                      )
                   })
 
               if jogadores:
 
-                  planteis[str(tsdb_id)] = {
+                  chave = str(id_equipa)
 
-                      "id":
-                          str(tsdb_id),
-
-                      "name":
-                          nome,
-
-                      "league":
-                          liga,
-
-                      "players":
-                          jogadores
+                  planteis[chave] = {
+                      "id": chave,
+                      "name": nome,
+                      "league": liga,
+                      "players": jogadores
                   }
 
                   print(
                       "PLANTEL OK:",
-                      len(jogadores),
-                      "jogadores"
+                      len(jogadores)
                   )
 
               else:
+                  print("PLANTEL VAZIO:", nome)
 
-                  print(
-                      "PLANTEL VAZIO:",
-                      nome
-                  )
+              time.sleep(1)
 
-              # Limite gratuito TheSportsDB
-              time.sleep(2)
+          print("================================")
+          print("VERIFICAR FC PORTO")
+          print("================================")
 
-          # =====================================================
-          # GARANTIR FC PORTO
-          # =====================================================
+          porto_encontrado = False
 
-          print("")
-          print("======================================")
-          print("VERIFICACAO FC PORTO")
-          print("======================================")
-
-          porto = None
-
-          for chave, valor in planteis.items():
+          for valor in planteis.values():
 
               if normalizar(
                   valor.get("name")
-              ) in [
-                  "fcporto",
-                  "porto"
-              ]:
+              ) in ["fcporto", "porto"]:
 
-                  porto = valor
-                  break
+                  porto_encontrado = True
 
-          if porto:
+                  print(
+                      "FC PORTO OK -",
+                      len(
+                          valor.get(
+                              "players",
+                              []
+                          )
+                      ),
+                      "jogadores"
+                  )
 
-              print(
-                  "FC PORTO OK
+          if not porto_encontrado:
+              print("FC PORTO NAO ENCONTRADO")
+
+          with open(
+              "data/planteis.json",
+              "w",
+              encoding="utf-8"
+          ) as f:
+
+              json.dump(
+                  planteis,
+                  f,
+                  ensure_ascii=False,
+                  indent=2
+              )
+
+          print("================================")
+          print("FUTZONE TERMINADO")
+          print("================================")
+          PY
+
+      - name: Guardar alteracoes
+        run: |
+          git config user.name "FUTZONE Bot"
+          git config user.email "actions@github.com"
+
+          git add data/
+
+          if git diff --cached --quiet; then
+            echo "Sem alteracoes."
+          else
+            git commit -m "Atualizar dados FUTZONE"
+            git push
+          fi
