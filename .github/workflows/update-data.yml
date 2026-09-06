@@ -16,69 +16,166 @@ jobs:
       - name: Baixar código
         uses: actions/checkout@v4
 
-      - name: Buscar dados das 5 ligas
+      - name: Atualizar jogos e classificações
+        shell: bash
         run: |
+          set -u
+
           mkdir -p data
 
-          HOJE=$(date -u +%Y%m%d)
           ONTEM=$(date -u -d "3 days ago" +%Y%m%d)
           FUTURO=$(date -u -d "14 days" +%Y%m%d)
 
-          echo "📅 Período: $ONTEM até $FUTURO"
+          echo "Periodo: $ONTEM ate $FUTURO"
 
-          buscar_jogos() {
-            LIGA=$1
-            FICHEIRO=$2
+          baixar_jogos() {
+            LIGA="$1"
+            FICHEIRO="$2"
 
-            echo "⚽ A procurar $LIGA"
+            echo ""
+            echo "================================"
+            echo "JOGOS: $LIGA"
+            echo "================================"
 
-            curl -sS \
-              "https://site.api.espn.com/apis/site/v2/sports/soccer/$LIGA/scoreboard?dates=$ONTEM-$FUTURO&limit=1000" \
-              -o "data/$FICHEIRO"
+            TEMP="data/${FICHEIRO}.tmp"
 
-            if [ ! -s "data/$FICHEIRO" ]; then
-              echo "[]" > "data/$FICHEIRO"
+            URL="https://site.api.espn.com/apis/site/v2/sports/soccer/${LIGA}/scoreboard?dates=${ONTEM}-${FUTURO}&limit=1000"
+
+            if curl -fLsS --max-time 60 "$URL" -o "$TEMP"; then
+
+              if python3 - "$TEMP" <<'PY'
+          import json
+          import sys
+
+          ficheiro = sys.argv[1]
+
+          try:
+              with open(ficheiro, "r", encoding="utf-8") as f:
+                  d = json.load(f)
+
+              eventos = d.get("events")
+
+              if isinstance(eventos, list):
+                  print("JSON valido:", len(eventos), "jogos")
+                  sys.exit(0)
+
+              print("Resposta sem events.")
+              sys.exit(1)
+
+          except Exception as e:
+              print("JSON invalido:", e)
+              sys.exit(1)
+          PY
+              then
+
+                mv "$TEMP" "data/$FICHEIRO"
+
+                echo "OK: $FICHEIRO"
+
+              else
+
+                rm -f "$TEMP"
+
+                echo "AVISO: resposta invalida."
+                echo "Ficheiro anterior mantido."
+              fi
+
+            else
+
+              rm -f "$TEMP"
+
+              echo "AVISO: API indisponivel."
+              echo "Ficheiro anterior mantido."
             fi
           }
 
-          buscar_jogos "por.1" "primeira-liga.json"
-          buscar_jogos "eng.1" "premier-league.json"
-          buscar_jogos "esp.1" "la-liga.json"
-          buscar_jogos "ita.1" "serie-a.json"
-          buscar_jogos "ger.1" "bundesliga.json"
+          baixar_classificacao() {
+            LIGA="$1"
+            FICHEIRO="$2"
 
-          echo "📊 A atualizar classificações..."
+            echo ""
+            echo "================================"
+            echo "TABELA: $LIGA"
+            echo "================================"
 
-          curl -sS \
-            "https://site.api.espn.com/apis/v2/sports/soccer/por.1/standings" \
-            -o data/classificacao.json
+            TEMP="data/${FICHEIRO}.tmp"
 
-          curl -sS \
-            "https://site.api.espn.com/apis/v2/sports/soccer/eng.1/standings" \
-            -o data/premier-league-classificacao.json
+            URL="https://site.api.espn.com/apis/v2/sports/soccer/${LIGA}/standings"
 
-          curl -sS \
-            "https://site.api.espn.com/apis/v2/sports/soccer/esp.1/standings" \
-            -o data/la-liga-classificacao.json
+            if curl -fLsS --max-time 60 "$URL" -o "$TEMP"; then
 
-          curl -sS \
-            "https://site.api.espn.com/apis/v2/sports/soccer/ita.1/standings" \
-            -o data/serie-a-classificacao.json
+              if python3 - "$TEMP" <<'PY'
+          import json
+          import sys
 
-          curl -sS \
-            "https://site.api.espn.com/apis/v2/sports/soccer/ger.1/standings" \
-            -o data/bundesliga-classificacao.json
+          ficheiro = sys.argv[1]
 
-          echo "✅ Dados descarregados."
+          try:
+              with open(ficheiro, "r", encoding="utf-8") as f:
+                  d = json.load(f)
 
-      - name: Guardar dados
-        run: |
-          git config user.name "FUTZONE"
-          git config user.email "futzone@users.noreply.github.com"
+              if isinstance(d, dict) and (
+                  "children" in d or
+                  "standings" in d or
+                  "entries" in d
+              ):
+                  print("Classificacao valida.")
+                  sys.exit(0)
 
-          git add data/
+              print("Estrutura de classificacao inesperada.")
+              sys.exit(1)
 
-          git diff --cached --quiet || \
-          git commit -m "FUTZONE - jogos e classificacoes atualizados"
+          except Exception as e:
+              print("JSON invalido:", e)
+              sys.exit(1)
+          PY
+              then
 
-          git push
+                mv "$TEMP" "data/$FICHEIRO"
+
+                echo "OK: $FICHEIRO"
+
+              else
+
+                rm -f "$TEMP"
+
+                echo "AVISO: classificacao invalida."
+                echo "Ficheiro anterior mantido."
+              fi
+
+            else
+
+              rm -f "$TEMP"
+
+              echo "AVISO: API de classificacoes indisponivel."
+              echo "Ficheiro anterior mantido."
+            fi
+          }
+
+          # =========================================
+          # JOGOS
+          # =========================================
+
+          baixar_jogos "por.1" "primeira-liga.json"
+          baixar_jogos "eng.1" "premier-league.json"
+          baixar_jogos "esp.1" "la-liga.json"
+          baixar_jogos "ita.1" "serie-a.json"
+          baixar_jogos "ger.1" "bundesliga.json"
+
+          # =========================================
+          # CLASSIFICACOES
+          # =========================================
+
+          baixar_classificacao \
+            "por.1" \
+            "classificacao.json"
+
+          baixar_classificacao \
+            "eng.1" \
+            "premier-league-classificacao.json"
+
+          baixar_classificacao \
+            "esp.1" \
+            "la-liga-classificacao.json"
+
+         
