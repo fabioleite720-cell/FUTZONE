@@ -122,6 +122,39 @@ button{
  margin-top:8px
 }
 
+.live-status{
+ color:#ff3030;
+ font-weight:900
+}
+
+.live-dot{
+ display:inline-block;
+ width:8px;
+ height:8px;
+ background:#ff3030;
+ border-radius:50%;
+ margin-right:5px
+}
+
+.update-bar{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ gap:10px;
+ margin:5px 0 10px
+}
+
+.update-text{
+ color:#777;
+ font-size:11px
+}
+
+.update-button{
+ background:#168cff;
+ padding:8px 12px;
+ font-size:12px
+}
+
 .nav{
  position:fixed;
  bottom:0;
@@ -337,6 +370,8 @@ let jogos=[];
 let ligaAtual="Todos";
 let filtroAtual="Todos";
 let equipaAtual=null;
+let ultimaAtualizacao=null;
+let intervaloLive=null;
 
 const ligas=[
  {nome:"Portugal",arquivo:"data/primeira-liga.json"},
@@ -364,11 +399,6 @@ function normalizarNome(nome){
  .replace(/&/g,"and")
  .replace(/[^a-z0-9]/g,"");
 }
-
-
-/* =========================
-   ALIASES
-========================= */
 
 const aliasesEquipas={
 
@@ -458,25 +488,16 @@ function nomesEquivalentes(a,b){
  const x=normalizarNome(a);
  const y=normalizarNome(b);
 
- if(!x || !y)
-   return false;
-
- if(x===y)
-   return true;
+ if(!x || !y) return false;
+ if(x===y) return true;
 
  for(const grupo of Object.values(aliasesEquipas)){
 
-   if(
-     grupo.includes(x) &&
-     grupo.includes(y)
-   )
+   if(grupo.includes(x) && grupo.includes(y))
      return true;
  }
 
- if(
-   x.includes(y) ||
-   y.includes(x)
- )
+ if(x.includes(y) || y.includes(x))
    return true;
 
  return false;
@@ -530,8 +551,7 @@ function nomeEquipaSeguro(c,j,home){
 
  const nome=nomeEquipa(c);
 
- if(nome)
-   return nome;
+ if(nome) return nome;
 
  if(j?.name){
 
@@ -592,6 +612,11 @@ function resultado(c){
  return valor;
 }
 
+
+/* =========================
+   ESTADO LIVE
+========================= */
+
 function estadoJogo(j){
 
  const s=obterCompeticao(j)?.status?.type;
@@ -607,8 +632,7 @@ function estadoJogo(j){
 
 function dataJogo(j){
 
- if(!j?.date)
-   return "";
+ if(!j?.date) return "";
 
  try{
 
@@ -635,14 +659,19 @@ function dataJogo(j){
 
 async function carregar(){
 
- jogos=[];
+ const jogosAnteriores=jogos;
+
+ const novosJogos=[];
 
  for(const liga of ligas){
 
    try{
 
      const r=await fetch(
-       liga.arquivo+"?v="+Date.now()
+       liga.arquivo+"?v="+Date.now(),
+       {
+         cache:"no-store"
+       }
      );
 
      if(!r.ok)
@@ -664,7 +693,7 @@ async function carregar(){
      lista.forEach(j=>{
 
        j.__liga=liga.nome;
-       jogos.push(j);
+       novosJogos.push(j);
 
      });
 
@@ -674,7 +703,72 @@ async function carregar(){
    }
  }
 
+ /*
+    Só substituímos os dados se conseguimos
+    receber jogos. Isto evita deixar a app vazia
+    caso uma API falhe momentaneamente.
+ */
+
+ if(novosJogos.length){
+
+   jogos=novosJogos;
+   ultimaAtualizacao=new Date();
+
+ }else{
+
+   jogos=jogosAnteriores;
+ }
+
  mostrarJogos();
+}
+
+
+/* =========================
+   ATUALIZAR LIVE
+========================= */
+
+async function atualizarAgora(){
+
+ const botao=document.getElementById("btnAtualizar");
+
+ if(botao){
+
+   botao.disabled=true;
+   botao.textContent="⏳ Atualizar...";
+ }
+
+ await carregar();
+
+ const b=document.getElementById("btnAtualizar");
+
+ if(b){
+
+   b.disabled=false;
+   b.textContent="🔄 Atualizar";
+ }
+}
+
+
+function iniciarAtualizacaoLive(){
+
+ if(intervaloLive)
+   clearInterval(intervaloLive);
+
+ /*
+    Atualização automática a cada 60 segundos.
+ */
+
+ intervaloLive=setInterval(()=>{
+
+   if(
+     document.visibilityState==="visible"
+   ){
+
+     carregar();
+
+   }
+
+ },60000);
 }
 
 
@@ -690,7 +784,46 @@ function mostrarJogos(){
 
  document.getElementById("app").innerHTML=`
 
- <h2>⚽ Jogos</h2>
+ <div class="update-bar">
+
+   <div>
+
+     <h2 style="margin:0">
+       ⚽ Jogos
+     </h2>
+
+     <div class="update-text">
+
+       ${
+         ultimaAtualizacao
+         ?
+         "Atualizado às "+
+         ultimaAtualizacao.toLocaleTimeString(
+           "pt-PT",
+           {
+             hour:"2-digit",
+             minute:"2-digit",
+             second:"2-digit"
+           }
+         )
+         :
+         "A carregar..."
+       }
+
+     </div>
+
+   </div>
+
+   <button
+     id="btnAtualizar"
+     class="update-button"
+     onclick="atualizarAgora()">
+
+     🔄 Atualizar
+
+   </button>
+
+ </div>
 
  <div class="filters">
 
@@ -702,7 +835,7 @@ function mostrarJogos(){
        class="${filtroAtual===x?"active":""}"
        onclick="filtroAtual='${esc(x)}';mostrarJogos()">
 
-       ${esc(x)}
+       ${x==="LIVE" ? "🔴 LIVE" : esc(x)}
 
      </button>
 
@@ -780,11 +913,15 @@ function jogoCard(j){
 
  const estado=estadoJogo(j);
 
+ const live=estado==="LIVE";
+
  return`
 
  <div class="card">
 
-   <div class="league">${esc(j.__liga)}</div>
+   <div class="league">
+     ${esc(j.__liga)}
+   </div>
 
    <div class="teams">
 
@@ -800,7 +937,8 @@ function jogoCard(j){
        ${
          hl
          ?
-         `<img class="team-logo"
+         `<img
+           class="team-logo"
            src="${esc(hl)}"
            onerror="this.style.display='none'">`
          :
@@ -812,9 +950,11 @@ function jogoCard(j){
      </div>
 
      <div class="score">
+
        ${esc(resultado(e.home))}
        -
        ${esc(resultado(e.away))}
+
      </div>
 
      <div
@@ -829,7 +969,8 @@ function jogoCard(j){
        ${
          al
          ?
-         `<img class="team-logo"
+         `<img
+           class="team-logo"
            src="${esc(al)}"
            onerror="this.style.display='none'">`
          :
@@ -842,12 +983,14 @@ function jogoCard(j){
 
    </div>
 
-   <div class="status">
+   <div class="status ${live ? "live-status" : ""}">
 
      ${
-       estado==="LIVE"
-       ? "🔴 AO VIVO"
-       : estado
+       live
+       ?
+       '<span class="live-dot"></span>AO VIVO'
+       :
+       estado
      }
 
      ${
@@ -879,11 +1022,6 @@ function abrirEquipaPorId(id,name,league,logo){
 
  mostrarEquipa();
 }
-
-
-/* =========================
-   MOSTRAR EQUIPA
-========================= */
 
 async function mostrarEquipa(){
 
@@ -980,13 +1118,11 @@ async function mostrarEquipa(){
 
 function idadeAPartirData(data){
 
- if(!data)
-   return "-";
+ if(!data) return "-";
 
  const d=new Date(data);
 
- if(isNaN(d.getTime()))
-   return "-";
+ if(isNaN(d.getTime())) return "-";
 
  const hoje=new Date();
 
@@ -1013,7 +1149,6 @@ function idadeAPartirData(data){
  return idade;
 }
 
-
 function obterDataNascimento(p){
 
  return (
@@ -1030,17 +1165,13 @@ function obterDataNascimento(p){
  );
 }
 
-
 function extrairTexto(valor){
 
- if(!valor)
-   return "";
+ if(!valor) return "";
 
- if(typeof valor==="string")
-   return valor;
+ if(typeof valor==="string") return valor;
 
- if(typeof valor==="number")
-   return String(valor);
+ if(typeof valor==="number") return String(valor);
 
  if(typeof valor==="object"){
 
@@ -1055,7 +1186,6 @@ function extrairTexto(valor){
 
  return "";
 }
-
 
 function criarJogador(p,i){
 
@@ -1140,15 +1270,9 @@ function criarJogador(p,i){
  };
 }
 
-
-/* =========================
-   ENCONTRAR PLANTEL
-========================= */
-
 function encontrarPlantel(dados){
 
- if(!dados)
-   return null;
+ if(!dados) return null;
 
  const atualId=
    String(equipaAtual.id || "");
@@ -1160,8 +1284,7 @@ function encontrarPlantel(dados){
 
  function recolher(obj){
 
-   if(!obj)
-     return;
+   if(!obj) return;
 
    if(Array.isArray(obj)){
      obj.forEach(recolher);
@@ -1258,7 +1381,7 @@ function encontrarPlantel(dados){
 
 
 /* =========================
-   PLANTEL THESPORTSDB
+   THESPORTSDB
 ========================= */
 
 async function procurarPlantelTheSportsDB(){
@@ -1295,8 +1418,7 @@ async function procurarPlantelTheSportsDB(){
 
      const r=await fetch(url);
 
-     if(!r.ok)
-       continue;
+     if(!r.ok) continue;
 
      const d=await r.json();
 
@@ -1323,8 +1445,7 @@ async function procurarPlantelTheSportsDB(){
        encodeURIComponent(team.idTeam)
      );
 
-     if(!rp.ok)
-       continue;
+     if(!rp.ok) continue;
 
      const dp=await rp.json();
 
@@ -1334,6 +1455,7 @@ async function procurarPlantelTheSportsDB(){
      const jogadores=
        dp.player
        .filter(p=>{
+
          const pos=
            String(
              p.strPosition || ""
@@ -1341,6 +1463,7 @@ async function procurarPlantelTheSportsDB(){
 
          return !pos.includes("coach") &&
                 !pos.includes("manager");
+
        })
        .map(criarJogador);
 
@@ -1369,7 +1492,10 @@ async function carregarPlantel(){
  try{
 
    const r=await fetch(
-     "data/planteis.json?v="+Date.now()
+     "data/planteis.json?v="+Date.now(),
+     {
+       cache:"no-store"
+     }
    );
 
    let dados=null;
@@ -1379,12 +1505,6 @@ async function carregarPlantel(){
 
    let plantel=
      encontrarPlantel(dados);
-
-   /*
-      Se não existir no ficheiro local,
-      tenta encontrar diretamente no
-      TheSportsDB.
-   */
 
    if(!plantel || !plantel.length){
 
@@ -1593,11 +1713,6 @@ async function mostrarTabelas(){
 
    try{
 
-     /*
-        CORREÇÃO PRINCIPAL:
-        Portugal usa classificacao.json.
-     */
-
      const ficheiro=
        liga.nome==="Portugal"
        ?
@@ -1609,7 +1724,10 @@ async function mostrarTabelas(){
        );
 
      const r=await fetch(
-       ficheiro+"?v="+Date.now()
+       ficheiro+"?v="+Date.now(),
+       {
+         cache:"no-store"
+       }
      );
 
      if(r.ok){
@@ -1662,14 +1780,9 @@ async function mostrarTabelas(){
 }
 
 
-/* =========================
-   PROCURAR ENTRIES
-========================= */
-
 function procurarEntries(d){
 
- if(!d)
-   return [];
+ if(!d) return [];
 
  if(Array.isArray(d))
    return d;
@@ -1682,8 +1795,7 @@ function procurarEntries(d){
    const x=
      procurarEntries(d.standings);
 
-   if(x.length)
-     return x;
+   if(x.length) return x;
  }
 
  if(Array.isArray(d.leagues)){
@@ -1693,8 +1805,7 @@ function procurarEntries(d){
      const x=
        procurarEntries(league);
 
-     if(x.length)
-       return x;
+     if(x.length) return x;
    }
  }
 
@@ -1705,8 +1816,7 @@ function procurarEntries(d){
      const x=
        procurarEntries(child);
 
-     if(x.length)
-       return x;
+     if(x.length) return x;
    }
  }
 
@@ -1796,10 +1906,6 @@ function numeroStat(e,...nomes){
 }
 
 
-/* =========================
-   TABELA ESPN
-========================= */
-
 function criarTabela(nomeLiga,entries){
 
  const linhas=
@@ -1882,10 +1988,6 @@ function criarTabela(nomeLiga,entries){
 }
 
 
-/* =========================
-   TABELA CALCULADA
-========================= */
-
 function construirTabelaDosJogos(nomeLiga){
 
  const mapa={};
@@ -1936,24 +2038,16 @@ function construirTabelaDosJogos(nomeLiga){
      mapa[homeKey]={
 
        id:idEquipa(e.home),
-
        nome:homeNome,
-
        logo:logoEquipa(e.home),
-
        jogos:0,
-
        vitorias:0,
-
        empates:0,
-
        derrotas:0,
-
        golosMarcados:0,
-
        golosSofridos:0,
-
        pontos:0
+
      };
    }
 
@@ -1962,24 +2056,16 @@ function construirTabelaDosJogos(nomeLiga){
      mapa[awayKey]={
 
        id:idEquipa(e.away),
-
        nome:awayNome,
-
        logo:logoEquipa(e.away),
-
        jogos:0,
-
        vitorias:0,
-
        empates:0,
-
        derrotas:0,
-
        golosMarcados:0,
-
        golosSofridos:0,
-
        pontos:0
+
      };
    }
 
@@ -1999,14 +2085,12 @@ function construirTabelaDosJogos(nomeLiga){
 
      home.vitorias++;
      home.pontos+=3;
-
      away.derrotas++;
 
    }else if(homeScore<awayScore){
 
      away.vitorias++;
      away.pontos+=3;
-
      home.derrotas++;
 
    }else{
@@ -2016,6 +2100,7 @@ function construirTabelaDosJogos(nomeLiga){
 
      home.pontos++;
      away.pontos++;
+
    }
 
  });
@@ -2044,6 +2129,7 @@ function construirTabelaDosJogos(nomeLiga){
      b.nome,
      "pt"
    );
+
  });
 }
 
@@ -2056,10 +2142,6 @@ function criarTabelaCalculada(nomeLiga,linhas){
  );
 }
 
-
-/* =========================
-   HTML TABELA
-========================= */
 
 function criarHTMLTabela(nomeLiga,linhas){
 
@@ -2080,11 +2162,7 @@ function criarHTMLTabela(nomeLiga,linhas){
        <tr>
 
          <th>#</th>
-
-         <th class="team-table">
-           Equipa
-         </th>
-
+         <th class="team-table">Equipa</th>
          <th>J</th>
          <th>V</th>
          <th>E</th>
@@ -2192,7 +2270,10 @@ function mostrarFavoritos(){
 ========================= */
 
 mostrarJogos();
+
 carregar();
+
+iniciarAtualizacaoLive();
 
 </script>
 
