@@ -347,7 +347,6 @@ const ligas=[
 ];
 
 function esc(v){
-
  return String(v ?? "")
  .replaceAll("&","&amp;")
  .replaceAll("<","&lt;")
@@ -368,81 +367,91 @@ function normalizarNome(nome){
 
 
 /* =========================
-   ALIASES DE EQUIPAS
+   ALIASES
 ========================= */
 
 const aliasesEquipas={
 
  "sportingcp":[
    "sporting",
+   "sportingcp",
    "sportingclubedeportugal",
-   "sportingcp"
+   "sportingclubeportugal"
  ],
 
  "benfica":[
-   "slbenfica",
    "benfica",
+   "slbenfica",
    "sportlisboaebenfica"
  ],
 
  "portofc":[
-   "fcporto",
    "porto",
-   "portofutebolclube"
+   "fcporto",
+   "futebolclubeporto",
+   "futebolclubedoporto",
+   "portofutebolclube",
+   "fcp"
  ],
 
  "braga":[
-   "scbraga",
    "braga",
-   "sportingbraga"
+   "scbraga",
+   "sportingbraga",
+   "sportingclubedebraga"
  ],
 
  "bayernmunich":[
+   "bayern",
    "bayernmunich",
    "bayernmunchen",
    "fcbayernmunchen",
-   "bayern"
+   "fcbayern"
  ],
 
  "inter":[
    "inter",
    "intermilan",
    "internazionale",
-   "intermilano"
+   "intermilano",
+   "fcinternazionale"
  ],
 
  "milan":[
-   "acmilan",
-   "milan"
+   "milan",
+   "acmilan"
  ],
 
  "roma":[
-   "asroma",
-   "roma"
+   "roma",
+   "asroma"
  ],
 
  "psg":[
+   "psg",
    "parissaintgermain",
-   "psg"
+   "parissg"
  ],
 
  "manchesterunited":[
    "manchesterunited",
-   "manutd"
+   "manutd",
+   "manchesterutd"
  ],
 
  "manchestercity":[
    "mancity",
-   "manchestercity"
+   "manchestercity",
+   "manchestercityfc"
  ],
 
  "tottenham":[
    "tottenham",
-   "tottenhamhotspur"
+   "tottenhamhotspur",
+   "tottenhamhotspurfc"
  ]
 
 };
-
 
 function nomesEquivalentes(a,b){
 
@@ -871,12 +880,10 @@ function abrirEquipaPorId(id,name,league,logo){
  mostrarEquipa();
 }
 
-function abrirEquipa(e){
 
- equipaAtual=e;
- mostrarEquipa();
-}
-
+/* =========================
+   MOSTRAR EQUIPA
+========================= */
 
 async function mostrarEquipa(){
 
@@ -925,7 +932,6 @@ async function mostrarEquipa(){
 
  document.getElementById("voltar").onclick=mostrarJogos;
 
-
  const relacionados=jogos.filter(j=>{
 
    const e=obterEquipas(j);
@@ -957,16 +963,12 @@ async function mostrarEquipa(){
 
  });
 
-
- document.getElementById("jogos-equipa")
- .innerHTML=
-
- relacionados.length
- ?
- relacionados.map(jogoCard).join("")
- :
- '<div class="empty">Sem jogos encontrados.</div>';
-
+ document.getElementById("jogos-equipa").innerHTML=
+   relacionados.length
+   ?
+   relacionados.map(jogoCard).join("")
+   :
+   '<div class="empty">Sem jogos encontrados.</div>';
 
  await carregarPlantel();
 }
@@ -1076,7 +1078,6 @@ function criarJogador(p,i){
      "-"
    );
 
-
  let foto=
    typeof p.photo==="string"
    ? p.photo
@@ -1096,7 +1097,6 @@ function criarJogador(p,i){
 
  if(!foto && typeof p.headshot==="object")
    foto=p.headshot?.href || "";
-
 
  return{
 
@@ -1156,11 +1156,7 @@ function encontrarPlantel(dados){
  const atualNome=
    equipaAtual.name || "";
 
- const atualLiga=
-   equipaAtual.league || "";
-
  let candidatos=[];
-
 
  function recolher(obj){
 
@@ -1168,7 +1164,6 @@ function encontrarPlantel(dados){
      return;
 
    if(Array.isArray(obj)){
-
      obj.forEach(recolher);
      return;
    }
@@ -1176,12 +1171,10 @@ function encontrarPlantel(dados){
    if(typeof obj!=="object")
      return;
 
-
    const temJogadores=
      Array.isArray(obj.players) ||
      Array.isArray(obj.roster) ||
      Array.isArray(obj.squad);
-
 
    const nome=
      obj.name ||
@@ -1190,10 +1183,8 @@ function encontrarPlantel(dados){
      obj.displayName ||
      "";
 
-
    if(temJogadores || nome)
      candidatos.push(obj);
-
 
    for(const chave of Object.keys(obj)){
 
@@ -1214,11 +1205,7 @@ function encontrarPlantel(dados){
    }
  }
 
-
  recolher(dados);
-
-
- /* ID */
 
  let encontrado=
    candidatos.find(x=>
@@ -1230,7 +1217,6 @@ function encontrarPlantel(dados){
      )===atualId
    );
 
-
  if(encontrado){
 
    return (
@@ -1240,9 +1226,6 @@ function encontrarPlantel(dados){
      []
    );
  }
-
-
- /* NOME + ALIASES */
 
  encontrado=
    candidatos.find(x=>{
@@ -1260,7 +1243,6 @@ function encontrarPlantel(dados){
      );
    });
 
-
  if(encontrado){
 
    return (
@@ -1271,87 +1253,108 @@ function encontrarPlantel(dados){
    );
  }
 
-
- /* MELHOR CORRESPONDÊNCIA */
-
- let melhor=null;
- let melhorPontuacao=0;
+ return null;
+}
 
 
- candidatos.forEach(x=>{
+/* =========================
+   PLANTEL THESPORTSDB
+========================= */
 
-   const nomeDB=
-     x.name ||
-     x.strTeam ||
-     x.teamName ||
-     x.displayName ||
-     "";
+async function procurarPlantelTheSportsDB(){
 
-   if(!nomeDB)
-     return;
+ const nome=equipaAtual.name || "";
 
-   let pontos=0;
-
-   const a=
-     normalizarNome(atualNome);
-
-   const b=
-     normalizarNome(nomeDB);
-
-   if(a===b)
-     pontos+=100;
-
-   if(nomesEquivalentes(a,b))
-     pontos+=80;
-
-   if(
-     a.includes(b) ||
-     b.includes(a)
-   )
-     pontos+=40;
-
-
-   if(
-     atualLiga &&
-     x.league
-   ){
-
-     const la=
-       normalizarNome(atualLiga);
-
-     const lb=
-       normalizarNome(x.league);
-
-     if(
-       la.includes(lb) ||
-       lb.includes(la)
-     )
-       pontos+=20;
-   }
-
-
-   if(pontos>melhorPontuacao){
-
-     melhorPontuacao=pontos;
-     melhor=x;
-   }
-
- });
-
+ let candidatos=[];
 
  if(
-   melhor &&
-   melhorPontuacao>=40
+   nomesEquivalentes(
+     nome,
+     "FC Porto"
+   )
  ){
 
-   return (
-     melhor.players ||
-     melhor.roster ||
-     melhor.squad ||
-     []
-   );
+   candidatos=[
+     "FC Porto",
+     "Porto",
+     "Futebol Clube do Porto"
+   ];
+
+ }else{
+
+   candidatos=[nome];
  }
 
+ for(const candidato of candidatos){
+
+   try{
+
+     const url=
+       "https://www.thesportsdb.com/api/v1/json/123/searchteams.php?t="+
+       encodeURIComponent(candidato);
+
+     const r=await fetch(url);
+
+     if(!r.ok)
+       continue;
+
+     const d=await r.json();
+
+     const teams=d?.teams;
+
+     if(!Array.isArray(teams) || !teams.length)
+       continue;
+
+     let team=teams.find(t=>
+       nomesEquivalentes(
+         t.strTeam,
+         candidato
+       )
+     );
+
+     if(!team)
+       team=teams[0];
+
+     if(!team?.idTeam)
+       continue;
+
+     const rp=await fetch(
+       "https://www.thesportsdb.com/api/v1/json/123/lookup_all_players.php?id="+
+       encodeURIComponent(team.idTeam)
+     );
+
+     if(!rp.ok)
+       continue;
+
+     const dp=await rp.json();
+
+     if(!Array.isArray(dp?.player))
+       continue;
+
+     const jogadores=
+       dp.player
+       .filter(p=>{
+         const pos=
+           String(
+             p.strPosition || ""
+           ).toLowerCase();
+
+         return !pos.includes("coach") &&
+                !pos.includes("manager");
+       })
+       .map(criarJogador);
+
+     if(jogadores.length)
+       return jogadores;
+
+   }catch(e){
+
+     console.log(
+       "Erro TheSportsDB:",
+       e
+     );
+   }
+ }
 
  return null;
 }
@@ -1369,13 +1372,25 @@ async function carregarPlantel(){
      "data/planteis.json?v="+Date.now()
    );
 
-   if(!r.ok)
-     throw new Error("Plantel");
+   let dados=null;
 
-   const dados=await r.json();
+   if(r.ok)
+     dados=await r.json();
 
    let plantel=
      encontrarPlantel(dados);
+
+   /*
+      Se não existir no ficheiro local,
+      tenta encontrar diretamente no
+      TheSportsDB.
+   */
+
+   if(!plantel || !plantel.length){
+
+     plantel=
+       await procurarPlantelTheSportsDB();
+   }
 
    if(!plantel){
 
@@ -1388,7 +1403,6 @@ async function carregarPlantel(){
    if(!Array.isArray(plantel))
      plantel=Object.values(plantel);
 
-
    plantel=
      plantel.filter(p=>
        p &&
@@ -1400,7 +1414,6 @@ async function carregarPlantel(){
        )
      );
 
-
    if(!plantel.length){
 
      document.getElementById("plantel").innerHTML=
@@ -1409,10 +1422,8 @@ async function carregarPlantel(){
      return;
    }
 
-
    const jogadores=
      plantel.map(criarJogador);
-
 
    document.getElementById("plantel").innerHTML=`
 
@@ -1429,16 +1440,12 @@ async function carregarPlantel(){
 
          ${
            jogador.photo
-
            ?
-
            `<img
              src="${esc(jogador.photo)}"
              onerror="this.style.display='none'"
            >`
-
            :
-
            `<div style="
              width:80px;
              height:80px;
@@ -1497,16 +1504,12 @@ function abrirJogador(p){
 
  ${
    p.photo
-
    ?
-
    `<img
       src="${esc(p.photo)}"
       onerror="this.style.display='none'"
    >`
-
    :
-
    `<div style="
       width:150px;
       height:150px;
@@ -1582,9 +1585,7 @@ async function mostrarTabelas(){
 
  `;
 
-
  let html="";
-
 
  for(const liga of ligas){
 
@@ -1592,7 +1593,16 @@ async function mostrarTabelas(){
 
    try{
 
+     /*
+        CORREÇÃO PRINCIPAL:
+        Portugal usa classificacao.json.
+     */
+
      const ficheiro=
+       liga.nome==="Portugal"
+       ?
+       "data/classificacao.json"
+       :
        liga.arquivo.replace(
          ".json",
          "-classificacao.json"
@@ -1602,14 +1612,12 @@ async function mostrarTabelas(){
        ficheiro+"?v="+Date.now()
      );
 
-
      if(r.ok){
 
        const d=await r.json();
 
        const entries=
          procurarEntries(d);
-
 
        if(entries.length){
 
@@ -1631,13 +1639,6 @@ async function mostrarTabelas(){
      );
    }
 
-
-   /*
-      Se a classificação ESPN não
-      estiver disponível, calcula
-      pelos resultados existentes.
-   */
-
    if(!encontrou){
 
      const tabela=
@@ -1653,9 +1654,7 @@ async function mostrarTabelas(){
        );
      }
    }
-
  }
-
 
  document.getElementById("tabelas").innerHTML=
    html ||
@@ -1664,7 +1663,7 @@ async function mostrarTabelas(){
 
 
 /* =========================
-   PROCURAR ENTRIES ESPN
+   PROCURAR ENTRIES
 ========================= */
 
 function procurarEntries(d){
@@ -1672,18 +1671,11 @@ function procurarEntries(d){
  if(!d)
    return [];
 
-
  if(Array.isArray(d))
    return d;
 
-
- /* entries diretamente */
-
  if(Array.isArray(d.entries))
    return d.entries;
-
-
- /* standings */
 
  if(d.standings){
 
@@ -1693,9 +1685,6 @@ function procurarEntries(d){
    if(x.length)
      return x;
  }
-
-
- /* leagues */
 
  if(Array.isArray(d.leagues)){
 
@@ -1709,9 +1698,6 @@ function procurarEntries(d){
    }
  }
 
-
- /* children */
-
  if(Array.isArray(d.children)){
 
    for(const child of d.children){
@@ -1723,9 +1709,6 @@ function procurarEntries(d){
        return x;
    }
  }
-
-
- /* procura recursiva */
 
  for(const chave of Object.keys(d)){
 
@@ -1774,7 +1757,6 @@ function stat(e,n){
    }
  }
 
-
  if(e?.stats && typeof e.stats==="object"){
 
    const s=e.stats[n];
@@ -1793,7 +1775,6 @@ function stat(e,n){
      return s;
    }
  }
-
 
  return e?.[n] ?? "-";
 }
@@ -1829,12 +1810,10 @@ function criarTabela(nomeLiga,entries){
        e.participant ||
        e;
 
-
      const id=
        t.id ||
        e.teamId ||
        "";
-
 
      const nome=
        t.displayName ||
@@ -1842,12 +1821,10 @@ function criarTabela(nomeLiga,entries){
        e.team?.name ||
        "Equipa";
 
-
      const logo=
        t.logo ||
        t.logos?.[0]?.href ||
        "";
-
 
      return{
 
@@ -1898,7 +1875,6 @@ function criarTabela(nomeLiga,entries){
 
    });
 
-
  return criarHTMLTabela(
    nomeLiga,
    linhas
@@ -1914,12 +1890,10 @@ function construirTabelaDosJogos(nomeLiga){
 
  const mapa={};
 
-
  const jogosLiga=
    jogos.filter(j=>
      j.__liga===nomeLiga
    );
-
 
  jogosLiga.forEach(j=>{
 
@@ -1939,13 +1913,11 @@ function construirTabelaDosJogos(nomeLiga){
        false
      );
 
-
    const homeScore=
      numeroResultado(e.home);
 
    const awayScore=
      numeroResultado(e.away);
-
 
    if(
      homeScore===null ||
@@ -1953,13 +1925,11 @@ function construirTabelaDosJogos(nomeLiga){
    )
      return;
 
-
    const homeKey=
      normalizarNome(homeNome);
 
    const awayKey=
      normalizarNome(awayNome);
-
 
    if(!mapa[homeKey]){
 
@@ -1987,7 +1957,6 @@ function construirTabelaDosJogos(nomeLiga){
      };
    }
 
-
    if(!mapa[awayKey]){
 
      mapa[awayKey]={
@@ -2014,22 +1983,17 @@ function construirTabelaDosJogos(nomeLiga){
      };
    }
 
-
    const home=mapa[homeKey];
    const away=mapa[awayKey];
-
 
    home.jogos++;
    away.jogos++;
 
-
    home.golosMarcados+=homeScore;
    home.golosSofridos+=awayScore;
 
-
    away.golosMarcados+=awayScore;
    away.golosSofridos+=homeScore;
-
 
    if(homeScore>awayScore){
 
@@ -2056,13 +2020,11 @@ function construirTabelaDosJogos(nomeLiga){
 
  });
 
-
  return Object.values(mapa)
  .sort((a,b)=>{
 
    if(b.pontos!==a.pontos)
      return b.pontos-a.pontos;
-
 
    const gdA=
      a.golosMarcados-a.golosSofridos;
@@ -2070,16 +2032,13 @@ function construirTabelaDosJogos(nomeLiga){
    const gdB=
      b.golosMarcados-b.golosSofridos;
 
-
    if(gdB!==gdA)
      return gdB-gdA;
-
 
    if(
      b.golosMarcados!==a.golosMarcados
    )
      return b.golosMarcados-a.golosMarcados;
-
 
    return a.nome.localeCompare(
      b.nome,
@@ -2177,11 +2136,8 @@ function criarHTMLTabela(nomeLiga,linhas){
          </td>
 
          <td>${esc(e.jogos)}</td>
-
          <td>${esc(e.vitorias)}</td>
-
          <td>${esc(e.empates)}</td>
-
          <td>${esc(e.derrotas)}</td>
 
          <td class="points">
