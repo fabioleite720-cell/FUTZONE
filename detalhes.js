@@ -1,142 +1,106 @@
-const params = new URLSearchParams(window.location.search);
+(function () {
 
-const eventoId = params.get("id");
-const liga = params.get("liga") || "por.1";
+  function ligaAPI(nome) {
+    const mapa = {
+      "Portugal": "por.1",
+      "Inglaterra": "eng.1",
+      "Espanha": "esp.1",
+      "Itália": "ita.1",
+      "Alemanha": "ger.1"
+    };
 
-const app = document.getElementById("app");
-
-async function carregarDetalhes() {
-
-  if (!eventoId) {
-    app.innerHTML = `
-      <div class="card">
-        Jogo não encontrado.
-      </div>
-    `;
-    return;
+    return mapa[nome] || "por.1";
   }
 
-  app.innerHTML = `
-    <div class="card">
-      <h2>Detalhes do jogo</h2>
-      <p>A carregar informações...</p>
-    </div>
-  `;
+  function jogosVisiveis() {
 
-  try {
-
-    const url =
-      "https://site.api.espn.com/apis/site/v2/sports/soccer/" +
-      liga +
-      "/summary?event=" +
-      encodeURIComponent(eventoId);
-
-    const resposta = await fetch(url);
-
-    if (!resposta.ok) {
-      throw new Error("Erro API");
+    if (
+      typeof jogos === "undefined" ||
+      !Array.isArray(jogos)
+    ) {
+      return [];
     }
 
-    const dados = await resposta.json();
+    return jogos.filter(function (j) {
 
-    const jogo =
-      dados.header?.competitions?.[0];
+      const ligaOK =
+        typeof ligaAtual === "undefined" ||
+        ligaAtual === "Todos" ||
+        j.__liga === ligaAtual;
 
-    if (!jogo) {
-      app.innerHTML = `
-        <div class="card">
-          <h2>Detalhes</h2>
-          <p>Não existem informações disponíveis.</p>
-        </div>
-      `;
-      return;
-    }
+      const estado =
+        typeof estadoJogo === "function"
+          ? estadoJogo(j)
+          : "";
 
-    const equipas =
-      jogo.competitors || [];
+      const filtroOK =
+        typeof filtroAtual === "undefined" ||
+        filtroAtual === "Todos" ||
+        (filtroAtual === "LIVE" && estado === "LIVE") ||
+        (filtroAtual === "Próximos" && estado === "PRÓXIMO") ||
+        (filtroAtual === "Resultados" && estado === "RESULTADO");
 
-    const casa =
-      equipas.find(e => e.homeAway === "home");
+      return ligaOK && filtroOK;
+    });
+  }
 
-    const fora =
-      equipas.find(e => e.homeAway === "away");
+  function ligarCartoes() {
 
-    const nomeCasa =
-      casa?.team?.displayName || "Casa";
+    const cards = Array.from(
+      document.querySelectorAll(".card")
+    ).filter(function (card) {
+      return card.querySelector(".teams .team");
+    });
 
-    const nomeFora =
-      fora?.team?.displayName || "Fora";
+    const lista = jogosVisiveis();
 
-    const resultadoCasa =
-      casa?.score ?? "-";
+    cards.forEach(function (card, index) {
 
-    const resultadoFora =
-      fora?.score ?? "-";
+      if (card.dataset.detalhesLigados === "sim") {
+        return;
+      }
 
-    const estado =
-      jogo.status?.type?.detail || "";
+      card.dataset.detalhesLigados = "sim";
+      card.style.cursor = "pointer";
 
-    const eventos =
-      dados.plays || [];
+      card.addEventListener("click", function (event) {
 
-    app.innerHTML = `
-
-      <button onclick="history.back()">
-        ← Voltar
-      </button>
-
-      <div class="card">
-
-        <h2>
-          ${nomeCasa}
-        </h2>
-
-        <div class="score">
-          ${resultadoCasa} - ${resultadoFora}
-        </div>
-
-        <h2>
-          ${nomeFora}
-        </h2>
-
-        <p>${estado}</p>
-
-      </div>
-
-      <div class="card">
-
-        <h3>📋 Eventos</h3>
-
-        ${
-          eventos.length
-          ? eventos.map(e => `
-              <p>
-                ${e.clock?.displayValue || ""}
-                ${e.text || ""}
-              </p>
-            `).join("")
-          : "<p>Sem eventos registados.</p>"
+        // Se tocar no nome/equipa, mantém o funcionamento
+        // normal da página da equipa.
+        if (event.target.closest(".team")) {
+          return;
         }
 
-      </div>
+        const jogo = lista[index];
 
-    `;
+        if (!jogo) {
+          alert("Não foi possível encontrar este jogo.");
+          return;
+        }
 
-  } catch (erro) {
+        const id =
+          jogo.id ||
+          jogo.uid ||
+          jogo.eventId;
 
-    console.error(erro);
+        if (!id) {
+          alert("Este jogo não tem ID.");
+          return;
+        }
 
-    app.innerHTML = `
-      <div class="card">
-        <h2>Erro</h2>
-        <p>Não foi possível carregar os detalhes.</p>
+        const liga = ligaAPI(jogo.__liga);
 
-        <button onclick="carregarDetalhes()">
-          🔄 Tentar novamente
-        </button>
-      </div>
-    `;
+        window.location.href =
+          "detalhes.html?id=" +
+          encodeURIComponent(id) +
+          "&liga=" +
+          encodeURIComponent(liga);
+      });
+
+    });
   }
-}
 
-carregarDetalhes();
+  // Liga os cartões quando aparecem.
+  setInterval(ligarCartoes, 500);
+
+})();
