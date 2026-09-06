@@ -16,32 +16,29 @@ jobs:
       - name: Baixar código
         uses: actions/checkout@v4
 
-      - name: Atualizar jogos e classificações
+      - name: Buscar jogos e classificações
         shell: bash
         run: |
-          set -u
+          set -e
 
           mkdir -p data
 
           ONTEM=$(date -u -d "3 days ago" +%Y%m%d)
           FUTURO=$(date -u -d "14 days" +%Y%m%d)
 
-          echo "Periodo: $ONTEM ate $FUTURO"
+          echo "📅 Período: $ONTEM até $FUTURO"
 
-          baixar_jogos() {
+          buscar_jogos() {
             LIGA="$1"
             FICHEIRO="$2"
 
-            echo ""
-            echo "================================"
-            echo "JOGOS: $LIGA"
-            echo "================================"
+            echo "⚽ A procurar $LIGA"
 
             TEMP="data/${FICHEIRO}.tmp"
 
-            URL="https://site.api.espn.com/apis/site/v2/sports/soccer/${LIGA}/scoreboard?dates=${ONTEM}-${FUTURO}&limit=1000"
-
-            if curl -fLsS --max-time 60 "$URL" -o "$TEMP"; then
+            if curl -fLsS \
+              "https://site.api.espn.com/apis/site/v2/sports/soccer/${LIGA}/scoreboard?dates=${ONTEM}-${FUTURO}&limit=1000" \
+              -o "$TEMP"; then
 
               if python3 - "$TEMP" <<'PY'
           import json
@@ -51,58 +48,54 @@ jobs:
 
           try:
               with open(ficheiro, "r", encoding="utf-8") as f:
-                  d = json.load(f)
+                  dados = json.load(f)
 
-              eventos = d.get("events")
+              if isinstance(dados, dict) and "events" in dados:
+                  if isinstance(dados["events"], list):
+                      print("JSON válido com events:", len(dados["events"]))
+                      sys.exit(0)
 
-              if isinstance(eventos, list):
-                  print("JSON valido:", len(eventos), "jogos")
-                  sys.exit(0)
-
-              print("Resposta sem events.")
+              print("Resposta sem events")
               sys.exit(1)
 
           except Exception as e:
-              print("JSON invalido:", e)
+              print("JSON inválido:", e)
               sys.exit(1)
           PY
               then
-
-                mv "$TEMP" "data/$FICHEIRO"
-
-                echo "OK: $FICHEIRO"
-
+                mv "$TEMP" "data/${FICHEIRO}.json"
+                echo "✅ $FICHEIRO atualizado"
               else
-
                 rm -f "$TEMP"
-
-                echo "AVISO: resposta invalida."
-                echo "Ficheiro anterior mantido."
+                echo "⚠️ Resposta inválida para $FICHEIRO — ficheiro anterior mantido"
               fi
 
             else
-
               rm -f "$TEMP"
-
-              echo "AVISO: API indisponivel."
-              echo "Ficheiro anterior mantido."
+              echo "⚠️ Falha na API para $FICHEIRO — ficheiro anterior mantido"
             fi
           }
 
-          baixar_classificacao() {
+          buscar_jogos "por.1" "primeira-liga"
+          buscar_jogos "eng.1" "premier-league"
+          buscar_jogos "esp.1" "la-liga"
+          buscar_jogos "ita.1" "serie-a"
+          buscar_jogos "ger.1" "bundesliga"
+
+          echo ""
+          echo "📊 A atualizar classificações..."
+
+          buscar_classificacao() {
             LIGA="$1"
             FICHEIRO="$2"
 
-            echo ""
-            echo "================================"
-            echo "TABELA: $LIGA"
-            echo "================================"
+            echo "📊 $LIGA"
 
             TEMP="data/${FICHEIRO}.tmp"
 
-            URL="https://site.api.espn.com/apis/v2/sports/soccer/${LIGA}/standings"
-
-            if curl -fLsS --max-time 60 "$URL" -o "$TEMP"; then
+            if curl -fLsS \
+              "https://site.api.espn.com/apis/v2/sports/soccer/${LIGA}/standings" \
+              -o "$TEMP"; then
 
               if python3 - "$TEMP" <<'PY'
           import json
@@ -112,70 +105,94 @@ jobs:
 
           try:
               with open(ficheiro, "r", encoding="utf-8") as f:
-                  d = json.load(f)
+                  dados = json.load(f)
 
-              if isinstance(d, dict) and (
-                  "children" in d or
-                  "standings" in d or
-                  "entries" in d
-              ):
-                  print("Classificacao valida.")
+              if isinstance(dados, dict):
+                  print("Classificação JSON válida")
                   sys.exit(0)
 
-              print("Estrutura de classificacao inesperada.")
+              print("Formato inválido")
               sys.exit(1)
 
           except Exception as e:
-              print("JSON invalido:", e)
+              print("JSON inválido:", e)
               sys.exit(1)
           PY
               then
-
-                mv "$TEMP" "data/$FICHEIRO"
-
-                echo "OK: $FICHEIRO"
-
+                mv "$TEMP" "data/${FICHEIRO}.json"
+                echo "✅ $FICHEIRO atualizado"
               else
-
                 rm -f "$TEMP"
-
-                echo "AVISO: classificacao invalida."
-                echo "Ficheiro anterior mantido."
+                echo "⚠️ Classificação inválida — ficheiro anterior mantido"
               fi
 
             else
-
               rm -f "$TEMP"
-
-              echo "AVISO: API de classificacoes indisponivel."
-              echo "Ficheiro anterior mantido."
+              echo "⚠️ Falha na classificação — ficheiro anterior mantido"
             fi
           }
 
-          # =========================================
-          # JOGOS
-          # =========================================
+          # PORTUGAL
+          # IMPORTANTE:
+          # O site guarda a classificação portuguesa em:
+          # data/classificacao.json
+          buscar_classificacao "por.1" "classificacao"
 
-          baixar_jogos "por.1" "primeira-liga.json"
-          baixar_jogos "eng.1" "premier-league.json"
-          baixar_jogos "esp.1" "la-liga.json"
-          baixar_jogos "ita.1" "serie-a.json"
-          baixar_jogos "ger.1" "bundesliga.json"
+          buscar_classificacao "eng.1" "premier-league-classificacao"
+          buscar_classificacao "esp.1" "la-liga-classificacao"
+          buscar_classificacao "ita.1" "serie-a-classificacao"
+          buscar_classificacao "ger.1" "bundesliga-classificacao"
 
-          # =========================================
-          # CLASSIFICACOES
-          # =========================================
+          echo ""
+          echo "🔎 Verificação dos ficheiros..."
 
-          baixar_classificacao \
-            "por.1" \
-            "classificacao.json"
+          python3 <<'PY'
+          import json
+          import os
 
-          baixar_classificacao \
-            "eng.1" \
-            "premier-league-classificacao.json"
+          ficheiros = [
+              "data/primeira-liga.json",
+              "data/premier-league.json",
+              "data/la-liga.json",
+              "data/serie-a.json",
+              "data/bundesliga.json",
+              "data/classificacao.json",
+              "data/premier-league-classificacao.json",
+              "data/la-liga-classificacao.json",
+              "data/serie-a-classificacao.json",
+              "data/bundesliga-classificacao.json"
+          ]
 
-          baixar_classificacao \
-            "esp.1" \
-            "la-liga-classificacao.json"
+          for ficheiro in ficheiros:
+              if not os.path.exists(ficheiro):
+                  print("⚠️ NÃO EXISTE:", ficheiro)
+                  continue
 
-         
+              try:
+                  with open(ficheiro, "r", encoding="utf-8") as f:
+                      dados = json.load(f)
+
+                  if "classificacao" in ficheiro:
+                      print("✅", ficheiro, "OK")
+                  else:
+                      eventos = dados.get("events", [])
+                      print("✅", ficheiro, "OK - jogos:", len(eventos))
+
+              except Exception as e:
+                  print("❌", ficheiro, e)
+          PY
+
+          echo ""
+          echo "✅ Atualização terminada."
+
+      - name: Guardar dados
+        run: |
+          git config user.name "FUTZONE"
+          git config user.email "futzone@users.noreply.github.com"
+
+          git add data/
+
+          git diff --cached --quiet || \
+            git commit -m "FUTZONE - atualizar jogos e classificacoes"
+
+          git push
