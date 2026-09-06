@@ -94,9 +94,13 @@ button{
  cursor:pointer
 }
 
-.team:last-child{text-align:right}
+.team:last-child{
+ text-align:right
+}
 
-.team:hover{color:#168cff}
+.team:hover{
+ color:#168cff
+}
 
 .team-logo{
  width:35px;
@@ -138,7 +142,9 @@ button{
  padding:8px
 }
 
-.nav button.active{color:#168cff}
+.nav button.active{
+ color:#168cff
+}
 
 .back{
  margin-bottom:15px;
@@ -157,7 +163,8 @@ button{
  border-radius:14px;
  padding:12px;
  text-align:center;
- cursor:pointer
+ cursor:pointer;
+ transition:.2s
 }
 
 .player:hover{
@@ -216,14 +223,21 @@ button{
  display:flex;
  justify-content:space-between;
  padding:14px;
- border-bottom:1px solid #222
+ border-bottom:1px solid #222;
+ gap:15px
 }
 
-.info-row:last-child{border-bottom:0}
+.info-row:last-child{
+ border-bottom:0
+}
 
-.info-label{color:#888}
+.info-label{
+ color:#888
+}
 
-.info-value{font-weight:bold}
+.info-value{
+ font-weight:bold
+}
 
 .empty{
  text-align:center;
@@ -231,10 +245,15 @@ button{
  padding:30px
 }
 
+.table-wrap{
+ overflow-x:auto
+}
+
 table{
  width:100%;
  border-collapse:collapse;
- background:#101010
+ background:#101010;
+ min-width:520px
 }
 
 th,td{
@@ -244,11 +263,51 @@ th,td{
  font-size:13px
 }
 
-th{color:#168cff}
+th{
+ color:#168cff
+}
+
+.team-table{
+ text-align:left;
+ white-space:nowrap
+}
+
+.position-number{
+ font-weight:bold
+}
+
+.points{
+ font-weight:900;
+ color:#168cff
+}
+
+.forma{
+ font-size:11px;
+ color:#888
+}
 
 @media(max-width:500px){
- .plantel-grid{grid-template-columns:repeat(2,1fr)}
- .player img{width:70px;height:70px}
+
+ .plantel-grid{
+   grid-template-columns:repeat(2,1fr)
+ }
+
+ .player img{
+   width:70px;
+   height:70px
+ }
+
+ .teams{
+   gap:5px
+ }
+
+ .team{
+   font-size:13px
+ }
+
+ .score{
+   font-size:18px
+ }
 }
 </style>
 </head>
@@ -262,9 +321,19 @@ th{color:#168cff}
 <div class="container" id="app"></div>
 
 <div class="nav">
- <button id="navJogos" onclick="mostrarJogos()">⚽<br>Jogos</button>
- <button id="navTabelas" onclick="mostrarTabelas()">📊<br>Tabelas</button>
- <button id="navFav" onclick="mostrarFavoritos()">⭐<br>Favoritos</button>
+
+ <button id="navJogos" onclick="mostrarJogos()">
+   ⚽<br>Jogos
+ </button>
+
+ <button id="navTabelas" onclick="mostrarTabelas()">
+   📊<br>Tabelas
+ </button>
+
+ <button id="navFav" onclick="mostrarFavoritos()">
+   ⭐<br>Favoritos
+ </button>
+
 </div>
 
 <script>
@@ -282,12 +351,14 @@ const ligas=[
  {nome:"Alemanha",arquivo:"data/bundesliga.json"}
 ];
 
+
 /* =========================
-   SEGURANÇA HTML
+   SEGURANÇA
 ========================= */
 
 function esc(v){
- return String(v??"")
+
+ return String(v ?? "")
  .replaceAll("&","&amp;")
  .replaceAll("<","&lt;")
  .replaceAll(">","&gt;")
@@ -295,13 +366,39 @@ function esc(v){
  .replaceAll("'","&#039;");
 }
 
+
 /* =========================
-   DADOS DOS JOGOS
+   NORMALIZAÇÃO DE NOMES
+========================= */
+
+function normalizarNome(nome){
+
+ return String(nome || "")
+ .toLowerCase()
+ .normalize("NFD")
+ .replace(/[\u0300-\u036f]/g,"")
+ .replace(/&/g,"and")
+ .replace(/[^a-z0-9]/g,"");
+}
+
+
+function tokensNome(nome){
+
+ return normalizarNome(nome)
+ .split(/(?=[A-Z])/)
+ .filter(Boolean);
+}
+
+
+/* =========================
+   JOGOS
 ========================= */
 
 function obterCompeticao(j){
+
  return j?.competitions?.[0] || {};
 }
+
 
 function obterEquipas(j){
 
@@ -311,17 +408,22 @@ function obterEquipas(j){
    c=j?.competitors;
  }
 
- if(!Array.isArray(c)) c=[];
+ if(!Array.isArray(c))
+   c=[];
 
- let home=c.find(x=>x.homeAway==="home") || c[0] || {};
- let away=c.find(x=>x.homeAway==="away") || c[1] || {};
+ let home=
+   c.find(x=>x.homeAway==="home") ||
+   c[0] ||
+   {};
+
+ let away=
+   c.find(x=>x.homeAway==="away") ||
+   c[1] ||
+   {};
 
  return {home,away};
 }
 
-/* MUITO IMPORTANTE:
-   aceita várias estruturas possíveis
-*/
 
 function nomeEquipa(c){
 
@@ -335,24 +437,25 @@ function nomeEquipa(c){
  );
 }
 
+
 function nomeEquipaSeguro(c,j,home){
 
  let nome=nomeEquipa(c);
 
- if(nome) return nome;
+ if(nome)
+   return nome;
 
- /* fallback pelo nome do próprio jogo */
  if(j?.name){
 
    let partes=j.name.split(" at ");
 
-   if(partes.length===2){
+   if(partes.length===2)
      return home ? partes[1] : partes[0];
-   }
  }
 
  return "Equipa";
 }
+
 
 function idEquipa(c){
 
@@ -362,6 +465,7 @@ function idEquipa(c){
    null
  );
 }
+
 
 function logoEquipa(c){
 
@@ -374,16 +478,47 @@ function logoEquipa(c){
  );
 }
 
+
+function numeroResultado(c){
+
+ let valor=c?.score;
+
+ if(valor===undefined || valor===null)
+   return null;
+
+ if(typeof valor==="object"){
+
+   valor=
+     valor.value ??
+     valor.displayValue ??
+     null;
+ }
+
+ let n=Number(valor);
+
+ return Number.isFinite(n) ? n : null;
+}
+
+
 function resultado(c){
 
- if(c?.score===undefined || c?.score===null)
+ let valor=c?.score;
+
+ if(valor===undefined || valor===null)
    return "-";
 
- if(typeof c.score==="object")
-   return c.score.displayValue || c.score.value || "-";
+ if(typeof valor==="object"){
 
- return c.score;
+   return (
+     valor.displayValue ??
+     valor.value ??
+     "-"
+   );
+ }
+
+ return valor;
 }
+
 
 function estadoJogo(j){
 
@@ -398,9 +533,11 @@ function estadoJogo(j){
  return "PRÓXIMO";
 }
 
+
 function dataJogo(j){
 
- if(!j?.date) return "";
+ if(!j?.date)
+   return "";
 
  try{
 
@@ -420,6 +557,7 @@ function dataJogo(j){
  }
 }
 
+
 /* =========================
    CARREGAR JOGOS
 ========================= */
@@ -436,7 +574,8 @@ async function carregar(){
        liga.arquivo+"?v="+Date.now()
      );
 
-     if(!r.ok) continue;
+     if(!r.ok)
+       continue;
 
      const d=await r.json();
 
@@ -447,6 +586,9 @@ async function carregar(){
 
      else if(Array.isArray(d))
        lista=d;
+
+     else if(Array.isArray(d?.games))
+       lista=d.games;
 
      lista.forEach(j=>{
 
@@ -463,12 +605,12 @@ async function carregar(){
        liga.arquivo,
        e
      );
-
    }
  }
 
  mostrarJogos();
 }
+
 
 /* =========================
    JOGOS
@@ -491,35 +633,39 @@ function mostrarJogos(){
 
  <div class="filters">
 
- ${["Todos","LIVE","Próximos","Resultados"]
- .map(x=>`
+ ${
+   ["Todos","LIVE","Próximos","Resultados"]
+   .map(x=>`
 
- <button
- class="${filtroAtual===x?"active":""}"
- onclick="filtroAtual='${x}';mostrarJogos()">
+     <button
+       class="${filtroAtual===x?"active":""}"
+       onclick="filtroAtual='${esc(x)}';mostrarJogos()">
 
- ${x}
+       ${esc(x)}
 
- </button>
+     </button>
 
- `).join("")}
+   `).join("")
+ }
 
  </div>
 
  <div class="filters">
 
- ${["Todos",...ligas.map(x=>x.nome)]
- .map(x=>`
+ ${
+   ["Todos",...ligas.map(x=>x.nome)]
+   .map(x=>`
 
- <button
- class="${ligaAtual===x?"active":""}"
- onclick="ligaAtual='${x}';mostrarJogos()">
+     <button
+       class="${ligaAtual===x?"active":""}"
+       onclick="ligaAtual='${esc(x)}';mostrarJogos()">
 
- ${x}
+       ${esc(x)}
 
- </button>
+     </button>
 
- `).join("")}
+   `).join("")
+ }
 
  </div>
 
@@ -538,9 +684,21 @@ function mostrarJogos(){
 
    let filtroOK=
      filtroAtual==="Todos" ||
-     (filtroAtual==="LIVE" && estado==="LIVE") ||
-     (filtroAtual==="Próximos" && estado==="PRÓXIMO") ||
-     (filtroAtual==="Resultados" && estado==="RESULTADO");
+
+     (
+       filtroAtual==="LIVE" &&
+       estado==="LIVE"
+     ) ||
+
+     (
+       filtroAtual==="Próximos" &&
+       estado==="PRÓXIMO"
+     ) ||
+
+     (
+       filtroAtual==="Resultados" &&
+       estado==="RESULTADO"
+     );
 
    return ligaOK && filtroOK;
  });
@@ -559,12 +717,16 @@ function mostrarJogos(){
    lista.map(jogoCard).join("");
 }
 
+
 function jogoCard(j){
 
  const e=obterEquipas(j);
 
- const hn=nomeEquipaSeguro(e.home,j,true);
- const an=nomeEquipaSeguro(e.away,j,false);
+ const hn=
+   nomeEquipaSeguro(e.home,j,true);
+
+ const an=
+   nomeEquipaSeguro(e.away,j,false);
 
  const hid=idEquipa(e.home);
  const aid=idEquipa(e.away);
@@ -587,13 +749,23 @@ function jogoCard(j){
 
    <div class="teams">
 
-     <div class="team"
-       onclick="abrirEquipaPorId('${esc(hid||"")}','${esc(hn)}','${esc(j.__liga)}','${esc(hl)}')">
+     <div
+       class="team"
+       onclick="abrirEquipaPorId(
+         '${esc(hid || "")}',
+         '${esc(hn)}',
+         '${esc(j.__liga)}',
+         '${esc(hl)}'
+       )">
 
        ${
          hl
-         ? `<img class="team-logo" src="${esc(hl)}">`
-         : ""
+         ?
+         `<img
+           class="team-logo"
+           src="${esc(hl)}">`
+         :
+         ""
        }
 
        ${esc(hn)}
@@ -604,13 +776,23 @@ function jogoCard(j){
        ${esc(hs)} - ${esc(as)}
      </div>
 
-     <div class="team"
-       onclick="abrirEquipaPorId('${esc(aid||"")}','${esc(an)}','${esc(j.__liga)}','${esc(al)}')">
+     <div
+       class="team"
+       onclick="abrirEquipaPorId(
+         '${esc(aid || "")}',
+         '${esc(an)}',
+         '${esc(j.__liga)}',
+         '${esc(al)}'
+       )">
 
        ${
          al
-         ? `<img class="team-logo" src="${esc(al)}">`
-         : ""
+         ?
+         `<img
+           class="team-logo"
+           src="${esc(al)}">`
+         :
+         ""
        }
 
        ${esc(an)}
@@ -627,7 +809,11 @@ function jogoCard(j){
        : estado
      }
 
-     ${j.date ? " • "+esc(dataJogo(j)) : ""}
+     ${
+       j.date
+       ? " • "+esc(dataJogo(j))
+       : ""
+     }
 
    </div>
 
@@ -636,11 +822,17 @@ function jogoCard(j){
  `;
 }
 
+
 /* =========================
    EQUIPA
 ========================= */
 
-function abrirEquipaPorId(id,name,league,logo){
+function abrirEquipaPorId(
+ id,
+ name,
+ league,
+ logo
+){
 
  equipaAtual={
    id:id,
@@ -652,6 +844,7 @@ function abrirEquipaPorId(id,name,league,logo){
  mostrarEquipa();
 }
 
+
 function abrirEquipa(e){
 
  equipaAtual=e;
@@ -659,12 +852,13 @@ function abrirEquipa(e){
  mostrarEquipa();
 }
 
+
 async function mostrarEquipa(){
 
  document.getElementById("app").innerHTML=`
 
  <button class="back" id="voltar">
- ← Voltar
+   ← Voltar
  </button>
 
  <div style="text-align:center">
@@ -673,8 +867,11 @@ async function mostrarEquipa(){
    equipaAtual.logo
    ?
    `<img
-      src="${esc(equipaAtual.logo)}"
-      style="width:80px;height:80px;object-fit:contain">`
+     src="${esc(equipaAtual.logo)}"
+     style="
+       width:80px;
+       height:80px;
+       object-fit:contain">`
    :
    ""
  }
@@ -704,570 +901,370 @@ async function mostrarEquipa(){
  document.getElementById("voltar")
  .onclick=mostrarJogos;
 
+
  const relacionados=jogos.filter(j=>{
 
    const e=obterEquipas(j);
 
+   const hn=
+     normalizarNome(
+       nomeEquipaSeguro(e.home,j,true)
+     );
+
+   const an=
+     normalizarNome(
+       nomeEquipaSeguro(e.away,j,false)
+     );
+
+   const atual=
+     normalizarNome(equipaAtual.name);
+
    return (
+
      String(idEquipa(e.home))===
      String(equipaAtual.id)
+
      ||
+
      String(idEquipa(e.away))===
      String(equipaAtual.id)
+
+     ||
+
+     hn===atual
+
+     ||
+
+     an===atual
+
    );
 
  });
 
- document.getElementById("jogos-equipa").innerHTML=
+
+ document.getElementById("jogos-equipa")
+ .innerHTML=
+
    relacionados.length
+
    ?
+
    relacionados.map(jogoCard).join("")
+
    :
+
    '<div class="empty">Sem jogos encontrados.</div>';
+
 
  await carregarPlantel();
 }
+
 
 /* =========================
    PLANTEL
 ========================= */
 
-async function carregarPlantel(){
+function idadeAPartirData(data){
 
- try{
+ if(!data)
+   return "-";
 
-   const r=await fetch(
-     "data/planteis.json?v="+Date.now()
+ const d=new Date(data);
+
+ if(isNaN(d.getTime()))
+   return "-";
+
+ const hoje=new Date();
+
+ let idade=
+   hoje.getFullYear()-
+   d.getFullYear();
+
+ const mes=
+   hoje.getMonth()-
+   d.getMonth();
+
+ if(
+   mes<0 ||
+   (
+     mes===0 &&
+     hoje.getDate()<d.getDate()
+   )
+ ){
+
+   idade--;
+ }
+
+ if(idade<0 || idade>100)
+   return "-";
+
+ return idade;
+}
+
+
+function obterDataNascimento(p){
+
+ return (
+   p.dateBorn ||
+   p.dateOfBirth ||
+   p.birthDate ||
+   (
+     typeof p.age==="string" &&
+     /^\d{4}-\d{2}-\d{2}/.test(p.age)
+       ? p.age
+       : ""
+   ) ||
+   ""
+ );
+}
+
+
+function extrairTexto(valor){
+
+ if(!valor)
+   return "";
+
+ if(typeof valor==="string")
+   return valor;
+
+ if(typeof valor==="number")
+   return String(valor);
+
+ if(typeof valor==="object"){
+
+   return (
+     valor.displayName ||
+     valor.name ||
+     valor.description ||
+     valor.value ||
+     ""
    );
+ }
 
-   if(!r.ok)
-     throw new Error("Plantel");
+ return "";
+}
 
-   const dados=await r.json();
 
-   let plantel=null;
+function criarJogador(p,i){
 
-   /* formato:
-      {"437":[...]}
-   */
+ const nascimento=
+   obterDataNascimento(p);
 
-   if(dados && !Array.isArray(dados)){
+ const idade=
+   idadeAPartirData(nascimento);
 
-     plantel=
-       dados[String(equipaAtual.id)];
-
-     /* formato:
-        {teams:[...]}
-     */
-
-     if(!plantel && Array.isArray(dados.teams)){
-
-       const t=dados.teams.find(x=>
-         String(x.id)===
-         String(equipaAtual.id)
-       );
-
-       plantel=
-         t?.players ||
-         t?.roster;
-     }
-
-   }
-
-   /* formato:
-      [{id:"437",players:[]}]
-   */
-
-   if(Array.isArray(dados) && !plantel){
-
-     const t=dados.find(x=>
-       String(x.id)===
-       String(equipaAtual.id)
+ let idadeFinal=
+   idade!=="-"
+   ? idade
+   : (
+       p.age &&
+       !/^\d{4}-\d{2}-\d{2}/.test(String(p.age))
+       ? p.age
+       : "-"
      );
 
-     plantel=
-       t?.players ||
-       t?.roster;
-   }
 
-   if(!plantel){
+ let foto="";
 
-     document.getElementById("plantel")
-     .innerHTML=
-       '<div class="empty">Plantel não disponível.</div>';
+ if(typeof p.photo==="string")
+   foto=p.photo;
 
+ if(!foto && typeof p.strThumb==="string")
+   foto=p.strThumb;
+
+ if(!foto && typeof p.strCutout==="string")
+   foto=p.strCutout;
+
+ if(!foto && typeof p.headshot==="string")
+   foto=p.headshot;
+
+ if(!foto && typeof p.image==="string")
+   foto=p.image;
+
+ if(
+   !foto &&
+   typeof p.headshot==="object"
+ )
+   foto=p.headshot?.href || "";
+
+
+ return {
+
+   id:
+     p.id ||
+     p.idPlayer ||
+     p.playerId ||
+     i,
+
+   name:
+     p.name ||
+     p.strPlayer ||
+     p.displayName ||
+     p.fullName ||
+     "Jogador",
+
+   number:
+     p.number ||
+     p.strNumber ||
+     p.jersey ||
+     p.jerseyNumber ||
+     "-",
+
+   position:
+     extrairTexto(
+       p.position ||
+       p.strPosition ||
+       p.positionName
+     ) || "-",
+
+   age:idadeFinal,
+
+   nationality:
+     extrairTexto(
+       p.nationality ||
+       p.strNationality ||
+       p.country
+     ) || "-",
+
+   photo:foto
+
+ };
+}
+
+
+function encontrarPlantel(dados){
+
+ if(!dados)
+   return null;
+
+
+ const atualId=
+   String(equipaAtual.id || "");
+
+
+ const atualNome=
+   normalizarNome(equipaAtual.name);
+
+
+ const atualLiga=
+   normalizarNome(equipaAtual.league);
+
+
+ let candidatos=[];
+
+
+ /* =========================
+    RECOLHER TODAS AS EQUIPAS
+ ========================= */
+
+ function recolher(obj){
+
+   if(!obj)
+     return;
+
+   if(Array.isArray(obj)){
+
+     obj.forEach(x=>recolher(x));
      return;
    }
 
-   if(!Array.isArray(plantel))
-     plantel=Object.values(plantel);
-
-   if(!plantel.length){
-
-     document.getElementById("plantel")
-     .innerHTML=
-       '<div class="empty">Plantel vazio.</div>';
-
+   if(typeof obj!=="object")
      return;
-   }
 
-   document.getElementById("plantel")
-   .innerHTML=`
 
-   <div class="plantel-grid">
+   const temJogadores=
+     Array.isArray(obj.players) ||
+     Array.isArray(obj.roster) ||
+     Array.isArray(obj.squad);
 
-   ${
-     plantel.map((p,i)=>{
-
-       const jogador={
-
-         id:
-           p.id ||
-           p.playerId ||
-           i,
-
-         name:
-           p.name ||
-           p.displayName ||
-           p.fullName ||
-           "Jogador",
-
-         number:
-           p.number ||
-           p.jersey ||
-           p.jerseyNumber ||
-           "-",
-
-         position:
-           typeof p.position==="object"
-           ?
-           (
-             p.position.displayName ||
-             p.position.name ||
-             "-"
-           )
-           :
-           (
-             p.position ||
-             p.positionName ||
-             "-"
-           ),
-
-         age:
-           p.age ||
-           "-",
-
-         nationality:
-           typeof p.nationality==="object"
-           ?
-           (
-             p.nationality.displayName ||
-             p.nationality.name ||
-             "-"
-           )
-           :
-           (
-             p.nationality ||
-             p.country ||
-             "-"
-           ),
-
-         photo:
-           p.photo ||
-           p.headshot ||
-           p.image ||
-           p.headshot?.href ||
-           ""
-       };
-
-       return`
-
-       <div class="player"
-         onclick='abrirJogador(${JSON.stringify(jogador)})'>
-
-         ${
-           jogador.photo
-
-           ?
-
-           `<img
-             src="${esc(jogador.photo)}"
-             onerror="this.style.display='none'">`
-
-           :
-
-           `<div style="
-             width:80px;
-             height:80px;
-             border-radius:50%;
-             background:#222;
-             margin:auto auto 8px;
-             display:flex;
-             align-items:center;
-             justify-content:center;
-             font-size:30px">
-             ⚽
-           </div>`
-         }
-
-         <div class="player-name">
-           ${esc(jogador.name)}
-         </div>
-
-         <div class="player-info">
-           #${esc(jogador.number)}
-           •
-           ${esc(jogador.position)}
-         </div>
-
-       </div>
-
-       `;
-
-     }).join("")
-   }
-
-   </div>
-   `;
-
- }catch(e){
-
-   console.log(e);
-
-   document.getElementById("plantel")
-   .innerHTML=
-     '<div class="empty">Não foi possível carregar o plantel.</div>';
- }
-}
-
-/* =========================
-   JOGADOR
-========================= */
-
-function abrirJogador(p){
-
- document.getElementById("app").innerHTML=`
-
- <button class="back" id="voltarJogador">
- ← Voltar ao plantel
- </button>
-
- <div class="player-profile">
-
- ${
-   p.photo
-
-   ?
-
-   `<img src="${esc(p.photo)}"
-      onerror="this.style.display='none'">`
-
-   :
-
-   `<div style="
-     width:150px;
-     height:150px;
-     border-radius:50%;
-     background:#181818;
-     border:3px solid #168cff;
-     margin:auto;
-     display:flex;
-     align-items:center;
-     justify-content:center;
-     font-size:60px">
-     ⚽
-   </div>`
- }
-
- <h1>${esc(p.name)}</h1>
-
- <div class="position">
-   ${esc(p.position)}
- </div>
-
- <div class="info-box">
-
-   <div class="info-row">
-     <span class="info-label">Número</span>
-     <span class="info-value">
-       #${esc(p.number)}
-     </span>
-   </div>
-
-   <div class="info-row">
-     <span class="info-label">Posição</span>
-     <span class="info-value">
-       ${esc(p.position)}
-     </span>
-   </div>
-
-   <div class="info-row">
-     <span class="info-label">Idade</span>
-     <span class="info-value">
-       ${esc(p.age)}
-     </span>
-   </div>
-
-   <div class="info-row">
-     <span class="info-label">Nacionalidade</span>
-     <span class="info-value">
-       ${esc(p.nationality)}
-     </span>
-   </div>
-
- </div>
-
- </div>
-
- `;
-
- document.getElementById("voltarJogador")
- .onclick=mostrarEquipa;
-}
-
-/* =========================
-   TABELAS
-========================= */
-
-async function mostrarTabelas(){
-
- document.getElementById("navJogos")
- .classList.remove("active");
-
- document.getElementById("navTabelas")
- .classList.add("active");
-
- document.getElementById("navFav")
- .classList.remove("active");
-
- document.getElementById("app").innerHTML=`
-
- <h2>📊 Tabelas</h2>
-
- <div id="tabelas">
-   <div class="empty">A carregar...</div>
- </div>
-
- `;
-
- let html="";
-
- for(const liga of ligas){
-
-   try{
-
-     const ficheiro=
-       liga.arquivo.replace(
-         ".json",
-         "-classificacao.json"
-       );
-
-     const r=await fetch(
-       ficheiro+"?v="+Date.now()
-     );
-
-     if(!r.ok) continue;
-
-     const d=await r.json();
-
-     const entries=procurarEntries(d);
-
-     if(entries.length)
-       html+=criarTabela(
-         liga.nome,
-         entries
-       );
-
-   }catch(e){}
- }
-
- document.getElementById("tabelas")
- .innerHTML=
-   html ||
-   '<div class="empty">Tabelas indisponíveis.</div>';
-}
-
-function procurarEntries(d){
-
- if(Array.isArray(d))
-   return d;
-
- if(Array.isArray(d?.entries))
-   return d.entries;
-
- if(Array.isArray(d?.standings))
-   return d.standings;
-
- if(Array.isArray(d?.children)){
-
-   for(const c of d.children){
-
-     const x=procurarEntries(c);
-
-     if(x.length)
-       return x;
-   }
- }
-
- return [];
-}
-
-function stat(e,n){
-
- if(Array.isArray(e?.stats)){
-
-   const s=e.stats.find(x=>
-     x.name===n ||
-     x.shortDisplayName===n ||
-     x.abbreviation===n
-   );
-
-   if(s)
-     return s.value ??
-            s.displayValue ??
-            "-";
- }
-
- return e?.[n] ?? "-";
-}
-
-function criarTabela(nome,entries){
-
- return`
-
- <div class="card">
-
- <div class="league">
-   ${esc(nome)}
- </div>
-
- <table>
-
- <tr>
-   <th>#</th>
-   <th>Equipa</th>
-   <th>J</th>
-   <th>V</th>
-   <th>E</th>
-   <th>D</th>
-   <th>Pts</th>
- </tr>
-
- ${
- entries.map((e,i)=>{
-
-   const t=e.team || e;
-
-   const id=
-     t.id ||
-     e.teamId ||
-     "";
 
    const nome=
-     t.displayName ||
-     t.name ||
-     "Equipa";
-
-   const logo=
-     t.logo ||
-     t.logos?.[0]?.href ||
+     obj.name ||
+     obj.strTeam ||
+     obj.teamName ||
+     obj.displayName ||
      "";
 
-   return`
 
-   <tr>
+   if(temJogadores || nome){
 
-   <td>${i+1}</td>
+     candidatos.push(obj);
+   }
 
-   <td
-     class="team"
-     onclick="abrirEquipaPorId(
-       '${esc(id)}',
-       '${esc(nome)}',
-       '${esc(nome)}',
-       '${esc(logo)}'
-     )">
 
-     ${esc(nome)}
+   for(const chave of Object.keys(obj)){
 
-   </td>
+     const valor=obj[chave];
 
-   <td>
-     ${esc(stat(e,"gamesPlayed"))}
-   </td>
+     if(
+       typeof valor==="object" &&
+       valor!==null
+     ){
 
-   <td>
-     ${esc(stat(e,"wins"))}
-   </td>
+       if(
+         chave!=="players" &&
+         chave!=="roster" &&
+         chave!=="squad"
+       ){
 
-   <td>
-     ${esc(
-       stat(e,"ties")!=="-"
-       ?stat(e,"ties")
-       :stat(e,"draws")
-     )}
-   </td>
-
-   <td>
-     ${esc(stat(e,"losses"))}
-   </td>
-
-   <td>
-     <b>${esc(stat(e,"points"))}</b>
-   </td>
-
-   </tr>
-
-   `;
-
- }).join("")
+         recolher(valor);
+       }
+     }
+   }
  }
 
- </table>
 
- </div>
+ recolher(dados);
 
- `;
-}
 
-/* =========================
-   FAVORITOS
-========================= */
+ /* =========================
+    PRIMEIRO: ID
+ ========================= */
 
-function mostrarFavoritos(){
+ let encontrado=
+   candidatos.find(x=>
+     String(
+       x.id ||
+       x.idTeam ||
+       x.teamId ||
+       ""
+     )===atualId
+   );
 
- document.getElementById("navJogos")
- .classList.remove("active");
 
- document.getElementById("navTabelas")
- .classList.remove("active");
+ if(encontrado){
 
- document.getElementById("navFav")
- .classList.add("active");
+   return (
+     encontrado.players ||
+     encontrado.roster ||
+     encontrado.squad ||
+     []
+   );
+ }
 
- document.getElementById("app").innerHTML=`
 
- <h2>⭐ Favoritos</h2>
+ /* =========================
+    SEGUNDO: NOME EXATO
+ ========================= */
 
- <div class="card">
+ encontrado=
+   candidatos.find(x=>{
 
- <div class="empty">
-   Favoritos em breve.
- </div>
+     const nome=
+       normalizarNome(
+         x.name ||
+         x.strTeam ||
+         x.teamName ||
+         x.displayName ||
+         ""
+       );
 
- </div>
+     return nome===atualNome;
+   });
 
- `;
-}
 
-/* =========================
-   INICIAR
-========================= */
+ if(encontrado){
 
-mostrarJogos();
-carregar();
-
-</script>
-
-</body>
-</html>
+   return (
+     encontrado.players ||
+    
