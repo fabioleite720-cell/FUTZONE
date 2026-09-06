@@ -1,21 +1,90 @@
 (function () {
 
-  function abrirDetalhes(card) {
+  function encontrarJogo(card) {
 
-    const jogo = card.__futzoneJogo;
+    // Procurar os nomes das duas equipas no cartão
+    const equipas = Array.from(
+      card.querySelectorAll(".team")
+    )
+      .map(el => el.textContent.trim())
+      .filter(Boolean);
 
-    if (!jogo) {
-      console.log("FUTZONE: jogo não encontrado");
-      return;
+    if (equipas.length < 2) {
+      console.log("FUTZONE: não encontrei as duas equipas");
+      return null;
     }
 
-    const liga =
-      jogo.__liga === "Portugal" ? "por.1" :
-      jogo.__liga === "Inglaterra" ? "eng.1" :
-      jogo.__liga === "Espanha" ? "esp.1" :
-      jogo.__liga === "Itália" ? "ita.1" :
-      jogo.__liga === "Alemanha" ? "ger.1" :
-      "por.1";
+    const casaTexto = equipas[0];
+    const foraTexto = equipas[1];
+
+    // Procurar o jogo correspondente nos dados carregados pelo index.html
+    if (typeof jogos === "undefined" || !Array.isArray(jogos)) {
+      console.log("FUTZONE: lista de jogos não disponível");
+      return null;
+    }
+
+    return jogos.find(function (jogo) {
+
+      try {
+
+        const equipasJogo = obterEquipas(jogo);
+
+        const casa = nomeEquipaSeguro(
+          equipasJogo.home,
+          jogo,
+          true
+        );
+
+        const fora = nomeEquipaSeguro(
+          equipasJogo.away,
+          jogo,
+          false
+        );
+
+        return (
+          nomesEquivalentes(casa, casaTexto) &&
+          nomesEquivalentes(fora, foraTexto)
+        );
+
+      } catch (e) {
+        return false;
+      }
+
+    }) || null;
+  }
+
+
+  function obterLiga(jogo) {
+
+    if (jogo.__liga === "Portugal")
+      return "por.1";
+
+    if (jogo.__liga === "Inglaterra")
+      return "eng.1";
+
+    if (jogo.__liga === "Espanha")
+      return "esp.1";
+
+    if (jogo.__liga === "Itália")
+      return "ita.1";
+
+    if (jogo.__liga === "Alemanha")
+      return "ger.1";
+
+    return "por.1";
+  }
+
+
+  function abrirDetalhes(card) {
+
+    const jogo = encontrarJogo(card);
+
+    if (!jogo) {
+      alert(
+        "Não foi possível encontrar os dados deste jogo. Tenta novamente."
+      );
+      return;
+    }
 
     const id =
       jogo.id ||
@@ -23,9 +92,11 @@
       jogo.eventId;
 
     if (!id) {
-      alert("Não foi possível encontrar o ID deste jogo.");
+      alert("Este jogo não tem ID.");
       return;
     }
+
+    const liga = obterLiga(jogo);
 
     window.location.href =
       "detalhes.html?id=" +
@@ -42,48 +113,47 @@
 
     cards.forEach(function (card) {
 
-      if (card.dataset.futzoneDetalhes === "1")
+      if (
+        card.dataset.futzoneDetalhes === "1"
+      ) {
         return;
+      }
 
       card.dataset.futzoneDetalhes = "1";
 
       card.style.cursor = "pointer";
 
-      card.addEventListener("click", function (event) {
+      card.addEventListener(
+        "click",
+        function (event) {
 
-        /*
-          Se o utilizador carregou no nome
-          de uma equipa, deixamos a página
-          da equipa funcionar normalmente.
-        */
-        if (
-          event.target.closest(".team")
-        ) {
-          return;
+          // Se tocar no nome da equipa,
+          // continua a abrir a página da equipa
+          if (
+            event.target.closest(".team")
+          ) {
+            return;
+          }
+
+          abrirDetalhes(card);
+
         }
-
-        abrirDetalhes(card);
-
-      });
+      );
 
     });
 
   }
 
 
-  /*
-    O index.html cria os cartões depois
-    de carregar os jogos. Por isso verificamos
-    periodicamente até os cartões aparecerem.
-  */
+  // Os cartões são criados depois dos jogos
+  // por isso verificamos regularmente
+  setInterval(
+    ligarCartoes,
+    500
+  );
 
-  setInterval(ligarCartoes, 500);
 
-
-  /*
-    Também tentamos imediatamente.
-  */
-
+  // Tentativa inicial
   ligarCartoes();
 
 
