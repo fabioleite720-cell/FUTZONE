@@ -1,480 +1,84 @@
-<!DOCTYPE html>
-<html lang="pt-PT">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="theme-color" content="#07111f">
-<title>FUTZONE</title>
-
-<style>
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:Arial,Helvetica,sans-serif;
-  background:#07111f;
-  color:#fff;
-}
-button{font:inherit}
-.header{
-  position:sticky;
-  top:0;
-  z-index:20;
-  background:#07111f;
-  border-bottom:1px solid #1b2a3d;
-  padding:16px;
-}
-.logo{
-  font-size:28px;
-  font-weight:900;
-  letter-spacing:1px;
-}
-.logo span{color:#22c55e}
-
-.container{
-  max-width:900px;
-  margin:auto;
-  padding:18px 14px 100px;
-}
-
-.filters{
-  display:flex;
-  gap:8px;
-  overflow-x:auto;
-  padding:8px 0 14px;
-}
-.filters button{
-  flex:0 0 auto;
-  border:0;
-  border-radius:20px;
-  padding:9px 15px;
-  background:#132238;
-  color:#fff;
-}
-.filters button.active{
-  background:#22c55e;
-  color:#06100b;
-  font-weight:bold;
-}
-
-.card{
-  background:#101d2d;
-  border:1px solid #1d3047;
-  border-radius:16px;
-  padding:14px;
-  margin-bottom:12px;
-}
-.game{
-  cursor:pointer;
-}
-.game-top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:12px;
-}
-.competition{
-  color:#8fa3b8;
-  font-size:12px;
-}
-.status{
-  font-size:11px;
-  font-weight:bold;
-  padding:5px 8px;
-  border-radius:10px;
-  background:#26364a;
-}
-.status.live{
-  background:#ef4444;
-}
-.teams{
-  display:grid;
-  grid-template-columns:1fr 55px 1fr;
-  align-items:center;
-  gap:8px;
-}
-.team{
-  text-align:center;
-  font-weight:bold;
-}
-.team img{
-  width:45px;
-  height:45px;
-  object-fit:contain;
-  display:block;
-  margin:0 auto 7px;
-}
-.score{
-  text-align:center;
-  font-size:22px;
-  font-weight:900;
-}
-.date{
-  text-align:center;
-  color:#8fa3b8;
-  font-size:12px;
-  margin-top:10px;
-}
-
-.section-title{
-  margin:8px 0 14px;
-  font-size:22px;
-}
-
-.empty{
-  text-align:center;
-  padding:35px 15px;
-  color:#8295aa;
-}
-
-.bottom-nav{
-  position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  z-index:30;
-  background:#081321;
-  border-top:1px solid #1b2a3d;
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  padding:8px 5px calc(8px + env(safe-area-inset-bottom));
-}
-.bottom-nav button{
-  border:0;
-  background:none;
-  color:#8295aa;
-  padding:7px;
-}
-.bottom-nav button.active{
-  color:#22c55e;
-  font-weight:bold;
-}
-
-.back{
-  border:0;
-  background:#132238;
-  color:#fff;
-  border-radius:12px;
-  padding:9px 13px;
-  margin-bottom:15px;
-}
-
-.team-header{
-  text-align:center;
-  padding:20px 10px;
-}
-.team-header img{
-  width:85px;
-  height:85px;
-  object-fit:contain;
-}
-.team-header h1{
-  margin:10px 0 4px;
-}
-
-.plantel-grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:10px;
-}
-.player{
-  background:#101d2d;
-  border:1px solid #1d3047;
-  border-radius:15px;
-  padding:14px 8px;
-  text-align:center;
-  cursor:pointer;
-}
-.player img,
-.player-photo{
-  width:80px;
-  height:80px;
-  object-fit:cover;
-  border-radius:50%;
-  margin:auto auto 8px;
-  display:block;
-  background:#202e3d;
-}
-.player-name{
-  font-weight:bold;
-  font-size:14px;
-}
-.player-info{
-  color:#8fa3b8;
-  font-size:11px;
-  margin-top:5px;
-}
-
-.player-profile{
-  text-align:center;
-}
-.player-profile img{
-  width:150px;
-  height:150px;
-  object-fit:cover;
-  border-radius:50%;
-  background:#1c2b3c;
-}
-.player-profile h1{
-  margin-bottom:5px;
-}
-.info-box{
-  background:#101d2d;
-  border:1px solid #1d3047;
-  border-radius:15px;
-  padding:15px;
-  margin-top:15px;
-  text-align:left;
-}
-.info-row{
-  display:flex;
-  justify-content:space-between;
-  padding:9px 0;
-  border-bottom:1px solid #1d3047;
-}
-.info-row:last-child{border-bottom:0}
-
-.table-wrap{
-  overflow-x:auto;
-}
-table{
-  width:100%;
-  border-collapse:collapse;
-  min-width:560px;
-}
-th,td{
-  padding:10px 7px;
-  border-bottom:1px solid #1d3047;
-  text-align:center;
-  font-size:13px;
-}
-th{
-  color:#8fa3b8;
-  font-size:11px;
-}
-td.team-cell{
-  text-align:left;
-  font-weight:bold;
-}
-.team-table-logo{
-  width:27px;
-  height:27px;
-  object-fit:contain;
-  vertical-align:middle;
-  margin-right:7px;
-}
-
-.favorite{
-  float:right;
-  border:0;
-  background:none;
-  color:#8295aa;
-  font-size:23px;
-}
-.favorite.on{color:#facc15}
-
-h2{margin-top:0}
-
-@media(min-width:650px){
-  .plantel-grid{grid-template-columns:repeat(4,1fr)}
-}
-</style>
-</head>
-
-<body>
-
-<header class="header">
-  <div class="logo">FUT<span>ZONE</span></div>
-</header>
-
-<main class="container" id="app"></main>
-
-<nav class="bottom-nav">
-  <button id="navJogos" class="active" onclick="mostrarJogos()">⚽<br>Jogos</button>
-  <button id="navTabelas" onclick="mostrarTabelas()">📊<br>Tabelas</button>
-  <button id="navFav" onclick="mostrarFavoritos()">⭐<br>Favoritos</button>
-</nav>
-
-<script>
-/* =========================================================
-   FUTZONE
-========================================================= */
-
-const ligas=[
-  {
-    nome:"Portugal",
-    arquivo:"data/primeira-liga.json"
-  },
-  {
-    nome:"Inglaterra",
-    arquivo:"data/premier-league.json"
-  },
-  {
-    nome:"Espanha",
-    arquivo:"data/la-liga.json"
-  },
-  {
-    nome:"Itália",
-    arquivo:"data/serie-a.json"
-  },
-  {
-    nome:"Alemanha",
-    arquivo:"data/bundesliga.json"
-  }
-];
-
-let jogos=[];
-let ligaAtual="Todas";
-let filtroAtual="Todos";
-let equipaAtual=null;
-let favoritos=JSON.parse(localStorage.getItem("futzone-favoritos")||"[]");
-
-/* =========================================================
-   UTILITÁRIOS
-========================================================= */
-
-function esc(v){
-  return String(v??"")
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
-}
-
-function obterCompeticao(j){
-  return j?.competitions?.[0] || {};
-}
-
-function obterEquipas(j){
-
-  let c=obterCompeticao(j).competitors;
-
-  if(!Array.isArray(c)){
-    c=j?.competitors;
-  }
-
-  if(!Array.isArray(c)) c=[];
-
-  let home=c.find(x=>x.homeAway==="home") || c[0] || {};
-  let away=c.find(x=>x.homeAway==="away") || c[1] || {};
-
-  return {home,away};
-}
-
-function nomeEquipa(c){
-  return (
-    c?.team?.displayName ||
-    c?.team?.shortDisplayName ||
-    c?.team?.name ||
-    c?.displayName ||
-    c?.name ||
-    null
-  );
-}
-
-function nomeEquipaSeguro(c,j,home){
-
-  let nome=nomeEquipa(c);
-
-  if(nome) return nome;
-
-  if(j?.name){
-
-    let partes=j.name.split(" at ");
-
-    if(partes.length===2){
-      return home ? partes[1] : partes[0];
-    }
-
-  }
-
-  return "Equipa";
-}
-
-function idEquipa(c){
-  return (
-    c?.team?.id ||
-    c?.id ||
-    null
-  );
-}
-
-function logoEquipa(c){
-  return (
-    c?.team?.logo ||
-    c?.team?.logos?.[0]?.href ||
-    c?.logo ||
-    c?.logos?.[0]?.href ||
-    ""
-  );
-}
-
-function resultado(c){
-
-  if(c?.score===undefined || c?.score===null)
-    return "-";
-
-  if(typeof c.score==="object")
-    return c.score.displayValue || c.score.value || "-";
-
-  return c.score;
-}
-
-function estadoJogo(j){
-
-  const s=obterCompeticao(j)?.status?.type;
-
-  if(s?.state==="in")
-    return "LIVE";
-
-  if(s?.completed || s?.state==="post")
-    return "RESULTADO";
-
-  return "PRÓXIMO";
-}
-
-function dataJogo(j){
-
-  if(!j?.date) return "";
-
-  try{
-
-    return new Date(j.date).toLocaleString("pt-PT",{
-      day:"2-digit",
-      month:"2-digit",
-      hour:"2-digit",
-      minute:"2-digit"
-    });
-
-  }catch(e){
-
-    return j.date;
-
-  }
-}
-
-function normalizar(texto){
-
-  return String(texto||"")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g,"")
-    .replace(/[^a-z0-9]/g,"");
-}
-
-/* =========================================================
-   ALIASES DE EQUIPAS
-========================================================= */
-
-const ALIASES_EQUIPAS={
-
-  "bayernmunich":[
-    "bayernmunchen",
-    "fcbayernmunich",
-    "fcbayern"
-  ],
-
-  "bayernmunchen":[
-    "bayernmunich",
-    "fcbayern",
-    "
+name: Atualizar dados FUTZONE
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Buscar dados das 5 ligas
+        run: |
+          mkdir -p data
+
+          HOJE=$(date -u +%Y%m%d)
+          ONTEM=$(date -u -d "3 days ago" +%Y%m%d)
+          FUTURO=$(date -u -d "14 days" +%Y%m%d)
+
+          echo "📅 Período: $ONTEM até $FUTURO"
+
+          buscar_jogos() {
+            LIGA=$1
+            FICHEIRO=$2
+
+            echo "⚽ A procurar $LIGA"
+
+            curl -sS \
+              "https://site.api.espn.com/apis/site/v2/sports/soccer/$LIGA/scoreboard?dates=$ONTEM-$FUTURO&limit=1000" \
+              -o "data/$FICHEIRO"
+
+            if [ ! -s "data/$FICHEIRO" ]; then
+              echo "[]" > "data/$FICHEIRO"
+            fi
+          }
+
+          buscar_jogos "por.1" "primeira-liga.json"
+          buscar_jogos "eng.1" "premier-league.json"
+          buscar_jogos "esp.1" "la-liga.json"
+          buscar_jogos "ita.1" "serie-a.json"
+          buscar_jogos "ger.1" "bundesliga.json"
+
+          echo "📊 A atualizar classificações..."
+
+          curl -sS \
+            "https://site.api.espn.com/apis/v2/sports/soccer/por.1/standings" \
+            -o data/classificacao.json
+
+          curl -sS \
+            "https://site.api.espn.com/apis/v2/sports/soccer/eng.1/standings" \
+            -o data/premier-league-classificacao.json
+
+          curl -sS \
+            "https://site.api.espn.com/apis/v2/sports/soccer/esp.1/standings" \
+            -o data/la-liga-classificacao.json
+
+          curl -sS \
+            "https://site.api.espn.com/apis/v2/sports/soccer/ita.1/standings" \
+            -o data/serie-a-classificacao.json
+
+          curl -sS \
+            "https://site.api.espn.com/apis/v2/sports/soccer/ger.1/standings" \
+            -o data/bundesliga-classificacao.json
+
+          echo "✅ Dados descarregados."
+
+      - name: Guardar dados
+        run: |
+          git config user.name "FUTZONE"
+          git config user.email "futzone@users.noreply.github.com"
+
+          git add data/
+
+          git diff --cached --quiet || \
+          git commit -m "FUTZONE - jogos e classificacoes atualizados"
+
+          git push
