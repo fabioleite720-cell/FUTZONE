@@ -598,9 +598,7 @@ border-radius:7px;
 padding:6px 8px
 }
 
-/* =========================
-PERFIL DO JOGADOR
-========================= */
+/* PERFIL JOGADOR */
 
 .jogador-perfil{
 background:#0b1627;
@@ -687,6 +685,13 @@ flex:1
 color:#9ca9bb;
 font-size:10px
 }
+
+.historico-aviso{
+color:#9ca9bb;
+font-size:11px;
+margin-top:9px;
+line-height:1.5
+}
 </style>
 </head>
 
@@ -696,26 +701,17 @@ font-size:10px
 <div class="brand">
 
 <div class="brand-mark">
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-label="FUTZONE">
 
-<svg
-viewBox="0 0 100 100"
-xmlns="http://www.w3.org/2000/svg"
-aria-label="FUTZONE">
-
-<circle
-cx="50"
-cy="50"
-r="43"
+<circle cx="50" cy="50" r="43"
 fill="none"
 stroke="#7ed957"
 stroke-width="6"/>
 
-<path
-d="M50 27 L67 39 L61 59 L39 59 L33 39 Z"
+<path d="M50 27 L67 39 L61 59 L39 59 L33 39 Z"
 fill="#7ed957"/>
 
-<path
-d="M50 27 L50 12
+<path d="M50 27 L50 12
 M67 39 L84 34
 M61 59 L72 76
 M39 59 L28 76
@@ -725,8 +721,7 @@ stroke="#fff"
 stroke-width="5"
 stroke-linecap="round"/>
 
-<path
-d="M43 38
+<path d="M43 38
 L70 38
 M43 38
 L43 76
@@ -739,19 +734,11 @@ stroke-linecap="round"
 stroke-linejoin="round"/>
 
 </svg>
-
 </div>
 
 <div>
-
-<div class="logo">
-FUT<span>ZONE</span>
-</div>
-
-<div class="logo-sub">
-FUTEBOL EM DIRETO
-</div>
-
+<div class="logo">FUT<span>ZONE</span></div>
+<div class="logo-sub">FUTEBOL EM DIRETO</div>
 </div>
 
 </div>
@@ -761,22 +748,15 @@ FUTEBOL EM DIRETO
 
 <div class="bottom">
 
-<button
-id="navJogos"
-class="active"
-onclick="mostrarJogos()">
+<button id="navJogos" class="active" onclick="mostrarJogos()">
 ⚽<br>Jogos
 </button>
 
-<button
-id="navTabelas"
-onclick="mostrarTabelas()">
+<button id="navTabelas" onclick="mostrarTabelas()">
 🏆<br>Tabelas
 </button>
 
-<button
-id="navFav"
-onclick="mostrarFavoritos()">
+<button id="navFav" onclick="mostrarFavoritos()">
 ⭐<br>Favoritos
 </button>
 
@@ -785,7 +765,6 @@ onclick="mostrarFavoritos()">
 <script>
 
 const ligas=[
-
 {nome:"Portugal",codigo:"por.1",icone:"🇵🇹"},
 {nome:"Inglaterra",codigo:"eng.1",icone:"🏴"},
 {nome:"Espanha",codigo:"esp.1",icone:"🇪🇸"},
@@ -797,7 +776,6 @@ const ligas=[
 {nome:"Champions League",codigo:"uefa.champions",icone:"🏆"},
 {nome:"Liga Europa",codigo:"uefa.europa",icone:"🏆"},
 {nome:"Liga Conferência",codigo:"uefa.europa.conf",icone:"🏆"}
-
 ];
 
 let jogos=[];
@@ -811,8 +789,6 @@ localStorage.getItem("futzone_favoritos")||"[]"
 let equipasFavoritas=JSON.parse(
 localStorage.getItem("futzone_equipas_favoritas")||"[]"
 );
-
-/* NOVO - FAVORITOS DE JOGADORES */
 
 let jogadoresFavoritos=JSON.parse(
 localStorage.getItem("futzone_jogadores_favoritos")||"[]"
@@ -844,8 +820,7 @@ if(!u)
 return "<div style='height:37px'></div>";
 
 return `
-<img
-class="escudo"
+<img class="escudo"
 src="${esc(u)}"
 onerror="this.style.visibility='hidden'">
 `;
@@ -857,13 +832,11 @@ return j?.competitions?.[0]||{};
 }
 
 function nome(c){
-
 return c?.team?.displayName||
 c?.team?.shortDisplayName||
 c?.team?.name||
 c?.displayName||
 "Equipa";
-
 }
 
 function normalizar(j,l){
@@ -873,73 +846,56 @@ let cs=c.competitors||[];
 
 let h=
 cs.find(x=>x.homeAway==="home")||
-cs[0]||
-{};
+cs[0]||{};
 
 let a=
 cs.find(x=>x.homeAway==="away")||
-cs[1]||
-{};
+cs[1]||{};
 
 return {
-
 id:String(j.id),
-
 codigo:l.codigo,
-
 liga:l.nome,
-
 data:j.date||"",
-
 home:{
 id:h?.team?.id||"",
 nome:nome(h),
 logo:h?.team?.logo||"",
 score:h?.score??"-"
 },
-
 away:{
 id:a?.team?.id||"",
 nome:nome(a),
 logo:a?.team?.logo||"",
 score:a?.score??"-"
 },
-
 estado:
 c?.status?.type?.shortDetail||
 c?.status?.type?.detail||
 c?.status?.type?.description||
 "",
-
 state:
 c?.status?.type?.state||
 "",
-
 competicao:c
-
 };
 
 }
 
-/* =========================
-JOGOS
-========================= */
+/* JOGOS */
 
 async function carregarJogos(){
 
 let todos=[];
 
 await Promise.all(
-
 ligas.map(async l=>{
 
 try{
 
 let url=
 "https://site.api.espn.com/apis/site/v2/sports/soccer/"
-+
-encodeURIComponent(l.codigo)
-+
++encodeURIComponent(l.codigo)+
 "/scoreboard?limit=100&_="+Date.now();
 
 let r=await fetch(url);
@@ -955,7 +911,6 @@ todos.push(normalizar(j,l));
 }catch(e){}
 
 })
-
 );
 
 jogos=todos;
@@ -966,15 +921,12 @@ mostrarJogos();
 if(pagina==="favoritos")
 mostrarFavoritos();
 
-if(notificacoesAtivas){
+if(notificacoesAtivas)
 verificarNotificacoes();
-}
 
 }
 
-/* =========================
-ESTADOS
-========================= */
+/* ESTADOS */
 
 function aoVivo(j){
 
@@ -998,14 +950,11 @@ s==="final"||
 
 }
 
-/* =========================
-LIGAS
-========================= */
+/* LIGAS */
 
 function botoes(){
 
 return `
-
 <div class="seletor-ligas">
 
 ${ligas.map(l=>`
@@ -1014,10 +963,7 @@ ${ligas.map(l=>`
 class="liga-btn ${ligaSelecionada===l.nome?"active":""}"
 onclick="selecionarLiga('${esc(l.nome)}')">
 
-<span class="liga-icon">
-${l.icone}
-</span>
-
+<span class="liga-icon">${l.icone}</span>
 ${esc(l.nome)}
 
 </button>
@@ -1025,7 +971,6 @@ ${esc(l.nome)}
 `).join("")}
 
 </div>
-
 `;
 
 }
@@ -1034,36 +979,22 @@ function selecionarLiga(n){
 
 ligaSelecionada=n;
 
-if(pagina==="tabelas"){
-
+if(pagina==="tabelas")
 mostrarTabela(n);
-
-}else{
-
+else
 mostrarJogos();
 
-}
-
 scrollTo(0,0);
-
 }
 
-/* =========================
-FAVORITOS DE JOGOS
-========================= */
+/* FAVORITOS */
 
 function alternarFavorito(id){
 
-if(favoritos.includes(id)){
-
-favoritos=
-favoritos.filter(x=>x!==id);
-
-}else{
-
+if(favoritos.includes(id))
+favoritos=favoritos.filter(x=>x!==id);
+else
 favoritos.push(id);
-
-}
 
 localStorage.setItem(
 "futzone_favoritos",
@@ -1077,67 +1008,45 @@ mostrarJogos();
 
 }
 
-/* =========================
-FAVORITOS DE EQUIPAS
-========================= */
-
 function equipaEstaFavorita(id,codigo){
 
 return equipasFavoritas.some(
-x=>
-String(x.id)===String(id)&&
+x=>String(x.id)===String(id)&&
 String(x.codigo)===String(codigo)
 );
 
 }
 
 function alternarEquipaFavorita(
-id,
-codigo,
-nomeEquipa,
-logoEquipa
+id,codigo,nomeEquipa,logoEquipa
 ){
 
-if(!id)
-return;
+if(!id)return;
 
 let existe=equipasFavoritas.findIndex(
-x=>
-String(x.id)===String(id)&&
+x=>String(x.id)===String(id)&&
 String(x.codigo)===String(codigo)
 );
 
-if(existe>=0){
-
+if(existe>=0)
 equipasFavoritas.splice(existe,1);
-
-}else{
-
+else
 equipasFavoritas.push({
-
 id:String(id),
 codigo:String(codigo),
 nome:nomeEquipa||"Equipa",
 logo:logoEquipa||""
-
 });
-
-}
 
 localStorage.setItem(
 "futzone_equipas_favoritas",
 JSON.stringify(equipasFavoritas)
 );
 
-if(pagina==="favoritos"){
+if(pagina==="favoritos")
 mostrarFavoritos();
-}
 
 }
-
-/* =========================
-FAVORITOS DE JOGADORES
-========================= */
 
 function jogadorEstaFavorito(id){
 
@@ -1148,31 +1057,19 @@ x=>String(x.id)===String(id)
 }
 
 function alternarJogadorFavorito(
-id,
-nomeJogador,
-foto,
-numero,
-posicao,
-equipa,
-equipaId,
-codigo
+id,nomeJogador,foto,numero,posicao,equipa,equipaId,codigo
 ){
 
-if(!id)
-return;
+if(!id)return;
 
 let indice=jogadoresFavoritos.findIndex(
 x=>String(x.id)===String(id)
 );
 
-if(indice>=0){
-
+if(indice>=0)
 jogadoresFavoritos.splice(indice,1);
-
-}else{
-
+else
 jogadoresFavoritos.push({
-
 id:String(id),
 nome:nomeJogador||"Jogador",
 foto:foto||"",
@@ -1181,10 +1078,7 @@ posicao:posicao||"",
 equipa:equipa||"",
 equipaId:String(equipaId||""),
 codigo:String(codigo||"")
-
 });
-
-}
 
 localStorage.setItem(
 "futzone_jogadores_favoritos",
@@ -1193,43 +1087,26 @@ JSON.stringify(jogadoresFavoritos)
 
 }
 
-/* =========================
-EQUIPA CLICÁVEL
-========================= */
+/* EQUIPA */
 
 function clicarEquipa(
-event,
-id,
-codigo,
-nomeEquipa,
-logoEquipa
+event,id,codigo,nomeEquipa,logoEquipa
 ){
 
 event.stopPropagation();
 
 if(!id){
-
-alert(
-"Não foi possível identificar esta equipa."
-);
-
+alert("Não foi possível identificar esta equipa.");
 return;
-
 }
 
-mostrarEquipa(
-id,
-codigo,
-nomeEquipa,
-logoEquipa
-);
+mostrarEquipa(id,codigo,nomeEquipa,logoEquipa);
 
 }
 
 function equipaLink(team,codigo){
 
 return `
-
 <div
 class="equipa team-link"
 onclick="clicarEquipa(
@@ -1241,29 +1118,21 @@ event,
 )">
 
 ${logo(team.logo)}
-
 ${esc(team.nome)}
 
 </div>
-
 `;
 
 }
 
-/* =========================
-CARTÃO MINI
-========================= */
+/* CARTÕES */
 
 function cartaoMini(j){
 
 return `
-
 <div
 class="card-mini"
-onclick="abrirDetalhe(
-'${esc(j.id)}',
-'${esc(j.codigo)}'
-)">
+onclick="abrirDetalhe('${esc(j.id)}','${esc(j.codigo)}')">
 
 <button
 class="fav-btn"
@@ -1281,11 +1150,8 @@ ${favoritos.includes(j.id)?"★":"☆"}
 <span>${esc(j.liga)}</span>
 
 <span class="${
-aoVivo(j)
-?"live"
-:terminou(j)
-?"final"
-:"futuro"
+aoVivo(j)?"live":
+terminou(j)?"final":"futuro"
 }">
 
 ${esc(j.estado)}
@@ -1299,11 +1165,7 @@ ${esc(j.estado)}
 ${equipaLink(j.home,j.codigo)}
 
 <div class="resultado">
-
-${esc(j.home.score)}
--
-${esc(j.away.score)}
-
+${esc(j.home.score)}-${esc(j.away.score)}
 </div>
 
 ${equipaLink(j.away,j.codigo)}
@@ -1311,25 +1173,16 @@ ${equipaLink(j.away,j.codigo)}
 </div>
 
 </div>
-
 `;
 
 }
-
-/* =========================
-CARTÃO NORMAL
-========================= */
 
 function cartao(j){
 
 return `
-
 <div
 class="jogo"
-onclick="abrirDetalhe(
-'${esc(j.id)}',
-'${esc(j.codigo)}'
-)">
+onclick="abrirDetalhe('${esc(j.id)}','${esc(j.codigo)}')">
 
 <button
 class="fav-btn"
@@ -1347,11 +1200,8 @@ ${favoritos.includes(j.id)?"★":"☆"}
 <span>${esc(j.liga)}</span>
 
 <span class="${
-aoVivo(j)
-?"live"
-:terminou(j)
-?"final"
-:"futuro"
+aoVivo(j)?"live":
+terminou(j)?"final":"futuro"
 }">
 
 ${esc(j.estado)}
@@ -1365,11 +1215,7 @@ ${esc(j.estado)}
 ${equipaLink(j.home,j.codigo)}
 
 <div class="resultado">
-
-${esc(j.home.score)}
--
-${esc(j.away.score)}
-
+${esc(j.home.score)}-${esc(j.away.score)}
 </div>
 
 ${equipaLink(j.away,j.codigo)}
@@ -1377,14 +1223,11 @@ ${equipaLink(j.away,j.codigo)}
 </div>
 
 </div>
-
 `;
 
 }
 
-/* =========================
-PÁGINA JOGOS
-========================= */
+/* JOGOS */
 
 function mostrarJogos(){
 
@@ -1402,9 +1245,7 @@ let proximos=liga.filter(
 j=>!aoVivo(j)&&!terminou(j)
 );
 
-let resultados=liga.filter(
-terminou
-);
+let resultados=liga.filter(terminou);
 
 app.innerHTML=`
 
@@ -1462,49 +1303,26 @@ Não há resultados disponíveis.
 
 }
 
-/* =========================
-NAVEGAÇÃO
-========================= */
+/* NAVEGAÇÃO */
 
 function nav(id){
 
-[
-"navJogos",
-"navTabelas",
-"navFav"
-]
+["navJogos","navTabelas","navFav"]
 .forEach(x=>{
-
-document
-.getElementById(x)
-.classList.toggle(
-"active",
-x===id
-);
-
+document.getElementById(x)
+.classList.toggle("active",x===id);
 });
 
 }
 
-/* =========================
-TRADUÇÃO
-========================= */
+/* TRADUÇÃO */
 
 function txt(v){
 
 return typeof v==="object"
-
 ?
-
-(
-v?.displayValue||
-v?.value||
-v?.text||
-""
-)
-
+(v?.displayValue||v?.value||v?.text||"")
 :
-
 String(v??"");
 
 }
@@ -1538,17 +1356,13 @@ const trocas=[
 
 ];
 
-trocas.forEach(x=>{
-s=s.replace(x[0],x[1]);
-});
+trocas.forEach(x=>s=s.replace(x[0],x[1]));
 
 return s;
 
 }
 
-/* =========================
-EVENTOS
-========================= */
+/* EVENTOS */
 
 function extrairEventos(d){
 
@@ -1585,36 +1399,20 @@ e?.type?.text||
 "Evento";
 
 let k=JSON.stringify([
-e?.id,
-e?.clock?.displayValue,
-t
+e?.id,e?.clock?.displayValue,t
 ]);
 
-if(seen.has(k))
-continue;
+if(seen.has(k))continue;
 
 seen.add(k);
 
 let i=
-/yellow|amarelo/.test(s)
-?"🟨"
-:
-/red|vermelho/.test(s)
-?"🟥"
-:
-/substitut/.test(s)
-?"🔄"
-:
-/penalty/.test(s)
-?"🎯"
-:
-/assist/.test(s)
-?"🎯"
-:
-/shot|corner|free kick|foul|save|offside/.test(s)
-?"🔵"
-:
-"⚽";
+/yellow|amarelo/.test(s)?"🟨":
+/red|vermelho/.test(s)?"🟥":
+/substitut/.test(s)?"🔄":
+/penalty/.test(s)?"🎯":
+/assist/.test(s)?"🎯":
+/shot|corner|free kick|foul|save|offside/.test(s)?"🔵":"⚽";
 
 out.push({
 m:e?.clock?.displayValue||
@@ -1630,9 +1428,7 @@ return out;
 
 }
 
-/* =========================
-ESTATÍSTICAS
-========================= */
+/* STATS */
 
 function extrairStats(d){
 
@@ -1640,8 +1436,7 @@ let grupos=[];
 
 function add(team,ss){
 
-if(!team||!Array.isArray(ss))
-return;
+if(!team||!Array.isArray(ss))return;
 
 let id=
 team?.id||
@@ -1697,31 +1492,15 @@ x?.display
 }
 
 (d.boxscore?.teams||[])
-.forEach(t=>
-add(
-t.team||t,
-t.statistics||t.stats
-)
-);
+.forEach(t=>add(t.team||t,t.statistics||t.stats));
 
 (d.header?.competitions?.[0]?.competitors||[])
-.forEach(c=>
-add(
-c.team||c,
-c.statistics
-)
-);
+.forEach(c=>add(c.team||c,c.statistics));
 
 (d.competitors||[])
-.forEach(c=>
-add(
-c.team||c,
-c.statistics
-)
-);
+.forEach(c=>add(c.team||c,c.statistics));
 
-if(grupos.length<2)
-return [];
+if(grupos.length<2)return [];
 
 let m=new Map();
 
@@ -1732,11 +1511,7 @@ g.s.forEach(x=>{
 let k=x.n.toLowerCase();
 
 if(!m.has(k))
-m.set(k,{
-n:x.n,
-h:"-",
-a:"-"
-});
+m.set(k,{n:x.n,h:"-",a:"-"});
 
 let r=m.get(k);
 
@@ -1751,9 +1526,7 @@ return [...m.values()];
 
 }
 
-/* =========================
-PLANTEL DO JOGO
-========================= */
+/* PLANTEL JOGO */
 
 function extrairPlantel(d){
 
@@ -1761,8 +1534,7 @@ let gs=[];
 
 function add(team,arr){
 
-if(!team||!Array.isArray(arr))
-return;
+if(!team||!Array.isArray(arr))return;
 
 let id=
 team?.id||
@@ -1793,26 +1565,20 @@ arr.forEach(x=>{
 
 let a=x?.athlete||x?.player||x;
 
-if(!a?.displayName&&!a?.fullName)
-return;
+if(!a?.displayName&&!a?.fullName)return;
 
 let n=
 a.displayName||
 a.fullName||
 a.shortName;
 
-if(g.p.some(q=>q.n===n))
-return;
+if(g.p.some(q=>q.n===n))return;
 
 g.p.push({
 
 id:a.id||"",
 n,
-num:
-a.jersey||
-x.jersey||
-a.uniformNumber||
-"",
+num:a.jersey||x.jersey||a.uniformNumber||"",
 pos:
 a?.position?.abbreviation||
 a?.position?.displayName||
@@ -1822,9 +1588,7 @@ foto:
 a?.headshot?.href||
 a?.headshot||
 "",
-tit:
-x.starter===true||
-x.starter==="true"
+tit:x.starter===true||x.starter==="true"
 
 });
 
@@ -1833,75 +1597,36 @@ x.starter==="true"
 }
 
 (d.rosters||[])
-.forEach(r=>
-add(
-r.team||r,
-r.roster||r.athletes||r.players
-)
-);
+.forEach(r=>add(r.team||r,r.roster||r.athletes||r.players));
 
 (d.boxscore?.players||[])
-.forEach(g=>
-add(
-g.team||g,
-g.statistics||
-g.athletes||
-g.roster||
-g.players
-)
-);
+.forEach(g=>add(g.team||g,g.statistics||g.athletes||g.roster||g.players));
 
 (d.header?.competitions?.[0]?.competitors||[])
-.forEach(c=>
-add(
-c.team||c,
-c.roster||
-c.athletes||
-c.players
-)
-);
+.forEach(c=>add(c.team||c,c.roster||c.athletes||c.players));
 
 return gs.filter(g=>g.p.length);
 
 }
 
-/* =========================
-PLAYER LINK
-========================= */
+/* JOGADOR */
 
 function clicarJogador(
-event,
-id,
-nomeJogador,
-foto,
-numero,
-posicao,
-equipa,
-equipaId,
-codigo
+event,id,nomeJogador,foto,numero,posicao,equipa,equipaId,codigo
 ){
 
 event.stopPropagation();
 
 if(!id){
 
-alert(
-"Perfil deste jogador não disponível."
-);
+alert("Perfil deste jogador não disponível.");
 
 return;
 
 }
 
 mostrarJogador(
-id,
-nomeJogador,
-foto,
-numero,
-posicao,
-equipa,
-equipaId,
-codigo
+id,nomeJogador,foto,numero,posicao,equipa,equipaId,codigo
 );
 
 }
@@ -1909,7 +1634,6 @@ codigo
 function jogadorLink(p,equipa,codigo){
 
 return `
-
 <div
 class="jogador"
 onclick="clicarJogador(
@@ -1924,66 +1648,42 @@ event,
 '${esc(codigo)}'
 )">
 
-${
-p.foto
-?
-`
-<img
-src="${esc(p.foto)}"
-onerror="this.style.display='none'">
-`
-:""
-}
+${p.foto?
+`<img src="${esc(p.foto)}"
+onerror="this.style.display='none'">`
+:""}
 
 <b>${esc(p.num)}</b>
 
 <span>
-
 ${esc(p.n)}
-
 <small style="display:block;color:#9ca9bb">
 ${esc(p.pos)}
 </small>
-
 </span>
 
 </div>
-
 `;
 
 }
 
-/* =========================
-BLOCOS
-========================= */
+/* BLOCOS */
 
 function blocoEventos(a){
 
 return `
-
 <div class="secao">
 
-<h3>
-⚽ Golos, assistências e jogadas
-</h3>
+<h3>⚽ Golos, assistências e jogadas</h3>
 
 ${
 a.length
 ?
 a.map(e=>`
-
 <div class="evento">
-
-<span class="minuto">
-${esc(e.m)}
-</span>
-
-<span>
-${e.i} ${esc(e.t)}
-</span>
-
+<span class="minuto">${esc(e.m)}</span>
+<span>${e.i} ${esc(e.t)}</span>
 </div>
-
 `).join("")
 :
 `<div class="vazio">
@@ -1992,7 +1692,6 @@ Não há golos ou eventos disponíveis.
 }
 
 </div>
-
 `;
 
 }
@@ -2000,74 +1699,51 @@ Não há golos ou eventos disponíveis.
 function blocoStats(a){
 
 return `
-
 <div class="secao">
 
-<h3>
-📊 Estatísticas do jogo
-</h3>
+<h3>📊 Estatísticas do jogo</h3>
 
 ${
 a.length
 ?
-
 `
-
 <div class="stats-head">
-
 <span>Casa</span>
 <span>ESTAT.</span>
 <span>Fora</span>
-
 </div>
 
 ${a.map(x=>`
-
 <div class="stat-row">
 
-<div class="stat-home">
-${esc(x.h)}
-</div>
+<div class="stat-home">${esc(x.h)}</div>
 
-<div class="nome">
-${esc(x.n)}
-</div>
+<div class="nome">${esc(x.n)}</div>
 
-<div class="stat-away">
-${esc(x.a)}
-</div>
+<div class="stat-away">${esc(x.a)}</div>
 
 </div>
-
 `).join("")}
-
 `
-
 :
-
 `<div class="vazio">
 Estatísticas não disponíveis para este jogo.
 </div>`
 }
 
 </div>
-
 `;
 
 }
 
 function blocoPlantel(gs,codigo){
 
-if(!gs.length)
-return "";
+if(!gs.length)return "";
 
 return `
-
 <div class="secao">
 
-<h3>
-👥 Equipas
-</h3>
+<h3>👥 Equipas</h3>
 
 ${gs.map(g=>{
 
@@ -2075,7 +1751,6 @@ let titulares=g.p.filter(x=>x.tit);
 let suplentes=g.p.filter(x=>!x.tit);
 
 return `
-
 <div style="margin-bottom:18px">
 
 <b>${esc(g.nome)}</b>
@@ -2083,21 +1758,12 @@ return `
 ${
 titulares.length
 ?
-
 `
-
-<div class="subtitulo">
-🟢 TITULARES
-</div>
+<div class="subtitulo">🟢 TITULARES</div>
 
 <div class="lista-jogadores">
-
-${titulares.map(p=>
-jogadorLink(p,g,codigo)
-).join("")}
-
+${titulares.map(p=>jogadorLink(p,g,codigo)).join("")}
 </div>
-
 `
 :""
 }
@@ -2105,49 +1771,33 @@ jogadorLink(p,g,codigo)
 ${
 suplentes.length
 ?
-
 `
-
-<div class="subtitulo">
-🔵 SUPLENTES
-</div>
+<div class="subtitulo">🔵 SUPLENTES</div>
 
 <div class="lista-jogadores">
-
-${suplentes.map(p=>
-jogadorLink(p,g,codigo)
-).join("")}
-
+${suplentes.map(p=>jogadorLink(p,g,codigo)).join("")}
 </div>
-
 `
 :""
 }
 
 </div>
-
 `;
 
 }).join("")}
 
 </div>
-
 `;
 
 }
 
-/* =========================
-DETALHE
-========================= */
+/* DETALHE */
 
 async function abrirDetalhe(id,codigo){
 
-let j=jogos.find(
-x=>x.id===id
-);
+let j=jogos.find(x=>x.id===id);
 
-if(!j)
-return;
+if(!j)return;
 
 let o=document.createElement("div");
 
@@ -2178,17 +1828,11 @@ ${equipaLink(j.home,codigo)}
 <div>
 
 <div class="bigscore">
-
-${esc(j.home.score)}
--
-${esc(j.away.score)}
-
+${esc(j.home.score)}-${esc(j.away.score)}
 </div>
 
 <div class="estado">
-
 ${esc(j.estado)}
-
 </div>
 
 </div>
@@ -2200,13 +1844,10 @@ ${equipaLink(j.away,codigo)}
 </div>
 
 <div class="carregando">
-
 A carregar golos, estatísticas e equipas...
-
 </div>
 
 </div>
-
 `;
 
 document.body.appendChild(o);
@@ -2214,40 +1855,22 @@ document.body.appendChild(o);
 try{
 
 let r=await fetch(
-
 "https://site.api.espn.com/apis/site/v2/sports/soccer/"
-+
-encodeURIComponent(codigo)
-+
-"/summary?event="
-+
-encodeURIComponent(id)
-+
++encodeURIComponent(codigo)+
+"/summary?event="+encodeURIComponent(id)+
 "&_="+Date.now()
-
 );
 
-if(!r.ok)
-throw 0;
+if(!r.ok)throw 0;
 
 let d=await r.json();
 
 o.querySelector(".detalhe")
 .insertAdjacentHTML(
-
 "beforeend",
-
-blocoEventos(
-extrairEventos(d)
-)+
-blocoStats(
-extrairStats(d)
-)+
-blocoPlantel(
-extrairPlantel(d),
-codigo
-)
-
+blocoEventos(extrairEventos(d))+
+blocoStats(extrairStats(d))+
+blocoPlantel(extrairPlantel(d),codigo)
 );
 
 o.querySelector(".carregando").remove();
@@ -2255,45 +1878,31 @@ o.querySelector(".carregando").remove();
 }catch(e){
 
 o.querySelector(".carregando").outerHTML=`
-
 <div class="erro">
-
 Não foi possível carregar os dados deste jogo.
-
 </div>
-
 `;
 
 }
 
 }
 
-/* =========================
-EQUIPA
-========================= */
+/* EQUIPA */
 
 function posicaoGrupo(pos){
 
 let p=String(pos||"").toLowerCase();
 
-if(
-/goal|keeper|gk|guarda/.test(p)
-)
+if(/goal|keeper|gk|guarda/.test(p))
 return "🧤 Guarda-redes";
 
-if(
-/def|back|centre back|full back|defesa/.test(p)
-)
+if(/def|back|centre back|full back|defesa/.test(p))
 return "🛡️ Defesas";
 
-if(
-/mid|center mid|winger|méd|medio|meio/.test(p)
-)
+if(/mid|center mid|winger|méd|medio|meio/.test(p))
 return "⚙️ Médios";
 
-if(
-/forward|striker|att|fwd|avanç|avanc/.test(p)
-)
+if(/forward|striker|att|fwd|avanç|avanc/.test(p))
 return "⚡ Avançados";
 
 return "👤 Outros";
@@ -2306,19 +1915,14 @@ let arr=[];
 
 function percorrer(obj){
 
-if(!obj)
-return;
+if(!obj)return;
 
 if(Array.isArray(obj)){
-
 obj.forEach(percorrer);
-
 return;
-
 }
 
-if(typeof obj!=="object")
-return;
+if(typeof obj!=="object")return;
 
 if(obj.athlete){
 
@@ -2327,78 +1931,33 @@ let a=obj.athlete;
 if(a.displayName||a.fullName){
 
 arr.push({
-
 id:a.id||"",
-
-nome:
-a.displayName||
-a.fullName||
-a.shortName||
-"Jogador",
-
-numero:
-a.jersey||
-obj.jersey||
-a.uniformNumber||
-"",
-
+nome:a.displayName||a.fullName||a.shortName||"Jogador",
+numero:a.jersey||obj.jersey||a.uniformNumber||"",
 posicao:
 a.position?.displayName||
 a.position?.abbreviation||
 obj.position?.displayName||
 "",
-
-foto:
-a.headshot?.href||
-a.headshot||
-""
-
+foto:a.headshot?.href||a.headshot||""
 });
 
 }
 
 }
 
-if(
-obj.displayName||
-obj.fullName
-){
+if(obj.displayName||obj.fullName){
 
 let a=obj;
 
-if(
-!arr.some(
-x=>
-String(x.id)===String(a.id)&&
-a.id
-)
-){
+if(!arr.some(x=>String(x.id)===String(a.id)&&a.id)){
 
 arr.push({
-
 id:a.id||"",
-
-nome:
-a.displayName||
-a.fullName||
-a.shortName||
-"Jogador",
-
-numero:
-a.jersey||
-a.uniformNumber||
-"",
-
-posicao:
-a.position?.displayName||
-a.position?.abbreviation||
-"",
-
-foto:
-a.headshot?.href||
-a.headshot||
-""
-
+nome:a.displayName||a.fullName||a.shortName||"Jogador",
+numero:a.jersey||a.uniformNumber||"",
+posicao:a.position?.displayName||a.position?.abbreviation||"",
+foto:a.headshot?.href||a.headshot||""
 });
 
 }
@@ -2406,10 +1965,8 @@ a.headshot||
 }
 
 Object.keys(obj).forEach(k=>{
-
 if(k!=="athlete")
 percorrer(obj[k]);
-
 });
 
 }
@@ -2421,12 +1978,9 @@ let nomes=new Set();
 
 arr.forEach(p=>{
 
-let chave=p.id?
-"id-"+p.id:
-"name-"+p.nome;
+let chave=p.id?"id-"+p.id:"name-"+p.nome;
 
-if(nomes.has(chave))
-return;
+if(nomes.has(chave))return;
 
 nomes.add(chave);
 unicos.push(p);
@@ -2437,25 +1991,15 @@ return unicos;
 
 }
 
-/* =========================
-MOSTRAR EQUIPA
-========================= */
-
 async function mostrarEquipa(
-teamId,
-codigo,
-nomeEquipa,
-logoEquipa
+teamId,codigo,nomeEquipa,logoEquipa
 ){
 
 let o=document.createElement("div");
 
 o.className="overlay";
 
-let favorita=equipaEstaFavorita(
-teamId,
-codigo
-);
+let favorita=equipaEstaFavorita(teamId,codigo);
 
 o.innerHTML=`
 
@@ -2479,8 +2023,7 @@ ${
 logoEquipa
 ?
 `
-<img
-class="equipa-logo-grande"
+<img class="equipa-logo-grande"
 src="${esc(logoEquipa)}"
 onerror="this.style.display='none'">
 `
@@ -2488,9 +2031,7 @@ onerror="this.style.display='none'">
 }
 
 <div class="equipa-nome-grande">
-
 ${esc(nomeEquipa)}
-
 </div>
 
 <button
@@ -2517,66 +2058,48 @@ ${favorita?"★ EQUIPA FAVORITA":"☆ ADICIONAR AOS FAVORITOS"}
 </div>
 
 <div class="carregando">
-
 A carregar plantel...
-
 </div>
 
 </div>
-
 `;
 
 document.body.appendChild(o);
 
 try{
 
-let url=
+let jogadores=[];
 
+let url=
 "https://site.api.espn.com/apis/site/v2/sports/soccer/"
-+
-encodeURIComponent(codigo)
-+
-"/teams/"
-+
-encodeURIComponent(teamId)
-+
++encodeURIComponent(codigo)+
+"/teams/"+encodeURIComponent(teamId)+
 "/roster?_="+Date.now();
 
 let r=await fetch(url);
-
-let jogadores=[];
 
 if(r.ok){
 
 let d=await r.json();
 
-jogadores=
-extrairPlantelEquipa(d);
+jogadores=extrairPlantelEquipa(d);
 
 }
 
 if(!jogadores.length){
 
 let r2=await fetch(
-
 "https://site.api.espn.com/apis/site/v2/sports/soccer/"
-+
-encodeURIComponent(codigo)
-+
-"/teams/"
-+
-encodeURIComponent(teamId)
-+
++encodeURIComponent(codigo)+
+"/teams/"+encodeURIComponent(teamId)+
 "?_="+Date.now()
-
 );
 
 if(r2.ok){
 
 let d2=await r2.json();
 
-jogadores=
-extrairPlantelEquipa(d2);
+jogadores=extrairPlantelEquipa(d2);
 
 }
 
@@ -2584,15 +2107,11 @@ extrairPlantelEquipa(d2);
 
 if(!jogadores.length){
 
-let url3=
-
+let r3=await fetch(
 "https://site.api.espn.com/apis/site/v2/sports/soccer/"
-+
-encodeURIComponent(codigo)
-+
-"/scoreboard?limit=100&_="+Date.now();
-
-let r3=await fetch(url3);
++encodeURIComponent(codigo)+
+"/scoreboard?limit=100&_="+Date.now()
+);
 
 if(r3.ok){
 
@@ -2607,15 +2126,10 @@ for(let tm of c?.competitors||[]){
 if(String(tm.team?.id)===String(teamId)){
 
 let resumo=await fetch(
-
 "https://site.api.espn.com/apis/site/v2/sports/soccer/"
-+
-encodeURIComponent(codigo)
-+
-"/summary?event="+
-encodeURIComponent(ev.id)+
++encodeURIComponent(codigo)+
+"/summary?event="+encodeURIComponent(ev.id)+
 "&_="+Date.now()
-
 );
 
 if(resumo.ok){
@@ -2631,13 +2145,11 @@ x=>String(x.id)===String(teamId)
 if(g&&g.p.length){
 
 jogadores=g.p.map(p=>({
-
 id:p.id||"",
 nome:p.n,
 numero:p.num,
 posicao:p.pos,
 foto:p.foto
-
 }));
 
 break;
@@ -2650,8 +2162,7 @@ break;
 
 }
 
-if(jogadores.length)
-break;
+if(jogadores.length)break;
 
 }
 
@@ -2660,29 +2171,22 @@ break;
 }
 
 let grupos={
-
 "🧤 Guarda-redes":[],
 "🛡️ Defesas":[],
 "⚙️ Médios":[],
 "⚡ Avançados":[],
 "👤 Outros":[]
-
 };
 
 jogadores.forEach(p=>{
-
-let g=posicaoGrupo(p.posicao);
-
-grupos[g].push(p);
-
+grupos[posicaoGrupo(p.posicao)].push(p);
 });
 
 let html="";
 
 Object.keys(grupos).forEach(g=>{
 
-if(!grupos[g].length)
-return;
+if(!grupos[g].length)return;
 
 html+=`
 
@@ -2711,28 +2215,18 @@ event,
 ${
 p.foto
 ?
-`
-<img
-src="${esc(p.foto)}"
-onerror="this.style.display='none'">
-`
+`<img src="${esc(p.foto)}"
+onerror="this.style.display='none'">`
 :""
 }
 
-<b>
-${esc(p.numero)}
-</b>
+<b>${esc(p.numero)}</b>
 
 <span>
-
 ${esc(p.nome)}
-
 <small style="display:block;color:#9ca9bb">
-
 ${esc(p.posicao)}
-
 </small>
-
 </span>
 
 </div>
@@ -2742,7 +2236,6 @@ ${esc(p.posicao)}
 </div>
 
 </div>
-
 `;
 
 });
@@ -2750,35 +2243,24 @@ ${esc(p.posicao)}
 if(!html){
 
 html=`
-
 <div class="erro">
-
 Não foi possível obter o plantel desta equipa.
-
 </div>
-
 `;
 
 }
 
 o.querySelector(".detalhe")
-.insertAdjacentHTML(
-"beforeend",
-html
-);
+.insertAdjacentHTML("beforeend",html);
 
 o.querySelector(".carregando").remove();
 
 }catch(e){
 
 o.querySelector(".carregando").outerHTML=`
-
 <div class="erro">
-
 Não foi possível carregar o plantel desta equipa.
-
 </div>
-
 `;
 
 }
@@ -2786,20 +2268,12 @@ Não foi possível carregar o plantel desta equipa.
 }
 
 function atualizarBotaoEquipaFavorita(
-botao,
-id,
-codigo
+botao,id,codigo
 ){
 
-let ativa=equipaEstaFavorita(
-id,
-codigo
-);
+let ativa=equipaEstaFavorita(id,codigo);
 
-botao.classList.toggle(
-"active",
-ativa
-);
+botao.classList.toggle("active",ativa);
 
 botao.innerHTML=
 ativa
@@ -2811,13 +2285,10 @@ ativa
 }
 
 /* =========================
-PERFIL DO JOGADOR
+PERFIL DO JOGADOR — CORRIGIDO
 ========================= */
 
-function normalizarJogadorDados(
-d,
-dadosBase
-){
+function normalizarJogadorDados(d,dadosBase){
 
 let a=
 d?.athlete||
@@ -2825,15 +2296,11 @@ d?.player||
 d?.athleteData||
 d;
 
-if(a?.athlete)
-a=a.athlete;
+if(a?.athlete)a=a.athlete;
 
 return {
 
-id:
-a?.id||
-dadosBase.id||
-"",
+id:a?.id||dadosBase.id||"",
 
 nome:
 a?.displayName||
@@ -2878,18 +2345,17 @@ a?.birthDate||
 "",
 
 equipa:
-dadosBase.equipa||
 a?.team?.displayName||
+a?.team?.name||
+dadosBase.equipa||
 "",
 
 equipaId:
-dadosBase.equipaId||
 a?.team?.id||
+dadosBase.equipaId||
 "",
 
-codigo:
-dadosBase.codigo||
-"",
+codigo:dadosBase.codigo||"",
 
 historico:[]
 
@@ -2897,15 +2363,20 @@ historico:[]
 
 }
 
-function procurarHistoricoClubes(obj,out=[]){
+/*
+NOVO:
+Procura histórico em vários formatos possíveis
+da API, sem depender de apenas teamName.
+*/
 
-if(!obj)
-return out;
+function procurarHistoricoClubes(obj,out=[],contexto={}){
+
+if(!obj)return out;
 
 if(Array.isArray(obj)){
 
 obj.forEach(x=>
-procurarHistoricoClubes(x,out)
+procurarHistoricoClubes(x,out,contexto)
 );
 
 return out;
@@ -2915,25 +2386,40 @@ return out;
 if(typeof obj!=="object")
 return out;
 
+/* vários formatos de clube */
+
+let team=
+obj.team||
+obj.club||
+obj.organization||
+obj.squad||
+obj.currentTeam||
+null;
+
 let nomeClube=
-obj.team?.displayName||
-obj.team?.name||
+team?.displayName||
+team?.name||
+team?.shortDisplayName||
 obj.teamName||
-obj.club?.displayName||
-obj.club?.name||
-obj.organization?.displayName;
+obj.clubName||
+obj.clubDisplayName||
+obj.organizationName||
+"";
 
 let logoClube=
-obj.team?.logos?.[0]?.href||
-obj.team?.logo||
-obj.club?.logo||
-obj.organization?.logo||
+team?.logos?.[0]?.href||
+team?.logo||
+team?.logos?.[0]||
+obj.teamLogo||
+obj.clubLogo||
 "";
 
 let inicio=
 obj.startDate||
 obj.from||
 obj.start||
+obj.joinDate||
+obj.joined||
 obj.season?.displayName||
 obj.season?.year||
 "";
@@ -2942,49 +2428,314 @@ let fim=
 obj.endDate||
 obj.to||
 obj.end||
+obj.leaveDate||
+obj.left||
 "";
+
+/*
+Também reconhece estruturas do género:
+{
+  season: {...},
+  team: {...}
+}
+*/
 
 if(nomeClube){
 
 let chave=
-String(nomeClube)+"_"+String(inicio);
+String(nomeClube)+"_"+String(inicio)+"_"+String(fim);
 
-if(!out.some(
-x=>x.chave===chave
-)){
+if(!out.some(x=>x.chave===chave)){
 
 out.push({
 
 chave,
 nome:nomeClube,
 logo:logoClube,
-inicio,
-fim
+inicio:inicio,
+fim:fim
 
 });
 
 }
 
 }
+
+/*
+Algumas respostas da API podem ter
+o clube dentro de uma lista de "teams".
+*/
+
+if(Array.isArray(obj.teams)){
+
+obj.teams.forEach(t=>{
+
+let n=
+t?.displayName||
+t?.name||
+t?.shortDisplayName||
+"";
+
+if(n){
+
+let chave=
+String(n)+"_"+String(
+t?.startDate||
+t?.season?.displayName||
+""
+);
+
+if(!out.some(x=>x.chave===chave)){
+
+out.push({
+
+chave,
+nome:n,
+logo:
+t?.logos?.[0]?.href||
+t?.logo||
+"",
+inicio:
+t?.startDate||
+t?.season?.displayName||
+t?.season?.year||
+"",
+fim:t?.endDate||""
+
+});
+
+}
+
+}
+
+});
+
+}
+
+/*
+Procura especificamente estruturas de carreira.
+*/
+
+[
+"history",
+"career",
+"careerHistory",
+"clubHistory",
+"teamHistory",
+"teams",
+"clubs",
+"organizations",
+"seasons",
+"statistics",
+"competitions"
+].forEach(k=>{
+
+if(obj[k])
+procurarHistoricoClubes(
+obj[k],
+out,
+contexto
+);
+
+});
+
+/*
+Procura também nos restantes campos,
+mas evita recursão infinita nos objetos do clube.
+*/
 
 Object.keys(obj).forEach(k=>{
 
 if(
-k!=="team"&&
-k!=="club"&&
-k!=="organization"
-){
+k==="team"||
+k==="club"||
+k==="organization"||
+k==="currentTeam"||
+k==="squad"||
+k==="teams"||
+k==="clubs"||
+k==="history"||
+k==="career"||
+k==="careerHistory"||
+k==="clubHistory"||
+k==="teamHistory"
+)
+return;
 
-procurarHistoricoClubes(
-obj[k],
-out
-);
+let v=obj[k];
 
-}
+if(v&&typeof v==="object")
+procurarHistoricoClubes(v,out,contexto);
 
 });
 
 return out;
+
+}
+
+/*
+NOVO FALLBACK:
+Se a API não entregar histórico, usamos o clube atual.
+Assim o jogador nunca fica com a mensagem
+"histórico não disponível" quando sabemos a equipa.
+*/
+
+function garantirHistoricoAtual(h,dadosBase,jogador){
+
+if(h.length)
+return h;
+
+if(
+dadosBase.equipa||
+jogador?.equipa
+){
+
+return [{
+
+chave:"atual-"+(
+dadosBase.equipaId||
+jogador.equipaId||
+dadosBase.equipa||
+jogador.equipa
+),
+
+nome:
+jogador?.equipa||
+dadosBase.equipa||
+"Clube atual",
+
+logo:
+dadosBase.logoEquipa||
+"",
+
+inicio:"Atual",
+fim:""
+
+}];
+
+}
+
+return [];
+
+}
+
+/*
+Tenta obter histórico também através
+dos jogos recentes do jogador/equipa.
+*/
+
+async function descobrirHistoricoExtra(
+id,
+codigo,
+equipaAtual,
+equipaId
+){
+
+let resultado=[];
+
+try{
+
+/*
+Endpoint do atleta com parâmetros adicionais.
+*/
+
+let urls=[
+
+"https://site.api.espn.com/apis/site/v2/sports/soccer/"
++encodeURIComponent(codigo)+
+"/athletes/"+encodeURIComponent(id)+
+"?enable=history,career,stats&_="+Date.now(),
+
+"https://site.api.espn.com/apis/site/v2/sports/soccer/"
++encodeURIComponent(codigo)+
+"/athletes/"+encodeURIComponent(id)+
+"/statistics?_="+Date.now()
+
+];
+
+for(let url of urls){
+
+try{
+
+let r=await fetch(url);
+
+if(!r.ok)continue;
+
+let d=await r.json();
+
+let h=procurarHistoricoClubes(d,[]);
+
+if(h.length){
+
+resultado.push(...h);
+
+}
+
+}catch(e){}
+
+}
+
+/*
+Se ainda não houver histórico, tenta a página da equipa
+atual, que por vezes contém referências à carreira.
+*/
+
+if(
+!resultado.length&&
+equipaId
+){
+
+try{
+
+let r=await fetch(
+
+"https://site.api.espn.com/apis/site/v2/sports/soccer/"
++encodeURIComponent(codigo)+
+"/teams/"+encodeURIComponent(equipaId)+
+"?_="+Date.now()
+
+);
+
+if(r.ok){
+
+let d=await r.json();
+
+let h=procurarHistoricoClubes(d,[]);
+
+resultado.push(...h);
+
+}
+
+}catch(e){}
+
+}
+
+/*
+Remove duplicados.
+*/
+
+let final=[];
+let chaves=new Set();
+
+resultado.forEach(x=>{
+
+let chave=
+String(x.nome)+"_"+String(x.inicio)+"_"+String(x.fim);
+
+if(chaves.has(chave))return;
+
+chaves.add(chave);
+final.push(x);
+
+});
+
+return final;
+
+}catch(e){
+
+return [];
+
+}
 
 }
 
@@ -2993,32 +2744,33 @@ function blocoHistoricoClubes(h){
 if(!h.length){
 
 return `
-
 <div class="secao">
 
-<h3>
-📜 Histórico de clubes
-</h3>
+<h3>📜 Histórico de clubes</h3>
 
 <div class="vazio">
 
-O histórico de clubes não está disponível para este jogador.
+O histórico completo deste jogador
+não é fornecido pela fonte de dados.
+
+</div>
+
+<div class="historico-aviso">
+
+A informação de carreira depende dos dados
+disponíveis para este jogador.
 
 </div>
 
 </div>
-
 `;
 
 }
 
 return `
-
 <div class="secao">
 
-<h3>
-📜 Histórico de clubes
-</h3>
+<h3>📜 Histórico de clubes</h3>
 
 <div class="historico-clubes">
 
@@ -3059,20 +2811,14 @@ c.inicio+
 </div>
 
 </div>
-
 `;
 
 }
 
+/* PERFIL */
+
 async function mostrarJogador(
-id,
-nomeJogador,
-foto,
-numero,
-posicao,
-equipa,
-equipaId,
-codigo
+id,nomeJogador,foto,numero,posicao,equipa,equipaId,codigo
 ){
 
 let o=document.createElement("div");
@@ -3112,7 +2858,11 @@ onerror="this.style.display='none'">
 `
 <div
 class="jogador-foto-grande"
-style="display:flex;align-items:center;justify-content:center;font-size:42px">
+style="
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:42px">
 
 👤
 
@@ -3121,9 +2871,7 @@ style="display:flex;align-items:center;justify-content:center;font-size:42px">
 }
 
 <div class="jogador-nome-grande">
-
 ${esc(nomeJogador)}
-
 </div>
 
 <div class="jogador-dados">
@@ -3165,27 +2913,31 @@ this,
 )
 ">
 
-${favorito?"★ JOGADOR FAVORITO":"☆ ADICIONAR AOS FAVORITOS"}
+${favorito?
+"★ JOGADOR FAVORITO":
+"☆ ADICIONAR AOS FAVORITOS"}
 
 </button>
 
 </div>
 
 <div class="carregando">
-
-A carregar perfil do jogador...
-
+A carregar perfil e histórico do jogador...
 </div>
 
 </div>
-
 `;
 
 document.body.appendChild(o);
 
 try{
 
-let jogador=normalizarJogadorDados(
+/*
+Dados base.
+*/
+
+let jogador=
+normalizarJogadorDados(
 {},
 {
 id,
@@ -3201,26 +2953,21 @@ codigo
 
 let respostas=[];
 
-/* PRIMEIRA TENTATIVA */
+/*
+1 — Endpoint principal.
+*/
 
 let urls=[
 
 "https://site.api.espn.com/apis/site/v2/sports/soccer/"
-+
-encodeURIComponent(codigo)
-+
-"/athletes/"
-+
-encodeURIComponent(id),
++encodeURIComponent(codigo)+
+"/athletes/"+encodeURIComponent(id)+
+"?_="+Date.now(),
 
 "https://site.api.espn.com/apis/site/v2/sports/soccer/"
-+
-encodeURIComponent(codigo)
-+
-"/athletes/"
-+
-encodeURIComponent(id)+
-"?_="+Date.now()
++encodeURIComponent(codigo)+
+"/athletes/"+encodeURIComponent(id)+
+"?enable=history,career,stats&_="+Date.now()
 
 ];
 
@@ -3228,12 +2975,9 @@ for(let url of urls){
 
 try{
 
-let r=await fetch(
-url+(url.includes("?")?"&":"?")+
-"_="+Date.now()
-);
+let r=await fetch(url);
 
-if(r.ok){
+if(!r.ok)continue;
 
 let d=await r.json();
 
@@ -3245,137 +2989,166 @@ d,
 jogador
 );
 
-break;
-
-}
-
 }catch(e){}
 
 }
 
-/* PROCURAR DADOS ADICIONAIS */
+/*
+2 — Procurar histórico em TODAS as respostas.
+*/
 
-for(let d of respostas){
+let historico=[];
 
-let hist=
+respostas.forEach(d=>{
+
+let h=
 procurarHistoricoClubes(d,[]);
 
-if(hist.length){
+if(h.length)
+historico.push(...h);
 
-jogador.historico=hist;
+});
 
-break;
-
-}
-
-}
-
-/* TENTAR ENDPOINT DE BIO */
+/*
+3 — Tentativa adicional.
+*/
 
 if(
+!historico.length||
 !jogador.nacionalidade||
-!jogador.idade||
-!jogador.historico.length
+!jogador.idade
 ){
 
-try{
+let extra=
+await descobrirHistoricoExtra(
+id,
+codigo,
+equipa,
+equipaId
+);
 
-let url=
+historico.push(...extra);
 
-"https://site.api.espn.com/apis/site/v2/sports/soccer/"
-+
-encodeURIComponent(codigo)
-+
-"/athletes/"
-+
-encodeURIComponent(id)+
-"?enable=history&_="+Date.now();
+}
 
-let r=await fetch(url);
+/*
+4 — Limpar duplicados.
+*/
 
-if(r.ok){
+let historicoFinal=[];
+let chaves=new Set();
 
-let d=await r.json();
+historico.forEach(c=>{
 
-let novo=
-normalizarJogadorDados(
-d,
+let chave=
+String(c.nome)+"_"+
+String(c.inicio)+"_"+
+String(c.fim);
+
+if(chaves.has(chave))return;
+
+chaves.add(chave);
+historicoFinal.push(c);
+
+});
+
+/*
+5 — Se a API não deu carreira,
+mostrar pelo menos o clube atual.
+*/
+
+historicoFinal=
+garantirHistoricoAtual(
+historicoFinal,
+{
+equipa,
+equipaId,
+logoEquipa:""
+},
 jogador
 );
 
-let hist=
-procurarHistoricoClubes(d,[]);
-
-novo.historico=
-hist.length?
-hist:
-jogador.historico;
-
-jogador=novo;
-
-}
-
-}catch(e){}
-
-}
-
-/* MOSTRAR PERFIL */
+/*
+6 — Dados do perfil.
+*/
 
 let dadosHTML="";
 
 if(jogador.idade)
-dadosHTML+=`<br>🎂 ${esc(jogador.idade)} anos`;
+dadosHTML+=
+`<br>🎂 ${esc(jogador.idade)} anos`;
 
 if(jogador.nacionalidade)
-dadosHTML+=`<br>🌍 ${esc(jogador.nacionalidade)}`;
+dadosHTML+=
+`<br>🌍 ${esc(jogador.nacionalidade)}`;
 
 if(jogador.nascimento)
-dadosHTML+=`<br>📅 ${esc(jogador.nascimento)}`;
+dadosHTML+=
+`<br>📅 ${esc(jogador.nascimento)}`;
 
 if(jogador.equipa)
-dadosHTML+=`<br>🏟️ ${esc(jogador.equipa)}`;
+dadosHTML+=
+`<br>🏟️ ${esc(jogador.equipa)}`;
 
-let perfil=o.querySelector(".jogador-perfil");
+/*
+7 — Atualizar dados.
+*/
 
-perfil.querySelector(".jogador-dados")
-.innerHTML=`
+let perfil=
+o.querySelector(".jogador-perfil");
+
+perfil.querySelector(
+".jogador-dados"
+).innerHTML=`
 
 ${
 jogador.numero
 ?
-`<span class="jogador-numero">
+`
+<span class="jogador-numero">
 #${esc(jogador.numero)}
-</span>`
+</span>
+`
 :""
 }
 
-${jogador.posicao?`<br>⚽ ${esc(jogador.posicao)}`:""}
+${jogador.posicao?
+`<br>⚽ ${esc(jogador.posicao)}`
+:""}
 
 ${dadosHTML}
 
 `;
 
+/*
+8 — Atualizar foto.
+*/
+
 if(jogador.foto){
 
-let imagem=perfil.querySelector(
+let imagem=
+perfil.querySelector(
 ".jogador-foto-grande"
 );
 
 if(imagem){
 
 imagem.src=jogador.foto;
-
 imagem.style.display="block";
 
 }
 
 }
 
+/*
+9 — Histórico.
+*/
+
 o.querySelector(".detalhe")
 .insertAdjacentHTML(
 "beforeend",
 blocoHistoricoClubes(
-jogador.historico||[]
+historicoFinal
 )
 );
 
@@ -3387,7 +3160,8 @@ o.querySelector(".carregando").outerHTML=`
 
 <div class="erro">
 
-Não foi possível carregar mais informações deste jogador.
+Não foi possível carregar mais informações
+deste jogador.
 
 </div>
 
@@ -3398,16 +3172,12 @@ Não foi possível carregar mais informações deste jogador.
 }
 
 function atualizarBotaoJogadorFavorito(
-botao,
-id
+botao,id
 ){
 
 let ativo=jogadorEstaFavorito(id);
 
-botao.classList.toggle(
-"active",
-ativo
-);
+botao.classList.toggle("active",ativo);
 
 botao.innerHTML=
 ativo
@@ -3418,9 +3188,7 @@ ativo
 
 }
 
-/* =========================
-FAVORITOS
-========================= */
+/* FAVORITOS */
 
 function mostrarFavoritos(){
 
@@ -3470,7 +3238,6 @@ notificacoesAtivas
 ${
 equipasFavoritas.length
 ?
-
 equipasFavoritas.map(e=>`
 
 <div class="equipa-favorita-card">
@@ -3479,8 +3246,7 @@ ${
 e.logo
 ?
 `
-<img
-src="${esc(e.logo)}"
+<img src="${esc(e.logo)}"
 onerror="this.style.display='none'">
 `
 :""
@@ -3519,17 +3285,16 @@ alternarEquipaFavorita(
 </div>
 
 `).join("")
-
 :
-
-`<div class="vazio">
+`
+<div class="vazio">
 Ainda não tens equipas favoritas.
 <br><br>
 Entra numa equipa e carrega em
 <br>
 ☆ ADICIONAR AOS FAVORITOS
-</div>`
-
+</div>
+`
 }
 
 <h2>👤 Jogadores favoritos</h2>
@@ -3537,7 +3302,6 @@ Entra numa equipa e carrega em
 ${
 jogadoresFavoritos.length
 ?
-
 jogadoresFavoritos.map(p=>`
 
 <div
@@ -3559,8 +3323,7 @@ ${
 p.foto
 ?
 `
-<img
-src="${esc(p.foto)}"
+<img src="${esc(p.foto)}"
 onerror="this.style.display='none'">
 `
 :
@@ -3604,15 +3367,14 @@ mostrarFavoritos();
 </div>
 
 `).join("")
-
 :
-
-`<div class="vazio">
+`
+<div class="vazio">
 Ainda não tens jogadores favoritos.
 <br><br>
 Entra no plantel de uma equipa e toca num jogador.
-</div>`
-
+</div>
+`
 }
 
 <h2>⭐ Jogos favoritos</h2>
@@ -3622,26 +3384,24 @@ l.length
 ?
 l.map(cartao).join("")
 :
-`<div class="vazio">
+`
+<div class="vazio">
 Ainda não tens jogos favoritos.
-</div>`
+</div>
+`
 }
 
 `;
 
 }
 
-/* =========================
-NOTIFICAÇÕES
-========================= */
+/* NOTIFICAÇÕES */
 
 async function pedirPermissaoNotificacoes(){
 
 if(!("Notification" in window)){
 
-alert(
-"Este navegador não suporta notificações."
-);
+alert("Este navegador não suporta notificações.");
 
 return false;
 
@@ -3683,11 +3443,9 @@ return;
 
 }
 
-let ok=
-await pedirPermissaoNotificacoes();
+let ok=await pedirPermissaoNotificacoes();
 
-if(!ok)
-return;
+if(!ok)return;
 
 notificacoesAtivas=true;
 
@@ -3698,9 +3456,7 @@ localStorage.setItem(
 
 localStorage.setItem(
 "futzone_notificacao_snapshot",
-JSON.stringify(
-criarSnapshot()
-)
+JSON.stringify(criarSnapshot())
 );
 
 mostrarFavoritos();
@@ -3712,14 +3468,9 @@ enviarNotificacao(
 
 }
 
-function enviarNotificacao(
-titulo,
-texto,
-tag=""
-){
+function enviarNotificacao(titulo,texto,tag=""){
 
-if(!notificacoesAtivas)
-return;
+if(!notificacoesAtivas)return;
 
 if(
 !("Notification" in window)||
@@ -3748,24 +3499,20 @@ let snap={};
 
 jogos.forEach(j=>{
 
-if(!j.home.id&&!j.away.id)
-return;
+if(!j.home.id&&!j.away.id)return;
 
 snap[j.id]={
 
 homeId:String(j.home.id||""),
 awayId:String(j.away.id||""),
-
 homeNome:j.home.nome,
 awayNome:j.away.nome,
-
 homeScore:String(j.home.score),
 awayScore:String(j.away.score),
-
 estado:j.estado,
 state:j.state,
-
-final:terminou(j)
+final:terminou(j),
+redCount:0
 
 };
 
@@ -3778,18 +3525,15 @@ return snap;
 function equipaFavoritaNoJogo(j){
 
 return equipasFavoritas.some(e=>
-
 String(e.id)===String(j.home.id)||
 String(e.id)===String(j.away.id)
-
 );
 
 }
 
 async function verificarNotificacoes(){
 
-if(!notificacoesAtivas)
-return;
+if(!notificacoesAtivas)return;
 
 if(
 !("Notification" in window)||
@@ -3801,9 +3545,7 @@ if(!equipasFavoritas.length){
 
 localStorage.setItem(
 "futzone_notificacao_snapshot",
-JSON.stringify(
-criarSnapshot()
-)
+JSON.stringify(criarSnapshot())
 );
 
 return;
@@ -3819,17 +3561,14 @@ let j=jogos.find(
 x=>String(x.id)===String(id)
 );
 
-if(!j)
-continue;
+if(!j)continue;
 
-if(!equipaFavoritaNoJogo(j))
-continue;
+if(!equipaFavoritaNoJogo(j))continue;
 
 let velho=anterior[id];
 let novo=atual[id];
 
-if(!velho)
-continue;
+if(!velho)continue;
 
 if(
 String(novo.homeScore)!==
@@ -3844,17 +3583,13 @@ parseInt(velho.homeScore);
 if(diferenca>0){
 
 enviarNotificacao(
-
 "⚽ GOOOLO! — FUTZONE",
-
 j.home.nome+
 " marcou! "+
 j.home.score+
 " - "+
 j.away.score,
-
 "golo-"+j.id+"-home-"+j.home.score
-
 );
 
 }
@@ -3874,17 +3609,13 @@ parseInt(velho.awayScore);
 if(diferenca>0){
 
 enviarNotificacao(
-
 "⚽ GOOOLO! — FUTZONE",
-
 j.away.nome+
 " marcou! "+
 j.home.score+
 " - "+
 j.away.score,
-
 "golo-"+j.id+"-away-"+j.away.score
-
 );
 
 }
@@ -3897,31 +3628,18 @@ velho.final!==true
 ){
 
 enviarNotificacao(
-
 "🏁 FIM DO JOGO — FUTZONE",
-
-j.home.nome+
-" "+
-j.home.score+
-" - "+
-j.away.score+
-" "+
+j.home.nome+" "+
+j.home.score+" - "+
+j.away.score+" "+
 j.away.nome,
-
 "fim-"+j.id
-
 );
 
 }
 
-if(aoVivo(j)){
-
-await verificarCartaoVermelho(
-j,
-velho
-);
-
-}
+if(aoVivo(j))
+await verificarCartaoVermelho(j,velho);
 
 }
 
@@ -3934,27 +3652,18 @@ JSON.stringify(atual)
 
 }
 
-async function verificarCartaoVermelho(
-j,
-velho
-){
+async function verificarCartaoVermelho(j,velho){
 
 try{
 
 let r=await fetch(
-
 "https://site.api.espn.com/apis/site/v2/sports/soccer/"
-+
-encodeURIComponent(j.codigo)
-+
-"/summary?event="+
-encodeURIComponent(j.id)+
++encodeURIComponent(j.codigo)+
+"/summary?event="+encodeURIComponent(j.id)+
 "&_="+Date.now()
-
 );
 
-if(!r.ok)
-return;
+if(!r.ok)return;
 
 let d=await r.json();
 
@@ -3973,17 +3682,10 @@ let ultimo=
 vermelhos[vermelhos.length-1];
 
 enviarNotificacao(
-
 "🟥 CARTÃO VERMELHO — FUTZONE",
-
-j.home.nome+
-" - "+
-j.away.nome+
-" | "+
-(ultimo.t||"Cartão vermelho"),
-
+j.home.nome+" - "+j.away.nome+
+" | "+(ultimo.t||"Cartão vermelho"),
 "vermelho-"+j.id+"-"+vermelhos.length
-
 );
 
 velho.redCount=vermelhos.length;
@@ -3994,9 +3696,7 @@ velho.redCount=vermelhos.length;
 
 }
 
-/* =========================
-RESULTADOS RECENTES
-========================= */
+/* RESULTADOS */
 
 async function resultadosRecentesLiga(l){
 
@@ -4013,32 +3713,21 @@ inicio.getDate()-14
 function dataAPI(x){
 
 return x.getFullYear()+
-String(x.getMonth()+1)
-.padStart(2,"0")+
+String(x.getMonth()+1).padStart(2,"0")+
 String(x.getDate());
 
 }
 
 let url=
-
 "https://site.api.espn.com/apis/site/v2/sports/soccer/"
-+
-encodeURIComponent(l.codigo)
-+
-"/scoreboard?dates="
-+
-dataAPI(inicio)
-+
-"-"
-+
-dataAPI(agora)
-+
++encodeURIComponent(l.codigo)+
+"/scoreboard?dates="+
+dataAPI(inicio)+"-"+dataAPI(agora)+
 "&limit=1000&_="+Date.now();
 
 let r=await fetch(url);
 
-if(!r.ok)
-return [];
+if(!r.ok)return [];
 
 let d=await r.json();
 
@@ -4046,8 +3735,7 @@ return (d.events||[])
 .map(j=>normalizar(j,l))
 .filter(terminou)
 .sort(
-(a,b)=>
-new Date(b.data)-new Date(a.data)
+(a,b)=>new Date(b.data)-new Date(a.data)
 )
 .slice(0,20);
 
@@ -4059,9 +3747,7 @@ return [];
 
 }
 
-/* =========================
-TABELAS
-========================= */
+/* TABELAS */
 
 function mostrarTabelas(){
 
@@ -4087,11 +3773,7 @@ Escolhe uma liga para veres a classificação atual.
 
 }
 
-function obterStat(
-stats,
-names,
-defaultValue=0
-){
+function obterStat(stats,names,defaultValue=0){
 
 if(!Array.isArray(stats))
 return defaultValue;
@@ -4099,46 +3781,31 @@ return defaultValue;
 let s=stats.find(x=>{
 
 let nomes=[
-
 x?.name,
 x?.abbreviation,
 x?.displayName,
 x?.shortDisplayName
-
 ]
-.map(v=>
-String(v||"").toLowerCase()
-);
+.map(v=>String(v||"").toLowerCase());
 
-return names.some(
-n=>nomes.includes(n)
-);
+return names.some(n=>nomes.includes(n));
 
 });
 
-if(!s)
-return defaultValue;
+if(!s)return defaultValue;
 
-return s?.displayValue??
-s?.value??
-defaultValue;
+return s?.displayValue??s?.value??defaultValue;
 
 }
 
-function procurarEquipas(
-obj,
-out=[]
-){
+function procurarEquipas(obj,out=[]){
 
-if(!obj||
-typeof obj!=="object")
+if(!obj||typeof obj!=="object")
 return out;
 
 if(Array.isArray(obj)){
 
-obj.forEach(
-x=>procurarEquipas(x,out)
-);
+obj.forEach(x=>procurarEquipas(x,out));
 
 return out;
 
@@ -4152,10 +3819,8 @@ obj.statistics||
 obj.records||
 [];
 
-if(
-Array.isArray(stats)||
-Array.isArray(obj.records)
-){
+if(Array.isArray(stats)||
+Array.isArray(obj.records)){
 
 out.push(obj);
 
@@ -4171,10 +3836,7 @@ k!=="stats"&&
 k!=="statistics"
 ){
 
-procurarEquipas(
-obj[k],
-out
-);
+procurarEquipas(obj[k],out);
 
 }
 
@@ -4190,12 +3852,9 @@ pagina="tabelas";
 
 ligaSelecionada=nomeLiga;
 
-let l=ligas.find(
-x=>x.nome===nomeLiga
-);
+let l=ligas.find(x=>x.nome===nomeLiga);
 
-if(!l)
-return;
+if(!l)return;
 
 app.innerHTML=`
 
@@ -4204,9 +3863,7 @@ app.innerHTML=`
 ${botoes()}
 
 <div class="carregando">
-
 A carregar classificação atual...
-
 </div>
 
 `;
@@ -4214,17 +3871,12 @@ A carregar classificação atual...
 try{
 
 let r=await fetch(
-
 "https://site.api.espn.com/apis/v2/sports/soccer/"
-+
-encodeURIComponent(l.codigo)
-+
++encodeURIComponent(l.codigo)+
 "/standings?_="+Date.now()
-
 );
 
-if(!r.ok)
-throw 0;
+if(!r.ok)throw 0;
 
 let d=await r.json();
 
@@ -4240,11 +3892,9 @@ let id=
 e.team?.id||
 e.team?.displayName;
 
-if(!id)
-return;
+if(!id)return;
 
-if(ids.has(String(id)))
-return;
+if(ids.has(String(id)))return;
 
 ids.add(String(id));
 
@@ -4265,15 +3915,13 @@ ${botoes()}
 Não foi possível obter a classificação desta liga.
 
 </div>
-
 `;
 
 return;
 
 }
 
-let tabela=unicos.map(
-(e,index)=>{
+let tabela=unicos.map((e,index)=>{
 
 let stats=
 e.stats||
@@ -4342,13 +3990,9 @@ return{
 
 rank,
 
-id:
-e.team?.id||
-"",
+id:e.team?.id||"",
 
-nome:
-e.team?.displayName||
-"Equipa",
+nome:e.team?.displayName||"Equipa",
 
 logo:
 e.team?.logos?.[0]?.href||
@@ -4366,9 +4010,7 @@ dg
 
 });
 
-tabela.sort(
-(a,b)=>a.rank-b.rank
-);
+tabela.sort((a,b)=>a.rank-b.rank);
 
 let recentes=
 await resultadosRecentesLiga(l);
@@ -4381,9 +4023,7 @@ ${botoes()}
 
 <div class="tabela-caixa">
 
-<h3>
-📊 Classificação atual
-</h3>
+<h3>📊 Classificação atual</h3>
 
 <div class="tabela-scroll">
 
@@ -4440,9 +4080,7 @@ onerror="this.style.display='none'">
 :""
 }
 
-<span>
-${esc(x.nome)}
-</span>
+<span>${esc(x.nome)}</span>
 
 </div>
 
@@ -4452,11 +4090,7 @@ ${esc(x.nome)}
 <td>${x.vitorias}</td>
 <td>${x.empates}</td>
 <td>${x.derrotas}</td>
-
-<td>
-<b>${x.pontos}</b>
-</td>
-
+<td><b>${x.pontos}</b></td>
 <td>${esc(x.dg)}</td>
 
 </tr>
@@ -4471,28 +4105,20 @@ ${esc(x.nome)}
 
 </div>
 
-<h2>
-⚽ Últimos resultados
-</h2>
+<h2>⚽ Últimos resultados</h2>
 
 ${
 recentes.length
 ?
 `
 <div class="carrossel">
-
-${recentes
-.map(cartaoMini)
-.join("")}
-
+${recentes.map(cartaoMini).join("")}
 </div>
 `
 :
 `
 <div class="vazio">
-
 Não há resultados recentes disponíveis.
-
 </div>
 `
 }
@@ -4508,9 +4134,7 @@ app.innerHTML=`
 ${botoes()}
 
 <div class="erro">
-
 Erro ao carregar a classificação.
-
 </div>
 
 `;
@@ -4519,16 +4143,8 @@ Erro ao carregar a classificação.
 
 }
 
-/* =========================
-CLIQUE NA EQUIPA DA TABELA
-========================= */
-
 function abrirEquipaTabela(
-event,
-id,
-codigo,
-nomeEquipa,
-logoEquipa
+event,id,codigo,nomeEquipa,logoEquipa
 ){
 
 event.stopPropagation();
@@ -4544,17 +4160,12 @@ return;
 }
 
 mostrarEquipa(
-id,
-codigo,
-nomeEquipa,
-logoEquipa
+id,codigo,nomeEquipa,logoEquipa
 );
 
 }
 
-/* =========================
-ARRANQUE
-========================= */
+/* ARRANQUE */
 
 mostrarJogos();
 
