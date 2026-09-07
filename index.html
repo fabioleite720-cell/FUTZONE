@@ -271,10 +271,6 @@ td:nth-child(2){
 
 <script>
 
-/* =========================
-   CONFIGURAÇÃO
-========================= */
-
 let jogos=[];
 let ligaAtual="Todos";
 let filtroAtual="Todos";
@@ -307,14 +303,24 @@ const ligas=[
  {
   nome:"Alemanha",
   arquivo:"data/bundesliga.json"
+ },
+
+ {
+  nome:"Champions League",
+  arquivo:"data/champions-league.json"
+ },
+
+ {
+  nome:"Liga Europa",
+  arquivo:"data/liga-europa.json"
+ },
+
+ {
+  nome:"Liga Conferência",
+  arquivo:"data/liga-conferencia.json"
  }
 
 ];
-
-
-/* =========================
-   SEGURANÇA HTML
-========================= */
 
 function esc(valor){
 
@@ -327,17 +333,11 @@ function esc(valor){
     ">":"&gt;",
     "'":"&#39;",
     '"':"&quot;"
-
    }[m];
 
   });
 
 }
-
-
-/* =========================
-   ESPN
-========================= */
 
 function extrairEventos(dados){
 
@@ -373,11 +373,6 @@ function extrairEventos(dados){
 
 }
 
-
-/* =========================
-   EQUIPAS ESPN
-========================= */
-
 function obterCompeticao(jogo){
 
  if(
@@ -392,7 +387,6 @@ function obterCompeticao(jogo){
 
  return null;
 }
-
 
 function obterCompetidores(jogo){
 
@@ -411,26 +405,22 @@ function obterCompetidores(jogo){
 
 }
 
-
 function obterEquipa(jogo,casa){
 
- let lista=
-  obterCompetidores(jogo);
+ let lista=obterCompetidores(jogo);
 
- let equipa=
-  lista.find(function(x){
+ let equipa=lista.find(function(x){
 
    if(casa)
     return x.homeAway==="home";
 
    return x.homeAway==="away";
 
-  });
+ });
 
  return equipa || null;
 
 }
-
 
 function nomeEquipa(equipa){
 
@@ -448,7 +438,6 @@ function nomeEquipa(equipa){
 
 }
 
-
 function idEquipa(equipa){
 
  if(!equipa)
@@ -461,7 +450,6 @@ function idEquipa(equipa){
  );
 
 }
-
 
 function logoEquipa(equipa){
 
@@ -487,11 +475,6 @@ function logoEquipa(equipa){
 
 }
 
-
-/* =========================
-   RESULTADO
-========================= */
-
 function scoreEquipa(equipa){
 
  if(!equipa)
@@ -505,14 +488,10 @@ function scoreEquipa(equipa){
 
 }
 
-
 function resultado(jogo){
 
- let casa=
-  obterEquipa(jogo,true);
-
- let fora=
-  obterEquipa(jogo,false);
+ let casa=obterEquipa(jogo,true);
+ let fora=obterEquipa(jogo,false);
 
  let h=scoreEquipa(casa);
  let a=scoreEquipa(fora);
@@ -524,21 +503,13 @@ function resultado(jogo){
 
 }
 
-
-/* =========================
-   ESTADO
-========================= */
-
 function estadoJogo(jogo){
 
- let comp=
-  obterCompeticao(jogo);
+ let comp=obterCompeticao(jogo);
 
- let tipo=
-  comp?.status?.type;
+ let tipo=comp?.status?.type;
 
- let estado=
-  String(
+ let estado=String(
    tipo?.state ||
    tipo?.name ||
    tipo?.description ||
@@ -569,11 +540,6 @@ function estadoJogo(jogo){
 
 }
 
-
-/* =========================
-   DATA
-========================= */
-
 function dataJogo(jogo){
 
  return(
@@ -583,11 +549,6 @@ function dataJogo(jogo){
  );
 
 }
-
-
-/* =========================
-   FAVORITOS
-========================= */
 
 function obterFavoritos(){
 
@@ -607,19 +568,16 @@ function obterFavoritos(){
 
 }
 
-
 function eFavorito(id){
 
  return obterFavoritos()
   .some(function(x){
 
-   return String(x.id)===
-          String(id);
+   return String(x.id)===String(id);
 
   });
 
 }
-
 
 function alternarFavorito(
  id,
@@ -628,17 +586,13 @@ function alternarFavorito(
  logo
 ){
 
- let lista=
-  obterFavoritos();
+ let lista=obterFavoritos();
 
- let indice=
-  lista.findIndex(function(x){
+ let indice=lista.findIndex(function(x){
 
-   return String(x.id)===
-          String(id);
+   return String(x.id)===String(id);
 
-  });
-
+ });
 
  if(indice>=0){
 
@@ -647,22 +601,18 @@ function alternarFavorito(
  }else{
 
   lista.push({
-
    id:id,
    name:nome,
    league:liga,
    logo:logo
-
   });
 
  }
-
 
  localStorage.setItem(
   "futzone_favoritos",
   JSON.stringify(lista)
  );
-
 
  if(equipaAtual)
   mostrarEquipa();
@@ -671,23 +621,16 @@ function alternarFavorito(
 
 }
 
-
-/* =========================
-   DETALHES
-========================= */
-
 function abrirDetalhes(jogo){
 
- let id=
-  jogo.id;
+ let id=jogo.id;
 
  if(!id)
   return;
 
- let liga=
-  encodeURIComponent(
-   jogo.__liga || ""
-  );
+ let liga=encodeURIComponent(
+  jogo.__liga || ""
+ );
 
  location.href=
   "detalhes.html?id="+
@@ -697,11 +640,6 @@ function abrirDetalhes(jogo){
 
 }
 
-
-/* =========================
-   EQUIPA
-========================= */
-
 function abrirEquipaPorId(
  id,
  nome,
@@ -710,64 +648,46 @@ function abrirEquipaPorId(
 ){
 
  equipaAtual={
-
   id:id,
   name:nome,
   league:liga,
   logo:logo
-
  };
 
  mostrarEquipa();
 
 }
 
-
-/* =========================
-   CARREGAR TODAS AS LIGAS
-========================= */
-
 async function carregar(){
 
  let todos=[];
 
- for(
-  const liga of ligas
- ){
+ for(const liga of ligas){
 
   try{
 
-   const resposta=
-    await fetch(
-     liga.arquivo+
-     "?v="+Date.now(),
-     {
-      cache:"no-store"
-     }
-    );
-
+   const resposta=await fetch(
+    liga.arquivo+
+    "?v="+Date.now(),
+    {
+     cache:"no-store"
+    }
+   );
 
    if(!resposta.ok)
     continue;
 
+   const dados=await resposta.json();
 
-   const dados=
-    await resposta.json();
-
-
-   const eventos=
-    extrairEventos(dados);
-
+   const eventos=extrairEventos(dados);
 
    eventos.forEach(function(jogo){
 
-    jogo.__liga=
-     liga.nome;
+    jogo.__liga=liga.nome;
 
     todos.push(jogo);
 
    });
-
 
   }catch(erro){
 
@@ -781,40 +701,29 @@ async function carregar(){
 
  }
 
-
  jogos=todos;
 
- ultimaAtualizacao=
-  new Date();
+ ultimaAtualizacao=new Date();
 
  mostrarJogos();
 
 }
-
-
-/* =========================
-   FILTROS
-========================= */
 
 function setFiltro(valor){
 
- filtroAtual=
-  valor;
+ filtroAtual=valor;
 
  mostrarJogos();
 
 }
-
 
 function setLiga(valor){
 
- ligaAtual=
-  valor;
+ ligaAtual=valor;
 
  mostrarJogos();
 
 }
-
 
 function passaFiltro(jogo){
 
@@ -827,67 +736,35 @@ function passaFiltro(jogo){
 
  }
 
+ let estado=estadoJogo(jogo);
 
- let estado=
-  estadoJogo(jogo);
-
-
- if(
-  filtroAtual==="🔴 Ao vivo"
- ){
-
+ if(filtroAtual==="🔴 Ao vivo")
   return estado==="🔴 AO VIVO";
 
- }
-
-
- if(
-  filtroAtual==="Resultados"
- ){
-
+ if(filtroAtual==="Resultados")
   return estado==="Final";
 
- }
-
-
- if(
-  filtroAtual==="Próximos"
- ){
-
+ if(filtroAtual==="Próximos")
   return estado==="Próximo";
 
- }
+ if(filtroAtual==="Hoje"){
 
-
- if(
-  filtroAtual==="Hoje"
- ){
-
-  let data=
-   dataJogo(jogo);
+  let data=dataJogo(jogo);
 
   if(!data)
    return false;
 
   return(
-   new Date(data)
-    .toDateString()
+   new Date(data).toDateString()
    ===
-   new Date()
-    .toDateString()
+   new Date().toDateString()
   );
 
  }
 
-
  return true;
 
 }
-
-
-/* =========================
-   BOTÕES FILTROS
-========================= */
 
 function filtros(){
 
@@ -921,7 +798,6 @@ function filtros(){
 
  </div>
 
-
  <div class="filters">
 
   ${[
@@ -951,44 +827,21 @@ function filtros(){
 
 }
 
-
-/* =========================
-   CARTÃO JOGO
-========================= */
-
 function cardJogo(jogo){
 
- let casa=
-  obterEquipa(jogo,true);
+ let casa=obterEquipa(jogo,true);
+ let fora=obterEquipa(jogo,false);
 
- let fora=
-  obterEquipa(jogo,false);
+ let nomeCasa=nomeEquipa(casa);
+ let nomeFora=nomeEquipa(fora);
 
+ let idCasa=idEquipa(casa);
+ let idFora=idEquipa(fora);
 
- let nomeCasa=
-  nomeEquipa(casa);
+ let logoCasa=logoEquipa(casa);
+ let logoFora=logoEquipa(fora);
 
- let nomeFora=
-  nomeEquipa(fora);
-
-
- let idCasa=
-  idEquipa(casa);
-
- let idFora=
-  idEquipa(fora);
-
-
- let logoCasa=
-  logoEquipa(casa);
-
- let logoFora=
-  logoEquipa(fora);
-
-
- let estado=
-  estadoJogo(jogo);
-
+ let estado=estadoJogo(jogo);
 
  return`
 
@@ -997,7 +850,6 @@ function cardJogo(jogo){
   <div class="league-title">
    ${esc(jogo.__liga)}
   </div>
-
 
   <div
    class="game"
@@ -1021,7 +873,6 @@ function cardJogo(jogo){
 
    </div>
 
-
    <div>
 
     <div class="score">
@@ -1039,7 +890,6 @@ function cardJogo(jogo){
     </div>
 
    </div>
-
 
    <div class="team">
 
@@ -1059,7 +909,6 @@ function cardJogo(jogo){
    </div>
 
   </div>
-
 
   <div
    style="
@@ -1085,7 +934,6 @@ function cardJogo(jogo){
     🏠 ${esc(nomeCasa)}
    </button>
 
-
    <button
     class="favbtn"
     onclick="
@@ -1109,11 +957,6 @@ function cardJogo(jogo){
 
 }
 
-
-/* =========================
-   JOGOS
-========================= */
-
 function mostrarJogos(){
 
  document
@@ -1128,10 +971,7 @@ function mostrarJogos(){
   .getElementById("navFav")
   .classList.remove("active");
 
-
- let lista=
-  jogos.filter(passaFiltro);
-
+ let lista=jogos.filter(passaFiltro);
 
  document
   .getElementById("app")
@@ -1149,39 +989,29 @@ function mostrarJogos(){
     ultimaAtualizacao
     ?
     "Atualizado "+
-    ultimaAtualizacao
-     .toLocaleTimeString("pt-PT")
+    ultimaAtualizacao.toLocaleTimeString("pt-PT")
     :
     ""
    }
 
   </div>
 
-
   ${
    lista.length
-
    ?
-
    lista
     .sort(function(a,b){
 
      return(
-      new Date(
-       dataJogo(a)
-      )
+      new Date(dataJogo(a))
       -
-      new Date(
-       dataJogo(b)
-      )
+      new Date(dataJogo(b))
      );
 
     })
     .map(cardJogo)
     .join("")
-
    :
-
    `
 
     <div class="card">
@@ -1193,17 +1023,11 @@ function mostrarJogos(){
     </div>
 
    `
-
   }
 
  `;
 
 }
-
-
-/* =========================
-   TABELAS
-========================= */
 
 async function mostrarTabelas(){
 
@@ -1218,7 +1042,6 @@ async function mostrarTabelas(){
  document
   .getElementById("navFav")
   .classList.remove("active");
-
 
  document
   .getElementById("app")
@@ -1256,7 +1079,6 @@ async function mostrarTabelas(){
 
   </div>
 
-
   <div
    id="tabela"
    class="card"
@@ -1272,17 +1094,12 @@ async function mostrarTabelas(){
 
 }
 
-
 async function carregarTabela(
  nome,
  arquivo
 ){
 
- let el=
-  document.getElementById(
-   "tabela"
-  );
-
+ let el=document.getElementById("tabela");
 
  el.innerHTML=`
 
@@ -1292,23 +1109,17 @@ async function carregarTabela(
 
  `;
 
-
  try{
 
-  let resposta=
-   await fetch(
-    arquivo+
-    "?v="+Date.now()
-   );
-
+  let resposta=await fetch(
+   arquivo+
+   "?v="+Date.now()
+  );
 
   if(!resposta.ok)
    throw new Error();
 
-
-  let dados=
-   await resposta.json();
-
+  let dados=await resposta.json();
 
   let lista=
    Array.isArray(dados)
@@ -1323,17 +1134,14 @@ async function carregarTabela(
     []
    );
 
-
   if(
    lista.length &&
    lista[0].entries
   ){
 
-   lista=
-    lista[0].entries;
+   lista=lista[0].entries;
 
   }
-
 
   el.innerHTML=`
 
@@ -1356,33 +1164,26 @@ async function carregarTabela(
     ${
      lista.map(function(x,i){
 
-      let equipa=
-       x.team ||
-       x.equipa ||
-       x;
+      let equipa=x.team || x.equipa || x;
 
-      let stats=
-       x.stats ||
-       [];
+      let stats=x.stats || [];
 
       function stat(nome){
 
-       let s=
-        stats.find(function(a){
+       let s=stats.find(function(a){
 
-         return(
-          a.name===nome ||
-          a.type===nome
-         );
+        return(
+         a.name===nome ||
+         a.type===nome
+        );
 
-        });
+       });
 
        return s?.value ??
               s?.displayValue ??
               0;
 
       }
-
 
       return`
 
@@ -1397,9 +1198,7 @@ async function carregarTabela(
         </td>
 
         <td>
-         ${esc(
-          nomeEquipa(equipa)
-         )}
+         ${esc(nomeEquipa(equipa))}
         </td>
 
         <td>
@@ -1458,7 +1257,6 @@ async function carregarTabela(
 
   `;
 
-
  }catch(e){
 
   el.innerHTML=`
@@ -1474,11 +1272,6 @@ async function carregarTabela(
 
 }
 
-
-/* =========================
-   FAVORITOS
-========================= */
-
 function mostrarFavoritos(){
 
  document
@@ -1493,10 +1286,7 @@ function mostrarFavoritos(){
   .getElementById("navFav")
   .classList.add("active");
 
-
- let lista=
-  obterFavoritos();
-
+ let lista=obterFavoritos();
 
  document
   .getElementById("app")
@@ -1506,12 +1296,9 @@ function mostrarFavoritos(){
    ⭐ Favoritos
   </div>
 
-
   ${
    lista.length
-
    ?
-
    lista.map(function(x){
 
     return`
@@ -1534,7 +1321,6 @@ function mostrarFavoritos(){
         ""
        }
 
-
        <div>
 
         <h2>
@@ -1546,7 +1332,6 @@ function mostrarFavoritos(){
         </div>
 
        </div>
-
 
        <button
         class="star"
@@ -1566,9 +1351,7 @@ function mostrarFavoritos(){
     `;
 
    }).join("")
-
    :
-
    `
 
     <div class="card">
@@ -1587,56 +1370,31 @@ function mostrarFavoritos(){
     </div>
 
    `
-
   }
 
  `;
 
 }
 
-
-/* =========================
-   EQUIPA
-========================= */
-
 function mostrarEquipa(){
 
- let e=
-  equipaAtual;
+ let e=equipaAtual;
 
+ let favorito=eFavorito(e.id);
 
- let favorito=
-  eFavorito(e.id);
+ let relacionados=jogos.filter(function(jogo){
 
-
- let relacionados=
-  jogos.filter(function(jogo){
-
-   let casa=
-    obterEquipa(
-     jogo,
-     true
-    );
-
-   let fora=
-    obterEquipa(
-     jogo,
-     false
-    );
-
+   let casa=obterEquipa(jogo,true);
+   let fora=obterEquipa(jogo,false);
 
    return(
 
-    String(
-     idEquipa(casa)
-    )===
+    String(idEquipa(casa))===
     String(e.id)
 
     ||
 
-    String(
-     idEquipa(fora)
-    )===
+    String(idEquipa(fora))===
     String(e.id)
 
     ||
@@ -1651,8 +1409,7 @@ function mostrarEquipa(){
 
    );
 
-  });
-
+ });
 
  document
   .getElementById("app")
@@ -1664,7 +1421,6 @@ function mostrarEquipa(){
   >
    ← Voltar
   </button>
-
 
   <div class="card">
 
@@ -1681,7 +1437,6 @@ function mostrarEquipa(){
      ""
     }
 
-
     <div>
 
      <h2>
@@ -1693,7 +1448,6 @@ function mostrarEquipa(){
      </div>
 
     </div>
-
 
     <button
      class="star"
@@ -1713,23 +1467,17 @@ function mostrarEquipa(){
 
   </div>
 
-
   <div class="section">
    Jogos da equipa
   </div>
 
-
   ${
    relacionados.length
-
    ?
-
    relacionados
     .map(cardJogo)
     .join("")
-
    :
-
    `
 
     <div class="card">
@@ -1741,20 +1489,13 @@ function mostrarEquipa(){
     </div>
 
    `
-
   }
 
  `;
 
 }
 
-
-/* =========================
-   ARRANQUE
-========================= */
-
 carregar();
-
 
 if(!intervaloLive){
 
