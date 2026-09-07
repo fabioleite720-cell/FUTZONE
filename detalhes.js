@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const MAPA_LIGAS = {
+  const ligas = {
     "Portugal": "por.1",
     "Inglaterra": "eng.1",
     "Espanha": "esp.1",
@@ -9,43 +9,31 @@
     "Alemanha": "ger.1"
   };
 
-  function ligaAPI(nome) {
-    return MAPA_LIGAS[nome] || "por.1";
-  }
+  document.addEventListener("click", function (e) {
 
-  function ligarCartoes() {
-    document.querySelectorAll(".jogo-card").forEach(function (card) {
+    const card = e.target.closest(".jogo-card");
 
-      if (card.dataset.detalhesLigados === "sim") return;
+    if (!card) return;
 
-      const id = card.dataset.jogoId;
+    // Se carregarmos diretamente no nome da equipa,
+    // mantém a abertura da página da equipa.
+    if (e.target.closest(".team")) return;
 
-      if (!id) return;
+    const id = card.dataset.jogoId;
+    const ligaNome = card.dataset.jogoLiga || "Portugal";
+    const liga = ligas[ligaNome] || "por.1";
 
-      card.dataset.detalhesLigados = "sim";
-      card.style.cursor = "pointer";
+    if (!id) {
+      alert("Este jogo não tem ID.");
+      return;
+    }
 
-      card.addEventListener("click", function (e) {
+    window.location.href =
+      "detalhes.html?id=" +
+      encodeURIComponent(id) +
+      "&liga=" +
+      encodeURIComponent(liga);
 
-        // Não abrir detalhes quando se toca diretamente no nome/equipa
-        if (e.target.closest(".team")) return;
-
-        const liga =
-          card.dataset.jogoLiga ||
-          "Portugal";
-
-        window.location.href =
-          "detalhes.html?id=" +
-          encodeURIComponent(id) +
-          "&liga=" +
-          encodeURIComponent(ligaAPI(liga));
-      });
-    });
-  }
-
-  ligarCartoes();
-
-  // Volta a ligar depois de a lista de jogos ser atualizada
-  setInterval(ligarCartoes, 500);
+  });
 
 })();
