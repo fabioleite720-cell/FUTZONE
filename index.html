@@ -1,8 +1,11 @@
-<!DOCTYPE html><html lang="pt-PT">
+<!DOCTYPE html>
+<html lang="pt-PT">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>FUTZONE</title><style>
+<title>FUTZONE</title>
+
+<style>
 *{box-sizing:border-box}
 
 body{
@@ -44,10 +47,10 @@ padding:35px 10px;
 color:#9eabc0;
 }
 
-.erro{
+.empty{
 text-align:center;
-padding:30px 10px;
-color:#ffb0b0;
+padding:40px 15px;
+color:#8c9ab0;
 }
 
 .liga{
@@ -70,7 +73,6 @@ border-radius:12px;
 padding:12px;
 margin-top:8px;
 cursor:pointer;
-transition:.15s;
 }
 
 .game:active{
@@ -93,7 +95,7 @@ font-weight:bold;
 
 .teams{
 display:grid;
-grid-template-columns:1fr 62px 1fr;
+grid-template-columns:1fr 65px 1fr;
 align-items:center;
 gap:6px;
 }
@@ -104,8 +106,8 @@ min-width:0;
 }
 
 .team img{
-width:38px;
-height:38px;
+width:42px;
+height:42px;
 object-fit:contain;
 display:block;
 margin:0 auto 6px;
@@ -119,7 +121,7 @@ word-break:break-word;
 }
 
 .score{
-font-size:22px;
+font-size:23px;
 font-weight:bold;
 text-align:center;
 }
@@ -128,7 +130,7 @@ text-align:center;
 font-size:10px;
 text-align:center;
 color:#7ed957;
-margin-top:4px;
+margin-top:5px;
 }
 
 .favorite{
@@ -140,7 +142,7 @@ margin-top:6px;
 background:none;
 border:0;
 color:#ffd400;
-font-size:21px;
+font-size:22px;
 padding:0 2px;
 cursor:pointer;
 }
@@ -170,11 +172,6 @@ cursor:pointer;
 color:#fff;
 }
 
-h2{
-font-size:20px;
-margin:10px 4px 15px;
-}
-
 table{
 width:100%;
 border-collapse:collapse;
@@ -200,92 +197,272 @@ text-align:left;
 font-weight:bold;
 }
 
-.empty{
-text-align:center;
-padding:40px 15px;
-color:#8c9ab0;
+/* DETALHES */
+
+#detalhes{
+display:none;
+position:fixed;
+z-index:10000;
+inset:0;
+background:#050b16;
+overflow:auto;
 }
-</style></head><body><header>
+
+.detalhes-box{
+max-width:700px;
+margin:auto;
+padding:12px 12px 90px;
+}
+
+.voltar{
+background:#0d1b30;
+border:1px solid #1b2a42;
+color:#fff;
+border-radius:10px;
+padding:11px 15px;
+font-size:14px;
+margin-bottom:12px;
+cursor:pointer;
+}
+
+.detalhes-header{
+background:#0b1627;
+border:1px solid #17243a;
+border-radius:14px;
+padding:18px 10px;
+text-align:center;
+}
+
+.detalhes-equipas{
+display:grid;
+grid-template-columns:1fr 90px 1fr;
+align-items:center;
+gap:5px;
+}
+
+.detalhes-equipa img{
+width:58px;
+height:58px;
+object-fit:contain;
+margin-bottom:7px;
+}
+
+.detalhes-nome{
+font-weight:bold;
+font-size:15px;
+}
+
+.detalhes-score{
+font-size:30px;
+font-weight:bold;
+}
+
+.detalhes-estado{
+font-size:12px;
+color:#7ed957;
+margin-top:5px;
+}
+
+.bloco{
+background:#0b1627;
+border:1px solid #17243a;
+border-radius:12px;
+margin-top:12px;
+padding:12px;
+}
+
+.bloco h3{
+margin:0 0 12px;
+font-size:17px;
+}
+
+.linha{
+display:flex;
+justify-content:space-between;
+gap:10px;
+padding:8px 0;
+border-bottom:1px solid #17243a;
+font-size:13px;
+}
+
+.linha:last-child{
+border-bottom:0;
+}
+
+.casa-text{
+text-align:left;
+flex:1;
+}
+
+.centro{
+text-align:center;
+min-width:70px;
+font-weight:bold;
+}
+
+.fora-text{
+text-align:right;
+flex:1;
+}
+
+.evento{
+padding:9px 0;
+border-bottom:1px solid #17243a;
+font-size:13px;
+}
+
+.evento:last-child{
+border-bottom:0;
+}
+
+.badge{
+display:inline-block;
+padding:3px 6px;
+border-radius:5px;
+font-size:11px;
+margin-right:5px;
+}
+
+.golo{
+background:#173b24;
+}
+
+.amarelo{
+background:#665800;
+}
+
+.vermelho{
+background:#5c1d1d;
+}
+
+.sub{
+background:#193653;
+}
+
+.erro{
+color:#ff8e8e;
+text-align:center;
+padding:25px 5px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
 <h1>⚽ FUTZONE</h1>
 <p>Futebol em direto, resultados e estatísticas</p>
-</header><div id="conteudo" class="container">
-<div class="loading">A carregar jogos...</div>
-</div><nav class="bottom-nav">
-<button id="navJogos" class="active" onclick="mostrarJogos()">⚽<br>Jogos</button>
-<button id="navTabelas" onclick="mostrarTabelas()">📊<br>Tabelas</button>
-<button id="navFav" onclick="mostrarFavoritos()">⭐<br>Favoritos</button>
-</nav><script>
+</header>
 
-/* ==========================================
-   FUTZONE
-   ========================================== */
+<div id="conteudo" class="container">
+<div class="loading">⚽ A carregar jogos...</div>
+</div>
+
+<div id="detalhes">
+<div class="detalhes-box">
+
+<button class="voltar" onclick="fecharDetalhes()">← Voltar aos jogos</button>
+
+<div id="detalhesConteudo">
+<div class="loading">A carregar detalhes...</div>
+</div>
+
+</div>
+</div>
+
+<nav class="bottom-nav">
+
+<button id="navJogos"
+class="active"
+onclick="mostrarJogos()">
+⚽<br>Jogos
+</button>
+
+<button id="navTabelas"
+onclick="mostrarTabelas()">
+📊<br>Tabelas
+</button>
+
+<button id="navFav"
+onclick="mostrarFavoritos()">
+⭐<br>Favoritos
+</button>
+
+</nav>
+
+<script>
+
+/* ================================
+   LIGAS
+================================ */
 
 const ligas=[
 {
 nome:"Portugal",
-arquivo:"data/primeira-liga.json"
+arquivo:"data/primeira-liga.json",
+codigo:"por.1"
 },
 {
 nome:"Inglaterra",
-arquivo:"data/premier-league.json"
+arquivo:"data/premier-league.json",
+codigo:"eng.1"
 },
 {
 nome:"Espanha",
-arquivo:"data/la-liga.json"
+arquivo:"data/la-liga.json",
+codigo:"esp.1"
 },
 {
 nome:"Itália",
-arquivo:"data/serie-a.json"
+arquivo:"data/serie-a.json",
+codigo:"ita.1"
 },
 {
 nome:"Alemanha",
-arquivo:"data/bundesliga.json"
+arquivo:"data/bundesliga.json",
+codigo:"ger.1"
 },
 {
 nome:"Champions League",
-arquivo:"data/champions-league.json"
+arquivo:"data/champions-league.json",
+codigo:"uefa.champions"
 },
 {
 nome:"Liga Europa",
-arquivo:"data/liga-europa.json"
+arquivo:"data/liga-europa.json",
+codigo:"uefa.europa"
 },
 {
 nome:"Liga Conferência",
-arquivo:"data/liga-conferencia.json"
+arquivo:"data/liga-conferencia.json",
+codigo:"uefa.europa.conf"
 }
 ];
-
-const codigosLiga={
-"Portugal":"por.1",
-"Inglaterra":"eng.1",
-"Espanha":"esp.1",
-"Itália":"ita.1",
-"Alemanha":"ger.1",
-"Champions League":"uefa.champions",
-"Liga Europa":"uefa.europa",
-"Liga Conferência":"uefa.europa.conf"
-};
 
 let todosJogos=[];
 let favoritos=[];
 
 try{
 favoritos=JSON.parse(
-localStorage.getItem("futzone_favoritos") || "[]"
+localStorage.getItem("futzone_favoritos")||"[]"
 );
-if(!Array.isArray(favoritos)) favoritos=[];
+
+if(!Array.isArray(favoritos)){
+favoritos=[];
+}
+
 }catch(e){
 favoritos=[];
 }
 
 
-/* ==========================================
+/* ================================
    SEGURANÇA
-   ========================================== */
+================================ */
 
-function esc(valor){
+function esc(v){
 
-return String(valor ?? "")
+return String(v??"")
 .replace(/&/g,"&amp;")
 .replace(/</g,"&lt;")
 .replace(/>/g,"&gt;")
@@ -295,177 +472,107 @@ return String(valor ?? "")
 }
 
 
-/* ==========================================
-   ID DO JOGO
-   ========================================== */
+/* ================================
+   ESTRUTURA ESPN
+================================ */
 
-function obterId(jogo){
+function competencia(j){
+
+return j?.competitions?.[0]||{};
+
+}
+
+function equipas(j){
+
+return competencia(j).competitors||[];
+
+}
+
+function casa(j){
+
+return equipas(j).find(
+x=>x.homeAway==="home"
+)||{};
+
+}
+
+function fora(j){
+
+return equipas(j).find(
+x=>x.homeAway==="away"
+)||{};
+
+}
+
+function nomeEquipa(e,alternativa){
+
+return e?.team?.displayName||
+e?.team?.shortDisplayName||
+e?.team?.name||
+alternativa;
+
+}
+
+function logoEquipa(e){
+
+return e?.team?.logo||
+e?.team?.logos?.[0]?.href||
+"";
+
+}
+
+function scoreEquipa(e){
+
+return e?.score??"-";
+
+}
+
+function obterId(j){
 
 return String(
-jogo?.id ??
-jogo?.eventId ??
-jogo?.gameId ??
-jogo?.event_id ??
+j?.id||
+j?.eventId||
+j?.gameId||
 ""
 );
 
 }
 
+function estado(j){
 
-/* ==========================================
-   EQUIPA
-   ========================================== */
-
-function obterEquipaCasa(jogo){
-
-return jogo?.homeTeam ??
-jogo?.home_team ??
-jogo?.casa ??
-jogo?.home ??
-jogo?.equipaCasa ??
-jogo?.homeTeamData ??
-{};
-
-}
-
-function obterEquipaFora(jogo){
-
-return jogo?.awayTeam ??
-jogo?.away_team ??
-jogo?.fora ??
-jogo?.away ??
-jogo?.equipaFora ??
-jogo?.awayTeamData ??
-{};
-
-}
-
-function nomeEquipa(equipa,alternativa){
-
-if(typeof equipa==="string"){
-return equipa;
-}
-
-return equipa?.displayName ??
-equipa?.shortName ??
-equipa?.name ??
-equipa?.nome ??
-alternativa;
-
-}
-
-function logoEquipa(equipa){
-
-if(typeof equipa==="string") return "";
-
-return equipa?.logo ??
-equipa?.crest ??
-equipa?.emblema ??
-equipa?.image ??
-equipa?.logoUrl ??
+return competencia(j)
+?.status
+?.type
+?.shortDetail||
+competencia(j)
+?.status
+?.type
+?.detail||
+competencia(j)
+?.status
+?.type
+?.description||
 "";
 
 }
 
+function live(j){
 
-/* ==========================================
-   RESULTADO
-   ========================================== */
+const s=String(estado(j)).toLowerCase();
 
-function obterGolosCasa(jogo){
-
-return jogo?.homeScore ??
-jogo?.home_score ??
-jogo?.scoreHome ??
-jogo?.homeGoals ??
-jogo?.golosCasa ??
-jogo?.casaScore ??
-jogo?.score?.home ??
-jogo?.placar?.casa ??
-"-";
-
-}
-
-function obterGolosFora(jogo){
-
-return jogo?.awayScore ??
-jogo?.away_score ??
-jogo?.scoreAway ??
-jogo?.awayGoals ??
-jogo?.golosFora ??
-jogo?.foraScore ??
-jogo?.score?.away ??
-jogo?.placar?.fora ??
-"-";
+return s.includes("live")||
+s.includes("in progress")||
+s.includes("ao vivo")||
+s.includes("1st")||
+s.includes("2nd")||
+s.includes("half");
 
 }
 
 
-/* ==========================================
-   ESTADO
-   ========================================== */
-
-function obterEstado(jogo){
-
-const estado=
-jogo?.status ??
-jogo?.estado ??
-jogo?.state ??
-jogo?.statusText ??
-"";
-
-if(typeof estado==="string") return estado;
-
-return estado?.displayValue ??
-estado?.description ??
-estado?.name ??
-"";
-
-}
-
-function eLive(jogo){
-
-const texto=obterEstado(jogo).toLowerCase();
-
-return texto.includes("live") ||
-texto.includes("ao vivo") ||
-texto.includes("in progress") ||
-texto.includes("em direto") ||
-texto.includes("1st") ||
-texto.includes("2nd") ||
-texto.includes("1º") ||
-texto.includes("2º");
-
-}
-
-
-/* ==========================================
-   ABRIR DETALHES
-   ========================================== */
-
-function abrirDetalhes(id,liga){
-
-id=String(id || "");
-
-if(!id){
-alert("Este jogo não tem ID.");
-return;
-}
-
-const url=
-"detalhes.html?id="+
-encodeURIComponent(id)+
-"&liga="+
-encodeURIComponent(liga || "");
-
-window.location.href=url;
-
-}
-
-
-/* ==========================================
+/* ================================
    FAVORITOS
-   ========================================== */
+================================ */
 
 function eFavorito(id){
 
@@ -503,43 +610,39 @@ mostrarJogos();
 }
 
 
-/* ==========================================
-   CARD DO JOGO
-   ========================================== */
+/* ================================
+   CARD
+================================ */
 
 function cardJogo(jogo){
 
 const id=obterId(jogo);
 
-const casa=obterEquipaCasa(jogo);
-const fora=obterEquipaFora(jogo);
+const h=casa(jogo);
+const a=fora(jogo);
 
-const nomeCasa=nomeEquipa(casa,"Casa");
-const nomeFora=nomeEquipa(fora,"Fora");
+const nomeH=nomeEquipa(h,"Casa");
+const nomeA=nomeEquipa(a,"Fora");
 
-const logoCasa=logoEquipa(casa);
-const logoFora=logoEquipa(fora);
+const logoH=logoEquipa(h);
+const logoA=logoEquipa(a);
 
-const golosCasa=obterGolosCasa(jogo);
-const golosFora=obterGolosFora(jogo);
+const scoreH=scoreEquipa(h);
+const scoreA=scoreEquipa(a);
 
-const estado=obterEstado(jogo);
-
-const liga=jogo.__liga || "";
+const st=estado(jogo);
 
 return `
 
-<div
-class="game"
-onclick="abrirDetalhes('${esc(id)}','${esc(liga)}')"
->
+<div class="game"
+onclick="abrirDetalhes('${esc(id)}','${esc(jogo.__liga)}')">
 
 <div class="game-top">
 
-<span>${esc(liga)}</span>
+<span>${esc(jogo.__liga)}</span>
 
-<span class="${eLive(jogo)?"live":""}">
-${eLive(jogo)?"🔴 ":""}${esc(estado)}
+<span class="${live(jogo)?"live":""}">
+${live(jogo)?"🔴 ":""}${esc(st)}
 </span>
 
 </div>
@@ -549,16 +652,16 @@ ${eLive(jogo)?"🔴 ":""}${esc(estado)}
 <div class="team">
 
 ${
-logoCasa
+logoH
 ?
-`<img src="${esc(logoCasa)}"
+`<img src="${esc(logoH)}"
 onerror="this.style.display='none'">`
 :
-""
+"⚽"
 }
 
 <div class="team-name">
-${esc(nomeCasa)}
+${esc(nomeH)}
 </div>
 
 </div>
@@ -566,11 +669,11 @@ ${esc(nomeCasa)}
 <div>
 
 <div class="score">
-${esc(golosCasa)} - ${esc(golosFora)}
+${esc(scoreH)} - ${esc(scoreA)}
 </div>
 
 <div class="status">
-${id ? "Ver detalhes" : ""}
+Ver detalhes
 </div>
 
 </div>
@@ -578,16 +681,16 @@ ${id ? "Ver detalhes" : ""}
 <div class="team">
 
 ${
-logoFora
+logoA
 ?
-`<img src="${esc(logoFora)}"
+`<img src="${esc(logoA)}"
 onerror="this.style.display='none'">`
 :
-""
+"⚽"
 }
 
 <div class="team-name">
-${esc(nomeFora)}
+${esc(nomeA)}
 </div>
 
 </div>
@@ -597,8 +700,7 @@ ${esc(nomeFora)}
 <div class="favorite">
 
 <button
-onclick="alternarFavorito('${esc(id)}',event)"
->
+onclick="alternarFavorito('${esc(id)}',event)">
 ${eFavorito(id)?"★":"☆"}
 </button>
 
@@ -611,9 +713,9 @@ ${eFavorito(id)?"★":"☆"}
 }
 
 
-/* ==========================================
-   LER JSON
-   ========================================== */
+/* ================================
+   EXTRAIR JOGOS
+================================ */
 
 function extrairJogos(dados){
 
@@ -646,46 +748,9 @@ return [];
 }
 
 
-/* ==========================================
-   FETCH COM TIMEOUT
-   ========================================== */
-
-async function fetchComTimeout(url){
-
-const controller=new AbortController();
-
-const timeout=setTimeout(
-()=>controller.abort(),
-10000
-);
-
-try{
-
-const resposta=await fetch(
-url,
-{
-cache:"no-store",
-signal:controller.signal
-}
-);
-
-clearTimeout(timeout);
-
-return resposta;
-
-}catch(e){
-
-clearTimeout(timeout);
-throw e;
-
-}
-
-}
-
-
-/* ==========================================
-   CARREGAR TODOS OS JOGOS
-   ========================================== */
+/* ================================
+   CARREGAR
+================================ */
 
 async function carregar(){
 
@@ -697,14 +762,16 @@ ligas.map(async liga=>{
 
 try{
 
-const resposta=
-await fetchComTimeout(
-liga.arquivo+"?v="+Date.now()
+const resposta=await fetch(
+liga.arquivo+"?v="+Date.now(),
+{
+cache:"no-store"
+}
 );
 
 if(!resposta.ok){
 console.log(
-"Ficheiro não encontrado:",
+"Não encontrado:",
 liga.arquivo
 );
 return;
@@ -716,19 +783,22 @@ const jogos=extrairJogos(dados);
 
 jogos.forEach(jogo=>{
 
-if(!jogo || typeof jogo!=="object") return;
+if(!jogo||typeof jogo!=="object"){
+return;
+}
 
 jogo.__liga=liga.nome;
+jogo.__codigo=liga.codigo;
 
 resultados.push(jogo);
 
 });
 
-}catch(erro){
+}catch(e){
 
 console.log(
-"Erro a carregar "+liga.nome,
-erro
+"Erro em "+liga.nome,
+e
 );
 
 }
@@ -744,9 +814,9 @@ mostrarJogos();
 }
 
 
-/* ==========================================
+/* ================================
    MOSTRAR JOGOS
-   ========================================== */
+================================ */
 
 function mostrarJogos(){
 
@@ -759,17 +829,8 @@ if(!todosJogos.length){
 
 conteudo.innerHTML=`
 <div class="empty">
-
 ⚽<br><br>
-
-Não foram encontrados jogos neste momento.
-
-<br><br>
-
-<small>
-A tentar atualizar os dados...
-</small>
-
+Não foram encontrados jogos.
 </div>
 `;
 
@@ -785,7 +846,9 @@ const jogos=todosJogos.filter(
 j=>j.__liga===liga.nome
 );
 
-if(!jogos.length) return;
+if(!jogos.length){
+return;
+}
 
 html+=`
 
@@ -808,9 +871,745 @@ conteudo.innerHTML=html;
 }
 
 
-/* ==========================================
+/* ================================
+   ABRIR DETALHES
+================================ */
+
+async function abrirDetalhes(id,liga){
+
+if(!id){
+alert("Este jogo não tem ID.");
+return;
+}
+
+document.getElementById(
+"detalhes"
+).style.display="block";
+
+document.body.style.overflow="hidden";
+
+const alvo=
+document.getElementById(
+"detalhesConteudo"
+);
+
+alvo.innerHTML=`
+<div class="loading">
+⚽ A carregar detalhes...
+</div>
+`;
+
+const codigo=
+ligas.find(x=>x.nome===liga)
+?.codigo||liga;
+
+try{
+
+const url=
+"https://site.api.espn.com/apis/site/v2/sports/soccer/"+
+encodeURIComponent(codigo)+
+"/summary?event="+
+encodeURIComponent(id)+
+"&_="+Date.now();
+
+const resposta=await fetch(url);
+
+if(!resposta.ok){
+throw new Error("Erro API");
+}
+
+const dados=await resposta.json();
+
+renderDetalhes(dados,liga);
+
+}catch(e){
+
+console.log(e);
+
+alvo.innerHTML=`
+<div class="erro">
+Não foi possível carregar os detalhes deste jogo.
+<br><br>
+Tenta novamente dentro de alguns segundos.
+</div>
+`;
+
+}
+
+}
+
+
+/* ================================
+   FECHAR DETALHES
+================================ */
+
+function fecharDetalhes(){
+
+document.getElementById(
+"detalhes"
+).style.display="none";
+
+document.body.style.overflow="";
+
+}
+
+
+/* ================================
+   RENDER DETALHES
+================================ */
+
+function renderDetalhes(dados,liga){
+
+const compet=dados?.header?.competitions?.[0]||
+dados?.competitions?.[0]||
+{};
+
+const comps=compet.competitors||[];
+
+const h=
+comps.find(x=>x.homeAway==="home")||{};
+
+const a=
+comps.find(x=>x.homeAway==="away")||{};
+
+const nomeH=
+h.team?.displayName||
+h.team?.name||
+"Casa";
+
+const nomeA=
+a.team?.displayName||
+a.team?.name||
+"Fora";
+
+const logoH=
+h.team?.logo||
+"";
+
+const logoA=
+a.team?.logo||
+"";
+
+const scoreH=h.score??"-";
+const scoreA=a.score??"-";
+
+const status=
+compet.status?.type?.detail||
+compet.status?.type?.description||
+"";
+
+let html=`
+
+<div class="detalhes-header">
+
+<div style="font-size:12px;color:#9eabc0;margin-bottom:12px">
+${esc(liga||"FUTZONE")}
+</div>
+
+<div class="detalhes-equipas">
+
+<div class="detalhes-equipa">
+
+${
+logoH
+?
+`<img src="${esc(logoH)}">`
+:
+"⚽"
+}
+
+<div class="detalhes-nome">
+${esc(nomeH)}
+</div>
+
+</div>
+
+<div>
+
+<div class="detalhes-score">
+${esc(scoreH)} - ${esc(scoreA)}
+</div>
+
+<div class="detalhes-estado">
+${esc(status)}
+</div>
+
+</div>
+
+<div class="detalhes-equipa">
+
+${
+logoA
+?
+`<img src="${esc(logoA)}">`
+:
+"⚽"
+}
+
+<div class="detalhes-nome">
+${esc(nomeA)}
+</div>
+
+</div>
+
+</div>
+
+</div>
+`;
+
+
+/* ================================
+   EVENTOS
+================================ */
+
+const eventos=[];
+
+if(Array.isArray(dados.plays)){
+
+dados.plays.forEach(p=>{
+eventos.push(p);
+});
+
+}
+
+if(Array.isArray(dados.keyEvents)){
+
+dados.keyEvents.forEach(p=>{
+eventos.push(p);
+});
+
+}
+
+if(Array.isArray(dados.scoringPlays)){
+
+dados.scoringPlays.forEach(p=>{
+eventos.push(p);
+});
+
+}
+
+
+/* remover duplicados */
+
+const unicos=[];
+
+const vistos=new Set();
+
+eventos.forEach(ev=>{
+
+const chave=
+ev.id||
+(ev.text||"")+"-"+(ev.clock?.displayValue||"");
+
+if(!vistos.has(chave)){
+
+vistos.add(chave);
+unicos.push(ev);
+
+}
+
+});
+
+
+/* ================================
+   GOLOS / CARTÕES / SUBS
+================================ */
+
+let eventosHtml="";
+
+unicos.forEach(ev=>{
+
+const texto=
+ev.text||
+ev.shortText||
+ev.description||
+"";
+
+const tipo=
+String(
+ev.type?.text||
+ev.type?.name||
+""
+).toLowerCase();
+
+const minuto=
+ev.clock?.displayValue||
+ev.period?.displayValue||
+"";
+
+let classe="";
+let icone="";
+
+if(
+tipo.includes("goal")||
+texto.toLowerCase().includes("goal")||
+texto.toLowerCase().includes("golo")
+){
+
+classe="golo";
+icone="⚽";
+
+}else if(
+tipo.includes("yellow")||
+texto.toLowerCase().includes("yellow")||
+texto.toLowerCase().includes("amarelo")
+){
+
+classe="amarelo";
+icone="🟨";
+
+}else if(
+tipo.includes("red")||
+texto.toLowerCase().includes("red card")||
+texto.toLowerCase().includes("vermelho")
+){
+
+classe="vermelho";
+icone="🟥";
+
+}else if(
+tipo.includes("sub")||
+texto.toLowerCase().includes("substitution")||
+texto.toLowerCase().includes("substituição")
+){
+
+classe="sub";
+icone="🔄";
+
+}else{
+
+return;
+
+}
+
+eventosHtml+=`
+
+<div class="evento">
+
+<span class="badge ${classe}">
+${icone} ${esc(minuto)}
+</span>
+
+${esc(texto)}
+
+</div>
+
+`;
+
+});
+
+
+if(eventosHtml){
+
+html+=`
+
+<div class="bloco">
+
+<h3>⚡ Acontecimentos</h3>
+
+${eventosHtml}
+
+</div>
+
+`;
+
+}else{
+
+html+=`
+
+<div class="bloco">
+
+<h3>⚡ Acontecimentos</h3>
+
+<div class="empty">
+Ainda não existem acontecimentos disponíveis.
+</div>
+
+</div>
+
+`;
+
+}
+
+
+/* ================================
+   ESTATÍSTICAS
+================================ */
+
+let stats=[];
+
+if(
+dados.boxscore&&
+Array.isArray(dados.boxscore.teams)
+){
+
+dados.boxscore.teams.forEach(team=>{
+
+const equipa=
+team.team?.displayName||
+team.team?.name||
+"";
+
+const statistics=
+team.statistics||[];
+
+statistics.forEach(s=>{
+
+stats.push({
+equipa,
+nome:s.name||
+s.label||
+"",
+valor:s.displayValue||
+s.displayValue||
+s.value||
+""
+});
+
+});
+
+});
+
+}
+
+
+if(
+Array.isArray(dados.statistics)
+){
+
+dados.statistics.forEach(s=>{
+
+if(s.name||s.label){
+
+stats.push(s);
+
+}
+
+});
+
+}
+
+
+if(stats.length){
+
+const grupos={};
+
+stats.forEach(s=>{
+
+const chave=s.name||s.label;
+
+if(!grupos[chave]){
+grupos[chave]=[];
+}
+
+grupos[chave].push(s);
+
+});
+
+let statsHtml="";
+
+Object.keys(grupos).slice(0,25).forEach(nome=>{
+
+const arr=grupos[nome];
+
+statsHtml+=`
+
+<div class="linha">
+
+<div class="casa-text">
+${esc(arr[0]?.valor||arr[0]?.displayValue||"")}
+</div>
+
+<div class="centro">
+${esc(nome)}
+</div>
+
+<div class="fora-text">
+${esc(arr[1]?.valor||arr[1]?.displayValue||"")}
+</div>
+
+</div>
+
+`;
+
+});
+
+html+=`
+
+<div class="bloco">
+
+<h3>📊 Estatísticas</h3>
+
+${statsHtml}
+
+</div>
+
+`;
+
+}else{
+
+html+=`
+
+<div class="bloco">
+
+<h3>📊 Estatísticas</h3>
+
+<div class="empty">
+As estatísticas ficam disponíveis quando a fonte do jogo as fornece.
+</div>
+
+</div>
+
+`;
+
+}
+
+
+/* ================================
+   EQUIPAS / JOGADORES
+================================ */
+
+const boxTeams=
+dados.boxscore?.players||
+[];
+
+if(Array.isArray(boxTeams)&&boxTeams.length){
+
+let jogadoresHtml="";
+
+boxTeams.forEach(grupo=>{
+
+const atletas=
+grupo.statistics||
+grupo.athletes||
+[];
+
+if(!atletas.length){
+return;
+}
+
+const nome=
+grupo.team?.displayName||
+grupo.team?.name||
+"Equipa";
+
+jogadoresHtml+=`
+
+<div style="margin-bottom:12px">
+
+<strong>${esc(nome)}</strong>
+
+`;
+
+atletas.slice(0,30).forEach(atleta=>{
+
+const player=
+atleta.athlete?.displayName||
+atleta.athlete?.shortName||
+atleta.displayName||
+"Jogador";
+
+jogadoresHtml+=`
+
+<div class="linha">
+
+<div class="casa-text">
+${esc(player)}
+</div>
+
+<div class="centro">
+${esc(atleta.substitute?"Banco":"")}
+</div>
+
+<div class="fora-text">
+</div>
+
+</div>
+
+`;
+
+});
+
+jogadoresHtml+=`</div>`;
+
+});
+
+if(jogadoresHtml){
+
+html+=`
+
+<div class="bloco">
+
+<h3>👥 Jogadores</h3>
+
+${jogadoresHtml}
+
+</div>
+
+`;
+
+}
+
+}
+
+document.getElementById(
+"detalhesConteudo"
+).innerHTML=html;
+
+}
+
+
+/* ================================
+   TABELAS
+================================ */
+
+async function mostrarTabelas(){
+
+ativarNav("navTabelas");
+
+const conteudo=
+document.getElementById("conteudo");
+
+conteudo.innerHTML=`
+
+<h2>📊 Classificações</h2>
+
+<div class="loading">
+A carregar tabelas...
+</div>
+
+`;
+
+let html="";
+
+for(const liga of ligas){
+
+try{
+
+const url=
+"https://site.api.espn.com/apis/v2/sports/soccer/"+
+liga.codigo+
+"/standings?_="+Date.now();
+
+const resposta=await fetch(url);
+
+if(!resposta.ok){
+continue;
+}
+
+const dados=await resposta.json();
+
+const entries=
+dados?.children?.[0]?.standings?.entries||
+dados?.standings?.entries||
+[];
+
+if(!entries.length){
+continue;
+}
+
+html+=`
+
+<div class="bloco">
+
+<h3>⚽ ${esc(liga.nome)}</h3>
+
+<table>
+
+<tr>
+<th>#</th>
+<th>Equipa</th>
+<th>J</th>
+<th>V</th>
+<th>E</th>
+<th>D</th>
+<th>Pts</th>
+</tr>
+
+`;
+
+entries.forEach((item,i)=>{
+
+const equipa=
+item.team?.displayName||
+item.team?.name||
+"Equipa";
+
+const stats={};
+
+(item.stats||[]).forEach(s=>{
+stats[s.name]=s.value;
+});
+
+html+=`
+
+<tr>
+
+<td>${i+1}</td>
+
+<td>${esc(equipa)}</td>
+
+<td>${stats.gamesPlayed??stats.gp??"-"}</td>
+
+<td>${stats.wins??"-"}</td>
+
+<td>${stats.ties??stats.draws??"-"}</td>
+
+<td>${stats.losses??"-"}</td>
+
+<td>${stats.points??"-"}</td>
+
+</tr>
+
+`;
+
+});
+
+html+=`
+
+</table>
+
+</div>
+
+`;
+
+}catch(e){
+
+console.log(
+"Erro tabela",
+liga.nome,
+e
+);
+
+}
+
+}
+
+if(!html){
+
+html=`
+
+<div class="empty">
+
+📊<br><br>
+As classificações não estão disponíveis neste momento.
+
+</div>
+
+`;
+
+}
+
+conteudo.innerHTML=
+`<h2>📊 Classificações</h2>`+
+html;
+
+}
+
+
+/* ================================
    FAVORITOS
-   ========================================== */
+================================ */
 
 function mostrarFavoritos(){
 
@@ -826,13 +1625,19 @@ j=>eFavorito(obterId(j))
 if(!jogos.length){
 
 conteudo.innerHTML=`
-<div class="empty">
 
-⭐<br><br>
+<h2>⭐ Favoritos</h2>
+
+<div class="empty">
 
 Ainda não tens jogos favoritos.
 
+<br><br>
+
+Carrega na ⭐ de um jogo para o guardar.
+
 </div>
+
 `;
 
 return;
@@ -850,224 +1655,43 @@ ${jogos.map(cardJogo).join("")}
 }
 
 
-/* ==========================================
-   TABELAS
-   ========================================== */
-
-async function mostrarTabelas(){
-
-ativarNav("navTabelas");
-
-const conteudo=
-document.getElementById("conteudo");
-
-conteudo.innerHTML=
-'<div class="loading">📊 A carregar classificações...</div>';
-
-let html="";
-
-for(const liga of ligas){
-
-const codigo=codigosLiga[liga.nome];
-
-try{
-
-const resposta=
-await fetchComTimeout(
-"https://site.api.espn.com/apis/v2/sports/soccer/"+
-codigo+
-"/standings?_="+Date.now()
-);
-
-if(!resposta.ok) continue;
-
-const dados=await resposta.json();
-
-const entradas=[];
-
-function recolher(obj){
-
-if(!obj || typeof obj!=="object") return;
-
-if(Array.isArray(obj.entries)){
-entradas.push(...obj.entries);
-}
-
-if(Array.isArray(obj.children)){
-obj.children.forEach(recolher);
-}
-
-}
-
-recolher(dados);
-
-if(!entradas.length) continue;
-
-html+=`
-
-<section class="liga">
-
-<div class="liga-title">
-📊 ${esc(liga.nome)}
-</div>
-
-<table>
-
-<thead>
-<tr>
-<th>#</th>
-<th>Equipa</th>
-<th>J</th>
-<th>V</th>
-<th>E</th>
-<th>D</th>
-<th>PTS</th>
-</tr>
-</thead>
-
-<tbody>
-
-${entradas.map((entrada,index)=>{
-
-const equipa=entrada.team || {};
-
-const stats={};
-
-(entrada.stats || []).forEach(stat=>{
-
-if(stat.name)
-stats[stat.name]=stat.value;
-
-if(stat.abbreviation)
-stats[stat.abbreviation]=stat.value;
-
-});
-
-return `
-
-<tr>
-
-<td>${index+1}</td>
-
-<td>
-${esc(
-equipa.displayName ||
-equipa.name ||
-"-"
-)}
-</td>
-
-<td>${esc(
-stats.gamesPlayed ??
-stats.gp ??
-"-"
-)}</td>
-
-<td>${esc(
-stats.wins ??
-stats.w ??
-"-"
-)}</td>
-
-<td>${esc(
-stats.ties ??
-stats.t ??
-"-"
-)}</td>
-
-<td>${esc(
-stats.losses ??
-stats.l ??
-"-"
-)}</td>
-
-<td>${esc(
-stats.points ??
-stats.pts ??
-"-"
-)}</td>
-
-</tr>
-
-`;
-
-}).join("")}
-
-</tbody>
-
-</table>
-
-</section>
-
-`;
-
-}catch(erro){
-
-console.log(
-"Erro classificação:",
-liga.nome,
-erro
-);
-
-}
-
-}
-
-if(!html){
-
-html=`
-
-<div class="empty">
-
-📊<br><br>
-
-As classificações não estão disponíveis neste momento.
-
-</div>
-
-`;
-
-}
-
-conteudo.innerHTML=html;
-
-}
-
-
-/* ==========================================
+/* ================================
    NAVEGAÇÃO
-   ========================================== */
+================================ */
 
 function ativarNav(id){
 
-document
-.querySelectorAll(".bottom-nav button")
-.forEach(botao=>{
-botao.classList.remove("active");
+document.querySelectorAll(
+".bottom-nav button"
+).forEach(btn=>{
+btn.classList.remove("active");
 });
 
-const botao=
+const btn=
 document.getElementById(id);
 
-if(botao){
-botao.classList.add("active");
+if(btn){
+btn.classList.add("active");
 }
 
 }
 
 
-/* ==========================================
+/* ================================
    INICIAR
-   ========================================== */
+================================ */
 
 carregar();
 
-/* Atualiza os jogos a cada minuto */
+
+/* atualizar automaticamente */
 
 setInterval(
 carregar,
 60000
 );
 
-</script></body>
+</script>
+
+</body>
 </html>
