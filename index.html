@@ -8,11 +8,81 @@
 
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#050b16;color:#fff;font-family:Arial,sans-serif}
-header{position:sticky;top:0;z-index:20;background:#071326;border-bottom:1px solid #17243a;padding:14px 12px}
-.logo{font-size:25px;font-weight:900}.logo span{color:#7ed957}
-main{padding:12px 10px 85px;max-width:700px;margin:auto}
-h2{font-size:18px;margin:15px 0 10px}
+
+body{
+margin:0;
+background:#050b16;
+color:#fff;
+font-family:Arial,sans-serif
+}
+
+header{
+position:sticky;
+top:0;
+z-index:20;
+background:#071326;
+border-bottom:1px solid #17243a;
+padding:10px 12px
+}
+
+/* =========================
+NOVO LOGÓTIPO FUTZONE
+========================= */
+
+.brand{
+display:flex;
+align-items:center;
+gap:10px
+}
+
+.brand-mark{
+width:42px;
+height:42px;
+border-radius:12px;
+background:#071a15;
+border:1px solid #7ed957;
+display:flex;
+align-items:center;
+justify-content:center;
+box-shadow:0 0 12px rgba(126,217,87,.15);
+flex-shrink:0
+}
+
+.brand-mark svg{
+width:32px;
+height:32px;
+display:block
+}
+
+.logo{
+font-size:25px;
+font-weight:900;
+letter-spacing:-1px;
+line-height:25px
+}
+
+.logo span{
+color:#7ed957
+}
+
+.logo-sub{
+font-size:8px;
+color:#9ca9bb;
+font-weight:bold;
+letter-spacing:2px;
+margin-top:3px
+}
+
+main{
+padding:12px 10px 85px;
+max-width:700px;
+margin:auto
+}
+
+h2{
+font-size:18px;
+margin:15px 0 10px
+}
 
 .seletor-ligas{
 display:grid;
@@ -575,25 +645,91 @@ padding:6px 8px
 <body>
 
 <header>
-<div class="logo">FUT<span>ZONE</span></div>
+
+<div class="brand">
+
+<div class="brand-mark">
+
+<svg
+viewBox="0 0 100 100"
+xmlns="http://www.w3.org/2000/svg"
+aria-label="FUTZONE">
+
+<circle
+cx="50"
+cy="50"
+r="43"
+fill="none"
+stroke="#7ed957"
+stroke-width="6"/>
+
+<path
+d="M50 27 L67 39 L61 59 L39 59 L33 39 Z"
+fill="#7ed957"/>
+
+<path
+d="M50 27 L50 12
+M67 39 L84 34
+M61 59 L72 76
+M39 59 L28 76
+M33 39 L16 34"
+fill="none"
+stroke="#fff"
+stroke-width="5"
+stroke-linecap="round"/>
+
+<path
+d="M43 38
+L70 38
+M43 38
+L43 76
+M43 57
+L62 57"
+fill="none"
+stroke="#fff"
+stroke-width="7"
+stroke-linecap="round"
+stroke-linejoin="round"/>
+
+</svg>
+
+</div>
+
+<div>
+
+<div class="logo">
+FUT<span>ZONE</span>
+</div>
+
+<div class="logo-sub">
+FUTEBOL EM DIRETO
+</div>
+
+</div>
+
+</div>
+
 </header>
 
 <main id="app"></main>
 
 <div class="bottom">
 
-<button id="navJogos"
+<button
+id="navJogos"
 class="active"
 onclick="mostrarJogos()">
 ⚽<br>Jogos
 </button>
 
-<button id="navTabelas"
+<button
+id="navTabelas"
 onclick="mostrarTabelas()">
 🏆<br>Tabelas
 </button>
 
-<button id="navFav"
+<button
+id="navFav"
 onclick="mostrarFavoritos()">
 ⭐<br>Favoritos
 </button>
@@ -626,13 +762,9 @@ let favoritos=JSON.parse(
 localStorage.getItem("futzone_favoritos")||"[]"
 );
 
-/* NOVOS FAVORITOS DE EQUIPAS */
-
 let equipasFavoritas=JSON.parse(
 localStorage.getItem("futzone_equipas_favoritas")||"[]"
 );
-
-/* NOTIFICAÇÕES */
 
 let notificacoesAtivas=
 localStorage.getItem("futzone_notificacoes_ativadas")==="1";
@@ -781,8 +913,6 @@ mostrarJogos();
 
 if(pagina==="favoritos")
 mostrarFavoritos();
-
-/* verificar notificações depois de atualizar */
 
 if(notificacoesAtivas){
 verificarNotificacoes();
@@ -2759,6 +2889,7 @@ alternarEquipaFavorita(
 ">
 
 ×
+
 </button>
 
 </div>
@@ -2918,15 +3049,10 @@ jogos.forEach(j=>{
 if(!j.home.id&&!j.away.id)
 return;
 
-if(
-!j.home.id&&
-!j.away.id
-)
-return;
-
 snap[j.id]={
 
 homeId:String(j.home.id||""),
+
 awayId:String(j.away.id||""),
 
 homeNome:j.home.nome,
@@ -3216,8 +3342,7 @@ function dataAPI(x){
 return x.getFullYear()+
 String(x.getMonth()+1)
 .padStart(2,"0")+
-String(x.getDate())
-.padStart(2,"0");
+String(x.getDate());
 
 }
 
