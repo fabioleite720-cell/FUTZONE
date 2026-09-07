@@ -6,7 +6,12 @@
     "Inglaterra": "eng.1",
     "Espanha": "esp.1",
     "Itália": "ita.1",
-    "Alemanha": "ger.1"
+    "Alemanha": "ger.1",
+
+    // Competições europeias
+    "Champions League": "uefa.champions",
+    "Liga Europa": "uefa.europa",
+    "Liga Conferência": "uefa.europa.conference"
   };
 
   document.addEventListener("click", function (e) {
