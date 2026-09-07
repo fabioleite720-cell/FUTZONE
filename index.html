@@ -2247,6 +2247,42 @@ function criarHTMLTabela(nomeLiga,linhas){
 ========================= */
 
 function mostrarFavoritos(){
+  document.getElementById("navJogos").classList.remove("active");
+  document.getElementById("navTabelas").classList.remove("active");
+  document.getElementById("navFav").classList.add("active");
+
+  const favoritos = JSON.parse(localStorage.getItem("futzone_favoritos") || "[]");
+
+  document.getElementById("app").innerHTML = `
+    <h2>⭐ Favoritos</h2>
+    <div class="card">
+      ${
+        favoritos.length === 0
+        ? `
+          <div class="empty">
+            Ainda não tens equipas favoritas ⭐
+            <br><br>
+            Abre uma equipa e carrega na estrela para a adicionar.
+          </div>
+        `
+        : favoritos.map(e => `
+          <div class="jogo-card" onclick="abrirEquipaPorId('${e.id}')">
+            <div style="display:flex;align-items:center;gap:12px">
+              <img src="${e.logo || ''}" 
+                   style="width:45px;height:45px;object-fit:contain"
+                   onerror="this.style.display='none'">
+              <div style="flex:1">
+                <strong>${e.nome}</strong>
+                <div style="font-size:12px;opacity:.7">${e.liga || ''}</div>
+              </div>
+              <span style="font-size:24px">⭐</span>
+            </div>
+          </div>
+        `).join("")
+      }
+    </div>
+  `;
+}
 
  document.getElementById("navJogos").classList.remove("active");
  document.getElementById("navTabelas").classList.remove("active");
