@@ -1025,7 +1025,41 @@ function abrirEquipaPorId(id,name,league,logo){
 
  mostrarEquipa();
 }
+function equipaFavorita(){
+  const favoritos = JSON.parse(
+    localStorage.getItem("futzone_favoritos") || "[]"
+  );
 
+  return favoritos.some(
+    e => String(e.id) === String(equipaAtual.id)
+  );
+}
+
+function alternarFavorito(){
+  let favoritos = JSON.parse(
+    localStorage.getItem("futzone_favoritos") || "[]"
+  );
+
+  if(equipaFavorita()){
+    favoritos = favoritos.filter(
+      e => String(e.id) !== String(equipaAtual.id)
+    );
+  }else{
+    favoritos.push({
+      id: equipaAtual.id,
+      nome: equipaAtual.name,
+      liga: equipaAtual.league,
+      logo: equipaAtual.logo
+    });
+  }
+
+  localStorage.setItem(
+    "futzone_favoritos",
+    JSON.stringify(favoritos)
+  );
+
+  mostrarEquipa();
+}
 async function mostrarEquipa(){
 
  document.getElementById("app").innerHTML=`
