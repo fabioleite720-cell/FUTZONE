@@ -192,6 +192,24 @@ padding:3px
 background:#17243a
 }
 
+/* FAVORITO EQUIPA */
+
+.team-fav-btn{
+background:#071326;
+border:1px solid #243653;
+color:#fff;
+border-radius:9px;
+padding:8px 12px;
+font-weight:bold;
+font-size:12px;
+margin-top:10px
+}
+
+.team-fav-btn.active{
+color:#7ed957;
+border-color:#7ed957
+}
+
 /* MENU */
 
 .bottom{
@@ -494,6 +512,63 @@ border-radius:7px
 .equipa-tabela-link:active{
 background:#17243a
 }
+
+/* NOTIFICAÇÕES */
+
+.notificacao-caixa{
+background:#0b1627;
+border:1px solid #17243a;
+border-radius:13px;
+padding:13px;
+margin-bottom:10px
+}
+
+.notificacao-btn{
+width:100%;
+background:#071326;
+border:1px solid #243653;
+border-radius:10px;
+color:#fff;
+padding:11px;
+font-weight:bold;
+font-size:13px
+}
+
+.notificacao-btn.ativa{
+border-color:#7ed957;
+color:#7ed957
+}
+
+.equipa-favorita-card{
+background:#0b1627;
+border:1px solid #17243a;
+border-radius:12px;
+padding:11px;
+display:flex;
+align-items:center;
+gap:10px;
+margin-bottom:8px
+}
+
+.equipa-favorita-card img{
+width:38px;
+height:38px;
+object-fit:contain
+}
+
+.equipa-favorita-nome{
+flex:1;
+font-weight:bold;
+font-size:13px
+}
+
+.remover-favorito{
+background:none;
+border:1px solid #243653;
+color:#ff8f8f;
+border-radius:7px;
+padding:6px 8px
+}
 </style>
 </head>
 
@@ -549,6 +624,21 @@ let pagina="jogos";
 
 let favoritos=JSON.parse(
 localStorage.getItem("futzone_favoritos")||"[]"
+);
+
+/* NOVOS FAVORITOS DE EQUIPAS */
+
+let equipasFavoritas=JSON.parse(
+localStorage.getItem("futzone_equipas_favoritas")||"[]"
+);
+
+/* NOTIFICAÇÕES */
+
+let notificacoesAtivas=
+localStorage.getItem("futzone_notificacoes_ativadas")==="1";
+
+let snapshotAnterior=JSON.parse(
+localStorage.getItem("futzone_notificacao_snapshot")||"{}"
 );
 
 const app=document.getElementById("app");
@@ -692,6 +782,12 @@ mostrarJogos();
 if(pagina==="favoritos")
 mostrarFavoritos();
 
+/* verificar notificações depois de atualizar */
+
+if(notificacoesAtivas){
+verificarNotificacoes();
+}
+
 }
 
 /* =========================
@@ -771,7 +867,7 @@ scrollTo(0,0);
 }
 
 /* =========================
-FAVORITOS
+FAVORITOS DE JOGOS
 ========================= */
 
 function alternarFavorito(id){
@@ -796,6 +892,72 @@ if(pagina==="favoritos")
 mostrarFavoritos();
 else
 mostrarJogos();
+
+}
+
+/* =========================
+FAVORITOS DE EQUIPAS
+========================= */
+
+function chaveEquipa(id,codigo){
+
+return String(codigo||"")+"_"+String(id||"");
+
+}
+
+function equipaEstaFavorita(id,codigo){
+
+return equipasFavoritas.some(
+x=>
+String(x.id)===String(id)&&
+String(x.codigo)===String(codigo)
+);
+
+}
+
+function alternarEquipaFavorita(
+id,
+codigo,
+nomeEquipa,
+logoEquipa
+){
+
+if(!id)
+return;
+
+let existe=equipasFavoritas.findIndex(
+x=>
+String(x.id)===String(id)&&
+String(x.codigo)===String(codigo)
+);
+
+if(existe>=0){
+
+equipasFavoritas.splice(existe,1);
+
+}else{
+
+equipasFavoritas.push({
+
+id:String(id),
+codigo:String(codigo),
+nome:nomeEquipa||"Equipa",
+logo:logoEquipa||""
+
+});
+
+}
+
+localStorage.setItem(
+"futzone_equipas_favoritas",
+JSON.stringify(equipasFavoritas)
+);
+
+if(pagina==="favoritos"){
+
+mostrarFavoritos();
+
+}
 
 }
 
@@ -2135,6 +2297,11 @@ let o=document.createElement("div");
 
 o.className="overlay";
 
+let favorita=equipaEstaFavorita(
+teamId,
+codigo
+);
+
 o.innerHTML=`
 
 <div class="detalhe-header">
@@ -2172,6 +2339,27 @@ onerror="this.style.display='none'">
 ${esc(nomeEquipa)}
 
 </div>
+
+<button
+class="team-fav-btn ${favorita?"active":""}"
+id="teamFavButton"
+onclick="
+alternarEquipaFavorita(
+'${esc(teamId)}',
+'${esc(codigo)}',
+'${esc(nomeEquipa)}',
+'${esc(logoEquipa)}'
+);
+atualizarBotaoEquipaFavorita(
+this,
+'${esc(teamId)}',
+'${esc(codigo)}'
+)
+">
+
+${favorita?"★ EQUIPA FAVORITA":"☆ ADICIONAR AOS FAVORITOS"}
+
+</button>
 
 </div>
 
@@ -2243,8 +2431,7 @@ extrairPlantelEquipa(d2);
 
 }
 
-/* TERCEIRA TENTATIVA:
-usar jogos recentes da equipa como fallback */
+/* TERCEIRA TENTATIVA */
 
 if(!jogadores.length){
 
@@ -2451,6 +2638,31 @@ Não foi possível carregar o plantel desta equipa.
 
 }
 
+function atualizarBotaoEquipaFavorita(
+botao,
+id,
+codigo
+){
+
+let ativa=equipaEstaFavorita(
+id,
+codigo
+);
+
+botao.classList.toggle(
+"active",
+ativa
+);
+
+botao.innerHTML=
+ativa
+?
+"★ EQUIPA FAVORITA"
+:
+"☆ ADICIONAR AOS FAVORITOS";
+
+}
+
 /* =========================
 FAVORITOS
 ========================= */
@@ -2469,6 +2681,104 @@ app.innerHTML=`
 
 <h2>⭐ Favoritos</h2>
 
+<div class="notificacao-caixa">
+
+<h3 style="margin-top:0">
+🔔 Notificações
+</h3>
+
+<p style="color:#9ca9bb;font-size:12px">
+
+Recebe avisos quando as tuas equipas favoritas
+marcarem, sofrerem cartão vermelho ou terminarem o jogo.
+
+</p>
+
+<button
+class="notificacao-btn ${notificacoesAtivas?"ativa":""}"
+onclick="alternarNotificacoes()">
+
+${
+notificacoesAtivas
+?
+"🔔 NOTIFICAÇÕES ATIVAS"
+:
+"🔕 ATIVAR NOTIFICAÇÕES"
+}
+
+</button>
+
+</div>
+
+<h2>⭐ Equipas favoritas</h2>
+
+${
+equipasFavoritas.length
+
+?
+
+equipasFavoritas.map(e=>`
+
+<div class="equipa-favorita-card">
+
+${
+e.logo
+?
+`
+<img
+src="${esc(e.logo)}"
+onerror="this.style.display='none'">
+`
+:""
+}
+
+<div
+class="equipa-favorita-nome"
+onclick="
+mostrarEquipa(
+'${esc(e.id)}',
+'${esc(e.codigo)}',
+'${esc(e.nome)}',
+'${esc(e.logo)}'
+)
+">
+
+${esc(e.nome)}
+
+</div>
+
+<button
+class="remover-favorito"
+onclick="
+alternarEquipaFavorita(
+'${esc(e.id)}',
+'${esc(e.codigo)}',
+'${esc(e.nome)}',
+'${esc(e.logo)}'
+)
+">
+
+×
+</button>
+
+</div>
+
+`).join("")
+
+:
+
+`<div class="vazio">
+Ainda não tens equipas favoritas.
+<br><br>
+Entra numa equipa e carrega em
+<br>
+☆ ADICIONAR AOS FAVORITOS
+</div>`
+
+}
+
+<h2>⭐ Jogos favoritos</h2>
+
 ${
 l.length
 
@@ -2485,6 +2795,469 @@ Ainda não tens jogos favoritos.
 }
 
 `;
+
+}
+
+/* =========================
+NOTIFICAÇÕES
+========================= */
+
+async function pedirPermissaoNotificacoes(){
+
+if(!("Notification" in window)){
+
+alert(
+"Este navegador não suporta notificações."
+);
+
+return false;
+
+}
+
+if(Notification.permission==="granted")
+return true;
+
+if(Notification.permission==="denied"){
+
+alert(
+"As notificações estão bloqueadas no navegador. Ativa-as nas definições do navegador."
+);
+
+return false;
+
+}
+
+let p=await Notification.requestPermission();
+
+return p==="granted";
+
+}
+
+async function alternarNotificacoes(){
+
+if(notificacoesAtivas){
+
+notificacoesAtivas=false;
+
+localStorage.setItem(
+"futzone_notificacoes_ativadas",
+"0"
+);
+
+mostrarFavoritos();
+
+return;
+
+}
+
+let ok=
+await pedirPermissaoNotificacoes();
+
+if(!ok)
+return;
+
+notificacoesAtivas=true;
+
+localStorage.setItem(
+"futzone_notificacoes_ativadas",
+"1"
+);
+
+localStorage.setItem(
+"futzone_notificacao_snapshot",
+JSON.stringify(
+criarSnapshot()
+)
+);
+
+mostrarFavoritos();
+
+enviarNotificacao(
+"FUTZONE 🔔",
+"Notificações ativadas. Vais receber avisos das tuas equipas favoritas."
+);
+
+}
+
+function enviarNotificacao(
+titulo,
+texto,
+tag=""
+){
+
+if(!notificacoesAtivas)
+return;
+
+if(
+!("Notification" in window)||
+Notification.permission!=="granted"
+)
+return;
+
+try{
+
+new Notification(
+titulo,
+{
+body:texto,
+tag:tag||"futzone",
+icon:"https://a.espncdn.com/i/teamlogos/soccer/500/86.png"
+}
+);
+
+}catch(e){}
+
+}
+
+function criarSnapshot(){
+
+let snap={};
+
+jogos.forEach(j=>{
+
+if(!j.home.id&&!j.away.id)
+return;
+
+if(
+!j.home.id&&
+!j.away.id
+)
+return;
+
+snap[j.id]={
+
+homeId:String(j.home.id||""),
+awayId:String(j.away.id||""),
+
+homeNome:j.home.nome,
+
+awayNome:j.away.nome,
+
+homeScore:String(j.home.score),
+
+awayScore:String(j.away.score),
+
+estado:j.estado,
+
+state:j.state,
+
+final:terminou(j)
+
+};
+
+});
+
+return snap;
+
+}
+
+function equipaFavoritaNoJogo(j){
+
+return equipasFavoritas.some(e=>
+
+String(e.id)===String(j.home.id)||
+String(e.id)===String(j.away.id)
+
+);
+
+}
+
+function nomeEquipaFavoritaNoJogo(j){
+
+let e=equipasFavoritas.find(e=>
+
+String(e.id)===String(j.home.id)||
+String(e.id)===String(j.away.id)
+
+);
+
+return e||null;
+
+}
+
+async function verificarNotificacoes(){
+
+if(!notificacoesAtivas)
+return;
+
+if(
+!("Notification" in window)||
+Notification.permission!=="granted"
+)
+return;
+
+if(!equipasFavoritas.length){
+
+localStorage.setItem(
+"futzone_notificacao_snapshot",
+JSON.stringify(
+criarSnapshot()
+)
+);
+
+return;
+
+}
+
+let atual=criarSnapshot();
+
+let anterior=snapshotAnterior||{};
+
+for(let id of Object.keys(atual)){
+
+let j=jogos.find(
+x=>String(x.id)===String(id)
+);
+
+if(!j)
+continue;
+
+if(!equipaFavoritaNoJogo(j))
+continue;
+
+let velho=anterior[id];
+let novo=atual[id];
+
+if(!velho){
+
+continue;
+
+}
+
+/* GOLO CASA */
+
+if(
+String(novo.homeScore)!==
+String(velho.homeScore)&&
+novo.homeScore!=="-"
+){
+
+let diferenca=
+parseInt(novo.homeScore)-
+parseInt(velho.homeScore);
+
+if(diferenca>0){
+
+enviarNotificacao(
+
+"⚽ GOOOLO! — FUTZONE",
+
+j.home.nome+
+" marcou! "+
+j.home.score+
+" - "+
+j.away.score,
+
+"golo-"+j.id+"-home-"+j.home.score
+
+);
+
+}
+
+}
+
+/* GOLO FORA */
+
+if(
+String(novo.awayScore)!==
+String(velho.awayScore)&&
+novo.awayScore!=="-"
+){
+
+let diferenca=
+parseInt(novo.awayScore)-
+parseInt(velho.awayScore);
+
+if(diferenca>0){
+
+enviarNotificacao(
+
+"⚽ GOOOLO! — FUTZONE",
+
+j.away.nome+
+" marcou! "+
+j.home.score+
+" - "+
+j.away.score,
+
+"golo-"+j.id+"-away-"+j.away.score
+
+);
+
+}
+
+}
+
+/* FIM DO JOGO */
+
+if(
+novo.final===true&&
+velho.final!==true
+){
+
+enviarNotificacao(
+
+"🏁 FIM DO JOGO — FUTZONE",
+
+j.home.nome+
+" "+
+j.home.score+
+" - "+
+j.away.score+
+" "+
+j.away.nome,
+
+"fim-"+j.id
+
+);
+
+}
+
+/* CARTÃO VERMELHO */
+
+if(
+aoVivo(j)
+){
+
+await verificarCartaoVermelho(
+j,
+velho
+);
+
+}
+
+}
+
+snapshotAnterior=atual;
+
+localStorage.setItem(
+"futzone_notificacao_snapshot",
+JSON.stringify(atual)
+);
+
+}
+
+async function verificarCartaoVermelho(
+j,
+velho
+){
+
+try{
+
+let r=await fetch(
+
+"https://site.api.espn.com/apis/site/v2/sports/soccer/"
++
+encodeURIComponent(j.codigo)
++
+"/summary?event="+
+encodeURIComponent(j.id)+
+"&_="+Date.now()
+
+);
+
+if(!r.ok)
+return;
+
+let d=await r.json();
+
+let eventos=extrairEventos(d);
+
+let vermelhos=eventos.filter(
+e=>e.i==="🟥"
+);
+
+if(!velho.redCount)
+velho.redCount=0;
+
+if(vermelhos.length>velho.redCount){
+
+let ultimo=
+vermelhos[vermelhos.length-1];
+
+enviarNotificacao(
+
+"🟥 CARTÃO VERMELHO — FUTZONE",
+
+j.home.nome+
+" - "+
+j.away.nome+
+" | "+
+(ultimo.t||"Cartão vermelho"),
+
+"vermelho-"+j.id+"-"+vermelhos.length
+
+);
+
+}
+
+}catch(e){}
+
+}
+
+/* =========================
+RESULTADOS RECENTES
+========================= */
+
+async function resultadosRecentesLiga(l){
+
+try{
+
+let agora=new Date();
+
+let inicio=new Date(agora);
+
+inicio.setDate(
+inicio.getDate()-14
+);
+
+function dataAPI(x){
+
+return x.getFullYear()+
+String(x.getMonth()+1)
+.padStart(2,"0")+
+String(x.getDate())
+.padStart(2,"0");
+
+}
+
+let url=
+
+"https://site.api.espn.com/apis/site/v2/sports/soccer/"
++
+encodeURIComponent(l.codigo)
++
+"/scoreboard?dates="
++
+dataAPI(inicio)
++
+"-"
++
+dataAPI(agora)
++
+"&limit=1000&_="+Date.now();
+
+let r=await fetch(url);
+
+if(!r.ok)
+return [];
+
+let d=await r.json();
+
+return (d.events||[])
+.map(j=>normalizar(j,l))
+.filter(terminou)
+.sort(
+(a,b)=>
+new Date(b.data)-new Date(a.data)
+)
+.slice(0,20);
+
+}catch(e){
+
+return [];
+
+}
 
 }
 
@@ -2612,76 +3385,6 @@ out
 return out;
 
 }
-
-/* =========================
-RESULTADOS RECENTES
-========================= */
-
-async function resultadosRecentesLiga(l){
-
-try{
-
-let agora=new Date();
-
-let inicio=new Date(agora);
-
-inicio.setDate(
-inicio.getDate()-14
-);
-
-function dataAPI(x){
-
-return x.getFullYear()+
-String(x.getMonth()+1)
-.padStart(2,"0")+
-String(x.getDate())
-.padStart(2,"0");
-
-}
-
-let url=
-
-"https://site.api.espn.com/apis/site/v2/sports/soccer/"
-+
-encodeURIComponent(l.codigo)
-+
-"/scoreboard?dates="
-+
-dataAPI(inicio)
-+
-"-"
-+
-dataAPI(agora)
-+
-"&limit=1000&_="+Date.now();
-
-let r=await fetch(url);
-
-if(!r.ok)
-return [];
-
-let d=await r.json();
-
-return (d.events||[])
-.map(j=>normalizar(j,l))
-.filter(terminou)
-.sort(
-(a,b)=>
-new Date(b.data)-new Date(a.data)
-)
-.slice(0,20);
-
-}catch(e){
-
-return [];
-
-}
-
-}
-
-/* =========================
-TABELA
-========================= */
 
 async function mostrarTabela(nomeLiga){
 
