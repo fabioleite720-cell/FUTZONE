@@ -2679,6 +2679,7 @@ return"";
 }
 
 
+
 function encontrarStandings(o){
 
 let resultado=[];
@@ -2691,17 +2692,46 @@ return;
 if(Array.isArray(x.entries)&&x.entries.length){
 
 resultado=x.entries;
-
 return;
 
 }
 
-if(Array.isArray(x.children)){
+if(Array.isArray(x.standings)&&x.standings.length){
 
-for(const c of x.children){
+for(const s of x.standings){
 
-if(!resultado.length)
-procurar(c);
+if(Array.isArray(s.entries)&&s.entries.length){
+
+resultado=s.entries;
+return;
+
+}
+
+}
+
+}
+
+if(x.standings&&typeof x.standings==="object"){
+
+if(Array.isArray(x.standings.entries)&&x.standings.entries.length){
+
+resultado=x.standings.entries;
+return;
+
+}
+
+}
+
+for(const chave of Object.keys(x)){
+
+if(resultado.length)
+return;
+
+const valor=x[chave];
+
+if(valor&&typeof valor==="object"){
+
+procurar(valor);
 
 }
 
