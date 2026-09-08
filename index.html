@@ -2387,7 +2387,93 @@ sd.events||
 [];
 
 let html="";
+if(ultimosJogos.length){
 
+html+=`
+
+<div class="secao">
+
+<h3>📈 Forma — últimos 5 jogos</h3>
+
+<div style="
+display:grid;
+grid-template-columns:repeat(5,1fr);
+gap:5px;
+">
+
+${ultimosJogos.map(e=>{
+
+const c=e.competitions?.[0]||{};
+const cs=c.competitors||[];
+
+const h=cs.find(x=>x.homeAway==="home")||cs[0]||{};
+const a=cs.find(x=>x.homeAway==="away")||cs[1]||{};
+
+const souCasa=String(h.team?.id)===String(id);
+
+const minha=souCasa?h:a;
+const adversario=souCasa?a:h;
+
+const meuScore=parseInt(minha.score);
+const advScore=parseInt(adversario.score);
+
+let resultado="🟡";
+
+if(!isNaN(meuScore)&&!isNaN(advScore)){
+
+if(meuScore>advScore) resultado="🟢";
+if(meuScore<advScore) resultado="🔴";
+
+}
+
+return`
+
+<div style="
+background:#0D1724;
+border:1px solid #1B2A3B;
+border-radius:7px;
+padding:6px 2px;
+text-align:center;
+font-size:9px;
+">
+
+<div style="font-size:18px">
+${resultado}
+</div>
+
+<div style="font-weight:bold">
+${esc(minha.score??"-")}
+-
+${esc(adversario.score??"-")}
+</div>
+
+<div style="
+color:#9DAABB;
+font-size:8px;
+margin-top:2px;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+">
+
+${esc(adversario.team?.shortDisplayName||
+adversario.team?.displayName||
+"Adversário")}
+
+</div>
+
+</div>
+
+`;
+
+}).join("")}
+
+</div>
+
+</div>
+`;
+
+   }
 html+=`
 
 <div class="secao">
