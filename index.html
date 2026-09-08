@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
 <meta name="theme-color" content="#0057B8">
+
+<link rel="manifest" href="./manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
 <title>FUTZONE</title>
 
 <style>
@@ -1539,12 +1545,6 @@ function tipoAcontecimento(e){
 
  const s=tipo+" "+texto;
 
- /*
-  IMPORTANTE:
-  vermelho antes de amarelo para
-  evitar classificações erradas.
- */
-
  if(
   s.includes("red card")||
   s.includes("redcard")||
@@ -1672,12 +1672,6 @@ function extrairEventos(d){
     continue;
   }
 
-  /*
-   Só usamos o texto como último recurso.
-   Não inventamos nomes quando a API
-   não fornece jogador.
-  */
-
   if(
    kind!=="sub"&&
    !jogador
@@ -1708,12 +1702,6 @@ function extrairEventos(d){
     jogador=limpo;
    }
   }
-
-  /*
-   Se for um evento de golo e não
-   houver jogador, não mostramos um
-   falso marcador.
-  */
 
   if(
    kind!=="sub"&&
@@ -2259,14 +2247,10 @@ async function abrirJogo(id,leagueCode){
   </div>
   `;
 
-  /* ===== ACONTECIMENTOS ===== */
-
   const eventos=
    extrairEventos(data);
 
   html+=blocoEventos(eventos);
-
-  /* ===== ONZE INICIAL ===== */
 
   const plantel=
    extrairPlantel(data);
@@ -2274,8 +2258,6 @@ async function abrirJogo(id,leagueCode){
   html+=blocoOnzeInicial(
    plantel
   );
-
-  /* ===== ESTATÍSTICAS ===== */
 
   html+=`
 
@@ -2665,6 +2647,7 @@ async function abrirJogo(id,leagueCode){
    </button>
 
   </div>
+
   `;
  }
 }
@@ -5455,6 +5438,14 @@ setInterval(()=>{
 
 mostrarJogos();
 
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  });
+}
 </script>
 
 </body>
