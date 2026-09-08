@@ -3097,7 +3097,32 @@ function renderJogos(){
  let lista=
   jogosAtuais;
 
- if(mostrarSomenteAoVivo){
+ let lista = jogosAtuais;
+
+if(filtroJogos==="proximos"){
+
+  lista = jogosAtuais.filter(j =>
+    !live(j.status) &&
+    j.status?.type?.state !== "post"
+  );
+
+}
+
+else if(filtroJogos==="realizados"){
+
+  lista = jogosAtuais.filter(j =>
+    j.status?.type?.state === "post"
+  );
+
+}
+
+else if(filtroJogos==="live"){
+
+  lista = jogosAtuais.filter(j =>
+    live(j.status)
+  );
+
+}
 
   lista=
    jogosAtuais.filter(j=>
