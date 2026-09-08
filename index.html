@@ -2715,6 +2715,10 @@ return resultado;
 
 }
 
+
+rank:
+
+
 async function mostrarTabelas(){
 
 nav("navTabelas");
@@ -2737,19 +2741,20 @@ ${botoesLigas()}
 
 try{
 
-const r=await fetch(
-`${ESPN2}${encodeURIComponent(ligaAtual.code)}/standings?_=${Date.now()}`
-);
+const url=
+`${ESPN2}${encodeURIComponent(ligaAtual.code)}/standings?_=${Date.now()}`;
+
+const r=await fetch(url);
 
 if(!r.ok)
-throw new Error();
+throw new Error("Erro");
 
 const d=await r.json();
 
 const entries=encontrarStandings(d);
 
 if(!entries.length)
-throw new Error();
+throw new Error("Sem classificação");
 
 const rows=entries.map((e,i)=>{
 
@@ -2762,20 +2767,21 @@ const stats={};
 const nome=
 s.name||
 s.abbreviation||
-s.displayName||
 "";
 
 stats[nome]=
-s.value??s.displayValue??"";
+s.value ??
+s.displayValue ??
+"";
 
 });
 
-function getStats(names){
+function stat(lista){
 
-for(const n of names){
+for(const nome of lista){
 
-if(stats[n]!==undefined)
-return stats[n];
+if(stats[nome]!==undefined)
+return stats[nome];
 
 }
 
@@ -2785,14 +2791,9 @@ return "-";
 
 return{
 
-rank:
-e.note?.rank||
-e.rank||
-i+1,
+rank:e.rank||i+1,
 
-id:
-t.id||
-"",
+id:t.id||"",
 
 nome:
 t.displayName||
@@ -2805,35 +2806,35 @@ t.logo||
 t.logos?.[0]?.href||
 "",
 
-j:getStats([
+j:stat([
 "gamesPlayed",
 "played",
 "gp"
 ]),
 
-v:getStats([
+v:stat([
 "wins",
 "w"
 ]),
 
-emp:getStats([
+emp:stat([
 "ties",
 "draws",
 "d"
 ]),
 
-der:getStats([
+der:stat([
 "losses",
 "l"
 ]),
 
-dg:getStats([
+dg:stat([
 "pointDifferential",
 "goalDifference",
 "gd"
 ]),
 
-pts:getStats([
+pts:stat([
 "points",
 "pts"
 ])
@@ -2846,7 +2847,7 @@ document.getElementById("tabelaConteudo").innerHTML=`
 
 <div class="secao">
 
-<h3>${esc(ligaAtual.name)}</h3>
+<h3>🏆 ${esc(ligaAtual.name)}</h3>
 
 <div class="tabela-wrap">
 
@@ -2915,14 +2916,17 @@ ${esc(x.nome)}
 
 }catch(e){
 
-const box=document.getElementById("tabelaConteudo");
+const box=
+document.getElementById("tabelaConteudo");
 
 if(box){
 
 box.innerHTML=`
 
 <div class="erro">
+
 Não foi possível carregar a classificação desta competição.
+
 </div>
 
 `;
@@ -2932,7 +2936,6 @@ Não foi possível carregar a classificação desta competição.
 }
 
 }
-
 
 /* INÍCIO */
 
