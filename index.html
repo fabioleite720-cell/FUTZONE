@@ -71,15 +71,30 @@ font-size:20px;
 margin-bottom:4px
 }
 
-.live-button{
-width:100%;
+/* NOVOS BOTÕES COMPACTOS */
+.acoes-jogos{
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:8px;
+margin-bottom:12px
+}
+
+.janela-btn{
 background:#09111C;
-border:1px solid #FF4054;
+border:1px solid #1B2A3B;
 color:#FFF;
 border-radius:11px;
-padding:12px;
-margin-bottom:12px;
+padding:12px 7px;
+font-size:12px;
 font-weight:900
+}
+
+.janela-btn.live{
+border-color:#FF4054
+}
+
+.janela-btn:active{
+opacity:.7
 }
 
 .dot{
@@ -88,29 +103,7 @@ width:9px;
 height:9px;
 background:#FF4054;
 border-radius:50%;
-margin-right:5px
-}
-
-.filtro{
-display:flex;
-gap:7px;
-margin:8px 0 12px
-}
-
-.filtro button{
-flex:1;
-background:#0D1724;
-border:1px solid #1B2A3B;
-color:#9DAABB;
-border-radius:8px;
-padding:8px;
-font-size:11px
-}
-
-.filtro button.active{
-color:#FFF;
-border-color:#1683FF;
-background:#003B7A
+margin-right:4px
 }
 
 .jogo{
@@ -185,6 +178,30 @@ color:#9DAABB
 
 .erro{
 color:#FF8F8F
+}
+
+/* JANELA DOS JOGOS */
+.janela-jogos{
+background:#03060B;
+min-height:100vh
+}
+
+.janela-titulo{
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:8px;
+margin-bottom:12px
+}
+
+.janela-titulo h2{
+margin:0
+}
+
+.contador{
+font-size:10px;
+color:#9DAABB;
+margin-bottom:10px
 }
 
 .bottom{
@@ -457,7 +474,6 @@ const ligas=[
 
 let ligaAtual=ligas[0];
 let jogosAtuais=[];
-let modoJogos="todos";
 
 const app=document.getElementById("app");
 
@@ -477,7 +493,10 @@ return u
 
 function nav(id){
 ["navJogos","navTabelas","navFav"]
-.forEach(x=>document.getElementById(x).classList.toggle("active",x===id));
+.forEach(x=>
+document.getElementById(x)
+.classList.toggle("active",x===id)
+);
 }
 
 function data8(d){
@@ -618,9 +637,6 @@ jogosAtuais=
 [...mapa.values()]
 .sort((a,b)=>new Date(a.date)-new Date(b.date));
 
-if(modoJogos==="live")
-mostrarJogosAoVivo();
-else
 mostrarJogos();
 }
 
@@ -652,8 +668,6 @@ function selecionarLiga(code){
 ligaAtual=
 ligas.find(l=>l.code===code)||
 ligas[0];
-
-modoJogos="todos";
 
 mostrarJogos();
 }
@@ -751,108 +765,172 @@ ${teamHtml(j.away,j.code)}
 `;
 }
 
+/* =========================================
+   PÁGINA PRINCIPAL MAIS COMPACTA
+========================================= */
+
 function mostrarJogos(){
 
 nav("navJogos");
 
-let l=
-jogosAtuais
-.filter(j=>j.liga===ligaAtual.name);
-
-if(modoJogos==="passados")
-l=l.filter(j=>j.estado.final);
-
-if(modoJogos==="futuros")
-l=l.filter(j=>!j.estado.final&&!j.estado.live);
-
-if(modoJogos==="live")
-l=l.filter(j=>j.estado.live);
+const l=
+jogosAtuais.filter(j=>
+j.liga===ligaAtual.name &&
+!j.estado.final
+);
 
 const totalLive=
 jogosAtuais.filter(j=>j.estado.live).length;
 
 app.innerHTML=`
 
-<h2>Jogos</h2>
+<h2>⚽ Jogos</h2>
+
+<div class="acoes-jogos">
 
 <button
-class="live-button"
-onclick="mostrarJogosAoVivo()">
+class="janela-btn live"
+onclick="abrirJanelaJogos('live')">
 
 <span class="dot"></span>
-
-🔴 Jogos ao Vivo
-
+🔴 Ao Vivo
 ${totalLive?` (${totalLive})`:""}
 
 </button>
 
-${botoesLigas()}
-
-<div class="filtro">
-
 <button
-class="${modoJogos==='todos'?'active':''}"
-onclick="modoJogos='todos';mostrarJogos()">
+class="janela-btn"
+onclick="abrirJanelaJogos('futuros')">
 
-Todos
+📅 Futuros
 
 </button>
 
 <button
-class="${modoJogos==='passados'?'active':''}"
-onclick="modoJogos='passados';mostrarJogos()">
+class="janela-btn"
+onclick="abrirJanelaJogos('realizados')">
 
-Já realizados
+✅ Realizados
 
 </button>
 
 <button
-class="${modoJogos==='futuros'?'active':''}"
-onclick="modoJogos='futuros';mostrarJogos()">
+class="janela-btn"
+onclick="carregarJogos()">
 
-Futuros
+🔄 Atualizar
 
 </button>
 
 </div>
 
+${botoesLigas()}
+
 <h2>${esc(ligaAtual.name)}</h2>
 
-${l.length
-?l.map(cartao).join("")
-:'<div class="vazio">Não há jogos encontrados neste período.</div>'}
+${
+l.length
+?
+l.slice(0,10).map(cartao).join("")
+:
+'<div class="vazio">Não há jogos próximos encontrados.</div>'
+}
 
 `;
 }
 
-function mostrarJogosAoVivo(){
+/* =========================================
+   JANELAS: AO VIVO / FUTUROS / REALIZADOS
+========================================= */
 
-modoJogos="live";
+function abrirJanelaJogos(tipo){
 
-nav("navJogos");
+let lista=[];
+let titulo="";
+let subtitulo="";
 
-const l=
+if(tipo==="live"){
+
+lista=
+jogosAtuais.filter(j=>j.estado.live);
+
+titulo="🔴 Ao Vivo";
+subtitulo=
+lista.length+
+" jogo(s) em todas as ligas";
+
+}
+
+if(tipo==="futuros"){
+
+lista=
 jogosAtuais
-.filter(j=>j.estado.live);
+.filter(j=>!j.estado.final&&!j.estado.live)
+.sort((a,b)=>new Date(a.date)-new Date(b.date));
 
-app.innerHTML=`
+titulo="📅 Futuros";
+subtitulo=
+lista.length+
+" jogo(s) futuros";
 
-<h2>🔴 Jogos ao Vivo</h2>
+}
 
-<div class="vazio" style="margin-bottom:12px">
+if(tipo==="realizados"){
 
-${l.length
-?l.length+" jogo(s) ao vivo em todas as ligas"
-:"Não há jogos ao vivo neste momento."}
+lista=
+jogosAtuais
+.filter(j=>j.estado.final)
+.sort((a,b)=>new Date(b.date)-new Date(a.date));
+
+titulo="✅ Realizados";
+subtitulo=
+lista.length+
+" jogo(s) realizados";
+
+}
+
+const o=document.createElement("div");
+
+o.className="overlay";
+
+o.innerHTML=`
+
+<div class="detalhe-header">
+
+<button
+class="voltar"
+onclick="this.closest('.overlay').remove()">
+
+← Voltar
+
+</button>
 
 </div>
 
-${l.length
-?l.map(cartao).join("")
-:""}
+<div class="detalhe janela-jogos">
 
+<div class="janela-titulo">
+
+<h2>${titulo}</h2>
+
+</div>
+
+<div class="contador">
+${esc(subtitulo)}
+</div>
+
+${
+lista.length
+?
+lista.map(cartao).join("")
+:
+'<div class="vazio">Não há jogos nesta categoria.</div>'
+}
+
+</div>
 `;
+
+document.body.appendChild(o);
 }
 
 function txt(v){
