@@ -2414,15 +2414,24 @@ const souCasa=String(h.team?.id)===String(id);
 const minha=souCasa?h:a;
 const adversario=souCasa?a:h;
 
-const meuScore=parseInt(minha.score);
-const advScore=parseInt(adversario.score);
+const meuScore=parseInt(String(minha.score||"").replace(/[^\d]/g,""));
+const advScore=parseInt(String(adversario.score||"").replace(/[^\d]/g,""));
 
 let resultado="🟡";
 
 if(!isNaN(meuScore)&&!isNaN(advScore)){
 
-if(meuScore>advScore) resultado="🟢";
-if(meuScore<advScore) resultado="🔴";
+if(meuScore>advScore){
+resultado="🟢";
+}
+
+else if(meuScore<advScore){
+resultado="🔴";
+}
+
+else{
+resultado="🟡";
+}
 
 }
 
