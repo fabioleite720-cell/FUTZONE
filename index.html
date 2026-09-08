@@ -2836,7 +2836,115 @@ function selecionarLiga(i){
 }
 
 async function carregarJogos(){
+  const area=document.getElementById("jogos");
 
+  area.innerHTML=`
+    <div class="loading">
+      <div class="spinner"></div>
+      A carregar jogos...
+    </div>
+  `;
+
+  const tentativas=[
+    `https://site.api.espn.com/apis/site/v2/sports/soccer/${ligaAtual.code}/scoreboard?limit=100`,
+    `https://site.api.espn.com/apis/site/v2/sports/soccer/${ligaAtual.code}/scoreboard`
+  ];
+
+  let data=null;
+
+  for(const url of tentativas){
+    try{
+      const r=await fetch(url);
+
+      if(!r.ok) continue;
+
+      const json=await r.json();
+
+      if(json && Array.isArray(json.events)){
+        data=json;
+        break;
+      }
+    }catch(e){}
+  }
+
+  if(!data){
+    area.innerHTML=`
+      <div class="empty">
+        Não foi possível carregar os jogos desta competição.
+      </div>
+    `;
+    return;
+  }
+
+  const eventos=data.events || [];
+
+  if(!eventos.length){
+    area.innerHTML=`
+      <div class="empty">
+        Não há jogos disponíveis nesta competição neste momento.
+      </div>
+    `;
+    return;
+  }
+
+  area.innerHTML="";
+
+  eventos.forEach(evento=>{
+    const comp=evento.competitions?.[0];
+    if(!comp) return;
+
+    const home=comp.competitors?.find(x=>x.homeAway==="home");
+    const away=comp.competitors?.find(x=>x.homeAway==="away");
+
+    if(!home || !away) return;
+
+    const status=comp.status?.type;
+    const estado=status?.shortDetail || status?.detail || "";
+    const completo=status?.completed;
+
+    const card=document.createElement("div");
+    card.className="card jogo-card";
+
+    card.innerHTML=`
+      <div class="game-date">
+        ${new Date(evento.date).toLocaleString("pt-PT",{
+          day:"2-digit",
+          month:"2-digit",
+          hour:"2-digit",
+          minute:"2-digit"
+        })}
+      </div>
+
+      <div class="teams">
+        <div class="team">
+          <img src="${home.team?.logo || ""}" 
+               onerror="this.style.display='none'">
+          <strong>${home.team?.displayName || "Casa"}</strong>
+        </div>
+
+        <div class="score">
+          <b>${home.score ?? "-"}</b>
+          <span>${estado}</span>
+          <b>${away.score ?? "-"}</b>
+        </div>
+
+        <div class="team">
+          <img src="${away.team?.logo || ""}" 
+               onerror="this.style.display='none'">
+          <strong>${away.team?.displayName || "Fora"}</strong>
+        </div>
+      </div>
+    `;
+
+    card.onclick=()=>{
+      if(typeof abrirJogo==="function"){
+        abrirJogo(evento);
+      }
+    };
+
+    area.appendChild(card);
+  });
+}
  const area=
   document.getElementById("games");
 
