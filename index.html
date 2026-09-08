@@ -2835,96 +2835,84 @@ function selecionarLiga(i){
  carregarNoticias();
 }
 
+
 async function carregarJogos(){
+  const area=document.getElementById("games");
+  if(!area)return;
 
- const area=
-  document.getElementById("games");
+  try{
+    const agora=new Date();
+    const inicio=new Date(agora);
+    inicio.setDate(inicio.getDate()-30);
 
- if(!area)return;
+    const fim=new Date(agora);
+    fim.setDate(fim.getDate()+7);
 
- try{
-
-  const r=await fetch(
-   ESPN_SITE+
-   ligaAtual.code+
-   "/scoreboard?limit=100"
-  );
-
-  if(!r.ok)
-   throw new Error();
-
-  const data=await r.json();
-
-  jogosAtuais=
-   (data.events||[]).map(ev=>{
-
-    const c=
-     ev.competitions?.[0];
-
-    const h=
-     c?.competitors?.find(
-      x=>x.homeAway==="home"
-     )||
-     c?.competitors?.[0]||
-     {};
-
-    const a=
-     c?.competitors?.find(
-      x=>x.homeAway==="away"
-     )||
-     c?.competitors?.[1]||
-     {};
-
-    return{
-
-     id:ev.id,
-     date:ev.date,
-     status:ev.status,
-
-     home:h.team||{},
-     away:a.team||{},
-
-     homeScore:h.score??"-",
-     awayScore:a.score??"-",
-
-     league:ligaAtual
-
+    const formatarData=d=>{
+      const y=d.getFullYear();
+      const m=String(d.getMonth()+1).padStart(2,"0");
+      const dia=String(d.getDate()).padStart(2,"0");
+      return y+m+dia;
     };
 
-   });
+    const dataInicio=formatarData(inicio);
+    const dataFim=formatarData(fim);
 
-  verificarNotificacoes();
+    const r=await fetch(
+      ESPN_SITE+
+      ligaAtual.code+
+      "/scoreboard?limit=500&dates="+
+      dataInicio+"-"+dataFim
+    );
 
-  renderHighlights();
-  renderJogos();
+    if(!r.ok) throw new Error();
 
- }catch(e){
+    const data=await r.json();
 
-  area.innerHTML=`
+    const vistos=new Set();
 
-  <div class="card">
+    jogosAtuais=(data.events||[])
+      .map(ev=>{
+        const c=ev.competitions?.[0];
+        const h=c?.competitors?.find(x=>x.homeAway==="home")
+          ||c?.competitors?.[0]
+          ||{};
+        const a=c?.competitors?.find(x=>x.homeAway==="away")
+          ||c?.competitors?.[1]
+          ||{};
 
-   <div class="empty">
+        return{
+          id:ev.id,
+          date:ev.date,
+          status:ev.status,
+          home:h.team||{},
+          away:a.team||{},
+          homeScore:h.score??"-",
+          awayScore:a.score??"-",
+          league:ligaAtual
+        };
+      })
+      .filter(j=>{
+        if(vistos.has(j.id)) return false;
+        vistos.add(j.id);
+        return true;
+      })
+      .sort((a,b)=>new Date(b.date)-new Date(a.date));
 
-    Não foi possível carregar os jogos.
+    verificarNotificacoes();
+    renderHighlights();
+    renderJogos();
 
-    <br><br>
-
-    <button
-     class="refresh"
-     onclick="carregarJogos()">
-
-     Tentar novamente
-
-    </button>
-
-   </div>
-
-  </div>
-  `;
- }
+  }catch(e){
+    area.innerHTML=`
+      <div class="card">
+        <div class="empty">
+          Não foi possível carregar os jogos.
+        </div>
+      </div>
+    `;
+  }
 }
-
 function renderHighlights(){
 
  const area=
