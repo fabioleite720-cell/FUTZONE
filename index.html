@@ -2825,26 +2825,141 @@ dg:
 stats.pointDifferential||
 stats.goalDifference||
 stats.gd||
-"-",
 
-pts:
-stats.points||
-stats.pts||
-"-"
+
+<th>E</th>
+async function mostrarTabelas(){
+
+nav("navTabelas");
+
+app.innerHTML=`
+
+<h2>🏆 Tabelas</h2>
+
+${botoesLigas()}
+
+<div id="tabelaConteudo">
+
+<div class="carregando">
+⏳ A carregar classificação...
+</div>
+
+</div>
+
+`;
+
+try{
+
+const r=await fetch(
+`${ESPN2}${encodeURIComponent(ligaAtual.code)}/standings?_=${Date.now()}`
+);
+
+if(!r.ok)
+throw new Error();
+
+const d=await r.json();
+
+const entries=encontrarStandings(d);
+
+if(!entries.length)
+throw new Error();
+
+const rows=entries.map((e,i)=>{
+
+const t=e.team||e;
+
+const stats={};
+
+(e.stats||[]).forEach(s=>{
+
+const nome=
+s.name||
+s.abbreviation||
+s.displayName||
+"";
+
+stats[nome]=
+s.value??s.displayValue??"";
+
+});
+
+function getStats(names){
+
+for(const n of names){
+
+if(stats[n]!==undefined)
+return stats[n];
+
+}
+
+return "-";
+
+}
+
+return{
+
+rank:
+e.note?.rank||
+e.rank||
+i+1,
+
+id:
+t.id||
+"",
+
+nome:
+t.displayName||
+t.shortDisplayName||
+t.name||
+"Equipa",
+
+logo:
+t.logo||
+t.logos?.[0]?.href||
+"",
+
+j:getStats([
+"gamesPlayed",
+"played",
+"gp"
+]),
+
+v:getStats([
+"wins",
+"w"
+]),
+
+emp:getStats([
+"ties",
+"draws",
+"d"
+]),
+
+der:getStats([
+"losses",
+"l"
+]),
+
+dg:getStats([
+"pointDifferential",
+"goalDifference",
+"gd"
+]),
+
+pts:getStats([
+"points",
+"pts"
+])
 
 };
 
 });
 
-app.querySelector(
-"#tabelaConteudo"
-).innerHTML=`
+document.getElementById("tabelaConteudo").innerHTML=`
 
 <div class="secao">
 
-<h3>
-${esc(ligaAtual.name)}
-</h3>
+<h3>${esc(ligaAtual.name)}</h3>
 
 <div class="tabela-wrap">
 
@@ -2855,21 +2970,12 @@ ${esc(ligaAtual.name)}
 <tr>
 
 <th>#</th>
-
-<th style="text-align:left">
-Equipa
-</th>
-
+<th style="text-align:left">Equipa</th>
 <th>J</th>
-
 <th>V</th>
-
 <th>E</th>
-
 <th>D</th>
-
 <th>DG</th>
-
 <th>PTS</th>
 
 </tr>
@@ -2878,13 +2984,11 @@ Equipa
 
 <tbody>
 
-${linhas.map(x=>`
+${rows.map(x=>`
 
 <tr>
 
-<td>
-${esc(x.rank)}
-</td>
+<td>${esc(x.rank)}</td>
 
 <td
 class="team-cell"
@@ -2902,18 +3006,11 @@ ${esc(x.nome)}
 </td>
 
 <td>${esc(x.j)}</td>
-
 <td>${esc(x.v)}</td>
-
 <td>${esc(x.emp)}</td>
-
 <td>${esc(x.der)}</td>
-
 <td>${esc(x.dg)}</td>
-
-<td>
-<b>${esc(x.pts)}</b>
-</td>
+<td><b>${esc(x.pts)}</b></td>
 
 </tr>
 
@@ -2931,19 +3028,14 @@ ${esc(x.nome)}
 
 }catch(e){
 
-const box=
-document.getElementById(
-"tabelaConteudo"
-);
+const box=document.getElementById("tabelaConteudo");
 
 if(box){
 
 box.innerHTML=`
 
 <div class="erro">
-
 Não foi possível carregar a classificação desta competição.
-
 </div>
 
 `;
