@@ -803,7 +803,85 @@ ${esc(l.name)}
 `;
 
 }
+function pesquisarEquipa(){
 
+const input=document.getElementById("pesquisaEquipa");
+const resultados=document.getElementById("resultadosPesquisa");
+
+if(!input||!resultados)return;
+
+const termo=input.value.trim().toLowerCase();
+
+if(!termo){
+
+resultados.innerHTML="";
+return;
+
+}
+
+const mapa=new Map();
+
+jogosAtuais.forEach(j=>{
+
+[j.home,j.away].forEach(t=>{
+
+if(!t.id)return;
+
+if(
+t.nome.toLowerCase().includes(termo)
+){
+
+mapa.set(
+String(t.id),
+t
+);
+
+}
+
+});
+
+});
+
+const equipas=[...mapa.values()];
+
+if(!equipas.length){
+
+resultados.innerHTML=`
+<div class="vazio" style="margin-top:6px">
+🔎 Nenhuma equipa encontrada.
+</div>
+`;
+
+return;
+
+}
+
+resultados.innerHTML=equipas
+.slice(0,10)
+.map(t=>`
+
+<div
+class="jogador team-click"
+style="margin-top:5px"
+onclick="
+abrirEquipa(
+'${esc(ligaAtual.code)}',
+'${esc(t.id)}',
+'${esc(t.nome)}',
+'${esc(t.logo)}'
+)
+">
+
+${logo(t.logo)}
+
+${esc(t.nome)}
+
+</div>
+
+`)
+.join("");
+
+}
 function selecionarLiga(code){
 
 ligaAtual=
