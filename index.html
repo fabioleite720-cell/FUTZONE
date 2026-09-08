@@ -2718,6 +2718,7 @@ return resultado;
 
 
 
+
 async function mostrarTabelas(){
 
 nav("navTabelas");
@@ -2729,58 +2730,79 @@ app.innerHTML=`
 ${botoesLigas()}
 
 <div id="tabelaConteudo">
-
 <div class="carregando">
 ⏳ A carregar classificação...
 </div>
-
 </div>
 
 `;
 
 try{
 
-const url=
-`${ESPN2}${encodeURIComponent(ligaAtual.code)}/standings?_=${Date.now()}`;
+const r=await fetch(
+`${ESPN2}${encodeURIComponent(ligaAtual.code)}/standings?_=${Date.now()}`
+);
 
-const r=await fetch(url);
-
-if(!r.ok)
-throw new Error("Erro");
+if(!r.ok) throw new Error();
 
 const d=await r.json();
 
-const entries=encontrarStandings(d);
+let entries=[];
 
-if(!entries.length)
-throw new Error("Sem classificação");
+function procurar(x){
 
-const rows=entries.map((e,i)=>{
+if(!x||typeof x!=="object") return;
 
-const t=e.team||e;
+if(Array.isArray(x.entries)&&x.entries.length){
 
-const stats={};
+entries=x.entries;
+return;
 
-(e.stats||[]).forEach(s=>{
+}
 
-const nome=
-s.name||
-s.abbreviation||
-"";
+if(Array.isArray(x.children)){
 
-stats[nome]=
-s.value ??
-s.displayValue ??
-"";
+x.children.forEach(c=>{
+
+if(!entries.length) procurar(c);
 
 });
 
-function stat(lista){
+}
 
-for(const nome of lista){
+}
 
-if(stats[nome]!==undefined)
-return stats[nome];
+procurar(d);
+
+if(!entries.length) throw new Error();
+
+const rows=entries.map((e,i)=>{
+
+const t=e.team||{};
+
+const stats=e.stats||[];
+
+function obter(nomes){
+
+for(const s of stats){
+
+const nome=String(
+s.name||
+s.abbreviation||
+""
+).toLowerCase();
+
+for(const n of nomes){
+
+if(nome===n.toLowerCase()){
+
+return s.displayValue ??
+s.value ??
+"-";
+
+}
+
+}
 
 }
 
@@ -2788,11 +2810,9 @@ return "-";
 
 }
 
-return{
+return {
 
 rank:e.rank||i+1,
-
-id:t.id||"",
 
 nome:
 t.displayName||
@@ -2800,40 +2820,37 @@ t.shortDisplayName||
 t.name||
 "Equipa",
 
-logo:
-t.logo||
-t.logos?.[0]?.href||
-"",
+id:t.id||"",
 
-j:stat([
-"gamesPlayed",
+j:obter([
+"gamesplayed",
 "played",
 "gp"
 ]),
 
-v:stat([
+v:obter([
 "wins",
 "w"
 ]),
 
-emp:stat([
+emp:obter([
 "ties",
 "draws",
 "d"
 ]),
 
-der:stat([
+der:obter([
 "losses",
 "l"
 ]),
 
-dg:stat([
-"pointDifferential",
-"goalDifference",
+dg:obter([
+"pointdifferential",
+"goaldifference",
 "gd"
 ]),
 
-pts:stat([
+pts:obter([
 "points",
 "pts"
 ])
@@ -2842,7 +2859,9 @@ pts:stat([
 
 });
 
-document.getElementById("tabelaConteudo").innerHTML=`
+document.getElementById(
+"tabelaConteudo"
+).innerHTML=`
 
 <div class="secao">
 
@@ -2855,7 +2874,6 @@ document.getElementById("tabelaConteudo").innerHTML=`
 <thead>
 
 <tr>
-
 <th>#</th>
 <th style="text-align:left">Equipa</th>
 <th>J</th>
@@ -2864,7 +2882,6 @@ document.getElementById("tabelaConteudo").innerHTML=`
 <th>D</th>
 <th>DG</th>
 <th>PTS</th>
-
 </tr>
 
 </thead>
@@ -2884,7 +2901,7 @@ abrirEquipa(
 '${esc(ligaAtual.code)}',
 '${esc(x.id)}',
 '${esc(x.nome)}',
-'${esc(x.logo)}'
+''
 )
 ">
 
@@ -2915,8 +2932,9 @@ ${esc(x.nome)}
 
 }catch(e){
 
-const box=
-document.getElementById("tabelaConteudo");
+const box=document.getElementById(
+"tabelaConteudo"
+);
 
 if(box){
 
@@ -2936,7 +2954,7 @@ Não foi possível carregar a classificação desta competição.
 
 }
 
-/* INÍCIO */
+  /* INÍCIO */
 
 mostrarJogos();
 
