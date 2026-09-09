@@ -1206,7 +1206,125 @@ function estado(ev){
 /* =====================================================
    NORMALIZAR JOGO
 ===================================================== */
+/* =====================================================
+   JORNADAS
+===================================================== */
 
+function extrairJornada(ev){
+
+ const candidatos=[
+
+  ev?.week?.number,
+  ev?.week?.displayValue,
+  ev?.week?.text,
+
+  ev?.round?.number,
+  ev?.round?.displayValue,
+  ev?.round?.text,
+
+  ev?.competition?.round?.number,
+  ev?.competition?.round?.displayValue,
+  ev?.competition?.round?.text,
+
+  ev?.competitions?.[0]?.week?.number,
+  ev?.competitions?.[0]?.week?.displayValue,
+  ev?.competitions?.[0]?.week?.text,
+
+  ev?.competitions?.[0]?.round?.number,
+  ev?.competitions?.[0]?.round?.displayValue,
+  ev?.competitions?.[0]?.round?.text,
+
+  ev?.season?.week?.number
+
+ ];
+
+ const v=
+  candidatos.find(
+   x=>
+    x!==undefined&&
+    x!==null&&
+    String(x).trim()!==""
+  );
+
+ return v===undefined
+  ?""
+  :String(v).trim();
+
+}
+
+
+function nomeJornada(v){
+
+ const s=
+  String(v||"").trim();
+
+ if(!s)
+  return "Jornada não indicada";
+
+ if(/^jornada/i.test(s))
+  return s;
+
+ return /^\d+$/.test(s)
+  ?`Jornada ${s}`
+  :s;
+
+}
+
+
+function numeroJornada(v){
+
+ const m=
+  String(v||"").match(/\d+/);
+
+ return m
+  ?Number(m[0])
+  :999999;
+
+}
+
+
+function agruparJornadas(lista){
+
+ const mapa=new Map();
+
+ lista.forEach(j=>{
+
+  const key=
+   j.jornada
+   ?String(j.jornada)
+   :"sem";
+
+  if(!mapa.has(key))
+   mapa.set(key,[]);
+
+  mapa.get(key).push(j);
+
+ });
+
+ return [...mapa.entries()].sort(
+  (a,b)=>{
+
+   const na=
+    numeroJornada(a[0]);
+
+   const nb=
+    numeroJornada(b[0]);
+
+   if(na!==nb)
+    return na-nb;
+
+   const da=
+    a[1][0]?.date||"";
+
+   const db=
+    b[1][0]?.date||"";
+
+   return new Date(da)-new Date(db);
+
+  }
+ );
+
+}
 function normalizar(ev,l){
 
  const c=
