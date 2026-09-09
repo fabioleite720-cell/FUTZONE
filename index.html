@@ -4361,44 +4361,101 @@ function detalheJogadorFutzone(el){
   );
 }
 
-function campoFutzone(roster){
+function campoFutzone(rosterCasa, rosterFora){
 
-  if(!Array.isArray(roster) || !roster.length)
+  if(!Array.isArray(rosterCasa) || !rosterCasa.length)
     return "";
 
-  const jogadores =
-    roster.slice(0,11);
+  if(!Array.isArray(rosterFora) || !rosterFora.length)
+    return "";
 
-  const linhas = [
-    jogadores.slice(0,1),
-    jogadores.slice(1,5),
-    jogadores.slice(5,9),
-    jogadores.slice(9,11)
+  const casa = rosterCasa.slice(0,11);
+  const fora = rosterFora.slice(0,11);
+
+  function jogador(p, lado){
+
+    const nome =
+      p.nome ||
+      p.name ||
+      "Jogador";
+
+    const num =
+      p.num ||
+      p.numero ||
+      "";
+
+    const nota =
+      ratingFutzone(p);
+
+    return `
+      <button
+        class="campo-jogador campo-${lado}"
+        onclick="detalheJogadorFutzone(this)"
+        data-nome="${esc(nome)}"
+        data-num="${esc(num)}"
+        data-pos="${esc(p.pos || p.position || '')}">
+
+        <span class="campo-num">
+          ${esc(num)}
+        </span>
+
+        <span class="campo-nome">
+          ${esc(nome)}
+        </span>
+
+        <span class="campo-nota">
+          ⭐ ${esc(nota)}
+        </span>
+
+      </button>
+    `;
+  }
+
+  const linhasCasa = [
+    casa.slice(0,1),
+    casa.slice(1,5),
+    casa.slice(5,9),
+    casa.slice(9,11)
+  ];
+
+  const linhasFora = [
+    fora.slice(0,1),
+    fora.slice(1,5),
+    fora.slice(5,9),
+    fora.slice(9,11)
   ];
 
   return `
     <div class="secao">
 
-      <h3>⚽ Onze / Plantel</h3>
+      <h3>⚽ Titulares — Casa vs Fora</h3>
 
       <div class="campo-futzone">
-
-        <div class="campo-titulo">
-          FUTZONE
-        </div>
 
         <div class="campo-area top"></div>
         <div class="campo-area bottom"></div>
         <div class="campo-meio"></div>
 
-        <div class="campo-equipa">
+        <div class="campo-titulo">
+          CASA
+        </div>
 
-          ${linhas.map(linha => `
-            <div class="campo-linha">
-              ${linha.map(jogadorFutzone).join("")}
-            </div>
-          `).join("")}
+        ${linhasCasa.map(linha => `
+          <div class="campo-linha">
+            ${linha.map(p => jogador(p,"casa")).join("")}
+          </div>
+        `).join("")}
 
+        <div class="campo-separador"></div>
+
+        ${linhasFora.reverse().map(linha => `
+          <div class="campo-linha">
+            ${linha.map(p => jogador(p,"fora")).join("")}
+          </div>
+        `).join("")}
+
+        <div class="campo-titulo campo-titulo-fora">
+          FORA
         </div>
 
       </div>
@@ -4410,7 +4467,3 @@ function campoFutzone(roster){
     </div>
   `;
 }
-</script>
-
-</body>
-</html>
