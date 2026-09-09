@@ -1,12 +1,9 @@
-<!DOCTYPE html>
-<html lang="pt-PT">
+<!DOCTYPE html><html lang="pt-PT">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0057B8">
-<title>FUTZONE Futsal</title>
-
-<style>
+<title>FUTZONE Futsal</title><style>
 *{box-sizing:border-box}
 body{margin:0;background:#050b16;color:#fff;font-family:Arial,sans-serif}
 header{background:linear-gradient(135deg,#0057B8,#003b80);padding:18px;text-align:center}
@@ -39,47 +36,60 @@ h3{margin:0 0 10px}
 .table th{background:#0057B8;padding:9px 3px}
 .table td{padding:9px 3px;border-bottom:1px solid #17345c;text-align:center}
 .table td:nth-child(2){text-align:left}
-.team-link{font-weight:bold;cursor:pointer}
+.team-link{font-weight:bold;cursor:pointer;color:#fff}
 .note{background:#101f34;border-left:4px solid #0057B8;padding:10px;border-radius:6px;color:#a9bdd5;font-size:12px}
 .formation{text-align:center;color:#48a5ff;font-size:18px;font-weight:bold;margin:8px}
 .field{position:relative;width:100%;max-width:380px;height:430px;margin:15px auto;background:linear-gradient(#087a45,#075f37);border:3px solid #fff;border-radius:12px;overflow:hidden}
 .field:before{content:"";position:absolute;left:0;right:0;top:50%;border-top:2px solid white}
 .circle{position:absolute;width:105px;height:105px;border:2px solid white;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}
 .goal-top,.goal-bottom{position:absolute;left:50%;transform:translateX(-50%);width:105px;height:45px;border:2px solid white}
-.goal-top{top:0;border-top:0}.goal-bottom{bottom:0;border-bottom:0}
+.goal-top{top:0;border-top:0}
+.goal-bottom{bottom:0;border-bottom:0}
 .player{position:absolute;width:58px;height:58px;border-radius:50%;background:#0057B8;border:3px solid white;display:flex;align-items:center;justify-content:center;text-align:center;font-size:10px;font-weight:bold}
 .p-gk{top:12px;left:50%;transform:translateX(-50%)}
 .p-fixo{top:115px;left:50%;transform:translateX(-50%)}
-.p-ala1{top:190px;left:18%}.p-ala2{top:190px;right:18%}
+.p-ala1{top:190px;left:18%}
+.p-ala2{top:190px;right:18%}
 .p-pivot{top:300px;left:50%;transform:translateX(-50%)}
 .player-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .player-card{background:#081426;border:1px solid #17345c;border-radius:9px;padding:10px;font-size:12px}
-.red{color:#ff4545}.yellow{color:#ffd32a}.green{color:#3bd16f}
-</style>
-</head>
-
-<body>
-
-<header>
+.red{color:#ff4545}
+.yellow{color:#ffd32a}
+.green{color:#3bd16f}
+.live-dot{display:inline-block;width:9px;height:9px;background:#ff3030;border-radius:50%;margin-right:5px}
+.clickable{cursor:pointer}
+</style></head><body><header>
 <h1>⚽ FUTZONE FUTSAL</h1>
 <p>Liga Placard · 2026/27</p>
-</header>
-
-<nav>
+</header><nav>
 <button id="nJogos" class="active" onclick="inicio()">🏠 Jogos</button>
 <button id="nTabela" onclick="tabela()">🏆 Tabela</button>
 <button id="nLive" onclick="aoVivo()">🔴 Ao vivo</button>
-</nav>
+</nav><main id="app"></main><script>
 
-<main id="app"></main>
-
-<script>
+/* =========================
+   EQUIPAS
+========================= */
 
 const equipas=[
-"AD Fundão","Benfica","Eléctrico","FC Famalicão",
-"Ferreira do Zêzere","Leões Porto Salvo","Portimonense",
-"Rio Ave","SC Braga","Sporting CP","Torreense","UPVN"
+"AD Fundão",
+"Benfica",
+"Eléctrico",
+"FC Famalicão",
+"Ferreira do Zêzere",
+"Leões Porto Salvo",
+"Portimonense",
+"Rio Ave",
+"SC Braga",
+"Sporting CP",
+"Torreense",
+"UPVN"
 ];
+
+
+/* =========================
+   CALENDÁRIO REAL
+========================= */
 
 const jornadas=[
 {
@@ -91,7 +101,8 @@ jogos:[
 ["12/09","17:00","Leões Porto Salvo","Ferreira do Zêzere"],
 ["12/09","19:00","Benfica","UPVN"],
 ["13/09","15:00","Rio Ave","FC Famalicão"]
-]},
+]
+},
 {
 n:2,
 jogos:[
@@ -101,8 +112,23 @@ jogos:[
 ["20/09","17:00","FC Famalicão","Sporting CP"],
 ["20/09","18:00","UPVN","Leões Porto Salvo"],
 ["21/09","19:00","Ferreira do Zêzere","AD Fundão"]
-]}
+]
+}
 ];
+
+
+/* =========================
+   RESULTADOS REAIS
+   Fica vazio até existir
+   uma fonte de dados real.
+========================= */
+
+const resultados={};
+
+
+/* =========================
+   NAVEGAÇÃO
+========================= */
 
 function nav(x){
 nJogos.classList.remove("active");
@@ -111,199 +137,794 @@ nLive.classList.remove("active");
 x.classList.add("active");
 }
 
+
+/* =========================
+   INÍCIO
+========================= */
+
 function inicio(){
+
 nav(nJogos);
+
 app.innerHTML=`
+
 <h2>⚽ Futsal</h2>
+
 <div class="league" onclick="liga()">
 <div class="ball">⚽</div>
-<div><strong>Liga Placard</strong><small>Portugal · 2026/27</small></div>
+<div>
+<strong>Liga Placard</strong>
+<small>Portugal · 2026/27</small>
 </div>
+</div>
+
 <div class="card">
 <h3>📰 Futsal</h3>
-<p class="info">Liga Placard 2026/27. Calendário oficial carregado.</p>
-</div>`;
+<p class="info">
+Liga Placard 2026/27 · calendário oficial carregado.
+</p>
+</div>
+
+`;
 }
+
+
+/* =========================
+   LIGA
+========================= */
 
 function liga(){
+
 app.innerHTML=`
+
 <button class="back" onclick="inicio()">← Voltar</button>
+
 <h2>🏆 Liga Placard</h2>
+
 <div class="tabs">
-<button class="active" onclick="jogosLiga(this)">📅 Jogos</button>
-<button onclick="aoVivoLiga(this)">🔴 Ao vivo</button>
-<button onclick="realizados(this)">✅ Realizados</button>
+
+<button class="active"
+onclick="jogosLiga(this)">
+📅 Jogos
+</button>
+
+<button onclick="aoVivoLiga(this)">
+🔴 Ao vivo
+</button>
+
+<button onclick="realizados(this)">
+✅ Realizados
+</button>
+
 </div>
-<div id="conteudo"></div>`;
+
+<div id="conteudo"></div>
+
+`;
+
 jogosLiga(document.querySelector(".tabs button"));
+
 }
+
+
+/* =========================
+   JOGOS
+========================= */
 
 function jogosLiga(btn){
-document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));
+
+document
+.querySelectorAll(".tabs button")
+.forEach(x=>x.classList.remove("active"));
+
 btn.classList.add("active");
 
-conteudo.innerHTML=jornadas.map(j=>`
-<div class="card"><b>JORNADA ${j.n}</b></div>
-${j.jogos.map((g,i)=>`
-<div class="match" onclick="jogo(${j.n},${i})">
-<div class="match-top"><span>${g[0]}</span><span>${g[1]}</span></div>
-<div class="teams">
-<div class="team">${g[2]}</div>
-<div class="score">-</div>
-<div class="team">${g[3]}</div>
+conteudo.innerHTML=
+
+jornadas.map(j=>`
+
+<div class="card">
+<b>JORNADA ${j.n}</b>
 </div>
-<div class="status">Pré-jogo · Ver detalhes</div>
-</div>`).join("")}`).join("");
+
+${j.jogos.map((g,i)=>{
+
+const chave=j.n+"-"+i;
+const r=resultados[chave];
+
+return `
+
+<div class="match"
+onclick="jogo(${j.n},${i})">
+
+<div class="match-top">
+<span>${g[0]}</span>
+<span>${g[1]}</span>
+</div>
+
+<div class="teams">
+
+<div class="team">${g[2]}</div>
+
+<div class="score">
+${r ? r.casa+"-"+r.fora : "-"}
+</div>
+
+<div class="team">${g[3]}</div>
+
+</div>
+
+<div class="status">
+
+${r
+? "Final · Ver detalhes"
+: "Pré-jogo · Ver detalhes"}
+
+</div>
+
+</div>
+
+`;
+
+}).join("")}
+
+`).join("");
+
 }
+
+
+/* =========================
+   AO VIVO DA LIGA
+========================= */
 
 function aoVivoLiga(btn){
-document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));
+
+document
+.querySelectorAll(".tabs button")
+.forEach(x=>x.classList.remove("active"));
+
 btn.classList.add("active");
-conteudo.innerHTML=`<div class="empty">🔴<br><br>Não existem jogos ao vivo neste momento.</div>`;
+
+conteudo.innerHTML=`
+
+<div class="card">
+
+<div class="empty">
+
+<span class="live-dot"></span>
+
+<br><br>
+
+Não existem jogos de futsal ao vivo neste momento.
+
+<br><br>
+
+<span class="info">
+Quando existirem dados reais, todos os jogos ao vivo aparecerão aqui.
+</span>
+
+</div>
+
+</div>
+
+`;
+
 }
+
+
+/* =========================
+   REALIZADOS
+========================= */
 
 function realizados(btn){
-document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));
+
+document
+.querySelectorAll(".tabs button")
+.forEach(x=>x.classList.remove("active"));
+
 btn.classList.add("active");
-conteudo.innerHTML=`<div class="empty">Ainda não existem resultados realizados.</div>`;
+
+const jogosRealizados=[];
+
+Object.keys(resultados).forEach(chave=>{
+
+const partes=chave.split("-");
+
+const j=parseInt(partes[0]);
+const i=parseInt(partes[1]);
+
+if(jornadas[j-1] &&
+jornadas[j-1].jogos[i]){
+
+jogosRealizados.push({
+j:j,
+i:i,
+g:jornadas[j-1].jogos[i],
+r:resultados[chave]
+});
+
 }
 
+});
+
+if(!jogosRealizados.length){
+
+conteudo.innerHTML=`
+
+<div class="empty">
+
+Ainda não existem resultados realizados.
+
+<br><br>
+
+<span class="info">
+Os resultados aparecerão aqui automaticamente depois de ligados aos dados reais.
+</span>
+
+</div>
+
+`;
+
+return;
+
+}
+
+conteudo.innerHTML=jogosRealizados.map(x=>`
+
+<div class="match"
+onclick="jogo(${x.j},${x.i})">
+
+<div class="match-top">
+
+<span>${x.g[0]}</span>
+<span>${x.g[1]}</span>
+
+</div>
+
+<div class="teams">
+
+<div class="team">${x.g[2]}</div>
+
+<div class="score">
+${x.r.casa}-${x.r.fora}
+</div>
+
+<div class="team">${x.g[3]}</div>
+
+</div>
+
+<div class="status">
+Final · Ver detalhes
+</div>
+
+</div>
+
+`).join("");
+
+}
+
+
+/* =========================
+   DETALHE DO JOGO
+========================= */
+
 function jogo(jornada,index){
-let g=jornadas[jornada-1].jogos[index];
+
+const g=jornadas[jornada-1].jogos[index];
+
+const chave=jornada+"-"+index;
+
+const r=resultados[chave];
+
+const score=r
+? r.casa+" - "+r.fora
+: "-";
+
+const estado=r
+? "FINAL"
+: "PRÉ-JOGO";
 
 app.innerHTML=`
-<button class="back" onclick="liga()">← Voltar</button>
+
+<button class="back" onclick="liga()">
+← Voltar
+</button>
 
 <div class="card">
-<div class="match-top"><span>${g[0]}</span><span>${g[1]}</span></div>
+
+<div class="match-top">
+
+<span>${g[0]}</span>
+
+<span>${g[1]}</span>
+
+</div>
+
 <div class="teams">
-<div class="team">${g[2]}</div>
-<div class="score">-</div>
-<div class="team">${g[3]}</div>
-</div>
-<div class="status">PRÉ-JOGO</div>
+
+<div class="team">
+${g[2]}
 </div>
 
+<div class="score">
+${score}
+</div>
+
+<div class="team">
+${g[3]}
+</div>
+
+</div>
+
+<div class="status">
+${estado}
+</div>
+
+</div>
+
+
+<!-- TÁTICA -->
+
 <div class="card">
+
 <h3>🧠 Tática</h3>
-<div class="formation">1-2-1</div>
-<p class="info">Modelo tático experimental.</p>
+
+<div class="formation">
+1-2-1
+</div>
+
+<p class="info">
+Formação apresentada apenas como modelo visual.
+Os dados oficiais serão usados quando disponibilizados pela fonte.
+</p>
+
 
 <div class="field">
+
 <div class="goal-top"></div>
 <div class="goal-bottom"></div>
 <div class="circle"></div>
-<div class="player p-gk">GR</div>
-<div class="player p-fixo">FIXO</div>
-<div class="player p-ala1">ALA</div>
-<div class="player p-ala2">ALA</div>
-<div class="player p-pivot">PIVÔ</div>
+
+<div class="player p-gk">
+GR
+</div>
+
+<div class="player p-fixo">
+FIXO
+</div>
+
+<div class="player p-ala1">
+ALA
+</div>
+
+<div class="player p-ala2">
+ALA
+</div>
+
+<div class="player p-pivot">
+PIVÔ
+</div>
+
 </div>
 
 <div class="note">
-Os nomes e posições oficiais serão apresentados quando existirem dados reais.
-</div>
+
+Os nomes e posições oficiais não serão inventados.
+Quando os dados reais existirem, serão colocados aqui.
+
 </div>
 
+</div>
+
+
+<!-- GOLOS -->
+
 <div class="card">
+
 <h3>⚽ Golos</h3>
-<div class="empty">Sem acontecimentos.</div>
+
+<div class="empty">
+
+${r && r.golos
+? r.golos
+: "Informação não disponível"}
+
 </div>
 
+</div>
+
+
+<!-- CARTÕES -->
+
 <div class="card">
+
 <h3>🟨 Cartões</h3>
-<div class="empty">Sem cartões.</div>
+
+<div class="empty">
+
+${r && r.cartoes
+? r.cartoes
+: "Informação não disponível"}
+
 </div>
 
+</div>
+
+
+<!-- SUBSTITUIÇÕES -->
+
 <div class="card">
+
 <h3>🔄 Substituições</h3>
-<div class="empty">Sem substituições.</div>
+
+<div class="empty">
+
+${r && r.substituicoes
+? r.substituicoes
+: "Informação não disponível"}
+
 </div>
 
+</div>
+
+
+<!-- ESTATÍSTICAS -->
+
 <div class="card">
+
 <h3>📊 Estatísticas</h3>
-<div class="row"><span>Posse</span><b>— / —</b></div>
-<div class="row"><span>Remates</span><b>— / —</b></div>
-<div class="row"><span>Remates à baliza</span><b>— / —</b></div>
-<div class="row"><span>Cantos</span><b>— / —</b></div>
-<div class="row"><span>Faltas</span><b>— / —</b></div>
+
+<div class="row">
+<span>Posse</span>
+<b>${r && r.posse ? r.posse : "— / —"}</b>
 </div>
 
-<div class="card">
-<h3>👥 5 inicial</h3>
-<div class="player-list">
-<div class="player-card">GR<br>Informação não disponível</div>
-<div class="player-card">FIXO<br>Informação não disponível</div>
-<div class="player-card">ALA<br>Informação não disponível</div>
-<div class="player-card">ALA<br>Informação não disponível</div>
-<div class="player-card">PIVÔ<br>Informação não disponível</div>
+<div class="row">
+<span>Remates</span>
+<b>${r && r.remates ? r.remates : "— / —"}</b>
 </div>
-</div>`;
+
+<div class="row">
+<span>Remates à baliza</span>
+<b>${r && r.rematesBaliza ? r.rematesBaliza : "— / —"}</b>
+</div>
+
+<div class="row">
+<span>Cantos</span>
+<b>${r && r.cantos ? r.cantos : "— / —"}</b>
+</div>
+
+<div class="row">
+<span>Faltas</span>
+<b>${r && r.faltas ? r.faltas : "— / —"}</b>
+</div>
+
+</div>
+
+
+<!-- 5 INICIAL -->
+
+<div class="card">
+
+<h3>👥 5 inicial</h3>
+
+<div class="player-list">
+
+<div class="player-card">
+GR<br>
+Informação não disponível
+</div>
+
+<div class="player-card">
+FIXO<br>
+Informação não disponível
+</div>
+
+<div class="player-card">
+ALA<br>
+Informação não disponível
+</div>
+
+<div class="player-card">
+ALA<br>
+Informação não disponível
+</div>
+
+<div class="player-card">
+PIVÔ<br>
+Informação não disponível
+</div>
+
+</div>
+
+</div>
+
+`;
+
 }
+
+
+/* =========================
+   CLASSIFICAÇÃO
+========================= */
 
 function tabela(){
+
 nav(nTabela);
 
-let linhas=equipas.map((e,i)=>`
+const dados=equipas.map(e=>({
+
+nome:e,
+J:0,
+V:0,
+E:0,
+D:0,
+GM:0,
+GS:0,
+DG:0,
+P:0
+
+}));
+
+dados.sort((a,b)=>{
+
+if(b.P!==a.P)
+return b.P-a.P;
+
+if(b.DG!==a.DG)
+return b.DG-a.DG;
+
+return a.nome.localeCompare(b.nome);
+
+});
+
+
+const linhas=dados.map((e,i)=>`
+
 <tr>
+
 <td>${i+1}</td>
-<td><span class="team-link" onclick="equipa('${e}')">${e}</span></td>
-<td>0</td><td>0</td><td>0</td><td>0</td>
-</tr>`).join("");
+
+<td>
+
+<span
+class="team-link"
+onclick="equipa('${e.nome}')">
+
+${e.nome}
+
+</span>
+
+</td>
+
+<td>${e.J}</td>
+<td>${e.V}</td>
+<td>${e.E}</td>
+<td>${e.D}</td>
+<td>${e.GM}</td>
+<td>${e.GS}</td>
+<td>${e.DG}</td>
+<td><b>${e.P}</b></td>
+
+</tr>
+
+`).join("");
+
 
 app.innerHTML=`
+
 <h2>🏆 Classificação</h2>
+
 <div class="card">
-<h3>Liga Placard 2026/27</h3>
+
+<h3>
+Liga Placard 2026/27
+</h3>
+
+<div style="overflow-x:auto">
+
 <table class="table">
-<thead><tr><th>#</th><th>Equipa</th><th>J</th><th>V</th><th>E</th><th>P</th></tr></thead>
-<tbody>${linhas}</tbody>
+
+<thead>
+
+<tr>
+
+<th>#</th>
+<th>Equipa</th>
+<th>J</th>
+<th>V</th>
+<th>E</th>
+<th>D</th>
+<th>GM</th>
+<th>GS</th>
+<th>DG</th>
+<th>P</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+${linhas}
+
+</tbody>
+
 </table>
-<p class="note">A classificação será preenchida automaticamente quando ligarmos os resultados reais.</p>
-</div>`;
+
+</div>
+
+<p class="note">
+
+A classificação começa a zeros porque a competição ainda não iniciou.
+Será atualizada quando ligarmos os resultados reais.
+
+</p>
+
+</div>
+
+`;
+
 }
+
+
+/* =========================
+   AO VIVO GLOBAL
+========================= */
 
 function aoVivo(){
+
 nav(nLive);
+
 app.innerHTML=`
+
 <h2>🔴 Ao vivo</h2>
+
 <div class="card">
-<div class="empty">🔴<br><br>
-Não existem jogos de futsal ao vivo neste momento.
+
+<div class="empty">
+
+<span class="live-dot"></span>
+
 <br><br>
-<span class="info">Quando existirem, todos os jogos ao vivo aparecerão aqui.</span>
+
+Não existem jogos de futsal ao vivo neste momento.
+
+<br><br>
+
+<span class="info">
+
+Esta área está preparada para mostrar
+todos os jogos ao vivo da Liga Placard.
+
+</span>
+
 </div>
-</div>`;
+
+</div>
+
+`;
+
 }
+
+
+/* =========================
+   EQUIPA
+========================= */
 
 function equipa(nome){
+
 app.innerHTML=`
-<button class="back" onclick="tabela()">← Voltar</button>
+
+<button class="back" onclick="tabela()">
+← Voltar
+</button>
+
+
 <div class="card" style="text-align:center">
-<div style="font-size:50px">⚽</div>
+
+<div style="font-size:50px">
+⚽
+</div>
+
 <h2>${nome}</h2>
-<p class="info">Liga Placard · 2026/27</p>
+
+<p class="info">
+Liga Placard · 2026/27
+</p>
+
 </div>
 
+
 <div class="card">
+
 <h3>📅 Jogos</h3>
-<div class="empty">Calendário da equipa será ligado aos dados reais.</div>
+
+${jornadas.flatMap(j=>j.jogos.map((g,i)=>{
+
+if(g[2]!==nome && g[3]!==nome)
+return "";
+
+return `
+
+<div class="match"
+onclick="jogo(${j.n},${i})">
+
+<div class="match-top">
+
+<span>${g[0]}</span>
+<span>${g[1]}</span>
+
 </div>
 
-<div class="card">
-<h3>👥 Plantel</h3>
-<div class="player-list">
-<div class="player-card">GR<br>Informação não disponível</div>
-<div class="player-card">FIXO<br>Informação não disponível</div>
-<div class="player-card">ALA<br>Informação não disponível</div>
-<div class="player-card">ALA<br>Informação não disponível</div>
-<div class="player-card">PIVÔ<br>Informação não disponível</div>
+<div class="teams">
+
+<div class="team">${g[2]}</div>
+
+<div class="score">-</div>
+
+<div class="team">${g[3]}</div>
+
 </div>
-</div>`;
+
+<div class="status">
+Ver detalhes
+</div>
+
+</div>
+
+`;
+
+})).join("")}
+
+</div>
+
+
+<div class="card">
+
+<h3>👥 Plantel</h3>
+
+<div class="player-list">
+
+<div class="player-card">
+GR<br>
+Informação não disponível
+</div>
+
+<div class="player-card">
+FIXO<br>
+Informação não disponível
+</div>
+
+<div class="player-card">
+ALA<br>
+Informação não disponível
+</div>
+
+<div class="player-card">
+ALA<br>
+Informação não disponível
+</div>
+
+<div class="player-card">
+PIVÔ<br>
+Informação não disponível
+</div>
+
+</div>
+
+</div>
+
+`;
+
 }
+
+
+/* =========================
+   ARRANQUE
+========================= */
 
 inicio();
 
-</script>
-</body>
+</script></body>
 </html>
