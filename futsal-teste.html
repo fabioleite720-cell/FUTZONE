@@ -2,718 +2,308 @@
 <html lang="pt-PT">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0057B8">
 <title>FUTZONE Futsal</title>
 
 <style>
 *{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:Arial,Helvetica,sans-serif;
-  background:#050b16;
-  color:#fff;
-}
-header{
-  background:linear-gradient(135deg,#0057B8,#003b80);
-  padding:18px 16px;
-  text-align:center;
-  position:sticky;
-  top:0;
-  z-index:20;
-  box-shadow:0 3px 12px #0008;
-}
-header h1{
-  margin:0;
-  font-size:25px;
-}
-header p{
-  margin:5px 0 0;
-  opacity:.85;
-  font-size:13px;
-}
-nav{
-  display:flex;
-  background:#081426;
-  border-bottom:1px solid #17345c;
-  position:sticky;
-  top:78px;
-  z-index:19;
-}
-nav button{
-  flex:1;
-  border:0;
-  background:none;
-  color:#9fb4d0;
-  padding:14px 5px;
-  font-size:13px;
-}
-nav button.active{
-  color:#fff;
-  background:#0057B8;
-  font-weight:bold;
-}
-main{
-  padding:14px;
-  padding-bottom:35px;
-}
-h2{
-  font-size:20px;
-  margin:8px 0 14px;
-}
-h3{
-  margin:0 0 8px;
-}
-.card{
-  background:#0b192d;
-  border:1px solid #17345c;
-  border-radius:14px;
-  padding:14px;
-  margin-bottom:12px;
-  box-shadow:0 4px 12px #0005;
-}
-.league{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  background:#0b192d;
-  border:1px solid #17345c;
-  border-radius:14px;
-  padding:16px;
-  margin-bottom:12px;
-  cursor:pointer;
-}
-.league .ball{
-  font-size:28px;
-}
-.league strong{
-  display:block;
-  font-size:16px;
-}
-.league small{
-  color:#91a8c5;
-}
-.tabs{
-  display:flex;
-  gap:7px;
-  margin-bottom:14px;
-}
-.tabs button{
-  flex:1;
-  border:1px solid #234b7c;
-  background:#0b192d;
-  color:#b8c9df;
-  border-radius:9px;
-  padding:10px 5px;
-  font-size:12px;
-}
-.tabs button.active{
-  background:#0057B8;
-  color:white;
-  border-color:#0057B8;
-}
-.match{
-  background:#0b192d;
-  border:1px solid #17345c;
-  border-radius:14px;
-  padding:14px;
-  margin-bottom:10px;
-  cursor:pointer;
-}
-.match:hover{
-  border-color:#287bd4;
-}
-.match-top{
-  display:flex;
-  justify-content:space-between;
-  color:#8ea7c5;
-  font-size:12px;
-  margin-bottom:10px;
-}
-.teams{
-  display:grid;
-  grid-template-columns:1fr 50px 1fr;
-  align-items:center;
-  text-align:center;
-  gap:5px;
-}
-.team{
-  font-weight:bold;
-  font-size:14px;
-}
-.score{
-  font-size:21px;
-  font-weight:bold;
-  color:#fff;
-}
-.status{
-  text-align:center;
-  margin-top:10px;
-  font-size:12px;
-  color:#8ea7c5;
-}
-.live{
-  color:#ff3b30;
-  font-weight:bold;
-}
-.back{
-  border:0;
-  background:#17345c;
-  color:#fff;
-  padding:10px 15px;
-  border-radius:9px;
-  margin-bottom:14px;
-}
-.info{
-  color:#91a8c5;
-  font-size:13px;
-}
-.row{
-  display:flex;
-  justify-content:space-between;
-  padding:9px 0;
-  border-bottom:1px solid #17345c;
-  font-size:13px;
-}
-.row:last-child{border-bottom:0}
-.badge{
-  display:inline-block;
-  padding:4px 7px;
-  border-radius:6px;
-  background:#17345c;
-  font-size:11px;
-}
-.red{color:#ff4545}
-.yellow{color:#ffd32a}
-.green{color:#3bd16f}
-.table{
-  width:100%;
-  border-collapse:collapse;
-  font-size:12px;
-}
-.table th{
-  background:#0057B8;
-  padding:9px 4px;
-}
-.table td{
-  padding:9px 4px;
-  border-bottom:1px solid #17345c;
-  text-align:center;
-}
-.table td:nth-child(2){
-  text-align:left;
-}
-.team-link{
-  color:#fff;
-  cursor:pointer;
-  font-weight:bold;
-}
-.field{
-  position:relative;
-  width:100%;
-  max-width:380px;
-  height:430px;
-  margin:15px auto;
-  border-radius:12px;
-  background:linear-gradient(#087a45,#075f37);
-  border:3px solid #fff;
-  overflow:hidden;
-}
-.field:before{
-  content:"";
-  position:absolute;
-  left:0;
-  right:0;
-  top:50%;
-  border-top:2px solid #fff;
-}
-.circle{
-  position:absolute;
-  width:105px;
-  height:105px;
-  border:2px solid #fff;
-  border-radius:50%;
-  left:50%;
-  top:50%;
-  transform:translate(-50%,-50%);
-}
-.goal-top,.goal-bottom{
-  position:absolute;
-  left:50%;
-  transform:translateX(-50%);
-  width:105px;
-  height:45px;
-  border:2px solid #fff;
-}
-.goal-top{top:0;border-top:0}
-.goal-bottom{bottom:0;border-bottom:0}
-.player{
-  position:absolute;
-  width:58px;
-  height:58px;
-  border-radius:50%;
-  background:#0057B8;
-  border:3px solid #fff;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
-  font-size:10px;
-  font-weight:bold;
-  box-shadow:0 2px 7px #0008;
-}
+body{margin:0;background:#050b16;color:#fff;font-family:Arial,sans-serif}
+header{background:linear-gradient(135deg,#0057B8,#003b80);padding:18px;text-align:center}
+header h1{margin:0;font-size:25px}
+header p{margin:5px 0 0;font-size:13px;opacity:.85}
+nav{display:flex;background:#081426;position:sticky;top:0;z-index:10}
+nav button{flex:1;border:0;background:none;color:#9fb4d0;padding:14px 3px;font-size:12px}
+nav button.active{background:#0057B8;color:#fff;font-weight:bold}
+main{padding:14px 14px 35px}
+h2{font-size:20px;margin:8px 0 14px}
+h3{margin:0 0 10px}
+.card,.match,.league{background:#0b192d;border:1px solid #17345c;border-radius:14px;padding:14px;margin-bottom:12px}
+.league{display:flex;align-items:center;gap:12px;cursor:pointer}
+.ball{font-size:30px}
+.league strong{display:block;font-size:16px}
+.info{color:#91a8c5;font-size:13px}
+.tabs{display:flex;gap:7px;margin-bottom:14px}
+.tabs button{flex:1;background:#0b192d;color:#b8c9df;border:1px solid #234b7c;border-radius:9px;padding:10px 4px;font-size:12px}
+.tabs button.active{background:#0057B8;color:white}
+.match{cursor:pointer}
+.match-top{display:flex;justify-content:space-between;color:#8ea7c5;font-size:12px;margin-bottom:10px}
+.teams{display:grid;grid-template-columns:1fr 45px 1fr;align-items:center;text-align:center;gap:5px}
+.team{font-weight:bold;font-size:14px}
+.score{font-size:21px;font-weight:bold}
+.status{text-align:center;margin-top:9px;color:#8ea7c5;font-size:12px}
+.back{border:0;background:#17345c;color:#fff;padding:10px 15px;border-radius:9px;margin-bottom:14px}
+.empty{text-align:center;padding:30px 10px;color:#8299b5}
+.row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #17345c;font-size:13px}
+.table{width:100%;border-collapse:collapse;font-size:12px}
+.table th{background:#0057B8;padding:9px 3px}
+.table td{padding:9px 3px;border-bottom:1px solid #17345c;text-align:center}
+.table td:nth-child(2){text-align:left}
+.team-link{font-weight:bold;cursor:pointer}
+.note{background:#101f34;border-left:4px solid #0057B8;padding:10px;border-radius:6px;color:#a9bdd5;font-size:12px}
+.formation{text-align:center;color:#48a5ff;font-size:18px;font-weight:bold;margin:8px}
+.field{position:relative;width:100%;max-width:380px;height:430px;margin:15px auto;background:linear-gradient(#087a45,#075f37);border:3px solid #fff;border-radius:12px;overflow:hidden}
+.field:before{content:"";position:absolute;left:0;right:0;top:50%;border-top:2px solid white}
+.circle{position:absolute;width:105px;height:105px;border:2px solid white;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}
+.goal-top,.goal-bottom{position:absolute;left:50%;transform:translateX(-50%);width:105px;height:45px;border:2px solid white}
+.goal-top{top:0;border-top:0}.goal-bottom{bottom:0;border-bottom:0}
+.player{position:absolute;width:58px;height:58px;border-radius:50%;background:#0057B8;border:3px solid white;display:flex;align-items:center;justify-content:center;text-align:center;font-size:10px;font-weight:bold}
 .p-gk{top:12px;left:50%;transform:translateX(-50%)}
 .p-fixo{top:115px;left:50%;transform:translateX(-50%)}
-.p-ala1{top:190px;left:18%}
-.p-ala2{top:190px;right:18%}
+.p-ala1{top:190px;left:18%}.p-ala2{top:190px;right:18%}
 .p-pivot{top:300px;left:50%;transform:translateX(-50%)}
-.formation{
-  text-align:center;
-  font-size:18px;
-  font-weight:bold;
-  color:#48a5ff;
-  margin:8px 0;
-}
-.event{
-  display:flex;
-  gap:9px;
-  align-items:center;
-  padding:9px 0;
-  border-bottom:1px solid #17345c;
-  font-size:13px;
-}
-.event:last-child{border-bottom:0}
-.empty{
-  text-align:center;
-  padding:35px 15px;
-  color:#8299b5;
-}
-.team-header{
-  text-align:center;
-}
-.team-logo{
-  width:70px;
-  height:70px;
-  border-radius:50%;
-  background:#0057B8;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:32px;
-  margin:0 auto 10px;
-}
-.player-list{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:8px;
-}
-.player-card{
-  background:#081426;
-  border:1px solid #17345c;
-  border-radius:9px;
-  padding:10px;
-  font-size:12px;
-}
-.note{
-  background:#101f34;
-  border-left:4px solid #0057B8;
-  padding:10px;
-  border-radius:6px;
-  color:#a9bdd5;
-  font-size:12px;
-  margin-top:10px;
-}
+.player-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.player-card{background:#081426;border:1px solid #17345c;border-radius:9px;padding:10px;font-size:12px}
+.red{color:#ff4545}.yellow{color:#ffd32a}.green{color:#3bd16f}
 </style>
 </head>
 
 <body>
 
 <header>
-  <h1>⚽ FUTZONE FUTSAL</h1>
-  <p>Liga Placard · 2026/27</p>
+<h1>⚽ FUTZONE FUTSAL</h1>
+<p>Liga Placard · 2026/27</p>
 </header>
 
 <nav>
-  <button id="navJogos" class="active" onclick="inicio()">🏠 Jogos</button>
-  <button id="navTabela" onclick="mostrarTabela()">🏆 Classificação</button>
-  <button id="navLive" onclick="mostrarLive()">🔴 Ao vivo</button>
+<button id="nJogos" class="active" onclick="inicio()">🏠 Jogos</button>
+<button id="nTabela" onclick="tabela()">🏆 Tabela</button>
+<button id="nLive" onclick="aoVivo()">🔴 Ao vivo</button>
 </nav>
 
 <main id="app"></main>
 
 <script>
 
-const equipas = [
-  "Benfica",
-  "Sporting CP",
-  "SC Braga",
-  "Ferreira do Zêzere",
-  "Leões Porto Salvo",
-  "Eléctrico",
-  "AD Fundão",
-  "Torreense",
-  "Portimonense",
-  "UPVN / Venda Nova",
-  "Rio Ave",
-  "FC Famalicão"
+const equipas=[
+"AD Fundão","Benfica","Eléctrico","FC Famalicão",
+"Ferreira do Zêzere","Leões Porto Salvo","Portimonense",
+"Rio Ave","SC Braga","Sporting CP","Torreense","UPVN"
 ];
 
-const jogos = [
-  {
-    id:1,
-    data:"11/09",
-    hora:"19:30",
-    casa:"AD Fundão",
-    fora:"SC Braga"
-  },
-  {
-    id:2,
-    data:"11/09",
-    hora:"20:30",
-    casa:"Torreense",
-    fora:"Eléctrico"
-  },
-  {
-    id:3,
-    data:"11/09",
-    hora:"21:15",
-    casa:"Sporting CP",
-    fora:"Portimonense"
-  },
-  {
-    id:4,
-    data:"12/09",
-    hora:"17:00",
-    casa:"Leões Porto Salvo",
-    fora:"Ferreira do Zêzere"
-  },
-  {
-    id:5,
-    data:"12/09",
-    hora:"19:00",
-    casa:"Benfica",
-    fora:"UPVN / Venda Nova"
-  },
-  {
-    id:6,
-    data:"13/09",
-    hora:"15:00",
-    casa:"Rio Ave",
-    fora:"FC Famalicão"
-  }
+const jornadas=[
+{
+n:1,
+jogos:[
+["11/09","19:30","AD Fundão","SC Braga"],
+["11/09","20:30","Torreense","Eléctrico"],
+["11/09","21:15","Sporting CP","Portimonense"],
+["12/09","17:00","Leões Porto Salvo","Ferreira do Zêzere"],
+["12/09","19:00","Benfica","UPVN"],
+["13/09","15:00","Rio Ave","FC Famalicão"]
+]},
+{
+n:2,
+jogos:[
+["19/09","15:00","Portimonense","Benfica"],
+["19/09","17:00","Eléctrico","Rio Ave"],
+["19/09","17:00","SC Braga","Torreense"],
+["20/09","17:00","FC Famalicão","Sporting CP"],
+["20/09","18:00","UPVN","Leões Porto Salvo"],
+["21/09","19:00","Ferreira do Zêzere","AD Fundão"]
+]}
 ];
 
-function limparNav(){
-  document.getElementById("navJogos").classList.remove("active");
-  document.getElementById("navTabela").classList.remove("active");
-  document.getElementById("navLive").classList.remove("active");
+function nav(x){
+nJogos.classList.remove("active");
+nTabela.classList.remove("active");
+nLive.classList.remove("active");
+x.classList.add("active");
 }
 
 function inicio(){
-  limparNav();
-  document.getElementById("navJogos").classList.add("active");
-
-  document.getElementById("app").innerHTML = `
-    <h2>⚽ Futsal</h2>
-
-    <div class="league" onclick="mostrarLiga()">
-      <div class="ball">⚽</div>
-      <div>
-        <strong>Liga Placard</strong>
-        <small>Portugal · 2026/27</small>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>📰 Futsal em destaque</h3>
-      <p class="info">
-        Área experimental FUTZONE Futsal.
-        Os dados detalhados serão ligados a fontes reais numa fase seguinte.
-      </p>
-    </div>
-  `;
+nav(nJogos);
+app.innerHTML=`
+<h2>⚽ Futsal</h2>
+<div class="league" onclick="liga()">
+<div class="ball">⚽</div>
+<div><strong>Liga Placard</strong><small>Portugal · 2026/27</small></div>
+</div>
+<div class="card">
+<h3>📰 Futsal</h3>
+<p class="info">Liga Placard 2026/27. Calendário oficial carregado.</p>
+</div>`;
 }
 
-function mostrarLiga(){
-  document.getElementById("app").innerHTML = `
-    <button class="back" onclick="inicio()">← Voltar</button>
-
-    <h2>🏆 Liga Placard</h2>
-
-    <div class="tabs">
-      <button class="active" onclick="mostrarJogosLiga(this)">📅 Jogos</button>
-      <button onclick="mostrarJogosAoVivoLiga(this)">🔴 Ao vivo</button>
-      <button onclick="mostrarResultadosLiga(this)">✅ Realizados</button>
-    </div>
-
-    <div id="ligaConteudo"></div>
-  `;
-
-  mostrarJogosLiga(document.querySelector(".tabs button"));
+function liga(){
+app.innerHTML=`
+<button class="back" onclick="inicio()">← Voltar</button>
+<h2>🏆 Liga Placard</h2>
+<div class="tabs">
+<button class="active" onclick="jogosLiga(this)">📅 Jogos</button>
+<button onclick="aoVivoLiga(this)">🔴 Ao vivo</button>
+<button onclick="realizados(this)">✅ Realizados</button>
+</div>
+<div id="conteudo"></div>`;
+jogosLiga(document.querySelector(".tabs button"));
 }
 
-function mostrarJogosLiga(botao){
-  document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
-  botao.classList.add("active");
+function jogosLiga(btn){
+document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));
+btn.classList.add("active");
 
-  document.getElementById("ligaConteudo").innerHTML = `
-    <div class="card">
-      <div class="info">1.ª jornada · setembro 2026</div>
-    </div>
-    ${jogos.map(j=>cartaoJogo(j)).join("")}
-  `;
+conteudo.innerHTML=jornadas.map(j=>`
+<div class="card"><b>JORNADA ${j.n}</b></div>
+${j.jogos.map((g,i)=>`
+<div class="match" onclick="jogo(${j.n},${i})">
+<div class="match-top"><span>${g[0]}</span><span>${g[1]}</span></div>
+<div class="teams">
+<div class="team">${g[2]}</div>
+<div class="score">-</div>
+<div class="team">${g[3]}</div>
+</div>
+<div class="status">Pré-jogo · Ver detalhes</div>
+</div>`).join("")}`).join("");
 }
 
-function cartaoJogo(j){
-  return `
-    <div class="match" onclick="abrirJogo(${j.id})">
-      <div class="match-top">
-        <span>${j.data}</span>
-        <span>${j.hora}</span>
-      </div>
-
-      <div class="teams">
-        <div class="team">${j.casa}</div>
-        <div class="score">-</div>
-        <div class="team">${j.fora}</div>
-      </div>
-
-      <div class="status">Pré-jogo · Ver detalhes</div>
-    </div>
-  `;
+function aoVivoLiga(btn){
+document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));
+btn.classList.add("active");
+conteudo.innerHTML=`<div class="empty">🔴<br><br>Não existem jogos ao vivo neste momento.</div>`;
 }
 
-function mostrarJogosAoVivoLiga(botao){
-  document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
-  botao.classList.add("active");
-
-  document.getElementById("ligaConteudo").innerHTML = `
-    <div class="empty">
-      🔴<br><br>
-      Não existem jogos ao vivo neste momento.
-    </div>
-  `;
+function realizados(btn){
+document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("active"));
+btn.classList.add("active");
+conteudo.innerHTML=`<div class="empty">Ainda não existem resultados realizados.</div>`;
 }
 
-function mostrarResultadosLiga(botao){
-  document.querySelectorAll(".tabs button").forEach(b=>b.classList.remove("active"));
-  botao.classList.add("active");
+function jogo(jornada,index){
+let g=jornadas[jornada-1].jogos[index];
 
-  document.getElementById("ligaConteudo").innerHTML = `
-    <div class="empty">
-      Ainda não existem resultados realizados nesta competição.
-    </div>
-  `;
+app.innerHTML=`
+<button class="back" onclick="liga()">← Voltar</button>
+
+<div class="card">
+<div class="match-top"><span>${g[0]}</span><span>${g[1]}</span></div>
+<div class="teams">
+<div class="team">${g[2]}</div>
+<div class="score">-</div>
+<div class="team">${g[3]}</div>
+</div>
+<div class="status">PRÉ-JOGO</div>
+</div>
+
+<div class="card">
+<h3>🧠 Tática</h3>
+<div class="formation">1-2-1</div>
+<p class="info">Modelo tático experimental.</p>
+
+<div class="field">
+<div class="goal-top"></div>
+<div class="goal-bottom"></div>
+<div class="circle"></div>
+<div class="player p-gk">GR</div>
+<div class="player p-fixo">FIXO</div>
+<div class="player p-ala1">ALA</div>
+<div class="player p-ala2">ALA</div>
+<div class="player p-pivot">PIVÔ</div>
+</div>
+
+<div class="note">
+Os nomes e posições oficiais serão apresentados quando existirem dados reais.
+</div>
+</div>
+
+<div class="card">
+<h3>⚽ Golos</h3>
+<div class="empty">Sem acontecimentos.</div>
+</div>
+
+<div class="card">
+<h3>🟨 Cartões</h3>
+<div class="empty">Sem cartões.</div>
+</div>
+
+<div class="card">
+<h3>🔄 Substituições</h3>
+<div class="empty">Sem substituições.</div>
+</div>
+
+<div class="card">
+<h3>📊 Estatísticas</h3>
+<div class="row"><span>Posse</span><b>— / —</b></div>
+<div class="row"><span>Remates</span><b>— / —</b></div>
+<div class="row"><span>Remates à baliza</span><b>— / —</b></div>
+<div class="row"><span>Cantos</span><b>— / —</b></div>
+<div class="row"><span>Faltas</span><b>— / —</b></div>
+</div>
+
+<div class="card">
+<h3>👥 5 inicial</h3>
+<div class="player-list">
+<div class="player-card">GR<br>Informação não disponível</div>
+<div class="player-card">FIXO<br>Informação não disponível</div>
+<div class="player-card">ALA<br>Informação não disponível</div>
+<div class="player-card">ALA<br>Informação não disponível</div>
+<div class="player-card">PIVÔ<br>Informação não disponível</div>
+</div>
+</div>`;
 }
 
-function abrirJogo(id){
-  const j = jogos.find(x=>x.id===id);
+function tabela(){
+nav(nTabela);
 
-  document.getElementById("app").innerHTML = `
-    <button class="back" onclick="mostrarLiga()">← Voltar</button>
+let linhas=equipas.map((e,i)=>`
+<tr>
+<td>${i+1}</td>
+<td><span class="team-link" onclick="equipa('${e}')">${e}</span></td>
+<td>0</td><td>0</td><td>0</td><td>0</td>
+</tr>`).join("");
 
-    <div class="card">
-      <div class="match-top">
-        <span>${j.data}</span>
-        <span>${j.hora}</span>
-      </div>
-
-      <div class="teams">
-        <div class="team">${j.casa}</div>
-        <div class="score">-</div>
-        <div class="team">${j.fora}</div>
-      </div>
-
-      <div class="status">PRÉ-JOGO</div>
-    </div>
-
-    <div class="card">
-      <h3>🧠 Tática</h3>
-      <div class="formation">1-2-1</div>
-      <p class="info">Formação exibida como modelo experimental.</p>
-
-      <div class="field">
-        <div class="goal-top"></div>
-        <div class="goal-bottom"></div>
-        <div class="circle"></div>
-
-        <div class="player p-gk">GR</div>
-        <div class="player p-fixo">FIXO</div>
-        <div class="player p-ala1">ALA</div>
-        <div class="player p-ala2">ALA</div>
-        <div class="player p-pivot">PIVÔ</div>
-      </div>
-
-      <div class="note">
-        ⚠️ Os nomes dos jogadores e a formação oficial só serão apresentados
-        quando forem disponibilizados por uma fonte de dados real.
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>⚽ Golos</h3>
-      <div class="empty">Ainda não existem acontecimentos.</div>
-    </div>
-
-    <div class="card">
-      <h3>🟨 Cartões</h3>
-      <div class="empty">Ainda não existem cartões registados.</div>
-    </div>
-
-    <div class="card">
-      <h3>🔄 Substituições</h3>
-      <div class="empty">Ainda não existem substituições registadas.</div>
-    </div>
-
-    <div class="card">
-      <h3>📊 Estatísticas</h3>
-
-      <div class="row">
-        <span>Posse de bola</span>
-        <span>— / —</span>
-      </div>
-
-      <div class="row">
-        <span>Remates</span>
-        <span>— / —</span>
-      </div>
-
-      <div class="row">
-        <span>Remates à baliza</span>
-        <span>— / —</span>
-      </div>
-
-      <div class="row">
-        <span>Cantos</span>
-        <span>— / —</span>
-      </div>
-
-      <div class="row">
-        <span>Faltas</span>
-        <span>— / —</span>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>👥 5 inicial</h3>
-
-      <div class="note">
-        Informação oficial dos jogadores ainda não disponível.
-      </div>
-    </div>
-  `;
+app.innerHTML=`
+<h2>🏆 Classificação</h2>
+<div class="card">
+<h3>Liga Placard 2026/27</h3>
+<table class="table">
+<thead><tr><th>#</th><th>Equipa</th><th>J</th><th>V</th><th>E</th><th>P</th></tr></thead>
+<tbody>${linhas}</tbody>
+</table>
+<p class="note">A classificação será preenchida automaticamente quando ligarmos os resultados reais.</p>
+</div>`;
 }
 
-function mostrarTabela(){
-  limparNav();
-  document.getElementById("navTabela").classList.add("active");
-
-  let linhas = equipas.map((e,i)=>`
-    <tr>
-      <td>${i+1}</td>
-      <td>
-        <span class="team-link" onclick="mostrarEquipa('${e.replace(/'/g,"\\'")}')">
-          ${e}
-        </span>
-      </td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-      <td>0</td>
-    </tr>
-  `).join("");
-
-  document.getElementById("app").innerHTML = `
-    <h2>🏆 Classificação</h2>
-
-    <div class="card">
-      <h3>Liga Placard 2026/27</h3>
-
-      <table class="table">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Equipa</th>
-            <th>J</th>
-            <th>V</th>
-            <th>E</th>
-            <th>P</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          ${linhas}
-        </tbody>
-      </table>
-
-      <div class="note">
-        Classificação experimental. Será ligada aos resultados reais quando
-        a fonte de dados estiver integrada.
-      </div>
-    </div>
-  `;
+function aoVivo(){
+nav(nLive);
+app.innerHTML=`
+<h2>🔴 Ao vivo</h2>
+<div class="card">
+<div class="empty">🔴<br><br>
+Não existem jogos de futsal ao vivo neste momento.
+<br><br>
+<span class="info">Quando existirem, todos os jogos ao vivo aparecerão aqui.</span>
+</div>
+</div>`;
 }
 
-function mostrarLive(){
-  limparNav();
-  document.getElementById("navLive").classList.add("active");
+function equipa(nome){
+app.innerHTML=`
+<button class="back" onclick="tabela()">← Voltar</button>
+<div class="card" style="text-align:center">
+<div style="font-size:50px">⚽</div>
+<h2>${nome}</h2>
+<p class="info">Liga Placard · 2026/27</p>
+</div>
 
-  document.getElementById("app").innerHTML = `
-    <h2>🔴 Ao vivo</h2>
+<div class="card">
+<h3>📅 Jogos</h3>
+<div class="empty">Calendário da equipa será ligado aos dados reais.</div>
+</div>
 
-    <div class="card">
-      <div class="empty">
-        <div style="font-size:35px">🔴</div>
-        <br>
-        Não existem jogos de futsal ao vivo neste momento.
-        <br><br>
-        <span class="info">
-          Quando existirem jogos ao vivo, aparecerão aqui todos os jogos.
-        </span>
-      </div>
-    </div>
-  `;
-}
-
-function mostrarEquipa(nome){
-  document.getElementById("app").innerHTML = `
-    <button class="back" onclick="mostrarTabela()">← Voltar</button>
-
-    <div class="card team-header">
-      <div class="team-logo">⚽</div>
-      <h2>${nome}</h2>
-      <p class="info">Liga Placard · Portugal</p>
-    </div>
-
-    <div class="card">
-      <h3>📅 Jogos</h3>
-      <div class="empty">
-        Calendário da equipa disponível quando os dados reais forem ligados.
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>👥 Plantel</h3>
-
-      <div class="player-list">
-        <div class="player-card">GR · Informação não disponível</div>
-        <div class="player-card">FIXO · Informação não disponível</div>
-        <div class="player-card">ALA · Informação não disponível</div>
-        <div class="player-card">ALA · Informação não disponível</div>
-        <div class="player-card">PIVÔ · Informação não disponível</div>
-      </div>
-
-      <div class="note">
-        Os jogadores serão apresentados apenas quando os dados oficiais
-        estiverem disponíveis.
-      </div>
-    </div>
-  `;
+<div class="card">
+<h3>👥 Plantel</h3>
+<div class="player-list">
+<div class="player-card">GR<br>Informação não disponível</div>
+<div class="player-card">FIXO<br>Informação não disponível</div>
+<div class="player-card">ALA<br>Informação não disponível</div>
+<div class="player-card">ALA<br>Informação não disponível</div>
+<div class="player-card">PIVÔ<br>Informação não disponível</div>
+</div>
+</div>`;
 }
 
 inicio();
 
 </script>
-
 </body>
 </html>
