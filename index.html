@@ -140,7 +140,7 @@ h3{
 }
 
 /* =========================
-   BOTAO VOLTAR
+   VOLTAR
 ========================= */
 
 .voltar-ligas{
@@ -161,7 +161,7 @@ h3{
 }
 
 /* =========================
-   GRUPOS DE JOGOS
+   JOGOS
 ========================= */
 
 .grupo-jogos{
@@ -269,7 +269,7 @@ h3{
 }
 
 /* =========================
-   NOTICIAS
+   NOTÍCIAS
 ========================= */
 
 .noticias{
@@ -316,6 +316,12 @@ h3{
  color:#9DAABB;
  font-size:9px;
  margin-top:5px
+}
+
+.noticia-fonte{
+ color:#1683FF;
+ font-size:9px;
+ margin-top:4px
 }
 
 /* =========================
@@ -450,7 +456,7 @@ h3{
 }
 
 /* =========================
-   ESTATISTICAS
+   ESTATÍSTICAS
 ========================= */
 
 .stats-head,
@@ -642,18 +648,21 @@ th{
 
 <div class="bottom">
 
- <button id="navJogos"
+ <button
+  id="navJogos"
   class="active"
   onclick="mostrarJogos()">
   ⚽<br>Jogos
  </button>
 
- <button id="navTabelas"
+ <button
+  id="navTabelas"
   onclick="mostrarTabelas()">
   🏆<br>Tabelas
  </button>
 
- <button id="navFav"
+ <button
+  id="navFav"
   onclick="mostrarFavoritos()">
   ⭐<br>Favoritos
  </button>
@@ -1105,12 +1114,6 @@ async function carregarJogos(){
      new Date(b.date)
    );
 
- /*
-  IMPORTANTE:
-  o refresh não tira o utilizador
-  da liga que está a consultar.
- */
-
  if(
   document
    .getElementById("navJogos")
@@ -1193,7 +1196,9 @@ function mostrarJogos(){
 
    <div class="noticias-titulo">
 
-    <span>📰 Notícias desportivas</span>
+    <span>
+     📰 Notícias desportivas
+    </span>
 
     <span class="noticias-sub">
      Últimas notícias
@@ -1201,7 +1206,8 @@ function mostrarJogos(){
 
    </div>
 
-   <div id="listaNoticias"
+   <div
+    id="listaNoticias"
     class="carregando">
 
     A carregar notícias...
@@ -1507,12 +1513,6 @@ function mostrarJogosLiga(){
     ligaAtual.code
   );
 
- /*
-  AO VIVO:
-  mostra todos os jogos ao vivo,
-  independentemente da liga.
- */
-
  if(modoJogos==="live"){
 
   const aoVivo=
@@ -1554,8 +1554,6 @@ function mostrarJogosLiga(){
 
  }
 
-
- /* FUTUROS */
 
  if(
   modoJogos==="futuros"
@@ -1607,8 +1605,6 @@ function mostrarJogosLiga(){
  }
 
 
- /* REALIZADOS */
-
  if(
   modoJogos==="passados"
  ){
@@ -1656,8 +1652,6 @@ function mostrarJogosLiga(){
 
  }
 
-
- /* TODOS DA LIGA */
 
  const aoVivo=
   daLiga.filter(
@@ -1742,7 +1736,7 @@ function mostrarJogosLiga(){
 
 
 /* =====================================================
-   TABELAS — PÁGINA PRINCIPAL
+   TABELAS
 ===================================================== */
 
 function mostrarTabelas(){
@@ -1762,10 +1756,6 @@ function mostrarTabelas(){
 }
 
 
-/* =====================================================
-   SELECIONAR LIGA DA TABELA
-===================================================== */
-
 async function selecionarLigaTabela(code){
 
  ligaAtual=
@@ -1782,7 +1772,7 @@ async function selecionarLigaTabela(code){
 
 
 /* =====================================================
-   TABELA
+   NORMALIZAR TABELA
 ===================================================== */
 
 function normalizarTabela(d){
@@ -1897,7 +1887,7 @@ function normalizarTabela(d){
 
 
 /* =====================================================
-   NÚMEROS DA TABELA
+   ESTATÍSTICAS DA TABELA
 ===================================================== */
 
 function numeroStat(
@@ -2053,7 +2043,7 @@ async function buscarTabela(){
 
 
 /* =====================================================
-   MOSTRAR TABELA DA LIGA
+   MOSTRAR TABELA
 ===================================================== */
 
 async function mostrarTabelaLiga(){
@@ -2406,7 +2396,7 @@ async function mostrarTabelaLiga(){
 
 
 /* =====================================================
-   EQUIPA / CLUBE
+   EQUIPA
 ===================================================== */
 
 async function abrirEquipa(
@@ -3316,7 +3306,7 @@ function extrairPlantel(d){
 
 
 /* =====================================================
-   BLOCO DE EVENTOS
+   EVENTOS
 ===================================================== */
 
 function blocoEventos(a){
@@ -3362,7 +3352,7 @@ function blocoEventos(a){
 
 
 /* =====================================================
-   BLOCO DE ESTATÍSTICAS
+   ESTATÍSTICAS
 ===================================================== */
 
 function blocoStats(a){
@@ -3428,7 +3418,7 @@ function blocoStats(a){
 
 
 /* =====================================================
-   BLOCO DE PLANTEL
+   PLANTEL
 ===================================================== */
 
 function blocoPlantel(gs){
@@ -3663,6 +3653,7 @@ async function abrirJogo(
 
 /* =====================================================
    NOTÍCIAS DESPORTIVAS
+   NOVA VERSÃO
 ===================================================== */
 
 async function carregarNoticias(){
@@ -3675,126 +3666,231 @@ async function carregarNoticias(){
  if(!box)
   return;
 
+
+ /*
+  Feed do Google Notícias em
+  português de Portugal.
+
+  O RSS2JSON transforma o RSS
+  em JSON para a FUTZONE poder
+  ler as notícias diretamente.
+ */
+
+ const feeds=[
+
+  "https://news.google.com/rss/search?q=futebol%20Portugal&hl=pt-PT&gl=PT&ceid=PT:pt",
+
+  "https://news.google.com/rss/search?q=futebol%20internacional&hl=pt-PT&gl=PT&ceid=PT:pt"
+
+ ];
+
+
  try{
 
+  let noticias=[];
+
   /*
-   Google News em português de Portugal.
-   O pedido passa por um serviço CORS
-   para funcionar diretamente na aplicação.
+   Tentamos os feeds disponíveis.
   */
 
-  const rss=
-   "https://news.google.com/rss/search?q=futebol&hl=pt-PT&gl=PT&ceid=PT:pt";
+  for(
+   const feed of feeds
+  ){
 
-  const url=
-   "https://api.allorigins.win/raw?url="+
-   encodeURIComponent(rss);
+   try{
 
-  const r=
-   await fetch(url);
+    const url=
+     "https://api.rss2json.com/v1/api.json?rss_url="+
+     encodeURIComponent(feed);
 
-  if(!r.ok)
-   throw 0;
+    const r=
+     await fetch(
+      url,
+      {
+       method:"GET",
+       cache:"no-store"
+      }
+     );
 
-  const texto=
-   await r.text();
+    if(!r.ok)
+     continue;
 
-  const xml=
-   new DOMParser()
-    .parseFromString(
-     texto,
-     "text/xml"
+    const data=
+     await r.json();
+
+    if(
+     data.status==="ok"&&
+     Array.isArray(data.items)
+    ){
+
+     noticias.push(
+      ...data.items
+     );
+
+    }
+
+   }catch(e){
+
+    console.log(
+     "Erro no feed:",
+     e
     );
 
-  const items=
-   [...xml.querySelectorAll("item")]
-    .slice(0,8);
+   }
 
-  if(!items.length)
-   throw 0;
+  }
+
+
+  /*
+   Remover notícias repetidas.
+  */
+
+  const mapa=
+   new Map();
+
+  noticias.forEach(
+   n=>{
+
+    const chave=
+     String(
+      n.title||
+      ""
+     ).trim();
+
+    if(
+     chave&&
+     !mapa.has(chave)
+    ){
+
+     mapa.set(
+      chave,
+      n
+     );
+
+    }
+
+   }
+  );
+
+
+  noticias=
+   [...mapa.values()]
+    .slice(0,10);
+
+
+  if(!noticias.length){
+
+   throw new Error(
+    "Sem notícias"
+   );
+
+  }
+
+
+  /*
+   Construir cartões.
+  */
 
   box.outerHTML=`
 
    <div id="listaNoticias">
 
-    ${items.map(item=>{
+    ${noticias.map(
+     n=>{
 
-     const titulo=
-      item.querySelector(
-       "title"
-      )?.textContent||
-      "Notícia desportiva";
+      const titulo=
+       n.title||
+       "Notícia desportiva";
 
-     const link=
-      item.querySelector(
-       "link"
-      )?.textContent||
-      "#";
+      const link=
+       n.link||
+       "#";
 
-     const data=
-      item.querySelector(
-       "pubDate"
-      )?.textContent||
-      "";
+      const fonte=
+       n.author||
+       n.feedTitle||
+       "Notícias desportivas";
 
-     let dataPT="";
+      let dataPT="";
 
-     if(data){
+      if(n.pubDate){
 
-      try{
+       try{
 
-       dataPT=
-        new Intl.DateTimeFormat(
-         "pt-PT",
-         {
-          day:"2-digit",
-          month:"2-digit",
-          hour:"2-digit",
-          minute:"2-digit"
-         }
-        ).format(
-         new Date(data)
-        );
+        dataPT=
+         new Intl.DateTimeFormat(
+          "pt-PT",
+          {
+           day:"2-digit",
+           month:"2-digit",
+           hour:"2-digit",
+           minute:"2-digit"
+          }
+         ).format(
+          new Date(n.pubDate)
+         );
 
-      }catch(e){}
+       }catch(e){}
+
+      }
+
+
+      return `
+
+       <a
+        class="noticia"
+        href="${esc(link)}"
+        target="_blank"
+        rel="noopener noreferrer">
+
+        <div class="noticia-titulo">
+
+         📰 ${esc(titulo)}
+
+        </div>
+
+        ${
+         dataPT
+         ?`
+          <div class="noticia-info">
+           ${esc(dataPT)}
+          </div>
+         `
+         :""
+        }
+
+        <div class="noticia-fonte">
+
+         ${esc(fonte)}
+
+        </div>
+
+       </a>
+
+      `;
 
      }
-
-     return `
-
-      <a
-       class="noticia"
-       href="${esc(link)}"
-       target="_blank"
-       rel="noopener noreferrer">
-
-       <div class="noticia-titulo">
-
-        📰 ${esc(titulo)}
-
-       </div>
-
-       ${
-        dataPT
-        ?`
-         <div class="noticia-info">
-          ${esc(dataPT)}
-         </div>
-        `
-        :""
-       }
-
-      </a>
-
-     `;
-
-    }).join("")}
+    ).join("")}
 
    </div>
 
   `;
 
+
  }catch(e){
+
+  console.log(
+   "Erro ao carregar notícias:",
+   e
+  );
+
+
+  /*
+   Se a primeira fonte falhar,
+   mostramos uma alternativa
+   para o utilizador não ficar
+   com uma caixa vazia.
+  */
 
   box.outerHTML=`
 
@@ -3802,8 +3898,13 @@ async function carregarNoticias(){
     id="listaNoticias"
     class="vazio">
 
-    As notícias não estão
-    disponíveis neste momento.
+    Não foi possível carregar
+    as notícias neste momento.
+
+    <br><br>
+
+    Tenta novamente dentro
+    de alguns segundos.
 
    </div>
 
@@ -3850,8 +3951,8 @@ carregarJogos();
 
 
 /*
- Atualização automática a cada
- 2 minutos.
+ Atualização automática
+ a cada 2 minutos.
 */
 
 setInterval(
