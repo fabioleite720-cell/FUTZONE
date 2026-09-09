@@ -4361,7 +4361,6 @@ function detalheJogadorFutzone(el){
   );
 }
 
-
 function campoFutzone(roster){
 
   if(!Array.isArray(roster) || !roster.length)
@@ -4370,22 +4369,12 @@ function campoFutzone(roster){
   const jogadores =
     roster.slice(0,11);
 
-  const linhas = [];
-
-  for(let i=0;i<jogadores.length;i+=4){
-
-    linhas.push(`
-      <div class="campo-linha">
-        ${
-          jogadores
-            .slice(i,i+4)
-            .map(jogadorFutzone)
-            .join("")
-        }
-      </div>
-    `);
-
-  }
+  const linhas = [
+    jogadores.slice(0,1),
+    jogadores.slice(1,5),
+    jogadores.slice(5,9),
+    jogadores.slice(9,11)
+  ];
 
   return `
     <div class="secao">
@@ -4394,17 +4383,28 @@ function campoFutzone(roster){
 
       <div class="campo-futzone">
 
-        <div class="campo-meio"></div>
+        <div class="campo-titulo">
+          FUTZONE
+        </div>
 
         <div class="campo-area top"></div>
         <div class="campo-area bottom"></div>
+        <div class="campo-meio"></div>
 
-        ${linhas.join("")}
+        <div class="campo-equipa">
+
+          ${linhas.map(linha => `
+            <div class="campo-linha">
+              ${linha.map(jogadorFutzone).join("")}
+            </div>
+          `).join("")}
+
+        </div>
 
       </div>
 
       <div class="subtitulo">
-        Toca num jogador para ver os dados disponíveis.
+        👆 Toca num jogador para ver os dados disponíveis.
       </div>
 
     </div>
