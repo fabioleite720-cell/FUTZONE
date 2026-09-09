@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="theme-color" content="#0057B8">
+<title>FUTZONE - Futsal</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+ margin:0;
+ background:#03060B;
+ color:#FFF;
+ font-family:Arial,sans-serif
+}
+
+header{
+ background:#09111C;
+ border-bottom:1px solid #1B2A3B;
+ padding:12px
+}
+
+.logo{
+ font-size:24px;
+ font-weight:900
+}
+
+.logo span{
+ color:#1683FF
+}
+
+.sub{
+ font-size:9px;
+ color:#9DAABB;
+ margin-top:2px
+}
+
+main{
+ max-width:720px;
+ margin:auto;
+ padding:12px 9px 25px
+}
+
+h2{
+ font-size:17px;
+ margin:10px 0
+}
+
+.tabs{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:6px;
+ margin-bottom:10px
+}
+
+button{
+ background:#09111C;
+ border:1px solid #1B2A3B;
+ color:#FFF;
+ border-radius:9px;
+ padding:10px 5px;
+ font-weight:900
+}
+
+button.active{
+ background:#003B7A;
+ border-color:#1683FF
+}
+
+.card{
+ background:#09111C;
+ border:1px solid #1B2A3B;
+ border-radius:11px;
+ padding:10px;
+ margin:7px 0
+}
+
+.game{
+ background:#0D1724;
+ border:1px solid #1B2A3B;
+ border-radius:9px;
+ padding:10px;
+ margin:6px 0;
+ text-align:center
+}
+
+.date{
+ font-size:9px;
+ color:#9DAABB;
+ margin-bottom:7px
+}
+
+.teams{
+ font-size:12px;
+ font-weight:bold
+}
+
+.vs{
+ color:#1683FF;
+ font-size:14px;
+ margin:5px
+}
+
+.live{
+ color:#FF4054;
+ font-size:9px;
+ font-weight:900
+}
+
+.note{
+ color:#9DAABB;
+ font-size:10px;
+ line-height:1.4
+}
+
+table{
+ width:100%;
+ border-collapse:collapse;
+ font-size:10px
+}
+
+th,td{
+ padding:7px 3px;
+ border-bottom:1px solid #1B2A3B;
+ text-align:center
+}
+
+th{
+ color:#9DAABB
+}
+
+.team{
+ text-align:left;
+ font-weight:bold
+}
+</style>
+</head>
+
+<body>
+
+<header>
+ <div class="logo">FUT<span>ZONE</span></div>
+ <div class="sub">FUTSAL • TESTE EXPERIMENTAL</div>
+</header>
+
+<main>
+
+<h2>🥅 Liga Placard 2026/27</h2>
+
+<div class="tabs">
+
+<button id="btnJogos"
+ class="active"
+ onclick="mostrar('jogos')">
+📅<br>Jogos
+</button>
+
+<button id="btnTabela"
+ onclick="mostrar('tabela')">
+🏆<br>Classificação
+</button>
+
+<button id="btnLive"
+ onclick="mostrar('live')">
+🔴<br>Ao vivo
+</button>
+
+</div>
+
+<div id="conteudo"></div>
+
+</main>
+
+<script>
+
+const jogos=[
+
+["11/09","Fundão","Braga"],
+
+["11/09","Torreense","Eléctrico"],
+
+["11/09","Sporting CP","Portimonense"],
+
+["12/09","Leões Porto Salvo","Ferreira do Zêzere"],
+
+["12/09","Benfica","Venda Nova"],
+
+["13/09","Rio Ave","Famalicão"]
+
+];
+
+const equipas=[
+
+"Benfica",
+"Sporting CP",
+"Braga",
+"Ferreira do Zêzere",
+"Leões Porto Salvo",
+"Eléctrico",
+"Fundão",
+"Torreense",
+"Portimonense",
+"Venda Nova",
+"Rio Ave",
+"Famalicão"
+
+];
+
+function mostrar(tipo){
+
+document.getElementById("btnJogos")
+.classList.toggle("active",tipo==="jogos");
+
+document.getElementById("btnTabela")
+.classList.toggle("active",tipo==="tabela");
+
+document.getElementById("btnLive")
+.classList.toggle("active",tipo==="live");
+
+const c=document.getElementById("conteudo");
+
+if(tipo==="jogos"){
+
+c.innerHTML=`
+
+<div class="card">
+
+<b>🇵🇹 1.ª Jornada</b>
+
+${jogos.map(j=>`
+
+<div class="game">
+
+<div class="date">
+${j[0]} • Liga Placard
+</div>
+
+<div class="teams">
+${j[1]}
+<span class="vs">vs</span>
+${j[2]}
+</div>
+
+</div>
+
+`).join("")}
+
+</div>
+
+<p class="note">
+Teste experimental da Liga Placard.
+Os resultados e dados em direto serão ligados numa fase seguinte.
+</p>
+
+`;
+
+}
+
+if(tipo==="tabela"){
+
+c.innerHTML=`
+
+<div class="card">
+
+<b>🏆 Classificação</b>
+
+<p class="note">
+Tabela experimental. Os pontos reais serão preenchidos quando ligarmos a fonte de resultados.
+</p>
+
+<table>
+
+<tr>
+<th>#</th>
+<th>Equipa</th>
+<th>J</th>
+<th>P</th>
+</tr>
+
+${equipas.map((e,i)=>`
+
+<tr>
+<td>${i+1}</td>
+<td class="team">${e}</td>
+<td>0</td>
+<td>0</td>
+</tr>
+
+`).join("")}
+
+</table>
+
+</div>
+
+`;
+
+}
+
+if(tipo==="live"){
+
+c.innerHTML=`
+
+<div class="card">
+
+<div class="live">
+🔴 AO VIVO
+</div>
+
+<h3>
+Ainda não há jogos ao vivo.
+</h3>
+
+<p class="note">
+O separador está preparado para receber jogos em direto.
+</p>
+
+</div>
+
+`;
+
+}
+
+}
+
+mostrar("jogos");
+
+</script>
+
+</body>
+</html>
