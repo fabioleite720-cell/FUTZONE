@@ -4279,7 +4279,137 @@ if(
  );
 
 }
+/* =====================================================
+   CAMPO FUTZONE
+===================================================== */
 
+function ratingFutzone(p){
+
+  const r =
+    p.rating ??
+    p.nota ??
+    p.score ??
+    null;
+
+  if(r === null || r === "")
+    return "—";
+
+  const n = Number(r);
+
+  return Number.isFinite(n)
+    ? n.toFixed(1)
+    : "—";
+}
+
+
+function jogadorFutzone(p){
+
+  const nome =
+    p.nome ||
+    p.name ||
+    "Jogador";
+
+  const num =
+    p.num ||
+    p.numero ||
+    "";
+
+  const pos =
+    p.pos ||
+    p.position ||
+    "";
+
+  return `
+    <button
+      class="campo-jogador"
+      onclick="detalheJogadorFutzone(this)"
+      data-nome="${esc(nome)}"
+      data-num="${esc(num)}"
+      data-pos="${esc(pos)}">
+
+      <span class="campo-num">
+        ${esc(num)}
+      </span>
+
+      <span class="campo-nome">
+        ${esc(nome)}
+      </span>
+
+      <span class="campo-nota">
+        ⭐ ${esc(ratingFutzone(p))}
+      </span>
+
+    </button>
+  `;
+}
+
+
+function detalheJogadorFutzone(el){
+
+  const nome = el.dataset.nome || "Jogador";
+  const num  = el.dataset.num || "—";
+  const pos  = el.dataset.pos || "—";
+
+  alert(
+    "👤 "+nome+
+    "\n\n"+
+    "Número: "+num+
+    "\n"+
+    "Posição: "+pos+
+    "\n"+
+    "⭐ Nota FUTZONE: —"
+  );
+}
+
+
+function campoFutzone(roster){
+
+  if(!Array.isArray(roster) || !roster.length)
+    return "";
+
+  const jogadores =
+    roster.slice(0,11);
+
+  const linhas = [];
+
+  for(let i=0;i<jogadores.length;i+=4){
+
+    linhas.push(`
+      <div class="campo-linha">
+        ${
+          jogadores
+            .slice(i,i+4)
+            .map(jogadorFutzone)
+            .join("")
+        }
+      </div>
+    `);
+
+  }
+
+  return `
+    <div class="secao">
+
+      <h3>⚽ Onze / Plantel</h3>
+
+      <div class="campo-futzone">
+
+        <div class="campo-meio"></div>
+
+        <div class="campo-area top"></div>
+        <div class="campo-area bottom"></div>
+
+        ${linhas.join("")}
+
+      </div>
+
+      <div class="subtitulo">
+        Toca num jogador para ver os dados disponíveis.
+      </div>
+
+    </div>
+  `;
+}
 </script>
 
 </body>
