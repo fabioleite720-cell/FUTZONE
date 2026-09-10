@@ -881,6 +881,9 @@ const ESPN=
 const ESPN2=
  "https://site.api.espn.com/apis/v2/sports/soccer/";
 
+const ESPN_CORE=
+ "https://sports.core.api.espn.com/v2/sports/soccer/leagues/";
+
 const ligas=[
 
  {
@@ -1167,9 +1170,19 @@ function extrairJornada(ev){
   ev?.round?.displayValue,
   ev?.round?.text,
 
+  ev?.matchday,
+  ev?.matchDay,
+
+  ev?.competition?.week?.number,
+  ev?.competition?.week?.displayValue,
+  ev?.competition?.week?.text,
+
   ev?.competition?.round?.number,
   ev?.competition?.round?.displayValue,
   ev?.competition?.round?.text,
+
+  ev?.competition?.matchday,
+  ev?.competition?.matchDay,
 
   ev?.competitions?.[0]?.week?.number,
   ev?.competitions?.[0]?.week?.displayValue,
@@ -1179,16 +1192,22 @@ function extrairJornada(ev){
   ev?.competitions?.[0]?.round?.displayValue,
   ev?.competitions?.[0]?.round?.text,
 
-  ev?.season?.week?.number
+  ev?.competitions?.[0]?.matchday,
+  ev?.competitions?.[0]?.matchDay,
+
+  ev?.season?.week?.number,
+  ev?.season?.week?.displayValue,
+  ev?.season?.week?.text
 
  ];
 
- const v=candidatos.find(
-  x=>
-   x!==undefined&&
-   x!==null&&
-   String(x).trim()!==""
- );
+ const v=
+  candidatos.find(
+   x=>
+    x!==undefined&&
+    x!==null&&
+    String(x).trim()!==""
+  );
 
  return v===undefined
   ?""
@@ -1198,39 +1217,28 @@ function extrairJornada(ev){
 
 
 function nomeJornada(v){
-  const s=String(v||"").trim();
-
-  if(!s) return "";
-
-  if(/^jornada/i.test(s)){
-    return s;
-  }
-
-  if(/^\d+$/.test(s)){
-    return `Jornada ${s}`;
-  }
-
-  const m=s.match(/(?:jornada|round|week|matchday)\s*[-:]?\s*(\d+)/i);
-
-  if(m){
-    return `Jornada ${m[1]}`;
-  }
-
-  return s;
-}
 
  const s=
   String(v||"").trim();
 
-
-  
+ if(!s)
+  return "Jornada não indicada";
 
  if(/^jornada/i.test(s))
   return s;
 
- return /^\d+$/.test(s)
-  ?`Jornada ${s}`
-  :s;
+ if(/^\d+$/.test(s))
+  return `Jornada ${s}`;
+
+ const m=
+  s.match(
+   /(?:jornada|round|week|matchday)\s*[-:]?\s*(\d+)/i
+  );
+
+ if(m)
+  return `Jornada ${m[1]}`;
+
+ return s;
 
 }
 
@@ -1290,6 +1298,160 @@ function agruparJornadas(lista){
 
   }
  );
+
+}
+
+
+/* =====================================================
+   OBTER JORNADA DIRETAMENTE DA ESPN CORE
+===================================================== */
+
+const cacheJornadas=
+ new Map();
+
+
+async function obterJornadaESPN(ev,l){
+
+ const direta=
+  extrairJornada(ev);
+
+ if(direta)
+  return direta;
+
+ if(!ev?.id||!l?.code)
+  return "";
+
+ const cacheKey=
+  `${l.code}:${ev.id}`;
+
+ if(cacheJornadas.has(cacheKey))
+  return cacheJornadas.get(cacheKey);
+
+ const competitionId=
+  ev?.competitions?.[0]?.id||
+  ev?.id;
+
+ const urls=[
+
+  `${ESPN_CORE}${encodeURIComponent(l.code)}/events/${encodeURIComponent(ev.id)}/competitions/${encodeURIComponent(competitionId)}?_=${Date.now()}`,
+
+  `${ESPN_CORE}${encodeURIComponent(l.code)}/events/${encodeURIComponent(ev.id)}?_=${Date.now()}`
+
+ ];
+
+ for(
+  const u of urls
+ ){
+
+  try{
+
+   const r=
+    await fetch(u);
+
+   if(!r.ok)
+    continue;
+
+   const d=
+    await r.json();
+
+   const candidatos=[
+
+    extrairJornada(d),
+
+    extrairJornada(d?.competition),
+
+    extrairJornada(d?.competitions?.[0]),
+
+    extrairJornada(d?.event),
+
+    extrairJornada(d?.event?.competition)
+
+   ];
+
+   const jornada=
+    candidatos.find(
+     x=>
+      x!==undefined&&
+      x!==null&&
+      String(x).trim()!==""
+    )||"";
+
+   if(jornada){
+
+    cacheJornadas.set(
+     cacheKey,
+     jornada
+    );
+
+    return jornada;
+
+   }
+
+  }catch(e){}
+
+ }
+
+ cacheJornadas.set(
+  cacheKey,
+  ""
+ );
+
+ return "";
+
+}
+
+
+/* =====================================================
+   ENRIQUECER JORNADAS
+===================================================== */
+
+async function enriquecerJornadas(lista,l){
+
+ if(!Array.isArray(lista)||!lista.length)
+  return lista;
+
+ const semJornada=
+  lista.filter(
+   j=>!j.jornada
+  );
+
+ if(!semJornada.length)
+  return lista;
+
+ const limite=8;
+
+ for(
+  let i=0;
+  i<semJornada.length;
+  i+=limite
+ ){
+
+  const bloco=
+   semJornada.slice(
+    i,
+    i+limite
+   );
+
+  await Promise.all(
+   bloco.map(
+    async j=>{
+
+     const jornada=
+      await obterJornadaESPN(
+       j._eventoOriginal||j,
+       l
+      );
+
+     if(jornada)
+      j.jornada=jornada;
+
+    }
+   )
+  );
+
+ }
+
+ return lista;
 
 }
 
@@ -1376,10 +1538,15 @@ function gruposLivePorLigaEJornada(lista){
     l=>l.code===g.code
    );
 
+  const jornadaTitulo=
+   g.jornada
+   ?nomeJornada(g.jornada)
+   :"Jornada não indicada";
+
   const titulo=
    `${liga?.icon||"⚽"} `+
    `${esc(g.liga)} — `+
-   `${nomeJornada(g.jornada)}`;
+   `${esc(jornadaTitulo)}`;
 
   return grupoJogos(
    titulo,
@@ -1424,7 +1591,7 @@ function normalizar(ev,l){
  const s=
   estado(ev);
 
- return{
+ const j={
 
   id:String(ev.id),
 
@@ -1486,6 +1653,10 @@ function normalizar(ev,l){
   code:l.code
 
  };
+
+ j._eventoOriginal=ev;
+
+ return j;
 
 }
 
@@ -1578,6 +1749,16 @@ async function carregarJogos(){
    );
 
   });
+
+  const daLiga=
+   lista.filter(
+    j=>j.code===l.code
+   );
+
+  await enriquecerJornadas(
+   daLiga,
+   l
+  );
 
  }
 
@@ -1779,7 +1960,7 @@ function futsalResultados(){
 
    <h3>✅ Resultados</h3>
 
-   <div class="empty vazio">
+   <div class="vazio">
     Ainda não existem resultados registados.
    </div>
 
@@ -3567,16 +3748,27 @@ async function buscarJogosEquipa(
     evs.length
    ){
 
-    return evs.map(
-     e=>
-      normalizar(
-       e,
-       ligas.find(
-        x=>x.code===code
-       )||
-       ligaAtual
-      )
+    const l=
+     ligas.find(
+      x=>x.code===code
+     )||
+     ligaAtual;
+
+    const resultado=
+     evs.map(
+      e=>
+       normalizar(
+        e,
+        l
+       )
+     );
+
+    await enriquecerJornadas(
+     resultado,
+     l
     );
+
+    return resultado;
 
    }
 
