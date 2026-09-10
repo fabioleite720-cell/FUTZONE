@@ -1553,6 +1553,148 @@ async function carregarJogos(){
     ligaAtual.code
   );
 
+ if(!daLiga.length){
+
+  app.innerHTML=`
+   <button class="voltar" onclick="mostrarJogos()">← Voltar</button>
+   <h2>${ligaAtual.icon} ${esc(ligaAtual.name)}</h2>
+
+   <div class="card">
+    <div class="empty">
+     Não há jogos disponíveis.
+    </div>
+   </div>
+  `;
+
+  return;
+ }
+
+ const aoVivo=
+  daLiga.filter(j=>j.estado.live);
+
+ const futuros=
+  daLiga.filter(j=>
+   !j.estado.live &&
+   !j.estado.final
+  );
+
+ const realizados=
+  daLiga.filter(j=>
+   j.estado.final
+  );
+
+ app.innerHTML=`
+
+  <button class="voltar" onclick="mostrarJogos()">← Voltar</button>
+
+  <h2>
+   ${ligaAtual.icon} ${esc(ligaAtual.name)}
+  </h2>
+
+  <div class="categorias">
+   ${botoesCategorias()}
+  </div>
+
+  <div id="conteudoLiga">
+
+   ${
+    modoJogos==="live"
+    ?
+      (
+       aoVivo.length
+       ?
+       gruposPorJornada(aoVivo,"🔴")
+       :
+       `
+       <div class="card">
+        <div class="empty">
+         Não há jogos ao vivo.
+        </div>
+       </div>
+       `
+      )
+    :
+      modoJogos==="futuros"
+    ?
+      (
+       futuros.length
+       ?
+       gruposPorJornada(futuros,"📅")
+       :
+       `
+       <div class="card">
+        <div class="empty">
+         Não há próximos jogos.
+        </div>
+       </div>
+       `
+      )
+    :
+      modoJogos==="realizados"
+    ?
+      (
+       realizados.length
+       ?
+       gruposPorJornada(realizados,"✅")
+       :
+       `
+       <div class="card">
+        <div class="empty">
+         Não há jogos realizados.
+        </div>
+       </div>
+       `
+      )
+    :
+      `
+       ${
+        aoVivo.length
+        ?
+        gruposPorJornada(aoVivo,"🔴")
+        :
+        ""
+       }
+
+       ${
+        futuros.length
+        ?
+        gruposPorJornada(futuros,"📅")
+        :
+        ""
+       }
+
+       ${
+        realizados.length
+        ?
+        gruposPorJornada(realizados,"✅")
+        :
+        ""
+       }
+
+       ${
+        !aoVivo.length &&
+        !futuros.length &&
+        !realizados.length
+        ?
+        `
+        <div class="card">
+         <div class="empty">
+          Não há jogos disponíveis.
+         </div>
+        </div>
+        `
+        :
+        ""
+       }
+      `
+   }
+
+  </div>
+ `;
+
+}
+  
+
 
  /* =========================
     AO VIVO
