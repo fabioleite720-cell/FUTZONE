@@ -1436,14 +1436,18 @@ async function enriquecerJornadas(lista,l){
    bloco.map(
     async j=>{
 
-     const jornada=
-      await obterJornadaESPN(
-       j._eventoOriginal||j,
-       l
-      );
+     try{
 
-     if(jornada)
-      j.jornada=jornada;
+      const jornada=
+       await obterJornadaESPN(
+        j._eventoOriginal||j,
+        l
+       );
+
+      if(jornada)
+       j.jornada=jornada;
+
+     }catch(e){}
 
     }
    )
@@ -1452,6 +1456,119 @@ async function enriquecerJornadas(lista,l){
  }
 
  return lista;
+
+}
+
+
+/* =====================================================
+   NOVO CARREGAMENTO DAS JORNADAS
+   — NÃO BLOQUEIA OS JOGOS
+===================================================== */
+
+async function enriquecerTodasAsJornadas(lista){
+
+ if(
+  !Array.isArray(lista)||
+  !lista.length
+ )
+  return;
+
+ const grupos=
+  new Map();
+
+ lista
+  .filter(
+   j=>!j.jornada
+  )
+  .forEach(
+   j=>{
+
+    if(
+     !grupos.has(j.code)
+    ){
+
+     grupos.set(
+      j.code,
+      []
+     );
+
+    }
+
+    grupos
+     .get(j.code)
+     .push(j);
+
+   }
+  );
+
+ for(
+  const [code,jogos]
+  of grupos
+ ){
+
+  const l=
+   ligas.find(
+    x=>x.code===code
+   );
+
+  if(!l)
+   continue;
+
+  const limite=6;
+
+  for(
+   let i=0;
+   i<jogos.length;
+   i+=limite
+  ){
+
+   const bloco=
+    jogos.slice(
+     i,
+     i+limite
+    );
+
+   await Promise.all(
+
+    bloco.map(
+     async j=>{
+
+      try{
+
+       const jornada=
+        await obterJornadaESPN(
+         j._eventoOriginal||j,
+         l
+        );
+
+       if(jornada){
+
+        j.jornada=jornada;
+
+       }
+
+      }catch(e){}
+
+     }
+    )
+
+   );
+
+   if(
+    document
+     .getElementById("navJogos")
+     ?.classList
+     .contains("active")&&
+    paginaJogos==="liga"
+   ){
+
+    mostrarJogosLiga();
+
+   }
+
+  }
+
+ }
 
 }
 
@@ -1728,51 +1845,85 @@ async function buscarEventos(l){
 
 
 /* =====================================================
-   CARREGAR JOGOS
+   CARREGAR JOGOS — CORRIGIDO
 ===================================================== */
 
 async function carregarJogos(){
 
  let lista=[];
 
+ /*
+  Carregamos os jogos primeiro.
+  As jornadas NÃO bloqueiam a aplicação.
+ */
+
  for(
   const l of ligas
  ){
 
-  const evs=
-   await buscarEventos(l);
+  try{
 
-  evs.forEach(e=>{
+   const evs=
+    await buscarEventos(l);
 
-   lista.push(
-    normalizar(e,l)
+   if(
+    Array.isArray(evs)
+   ){
+
+    evs.forEach(e=>{
+
+     try{
+
+      lista.push(
+       normalizar(e,l)
+      );
+
+     }catch(err){
+
+      console.log(
+       "Erro a normalizar jogo:",
+       err
+      );
+
+     }
+
+    });
+
+   }
+
+  }catch(e){
+
+   console.log(
+    "Erro ao carregar liga:",
+    l.name,
+    e
    );
 
-  });
-
-  const daLiga=
-   lista.filter(
-    j=>j.code===l.code
-   );
-
-  await enriquecerJornadas(
-   daLiga,
-   l
-  );
+  }
 
  }
+
+
+ /*
+  Retirar duplicados
+ */
 
  const mapa=
   new Map();
 
  lista.forEach(j=>{
 
-  mapa.set(
-   j.id,
-   j
-  );
+  if(j?.id){
+
+   mapa.set(
+    j.id,
+    j
+   );
+
+  }
 
  });
+
 
  jogosAtuais=
   [...mapa.values()]
@@ -1781,6 +1932,11 @@ async function carregarJogos(){
      new Date(a.date)-
      new Date(b.date)
    );
+
+
+ /*
+  MOSTRAR OS JOGOS IMEDIATAMENTE
+ */
 
  if(
   document
@@ -1802,6 +1958,16 @@ async function carregarJogos(){
   }
 
  }
+
+
+ /*
+  Só agora procuramos as jornadas
+  que não vieram diretamente da ESPN.
+ */
+
+ enriquecerTodasAsJornadas(
+  jogosAtuais
+ );
 
 }
 
@@ -3707,6 +3873,7 @@ async function buscarPlantelEquipa(
 
 /* =====================================================
    JOGOS DA EQUIPA
+   — SEM BLOQUEAR POR JORNADAS
 ===================================================== */
 
 async function buscarJogosEquipa(
@@ -3763,9 +3930,12 @@ async function buscarJogosEquipa(
        )
      );
 
-    await enriquecerJornadas(
-     resultado,
-     l
+    /*
+     Não esperamos pelas jornadas aqui.
+     */
+
+    enriquecerTodasAsJornadas(
+     resultado
     );
 
     return resultado;
