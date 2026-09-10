@@ -1198,12 +1198,32 @@ function extrairJornada(ev){
 
 
 function nomeJornada(v){
+  const s=String(v||"").trim();
+
+  if(!s) return "";
+
+  if(/^jornada/i.test(s)){
+    return s;
+  }
+
+  if(/^\d+$/.test(s)){
+    return `Jornada ${s}`;
+  }
+
+  const m=s.match(/(?:jornada|round|week|matchday)\s*[-:]?\s*(\d+)/i);
+
+  if(m){
+    return `Jornada ${m[1]}`;
+  }
+
+  return s;
+}
 
  const s=
   String(v||"").trim();
 
- if(!s)
-  return "Jornada não indicada";
+
+  
 
  if(/^jornada/i.test(s))
   return s;
