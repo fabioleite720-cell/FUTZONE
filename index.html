@@ -1540,7 +1540,288 @@ async function carregarJogos(){
    paginaJogos==="liga"
   ){
 
-   mostrarJogosLiga();
+   function mostrarJogosLiga(){
+
+ nav("navJogos");
+
+ paginaJogos="liga";
+
+ const daLiga=
+  jogosAtuais.filter(
+   j=>
+    j.code===
+    ligaAtual.code
+  );
+
+
+ /* =========================
+    AO VIVO
+ ========================= */
+
+ if(modoJogos==="live"){
+
+  const aoVivo=
+   jogosAtuais.filter(
+    j=>j.estado.live
+   );
+
+  const grupos=
+   agruparJornadas(aoVivo);
+
+  app.innerHTML=`
+
+   <button
+    class="voltar-ligas"
+    onclick="mostrarJogos()">
+
+    ← Voltar às ligas
+
+   </button>
+
+   <h2>
+    🔴 Jogos ao Vivo
+   </h2>
+
+   ${
+    grupos.length
+    ?grupos.map(
+     ([key,jogos])=>
+      grupoJogos(
+       nomeJornada(key),
+       jogos,
+       "🔴"
+      )
+    ).join("")
+    :`
+     <div class="vazio">
+      Não existem jogos ao vivo
+      neste momento.
+     </div>
+    `
+   }
+
+  `;
+
+  return;
+
+ }
+
+
+ /* =========================
+    FUTUROS
+ ========================= */
+
+ if(modoJogos==="futuros"){
+
+  const futuros=
+   daLiga.filter(
+    j=>
+     !j.estado.final&&
+     !j.estado.live
+   );
+
+  const grupos=
+   agruparJornadas(futuros);
+
+  app.innerHTML=`
+
+   <button
+    class="voltar-ligas"
+    onclick="mostrarJogos()">
+
+    ← Voltar às ligas
+
+   </button>
+
+   <h2>
+    ${ligaAtual.icon}
+    ${esc(ligaAtual.name)}
+   </h2>
+
+   ${botoesCategorias()}
+
+   ${
+    grupos.length
+    ?grupos.map(
+     ([key,jogos])=>
+      grupoJogos(
+       nomeJornada(key),
+       jogos,
+       "📅"
+      )
+    ).join("")
+    :`
+     <div class="vazio">
+      Não há próximos jogos
+      encontrados.
+     </div>
+    `
+   }
+
+  `;
+
+  return;
+
+ }
+
+
+ /* =========================
+    REALIZADOS
+ ========================= */
+
+ if(modoJogos==="passados"){
+
+  const passados=
+   daLiga.filter(
+    j=>j.estado.final
+   );
+
+  const grupos=
+   agruparJornadas(passados);
+
+  app.innerHTML=`
+
+   <button
+    class="voltar-ligas"
+    onclick="mostrarJogos()">
+
+    ← Voltar às ligas
+
+   </button>
+
+   <h2>
+    ${ligaAtual.icon}
+    ${esc(ligaAtual.name)}
+   </h2>
+
+   ${botoesCategorias()}
+
+   ${
+    grupos.length
+    ?grupos.map(
+     ([key,jogos])=>
+      grupoJogos(
+       nomeJornada(key),
+       jogos,
+       "✅"
+      )
+    ).join("")
+    :`
+     <div class="vazio">
+      Não há jogos realizados
+      encontrados.
+     </div>
+    `
+   }
+
+  `;
+
+  return;
+
+ }
+
+
+ /* =========================
+    TODOS
+ ========================= */
+
+ const aoVivo=
+  daLiga.filter(
+   j=>j.estado.live
+  );
+
+ const futuros=
+  daLiga.filter(
+   j=>
+    !j.estado.final&&
+    !j.estado.live
+  );
+
+ const realizados=
+  daLiga.filter(
+   j=>j.estado.final
+  );
+
+ const gruposVivo=
+  agruparJornadas(aoVivo);
+
+ const gruposFuturos=
+  agruparJornadas(futuros);
+
+ const gruposRealizados=
+  agruparJornadas(realizados);
+
+
+ app.innerHTML=`
+
+  <button
+   class="voltar-ligas"
+   onclick="mostrarJogos()">
+
+   ← Voltar às ligas
+
+  </button>
+
+  <h2>
+   ${ligaAtual.icon}
+   ${esc(ligaAtual.name)}
+  </h2>
+
+  ${botoesCategorias()}
+
+
+  ${
+   gruposVivo.map(
+    ([key,jogos])=>
+     grupoJogos(
+      nomeJornada(key),
+      jogos,
+      "🔴"
+     )
+   ).join("")
+  }
+
+
+  ${
+   gruposFuturos.map(
+    ([key,jogos])=>
+     grupoJogos(
+      nomeJornada(key),
+      jogos,
+      "📅"
+     )
+   ).join("")
+  }
+
+
+  ${
+   gruposRealizados.map(
+    ([key,jogos])=>
+     grupoJogos(
+      nomeJornada(key),
+      jogos,
+      "✅"
+     )
+   ).join("")
+  }
+
+
+  ${
+   !aoVivo.length&&
+   !futuros.length&&
+   !realizados.length
+   ?`
+    <div class="vazio">
+     Não há jogos encontrados
+     para esta competição.
+    </div>
+   `
+   :""
+  }
+
+ `;
+
+}
 
   }else{
 
