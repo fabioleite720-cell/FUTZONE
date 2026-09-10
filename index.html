@@ -64,10 +64,6 @@ h3{
  font-size:13px
 }
 
-/* =========================
-   LIGAS
-========================= */
-
 .seletor-ligas{
  display:grid;
  grid-template-columns:repeat(2,1fr);
@@ -100,10 +96,6 @@ h3{
  font-size:19px;
  margin-bottom:3px
 }
-
-/* =========================
-   CATEGORIAS
-========================= */
 
 .categorias-jogos{
  display:grid;
@@ -139,10 +131,6 @@ h3{
  border-color:#FF4054
 }
 
-/* =========================
-   VOLTAR
-========================= */
-
 .voltar-ligas{
  width:100%;
  background:#09111C;
@@ -159,10 +147,6 @@ h3{
 .voltar-ligas:active{
  opacity:.7
 }
-
-/* =========================
-   JOGOS
-========================= */
 
 .grupo-jogos{
  background:#09111C;
@@ -268,10 +252,6 @@ h3{
  color:#FF8F8F
 }
 
-/* =========================
-   NOTÍCIAS
-========================= */
-
 .noticias{
  margin-top:12px
 }
@@ -324,10 +304,6 @@ h3{
  margin-top:4px
 }
 
-/* =========================
-   MENU
-========================= */
-
 .bottom{
  position:fixed;
  bottom:0;
@@ -353,10 +329,6 @@ h3{
 .bottom button.active{
  color:#1683FF
 }
-
-/* =========================
-   DETALHES
-========================= */
 
 .overlay{
  position:fixed;
@@ -455,10 +427,6 @@ h3{
  min-width:32px
 }
 
-/* =========================
-   ESTATÍSTICAS
-========================= */
-
 .stats-head,
 .stat-row{
  display:grid;
@@ -492,10 +460,6 @@ h3{
  font-weight:bold
 }
 
-/* =========================
-   PLANTEL
-========================= */
-
 .lista-jogadores{
  display:grid;
  grid-template-columns:1fr 1fr;
@@ -520,10 +484,6 @@ h3{
  font-size:9px;
  margin:6px 0
 }
-
-/* =========================
-   TABELAS
-========================= */
 
 .tabela-caixa{
  background:#09111C;
@@ -580,10 +540,6 @@ th{
  width:23px
 }
 
-/* =========================
-   CLUBE
-========================= */
-
 .equipa-header{
  background:#09111C;
  border:1px solid #1B2A3B;
@@ -626,10 +582,6 @@ th{
  font-size:15px;
  font-weight:900
 }
-
-/* =========================
-   FUTEBOL / FUTSAL
-========================= */
 
 .modo-desporto{
  display:grid;
@@ -704,10 +656,6 @@ th{
  color:#1683FF;
  font-size:9px;
 }
-
-/* =========================
-   CAMPO FUTZONE
-========================= */
 
 .campo-futzone{
  background:#063B22;
@@ -1202,6 +1150,7 @@ function estado(ev){
 
 }
 
+
 /* =====================================================
    JORNADAS
 ===================================================== */
@@ -1323,6 +1272,107 @@ function agruparJornadas(lista){
  );
 
 }
+
+
+/* =====================================================
+   AGRUPAR JOGOS POR JORNADA
+===================================================== */
+
+function gruposPorJornada(lista,icone){
+
+ return agruparJornadas(lista)
+  .map(([key,jogos])=>{
+
+   const titulo=
+    jogos[0]?.jornada
+    ?nomeJornada(jogos[0].jornada)
+    :"Jornada não indicada";
+
+   return grupoJogos(
+    titulo,
+    jogos,
+    icone
+   );
+
+  })
+  .join("");
+
+}
+
+
+/* =====================================================
+   AO VIVO — LIGA + JORNADA
+===================================================== */
+
+function gruposLivePorLigaEJornada(lista){
+
+ const mapa=
+  new Map();
+
+ lista.forEach(j=>{
+
+  const jornada=
+   j.jornada
+   ?String(j.jornada)
+   :"sem";
+
+  const key=
+   `${j.code}::${jornada}`;
+
+  if(!mapa.has(key)){
+
+   mapa.set(
+    key,
+    {
+     liga:j.liga,
+     code:j.code,
+     jornada,
+     jogos:[]
+    }
+   );
+
+  }
+
+  mapa.get(key).jogos.push(j);
+
+ });
+
+ return[
+  ...mapa.values()
+ ]
+ .sort(
+  (a,b)=>
+   new Date(
+    a.jogos[0]?.date||0
+   )-
+   new Date(
+    b.jogos[0]?.date||0
+   )
+ )
+ .map(g=>{
+
+  const liga=
+   ligas.find(
+    l=>l.code===g.code
+   );
+
+  const titulo=
+   `${liga?.icon||"⚽"} `+
+   `${esc(g.liga)} — `+
+   `${nomeJornada(g.jornada)}`;
+
+  return grupoJogos(
+   titulo,
+   g.jogos,
+   "🔴"
+  );
+
+ })
+ .join("");
+
+}
+
+
 /* =====================================================
    NORMALIZAR JOGO
 ===================================================== */
@@ -1515,10 +1565,12 @@ async function carregarJogos(){
   new Map();
 
  lista.forEach(j=>{
+
   mapa.set(
    j.id,
    j
   );
+
  });
 
  jogosAtuais=
@@ -1540,430 +1592,7 @@ async function carregarJogos(){
    paginaJogos==="liga"
   ){
 
-   function mostrarJogosLiga(){
-
- nav("navJogos");
-
- paginaJogos="liga";
-
- const daLiga=
-  jogosAtuais.filter(
-   j=>
-    j.code===
-    ligaAtual.code
-  );
-
- if(!daLiga.length){
-
-  app.innerHTML=`
-   <button class="voltar" onclick="mostrarJogos()">← Voltar</button>
-   <h2>${ligaAtual.icon} ${esc(ligaAtual.name)}</h2>
-
-   <div class="card">
-    <div class="empty">
-     Não há jogos disponíveis.
-    </div>
-   </div>
-  `;
-
-  return;
- }
-
- const aoVivo=
-  daLiga.filter(j=>j.estado.live);
-
- const futuros=
-  daLiga.filter(j=>
-   !j.estado.live &&
-   !j.estado.final
-  );
-
- const realizados=
-  daLiga.filter(j=>
-   j.estado.final
-  );
-
- app.innerHTML=`
-
-  <button class="voltar" onclick="mostrarJogos()">← Voltar</button>
-
-  <h2>
-   ${ligaAtual.icon} ${esc(ligaAtual.name)}
-  </h2>
-
-  <div class="categorias">
-   ${botoesCategorias()}
-  </div>
-
-  <div id="conteudoLiga">
-
-   ${
-    modoJogos==="live"
-    ?
-      (
-       aoVivo.length
-       ?
-       gruposPorJornada(aoVivo,"🔴")
-       :
-       `
-       <div class="card">
-        <div class="empty">
-         Não há jogos ao vivo.
-        </div>
-       </div>
-       `
-      )
-    :
-      modoJogos==="futuros"
-    ?
-      (
-       futuros.length
-       ?
-       gruposPorJornada(futuros,"📅")
-       :
-       `
-       <div class="card">
-        <div class="empty">
-         Não há próximos jogos.
-        </div>
-       </div>
-       `
-      )
-    :
-      modoJogos==="realizados"
-    ?
-      (
-       realizados.length
-       ?
-       gruposPorJornada(realizados,"✅")
-       :
-       `
-       <div class="card">
-        <div class="empty">
-         Não há jogos realizados.
-        </div>
-       </div>
-       `
-      )
-    :
-      `
-       ${
-        aoVivo.length
-        ?
-        gruposPorJornada(aoVivo,"🔴")
-        :
-        ""
-       }
-
-       ${
-        futuros.length
-        ?
-        gruposPorJornada(futuros,"📅")
-        :
-        ""
-       }
-
-       ${
-        realizados.length
-        ?
-        gruposPorJornada(realizados,"✅")
-        :
-        ""
-       }
-
-       ${
-        !aoVivo.length &&
-        !futuros.length &&
-        !realizados.length
-        ?
-        `
-        <div class="card">
-         <div class="empty">
-          Não há jogos disponíveis.
-         </div>
-        </div>
-        `
-        :
-        ""
-       }
-      `
-   }
-
-  </div>
- `;
-
-}
-  
-
-
- /* =========================
-    AO VIVO
- ========================= */
-
- if(modoJogos==="live"){
-
-  const aoVivo=
-   jogosAtuais.filter(
-    j=>j.estado.live
-   );
-
-  const grupos=
-   agruparJornadas(aoVivo);
-
-  app.innerHTML=`
-
-   <button
-    class="voltar-ligas"
-    onclick="mostrarJogos()">
-
-    ← Voltar às ligas
-
-   </button>
-
-   <h2>
-    🔴 Jogos ao Vivo
-   </h2>
-
-   ${
-    grupos.length
-    ?grupos.map(
-     ([key,jogos])=>
-      grupoJogos(
-       nomeJornada(key),
-       jogos,
-       "🔴"
-      )
-    ).join("")
-    :`
-     <div class="vazio">
-      Não existem jogos ao vivo
-      neste momento.
-     </div>
-    `
-   }
-
-  `;
-
-  return;
-
- }
-
-
- /* =========================
-    FUTUROS
- ========================= */
-
- if(modoJogos==="futuros"){
-
-  const futuros=
-   daLiga.filter(
-    j=>
-     !j.estado.final&&
-     !j.estado.live
-   );
-
-  const grupos=
-   agruparJornadas(futuros);
-
-  app.innerHTML=`
-
-   <button
-    class="voltar-ligas"
-    onclick="mostrarJogos()">
-
-    ← Voltar às ligas
-
-   </button>
-
-   <h2>
-    ${ligaAtual.icon}
-    ${esc(ligaAtual.name)}
-   </h2>
-
-   ${botoesCategorias()}
-
-   ${
-    grupos.length
-    ?grupos.map(
-     ([key,jogos])=>
-      grupoJogos(
-       nomeJornada(key),
-       jogos,
-       "📅"
-      )
-    ).join("")
-    :`
-     <div class="vazio">
-      Não há próximos jogos
-      encontrados.
-     </div>
-    `
-   }
-
-  `;
-
-  return;
-
- }
-
-
- /* =========================
-    REALIZADOS
- ========================= */
-
- if(modoJogos==="passados"){
-
-  const passados=
-   daLiga.filter(
-    j=>j.estado.final
-   );
-
-  const grupos=
-   agruparJornadas(passados);
-
-  app.innerHTML=`
-
-   <button
-    class="voltar-ligas"
-    onclick="mostrarJogos()">
-
-    ← Voltar às ligas
-
-   </button>
-
-   <h2>
-    ${ligaAtual.icon}
-    ${esc(ligaAtual.name)}
-   </h2>
-
-   ${botoesCategorias()}
-
-   ${
-    grupos.length
-    ?grupos.map(
-     ([key,jogos])=>
-      grupoJogos(
-       nomeJornada(key),
-       jogos,
-       "✅"
-      )
-    ).join("")
-    :`
-     <div class="vazio">
-      Não há jogos realizados
-      encontrados.
-     </div>
-    `
-   }
-
-  `;
-
-  return;
-
- }
-
-
- /* =========================
-    TODOS
- ========================= */
-
- const aoVivo=
-  daLiga.filter(
-   j=>j.estado.live
-  );
-
- const futuros=
-  daLiga.filter(
-   j=>
-    !j.estado.final&&
-    !j.estado.live
-  );
-
- const realizados=
-  daLiga.filter(
-   j=>j.estado.final
-  );
-
- const gruposVivo=
-  agruparJornadas(aoVivo);
-
- const gruposFuturos=
-  agruparJornadas(futuros);
-
- const gruposRealizados=
-  agruparJornadas(realizados);
-
-
- app.innerHTML=`
-
-  <button
-   class="voltar-ligas"
-   onclick="mostrarJogos()">
-
-   ← Voltar às ligas
-
-  </button>
-
-  <h2>
-   ${ligaAtual.icon}
-   ${esc(ligaAtual.name)}
-  </h2>
-
-  ${botoesCategorias()}
-
-
-  ${
-   gruposVivo.map(
-    ([key,jogos])=>
-     grupoJogos(
-      nomeJornada(key),
-      jogos,
-      "🔴"
-     )
-   ).join("")
-  }
-
-
-  ${
-   gruposFuturos.map(
-    ([key,jogos])=>
-     grupoJogos(
-      nomeJornada(key),
-      jogos,
-      "📅"
-     )
-   ).join("")
-  }
-
-
-  ${
-   gruposRealizados.map(
-    ([key,jogos])=>
-     grupoJogos(
-      nomeJornada(key),
-      jogos,
-      "✅"
-     )
-   ).join("")
-  }
-
-
-  ${
-   !aoVivo.length&&
-   !futuros.length&&
-   !realizados.length
-   ?`
-    <div class="vazio">
-     Não há jogos encontrados
-     para esta competição.
-    </div>
-   `
-   :""
-  }
-
- `;
-
-}
+   mostrarJogosLiga();
 
   }else{
 
@@ -2542,6 +2171,11 @@ function mostrarJogosLiga(){
     ligaAtual.code
   );
 
+
+ /* =========================
+    AO VIVO
+ ========================= */
+
  if(modoJogos==="live"){
 
   const aoVivo=
@@ -2563,18 +2197,19 @@ function mostrarJogosLiga(){
     🔴 Jogos ao Vivo
    </h2>
 
-   ${aoVivo.length
-    ?grupoJogos(
-     "Todos os jogos ao vivo",
-     aoVivo,
-     "🔴"
-    )
-    :`
-     <div class="vazio">
-      Não existem jogos ao vivo
-      neste momento.
-     </div>
-    `
+   ${
+    aoVivo.length
+    ?
+     gruposLivePorLigaEJornada(
+      aoVivo
+     )
+    :
+     `
+      <div class="vazio">
+       Não existem jogos ao vivo
+       neste momento.
+      </div>
+     `
    }
 
   `;
@@ -2583,6 +2218,10 @@ function mostrarJogosLiga(){
 
  }
 
+
+ /* =========================
+    FUTUROS
+ ========================= */
 
  if(
   modoJogos==="futuros"
@@ -2614,17 +2253,18 @@ function mostrarJogosLiga(){
 
    ${
     futuros.length
-    ?grupoJogos(
-      "Próximos jogos",
+    ?
+     gruposPorJornada(
       futuros,
       "📅"
      )
-    :`
-     <div class="vazio">
-      Não há próximos jogos
-      encontrados.
-     </div>
-    `
+    :
+     `
+      <div class="vazio">
+       Não há próximos jogos
+       encontrados.
+      </div>
+     `
    }
 
   `;
@@ -2633,6 +2273,10 @@ function mostrarJogosLiga(){
 
  }
 
+
+ /* =========================
+    REALIZADOS
+ ========================= */
 
  if(
   modoJogos==="passados"
@@ -2662,17 +2306,18 @@ function mostrarJogosLiga(){
 
    ${
     passados.length
-    ?grupoJogos(
-      "Jogos realizados",
+    ?
+     gruposPorJornada(
       passados,
       "✅"
      )
-    :`
-     <div class="vazio">
-      Não há jogos realizados
-      encontrados.
-     </div>
-    `
+    :
+     `
+      <div class="vazio">
+       Não há jogos realizados
+       encontrados.
+      </div>
+     `
    }
 
   `;
@@ -2681,6 +2326,10 @@ function mostrarJogosLiga(){
 
  }
 
+
+ /* =========================
+    TODOS
+ ========================= */
 
  const aoVivo=
   daLiga.filter(
@@ -2718,45 +2367,50 @@ function mostrarJogosLiga(){
 
   ${
    aoVivo.length
-   ?grupoJogos(
-    "Ao Vivo",
-    aoVivo,
-    "🔴"
-   )
-   :""
+   ?
+    gruposPorJornada(
+     aoVivo,
+     "🔴"
+    )
+   :
+    ""
   }
 
   ${
    futuros.length
-   ?grupoJogos(
-    "Próximos jogos",
-    futuros,
-    "📅"
-   )
-   :""
+   ?
+    gruposPorJornada(
+     futuros,
+     "📅"
+    )
+   :
+    ""
   }
 
   ${
    realizados.length
-   ?grupoJogos(
-    "Jogos realizados",
-    realizados,
-    "✅"
-   )
-   :""
+   ?
+    gruposPorJornada(
+     realizados,
+     "✅"
+    )
+   :
+    ""
   }
 
   ${
    !aoVivo.length&&
    !futuros.length&&
    !realizados.length
-   ?`
-    <div class="vazio">
-     Não há jogos encontrados
-     para esta competição.
-    </div>
-   `
-   :""
+   ?
+    `
+     <div class="vazio">
+      Não há jogos encontrados
+      para esta competição.
+     </div>
+    `
+   :
+    ""
   }
 
  `;
@@ -4196,6 +3850,74 @@ function extrairStats(d){
 
 
 /* =====================================================
+   RATING REAL DO JOGADOR
+===================================================== */
+
+function ratingJogadorReal(x,a){
+
+ const direto=
+  x?.rating ??
+  a?.rating;
+
+ if(
+  direto!==undefined&&
+  direto!==null&&
+  direto!==""
+ ){
+
+  return direto;
+
+ }
+
+ const arrays=[
+
+  ...(Array.isArray(x?.statistics)
+    ?x.statistics
+    :[]),
+
+  ...(Array.isArray(a?.statistics)
+    ?a.statistics
+    :[]),
+
+  ...(Array.isArray(x?.stats)
+    ?x.stats
+    :[]),
+
+  ...(Array.isArray(a?.stats)
+    ?a.stats
+    :[])
+
+ ];
+
+ const r=
+  arrays.find(s=>{
+
+   const nome=
+    String(
+     s?.name||
+     s?.displayName||
+     s?.shortDisplayName||
+     s?.label||
+     ""
+    ).toLowerCase();
+
+   return(
+    nome.includes("rating")||
+    nome.includes("nota")
+   );
+
+  });
+
+ return(
+  r?.value ??
+  r?.displayValue ??
+  null
+ );
+
+}
+
+
+/* =====================================================
    PLANTEL DO JOGO
 ===================================================== */
 
@@ -4286,9 +4008,10 @@ function extrairPlantel(d){
       x.starter===true,
 
      rating:
-      x.rating||
-      a.rating||
-      null
+      ratingJogadorReal(
+       x,
+       a
+      )
 
     });
 
@@ -4486,6 +4209,10 @@ function blocoPlantel(gs){
 
         ${esc(p.n)}
 
+        <span class="campo-nota">
+         ⭐ Nota: ${esc(ratingFutzone(p))}
+        </span>
+
         ${
          p.tit
          ?`
@@ -4533,7 +4260,7 @@ function blocoPlantel(gs){
 
 
 /* =====================================================
-   CAMPO — JOGADOR
+   CAMPO — RATING
 ===================================================== */
 
 function ratingFutzone(p){
@@ -4648,7 +4375,6 @@ function detalheJogadorFutzone(el){
 
 /* =====================================================
    CAMPO FUTZONE
-   RECEBE O PLANTEL DO JOGO
 ===================================================== */
 
 function campoFutzoneJogo(
@@ -4686,12 +4412,6 @@ function campoFutzoneJogo(
     String(g.id)===foraId
   );
 
- /*
-  Se a API não devolver os IDs
-  exatamente iguais, usamos a ordem
-  das duas equipas recebidas.
- */
-
  if(!casa)
   casa=gs[0];
 
@@ -4704,13 +4424,6 @@ function campoFutzoneJogo(
 
  if(!casa||!fora)
   return "";
-
- /*
-  Primeiro tentamos usar apenas
-  os jogadores marcados como titulares.
-  Se a API não indicar titulares,
-  usamos os primeiros 11.
- */
 
  function titulares(g){
 
@@ -4782,14 +4495,6 @@ function campoFutzoneJogo(
   `;
 
  }
-
- /*
-  Organização visual:
-  Guarda-redes
-  Defesa
-  Meio-campo
-  Ataque
- */
 
  function linhas(jogadores){
 
