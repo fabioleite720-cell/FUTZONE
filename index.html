@@ -37,6 +37,12 @@ table{width:100%;border-collapse:collapse;font-size:11px}th,td{padding:8px 4px;b
 .jogador-campo.fora .camisa{background:#f4f4f4;color:#111}.jogador-campo .nome-campo{background:rgba(3,6,11,.85);border-radius:5px;padding:2px 3px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
 .campo-legenda{display:flex;justify-content:center;gap:16px;font-size:10px;margin-top:7px;color:#9DAABB}.campo-legenda span{display:flex;align-items:center;gap:4px}.bola-leg{width:12px;height:12px;border-radius:50%;background:#1683FF;border:1px solid #fff}.bola-leg.fora{background:#f4f4f4}
 .campo-futsal{min-height:350px}.campo-futsal .area-home,.campo-futsal .area-away{width:70px;height:150px}.campo-futsal:after{width:85px;height:85px}
+
+/* FUTZONE SCOREBOARD — visual inspirado em apps de resultados */
+.score-toolbar{display:flex;gap:6px;overflow-x:auto;margin:8px 0 12px;padding-bottom:2px}.score-toolbar button{flex:0 0 auto;background:#0D1724;border:1px solid #1B2A3B;color:#B9C4D2;border-radius:7px;padding:7px 10px;font-size:10px;font-weight:800}.score-toolbar button.active{background:#0057B8;border-color:#1683FF;color:#fff}
+.dia-header{display:flex;align-items:center;justify-content:space-between;background:#101B29;border-left:3px solid #1683FF;padding:9px 10px;margin:12px 0 6px;border-radius:7px;font-size:11px;font-weight:900}.dia-header span:last-child{color:#7F8DA0;font-size:9px}
+.competicao-header{display:flex;align-items:center;gap:7px;padding:8px 4px;color:#B9C4D2;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.3px}
+.fs-card{background:#09111C;border:1px solid #1B2A3B;border-radius:8px;margin-bottom:5px;overflow:hidden}.fs-card-main{display:grid;grid-template-columns:52px 1fr 58px;align-items:center;min-height:70px}.fs-time{text-align:center;color:#9DAABB;font-size:10px}.fs-time.live{color:#FF4054;font-weight:900}.fs-teams{padding:7px 4px}.fs-team{display:grid;grid-template-columns:1fr 25px;align-items:center;gap:4px;font-size:11px;font-weight:800;line-height:1.7}.fs-team img{width:21px;height:21px;object-fit:contain;grid-column:2;grid-row:1}.fs-team span{grid-column:1;grid-row:1;text-align:left}.fs-score{text-align:center;font-size:14px;font-weight:900;line-height:1.8}.fs-score.live{color:#FF4054}.fs-bottom{border-top:1px solid #162333;padding:4px 8px;color:#657488;font-size:8px;display:flex;justify-content:space-between}.fs-live-dot{color:#FF4054;font-weight:900}.tabela-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.tabela-top small{color:#6F7E90;font-size:9px}.tabela-scroll{overflow-x:auto}.tabela-flash th{background:#101B29;position:sticky;top:0}.tabela-flash td,.tabela-flash th{padding:8px 5px}.tabela-flash tbody tr:nth-child(even){background:#0B1420}.tabela-flash td:first-child{font-weight:900;color:#9DAABB}.tabela-flash td:nth-child(2){font-weight:800;text-align:left;white-space:nowrap}.tabela-flash td:last-child{font-weight:900;color:#fff}.pontos-destaque{color:#1683FF!important;font-size:12px}.forma-mini{font-size:8px;color:#6F7E90}
 </style>
 </head>
 <body>
@@ -92,18 +98,24 @@ function botoesLigas(){return`<div class="seletor-ligas">${ligas.map(l=>`<button
 function selecionarLiga(code){ligaAtual=ligas.find(l=>l.code===code)||ligas[0];modoJogos="todos";mostrarJogos()}
 function dataLocal(d){try{return new Intl.DateTimeFormat("pt-PT",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}).format(new Date(d))}catch(e){return""}}
 function cartao(j){
- const l=j.estado.live?`<span class="estado-live">🔴 ${esc(j.estado.txt)}</span>`:j.estado.final?`<span class="estado-final">${esc(j.estado.txt)}</span>`:`${esc(dataLocal(j.date))}`;
- return `<div class="jogo" onclick="abrirJogo('${esc(j.id)}','${esc(j.code)}')"><div class="jogo-top"><span>${esc(j.liga)}</span><span>${l}</span></div><div class="equipas"><div class="equipa">${logo(j.home.logo)}${esc(j.home.nome)}</div><div class="resultado">${esc(j.home.score)} - ${esc(j.away.score)}</div><div class="equipa">${logo(j.away.logo)}${esc(j.away.nome)}</div></div></div>`
+ const hora=j.estado.live?'<span class="fs-live-dot">● AO VIVO</span>':j.estado.final?'FINAL':dataLocal(j.date);
+ const hs=j.home.score,as=j.away.score;
+ return `<div class="fs-card" onclick="abrirJogo('${esc(j.id)}','${esc(j.code)}')"><div class="fs-card-main"><div class="fs-time ${j.estado.live?'live':''}">${hora}</div><div class="fs-teams"><div class="fs-team"><span>${esc(j.home.nome)}</span>${logo(j.home.logo)}</div><div class="fs-team"><span>${esc(j.away.nome)}</span>${logo(j.away.logo)}</div></div><div class="fs-score ${j.estado.live?'live':''}">${esc(hs)}<br>${esc(as)}</div></div><div class="fs-bottom"><span>${esc(j.liga)}</span><span>${j.estado.live?'🔴 direto':j.estado.final?'resultado final':'agendado'}</span></div></div>`
 }
+function gruposJogosPorDia(lista){
+ const m=new Map();(lista||[]).forEach(j=>{const k=new Intl.DateTimeFormat('pt-PT',{weekday:'long',day:'2-digit',month:'2-digit'}).format(new Date(j.date));if(!m.has(k))m.set(k,[]);m.get(k).push(j)});return [...m.entries()];
+}
+function htmlJogosFutebol(lista){
+ return gruposJogosPorDia(lista).map(([dia,arr])=>`<div class="dia-header"><span>${esc(dia.charAt(0).toUpperCase()+dia.slice(1))}</span><span>${arr.length} jogo${arr.length===1?'':'s'}</span></div>${arr.map(j=>cartao(j)).join('')}`).join('');
+}
+
 function botoesDesporto(){return `<div class="desporto"><button class="${desportoAtual==='futebol'?'active':''}" onclick="desportoAtual='futebol';mostrarJogos()">⚽ Futebol</button><button class="${desportoAtual==='futsal'?'active':''}" onclick="desportoAtual='futsal';carregarFutsal()">🥅 Futsal</button></div>`}
 async function buscarFutsal(){
  const hoje=new Date(),arr=[];
- for(let i=-7;i<=14;i++){
-  const d=new Date(hoje);d.setDate(d.getDate()+i);const iso=d.toISOString().slice(0,10);
-  try{const r=await fetch(`https://www.sofascore.com/api/v1/sport/futsal/scheduled-events/${iso}`);if(!r.ok)continue;const x=await r.json();(x.events||[]).forEach(e=>arr.push(e))}catch(e){}
- }
- const m=new Map();arr.forEach(e=>m.set(String(e.id),e));return [...m.values()].sort((a,b)=>new Date(a.startTimestamp*1000)-new Date(b.startTimestamp*1000));
+ for(let i=-14;i<=30;i++){const d=new Date(hoje);d.setDate(d.getDate()+i);const iso=d.toISOString().slice(0,10);try{const r=await fetch(`https://www.sofascore.com/api/v1/sport/futsal/scheduled-events/${iso}`);if(!r.ok)continue;const x=await r.json();(x.events||[]).forEach(e=>arr.push(e))}catch(e){}}
+ const m=new Map();arr.forEach(e=>m.set(String(e.id),e));return [...m.values()].sort((a,b)=>(a.startTimestamp||0)-(b.startTimestamp||0));
 }
+
 function cartaoFutsal(e){
  const live=e.status?.type==='inprogress';
  const fin=e.status?.type==='finished';
@@ -115,18 +127,15 @@ function cartaoFutsal(e){
 }
 async function carregarFutsal(){
  desportoAtual='futsal';nav('navJogos');app.innerHTML=`<h2>Jogos</h2>${botoesDesporto()}<div class="carregando">A carregar futsal...</div>`;
- try{futsalAtuais=await buscarFutsal();const l=futsalAtuais;app.innerHTML=`<h2>Jogos</h2>${botoesDesporto()}<button class="live-button" onclick="mostrarFutsalLive()"><span class="dot"></span>🥅 Futsal ao Vivo</button>${l.length?l.map(cartaoFutsal).join(''):'<div class="vazio">Não foram encontrados jogos de futsal neste período.</div>'}`}
+ try{futsalAtuais=await buscarFutsal();const l=futsalAtuais;app.innerHTML=`<h2>Jogos</h2>${botoesDesporto()}<button class="live-button" onclick="mostrarFutsalLive()"><span class="dot"></span>🥅 Futsal ao Vivo</button>${l.length?htmlJogosFutsalLiga(l):'<div class="vazio">Não foram encontrados jogos de futsal neste período.</div>'}`}
  catch(e){app.innerHTML=`<h2>Jogos</h2>${botoesDesporto()}<div class="erro">Não foi possível carregar o futsal.</div>`}
 }
 function mostrarFutsalLive(){const l=futsalAtuais.filter(e=>e.status?.type==='inprogress');app.innerHTML=`<h2>🥅 Futsal ao Vivo</h2>${botoesDesporto()}${l.length?l.map(cartaoFutsal).join(''):'<div class="vazio">Não há jogos de futsal ao vivo neste momento.</div>'}`}
 function mostrarJogos(){
- nav("navJogos");
- let l=jogosAtuais.filter(j=>j.liga===ligaAtual.name);
- if(modoJogos==="passados")l=l.filter(j=>j.estado.final);
- if(modoJogos==="futuros")l=l.filter(j=>!j.estado.final&&!j.estado.live);
- if(modoJogos==="live")l=l.filter(j=>j.estado.live);
- app.innerHTML=`<h2>Jogos</h2>${botoesDesporto()}<button class="live-button" onclick="modoJogos='live';mostrarJogos()"><span class="dot"></span>🔴 Jogos ao Vivo</button>${botoesLigas()}<div class="filtro"><button class="${modoJogos==='todos'?'active':''}" onclick="modoJogos='todos';mostrarJogos()">Todos</button><button class="${modoJogos==='passados'?'active':''}" onclick="modoJogos='passados';mostrarJogos()">Já realizados</button><button class="${modoJogos==='futuros'?'active':''}" onclick="modoJogos='futuros';mostrarJogos()">Futuros</button></div><h2>${esc(ligaAtual.name)}</h2>${l.length?l.map(cartao).join(""):'<div class="vazio">Não há jogos encontrados neste período.</div>'}`
+ nav("navJogos");let l=jogosAtuais.filter(j=>j.liga===ligaAtual.name);if(modoJogos==="passados")l=l.filter(j=>j.estado.final);if(modoJogos==="futuros")l=l.filter(j=>!j.estado.final&&!j.estado.live);if(modoJogos==="live")l=l.filter(j=>j.estado.live);
+ app.innerHTML=`<h2>Jogos</h2>${botoesDesporto()}<button class="live-button" onclick="modoJogos='live';mostrarJogos()"><span class="dot"></span>🔴 Jogos Ao Vivo</button>${botoesLigas()}<div class="score-toolbar"><button class="active">TODOS</button><button onclick="modoJogos='live';mostrarJogos()">AO VIVO</button><button onclick="modoJogos='futuros';mostrarJogos()">PRÓXIMOS</button><button onclick="modoJogos='passados';mostrarJogos()">RESULTADOS</button></div><div class="filtro"><button class="${modoJogos==='todos'?'active':''}" onclick="modoJogos='todos';mostrarJogos()">Todos</button><button class="${modoJogos==='passados'?'active':''}" onclick="modoJogos='passados';mostrarJogos()">Já realizados</button><button class="${modoJogos==='futuros'?'active':''}" onclick="modoJogos='futuros';mostrarJogos()">Futuros</button></div><h2>${esc(ligaAtual.name)}</h2>${l.length?htmlJogosFutebol(l):'<div class="vazio">Não há jogos encontrados neste período.</div>'}`
 }
+
 function mostrarJogosAoVivo(){modoJogos="live";mostrarJogos()}
 function txt(v){return typeof v==="object"?(v?.displayValue??v?.value??v?.text??""):String(v??"")}
 function extrairEventos(d){
@@ -279,68 +288,42 @@ function htmlTabela(grupos){
 }
 async function obterFutsalLigaPlacard(){
  if(!futsalAtuais.length)futsalAtuais=await buscarFutsal();
- const candidatos=futsalAtuais.filter(e=>{
-  const nomes=[e?.tournament?.name,e?.tournament?.uniqueTournament?.name,e?.uniqueTournament?.name].filter(Boolean).join(' ').toLowerCase();
-  return nomes.includes('liga placard')&&!nomes.includes('feminina');
- });
+ const candidatos=futsalAtuais.filter(e=>{const nomes=[e?.tournament?.name,e?.tournament?.uniqueTournament?.name,e?.uniqueTournament?.name].filter(Boolean).join(' ').toLowerCase();return (nomes.includes('liga placard')||nomes.includes('primeira liga'))&&!nomes.includes('feminina')});
  let e=candidatos.find(x=>x?.tournament?.uniqueTournament?.id||x?.uniqueTournament?.id)||candidatos[0];
- if(!e)throw new Error('Liga Placard de futsal não encontrada');
+ if(!e)throw new Error('Liga Placard não encontrada');
  const tid=e?.tournament?.uniqueTournament?.id||e?.uniqueTournament?.id||e?.tournament?.id;
  let sid=e?.season?.id||e?.tournament?.season?.id||null;
- if(!sid&&tid){
-  const r=await fetch(`https://www.sofascore.com/api/v1/unique-tournament/${tid}/seasons`);if(!r.ok)throw 0;
-  const d=await r.json();const ss=d?.seasons||[];
-  sid=(ss.find(x=>String(x.year||'').includes('26/27'))||ss.find(x=>String(x.name||'').includes('26/27'))||ss[0])?.id||null;
- }
+ if(!sid&&tid){const r=await fetch(`https://www.sofascore.com/api/v1/unique-tournament/${tid}/seasons`);if(!r.ok)throw 0;const d=await r.json();const ss=d?.seasons||[];sid=(ss.find(x=>String(x.name||'').includes('2026/2027'))||ss.find(x=>String(x.name||'').includes('26/27'))||ss[0])?.id||null}
  if(!tid||!sid)throw new Error('Época da Liga Placard não encontrada');
  return {event:e,tid,sid};
 }
-function jornadaFutsal(e){
- const r=e?.roundInfo?.round||e?.roundInfo?.name||e?.round?.round||e?.round?.name||e?.tournament?.roundInfo?.round;
- return r?String(r):'';
+async function buscarJogosLigaPlacard(info){
+ const arr=[];
+ for(let round=1;round<=30;round++){try{const r=await fetch(`https://www.sofascore.com/api/v1/unique-tournament/${info.tid}/season/${info.sid}/events/round/${round}`);if(!r.ok)continue;const d=await r.json();(d.events||[]).forEach(e=>arr.push(e))}catch(e){}}
+ const base=arr.length?arr:futsalAtuais.filter(e=>{const n=String(e?.tournament?.name||e?.tournament?.uniqueTournament?.name||'').toLowerCase();return n.includes('liga placard')&&!n.includes('feminina')});
+ const m=new Map();base.forEach(e=>m.set(String(e.id),e));return [...m.values()].sort((a,b)=>(a.startTimestamp||0)-(b.startTimestamp||0));
 }
-function gruposFutsalPorJornada(lista){
+function jornadaFutsal(e){const r=e?.roundInfo?.round||e?.roundInfo?.name||e?.round?.round||e?.round?.name;return r?String(r):''}
+function gruposFutsalPorJornada(lista){const mapa=new Map();(lista||[]).forEach(e=>{const j=jornadaFutsal(e)||'Jornada não indicada';if(!mapa.has(j))mapa.set(j,[]);mapa.get(j).push(e)});return [...mapa.entries()].sort((a,b)=>{const na=Number(String(a[0]).match(/\d+/)?.[0]||9999),nb=Number(String(b[0]).match(/\d+/)?.[0]||9999);return na-nb})}
+function htmlJogosFutsalLiga(lista){const jogos=lista||[];if(!jogos.length)return '<div class="vazio">Não foram encontrados jogos da Liga Placard.</div>';return gruposFutsalPorJornada(jogos).map(([j,arr])=>`<div class="dia-header"><span>📅 ${esc(/^jornada/i.test(j)?j:`Jornada ${j}`)}</span><span>${arr.length} jogos</span></div>${arr.sort((a,b)=>(a.startTimestamp||0)-(b.startTimestamp||0)).map(cartaoFutsal).join('')}`).join('')}
+
+function estatValor(e,keys,def=0){const ss=Array.isArray(e?.stats)?e.stats:[];const x=ss.find(z=>{const n=String(z?.name||z?.displayName||z?.shortDisplayName||'').toLowerCase();return keys.some(k=>n===k||n.includes(k))});return x?.displayValue??x?.value??def}
+function extrairTeamTabela(e){return e?.team||e?.competitor||e?.competitor?.team||{}}
+function htmlTabelaAtualizada(rows,nome){return `<div class="secao"><div class="tabela-top"><h3>🏆 ${esc(nome)}</h3><small>Atualizada agora</small></div><div class="tabela-scroll"><table class="tabela-flash"><thead><tr><th>#</th><th>Equipa</th><th>J</th><th>V</th><th>E</th><th>D</th><th>DG</th><th>Pts</th></tr></thead><tbody>${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(r.nome)}</td><td>${r.j}</td><td>${r.v}</td><td>${r.e}</td><td>${r.d}</td><td>${r.dg>0?'+'+r.dg:r.dg}</td><td class="pontos-destaque">${r.pts}</td></tr>`).join('')}</tbody></table></div></div>`}
+async function tabelaFutebolEmTempoReal(){
+ const evs=await buscarEventos(ligaAtual);
  const mapa=new Map();
- (lista||[]).forEach(e=>{
-  const j=jornadaFutsal(e)||'Jornada não indicada';
-  if(!mapa.has(j))mapa.set(j,[]);mapa.get(j).push(e);
- });
- return [...mapa.entries()].sort((a,b)=>{const na=Number(String(a[0]).match(/\d+/)?.[0]||9999),nb=Number(String(b[0]).match(/\d+/)?.[0]||9999);return na-nb});
-}
-function htmlJogosFutsalLiga(lista){
- const jogos=(lista||[]).filter(e=>{const n=String(e?.tournament?.name||e?.tournament?.uniqueTournament?.name||'').toLowerCase();return n.includes('liga placard')&&!n.includes('feminina')});
- if(!jogos.length)return '<div class="vazio">Não foram encontrados jogos da Liga Placard neste período.</div>';
- return gruposFutsalPorJornada(jogos).map(([j,arr])=>`<div class="secao"><h3>📅 ${esc(/^jornada/i.test(j)?j:`Jornada ${j}`)}</h3>${arr.sort((a,b)=>(a.startTimestamp||0)-(b.startTimestamp||0)).map(cartaoFutsal).join('')}</div>`).join('');
+ function team(t){if(!t?.id)return; if(!mapa.has(String(t.id)))mapa.set(String(t.id),{id:String(t.id),nome:t.displayName||t.shortDisplayName||t.name||'Equipa',j:0,v:0,e:0,d:0,gf:0,ga:0,pts:0,logo:t.logo||''})}
+ evs.forEach(ev=>{const c=ev?.competitions?.[0],cs=c?.competitors||[];const h=cs.find(x=>x.homeAway==='home')||cs[0],a=cs.find(x=>x.homeAway==='away')||cs[1];if(!h||!a)return;team(h.team);team(a.team);const st=ev?.status?.type||c?.status?.type||{};if(st.state!=='post')return;const hs=Number(h.score),as=Number(a.score);if(!Number.isFinite(hs)||!Number.isFinite(as))return;const H=mapa.get(String(h.team.id)),A=mapa.get(String(a.team.id));H.j++;A.j++;H.gf+=hs;H.ga+=as;A.gf+=as;A.ga+=hs;if(hs>as){H.v++;H.pts+=3;A.d++}else if(hs<as){A.v++;A.pts+=3;H.d++}else{H.e++;A.e++;H.pts++;A.pts++}});
+ const rows=[...mapa.values()].map(x=>({...x,dg:x.gf-x.ga})).sort((a,b)=>b.pts-a.pts||b.dg-a.dg||b.gf-a.gf||a.nome.localeCompare(b.nome,'pt'));
+ if(rows.length<2)throw 0;return rows;
 }
 async function mostrarTabelas(){
- nav('navTabelas');
- app.innerHTML=`<h2>🏆 Tabelas</h2>${botoesDesporto()}${desportoAtual==='futebol'?botoesLigas():''}<div class="carregando">A carregar classificação...</div>`;
+ nav('navTabelas');app.innerHTML=`<h2>🏆 Tabelas</h2>${botoesDesporto()}${desportoAtual==='futebol'?botoesLigas():''}<div class="carregando">A atualizar classificação em tempo real...</div>`;
  try{
-  if(desportoAtual==='futsal'){
-   const info=await obterFutsalLigaPlacard();
-   const r=await fetch(`https://www.sofascore.com/api/v1/unique-tournament/${info.tid}/season/${info.sid}/standings/total`);if(!r.ok)throw 0;
-   const d=await r.json();
-   const entries=(d?.standings||[]).flatMap(st=>(st?.rows||[])).map(x=>({team:x.team,stats:[
-    {name:'rank',value:x.position},{name:'gamesplayed',value:x.matches},{name:'wins',value:x.wins},{name:'ties',value:x.draws},{name:'losses',value:x.losses},{name:'goaldifference',value:x.goalDifference},{name:'points',value:x.points}
-   ]}));
-   const a=app.querySelector('.carregando');
-   a.outerHTML=`${htmlTabela([{nome:'Liga Placard',entries}])}<div class="secao"><h3>⚽ Jogos da Liga Placard</h3>${htmlJogosFutsalLiga(futsalAtuais)}</div>`;
-  }else{
-   const urls=[
-    `https://site.api.espn.com/apis/v2/sports/soccer/${encodeURIComponent(ligaAtual.code)}/standings?_=${Date.now()}`,
-    `https://site.api.espn.com/apis/v2/sports/soccer/${encodeURIComponent(ligaAtual.code)}/standings?season=${new Date().getFullYear()}&_=${Date.now()}`
-   ];
-   let d=null;
-   for(const u of urls){try{const r=await fetch(u);if(r.ok){const x=await r.json();if(x&&(x.children||x.entries||x.standings)){d=x;break}}}catch(e){}}
-   if(!d)throw 0;
-   const grupos=gruposTabela(d);
-   if(!grupos.length)throw 0;
-   app.querySelector('.carregando').outerHTML=htmlTabela(grupos);
-  }
- }catch(e){
-  const a=app.querySelector('.carregando');
-  if(a)a.outerHTML=`<div class="erro">Não foi possível carregar a classificação. Tenta novamente dentro de alguns segundos.</div>`;
- }
+  if(desportoAtual==='futsal'){const info=await obterFutsalLigaPlacard();const r=await fetch(`https://www.sofascore.com/api/v1/unique-tournament/${info.tid}/season/${info.sid}/standings/total?_=${Date.now()}`);if(!r.ok)throw 0;const d=await r.json();const rows=(d?.standings||[]).flatMap(st=>st?.rows||[]).map(x=>({nome:x.team?.name||x.team?.shortName||'Equipa',j:x.matches||0,v:x.wins||0,e:x.draws||0,d:x.losses||0,dg:x.goalDifference||0,pts:x.points||0})).sort((a,b)=>b.pts-a.pts||b.dg-a.dg||a.nome.localeCompare(b.nome,'pt'));const jogos=await buscarJogosLigaPlacard(info);app.querySelector('.carregando').outerHTML=htmlTabelaAtualizada(rows,'Liga Placard')+`<div class="secao"><h3>📅 Jogos da Liga Placard</h3>${htmlJogosFutsalLiga(jogos)}</div>`;futsalAtuais=jogos;
+  }else{const rows=await tabelaFutebolEmTempoReal();app.querySelector('.carregando').outerHTML=htmlTabelaAtualizada(rows,ligaAtual.name);}
+ }catch(e){const a=app.querySelector('.carregando');if(a)a.outerHTML='<div class="erro">Não foi possível atualizar esta tabela. Toca novamente em Tabelas.</div>'}
 }
 
 carregarJogos();setInterval(carregarJogos,120000);
