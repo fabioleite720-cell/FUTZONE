@@ -26,6 +26,17 @@ main{padding:12px 10px 85px;max-width:720px;margin:auto}h2{font-size:18px;margin
 .lista-jogadores{display:grid;grid-template-columns:1fr 1fr;gap:6px}.jogador{background:#0D1724;border:1px solid #1B2A3B;border-radius:7px;padding:8px;font-size:11px}.jogador b{color:#1683FF;margin-right:4px}.subtitulo{color:#9DAABB;font-size:10px;margin:7px 0}
 table{width:100%;border-collapse:collapse;font-size:11px}th,td{padding:8px 4px;border-bottom:1px solid #1B2A3B;text-align:center}th{color:#9DAABB}
 .desporto{display:flex;gap:7px;margin:8px 0 12px}.desporto button{flex:1;background:#0D1724;border:1px solid #1B2A3B;color:#9DAABB;border-radius:8px;padding:9px;font-weight:bold}.desporto button.active{color:#FFF;border-color:#1683FF;background:#003B7A}
+
+.campo-futzone{background:linear-gradient(90deg,#0a5b32,#0d7a42);border:3px solid #fff;border-radius:14px;margin-top:10px;padding:10px;position:relative;min-height:430px;overflow:hidden;box-shadow:inset 0 0 0 2px rgba(255,255,255,.15)}
+.campo-futzone:before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:2px solid rgba(255,255,255,.9);transform:translateX(-50%)}
+.campo-futzone:after{content:"";position:absolute;width:105px;height:105px;border:2px solid rgba(255,255,255,.9);border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}
+.campo-meio{position:absolute;left:50%;top:50%;width:10px;height:10px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);z-index:1}
+.area-home,.area-away{position:absolute;width:92px;height:180px;border:2px solid #fff;top:50%;transform:translateY(-50%);z-index:0}.area-home{left:0;border-left:0}.area-away{right:0;border-right:0}
+.campo-titulo{font-weight:900;text-align:center;font-size:12px;margin-bottom:7px}.campo-sub{font-size:10px;color:#9DAABB;text-align:center;margin-bottom:6px}
+.jogador-campo{position:absolute;transform:translate(-50%,-50%);width:72px;text-align:center;z-index:3;font-size:9px;font-weight:900;line-height:1.05}.jogador-campo .camisa{width:30px;height:30px;border-radius:50%;background:#1683FF;border:2px solid #fff;margin:auto;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;box-shadow:0 2px 5px rgba(0,0,0,.35)}
+.jogador-campo.fora .camisa{background:#f4f4f4;color:#111}.jogador-campo .nome-campo{background:rgba(3,6,11,.85);border-radius:5px;padding:2px 3px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
+.campo-legenda{display:flex;justify-content:center;gap:16px;font-size:10px;margin-top:7px;color:#9DAABB}.campo-legenda span{display:flex;align-items:center;gap:4px}.bola-leg{width:12px;height:12px;border-radius:50%;background:#1683FF;border:1px solid #fff}.bola-leg.fora{background:#f4f4f4}
+.campo-futsal{min-height:350px}.campo-futsal .area-home,.campo-futsal .area-away{width:70px;height:150px}.campo-futsal:after{width:85px;height:85px}
 </style>
 </head>
 <body>
@@ -94,13 +105,13 @@ async function buscarFutsal(){
  const m=new Map();arr.forEach(e=>m.set(String(e.id),e));return [...m.values()].sort((a,b)=>new Date(a.startTimestamp*1000)-new Date(b.startTimestamp*1000));
 }
 function cartaoFutsal(e){
- const live=e.status?.type==='inprogress'||e.status?.type==='inprogress';
+ const live=e.status?.type==='inprogress';
  const fin=e.status?.type==='finished';
  const h=e.homeTeam||{},a=e.awayTeam||{};
  const hs=live||fin?e.homeScore?.current??e.homeScore?.normaltime??0:'-';
  const as=live||fin?e.awayScore?.current??e.awayScore?.normaltime??0:'-';
  const hora=live?'🔴 AO VIVO':fin?'FINAL':dataLocal(new Date(e.startTimestamp*1000));
- return `<div class="jogo"><div class="jogo-top"><span>${esc(e.tournament?.name||'Futsal')}</span><span>${hora}</span></div><div class="equipas"><div class="equipa"><div style="height:35px"></div>${esc(h.name||'Casa')}</div><div class="resultado">${esc(hs)} - ${esc(as)}</div><div class="equipa"><div style="height:35px"></div>${esc(a.name||'Fora')}</div></div></div>`;
+ return `<div class="jogo" onclick="abrirFutsalJogo('${esc(e.id)}')"><div class="jogo-top"><span>${esc(e.tournament?.name||'Futsal')}</span><span>${hora}</span></div><div class="equipas"><div class="equipa"><div style="height:35px"></div>${esc(h.name||'Casa')}</div><div class="resultado">${esc(hs)} - ${esc(as)}</div><div class="equipa"><div style="height:35px"></div>${esc(a.name||'Fora')}</div></div></div>`;
 }
 async function carregarFutsal(){
  desportoAtual='futsal';nav('navJogos');app.innerHTML=`<h2>Jogos</h2>${botoesDesporto()}<div class="carregando">A carregar futsal...</div>`;
@@ -159,10 +170,55 @@ function extrairPlantel(d){
 function blocoEventos(a){return`<div class="secao"><h3>⚽ Golos, cartões e eventos</h3>${a.length?a.map(e=>`<div class="evento"><span class="minuto">${esc(e.m)}</span><span>${e.i} ${esc(e.t)}</span></div>`).join(""):'<div class="vazio">Sem eventos disponíveis.</div>'}</div>`}
 function blocoStats(a){return`<div class="secao"><h3>📊 Estatísticas</h3>${a.length?`<div class="stats-head"><span>Casa</span><span>ESTAT.</span><span>Fora</span></div>${a.map(x=>`<div class="stat-row"><div class="stat-home">${esc(x.h)}</div><div class="nome">${esc(x.n)}</div><div class="stat-away">${esc(x.a)}</div></div>`).join("")}`:'<div class="vazio">Estatísticas não disponíveis para este jogo.</div>'}</div>`}
 function blocoPlantel(gs){return gs.length?`<div class="secao"><h3>👥 Titulares / Plantel</h3>${gs.map(g=>`<div style="margin-bottom:14px"><b>${esc(g.nome)}</b><div class="subtitulo">Jogadores</div><div class="lista-jogadores">${g.p.map(p=>`<div class="jogador"><b>${esc(p.num)}</b>${esc(p.n)}${p.pos?`<small style="display:block;color:#9DAABB">${esc(p.pos)}</small>`:""}</div>`).join("")}</div></div>`).join("")}</div>`:""}
+function normalizarPosicao(p,i,total,fora){
+ const pos=String(p?.pos||p?.position||'').toUpperCase();
+ let x,y;
+ if(total===5){
+  const map={G:[8,50],GK:[8,50],D:[30,50],DF:[30,50],M:[52,50],MF:[52,50],F:[78,50],FW:[78,50],A:[78,50]};
+  [x,y]=map[pos]||[50,50];
+  if(!map[pos]){const slots=[[8,50],[30,30],[30,70],[52,50],[78,50]];[x,y]=slots[i]||[50,50]}
+ }else{
+  const map={G:[8,50],GK:[8,50],D:[28,50],DF:[28,50],M:[53,50],MF:[53,50],F:[80,50],FW:[80,50],A:[80,50]};
+  [x,y]=map[pos]||[50,50];
+  if(!map[pos]){const slots=[[8,50],[28,20],[28,40],[28,60],[28,80],[53,25],[53,50],[53,75],[80,30],[80,50],[80,70]];[x,y]=slots[i]||[50,50]}
+ }
+ if(fora)x=100-x;
+ return {x,y};
+}
+function jogadoresCampo(grupo,total,fora){
+ const ps=(grupo?.p||[]).filter(p=>p.tit!==false).slice(0,total);
+ if(ps.length<Math.min(total,5))return '';
+ return ps.map((p,i)=>{const q=normalizarPosicao(p,i,total,fora);return `<div class="jogador-campo ${fora?'fora':''}" style="left:${q.x}%;top:${q.y}%"><div class="camisa">${esc(p.num||'')}</div><div class="nome-campo">${esc(p.n)}</div></div>`}).join('');
+}
+function campoFutzone(grupos,tipo='futebol',formHome='',formAway=''){
+ const total=tipo==='futsal'?5:11;
+ const gh=grupos?.[0],ga=grupos?.[1];
+ if(!gh||!ga||!gh.p?.length||!ga.p?.length)return `<div class="secao"><h3>🟩 Campo e titulares</h3><div class="vazio">Onze inicial ainda não divulgado pela fonte de dados.</div></div>`;
+ const sh=formHome?` • ${esc(formHome)}`:''; const sa=formAway?` • ${esc(formAway)}`:'';
+ return `<div class="secao"><h3>${tipo==='futsal'?'🥅 5 inicial / Tática':'⚽ 11 inicial / Tática'}</h3><div class="campo-titulo">${esc(gh.nome)}${sh} — ${esc(ga.nome)}${sa}</div><div class="campo-sub">${tipo==='futsal'?'5×5':'11×11'}</div><div class="campo-futzone ${tipo==='futsal'?'campo-futsal':''}"><div class="area-home"></div><div class="area-away"></div><div class="campo-meio"></div>${jogadoresCampo(gh,total,false)}${jogadoresCampo(ga,total,true)}</div><div class="campo-legenda"><span><i class="bola-leg"></i>${esc(gh.nome)}</span><span><i class="bola-leg fora"></i>${esc(ga.nome)}</span></div></div>`;
+}
+function prepararCampoFutebol(d){
+ const gs=extrairPlantel(d);
+ const comps=d?.header?.competitions?.[0]?.competitors||d?.competitions?.[0]?.competitors||[];
+ const forms=comps.map(x=>x?.formation||x?.form||'');
+ return campoFutzone(gs,'futebol',forms[0]||'',forms[1]||'');
+}
+async function abrirFutsalJogo(id){
+ const e=futsalAtuais.find(x=>String(x.id)===String(id)); if(!e)return;
+ const h=e.homeTeam||{},a=e.awayTeam||{}; const hs=e.homeScore?.current??e.homeScore?.normaltime??'-',as=e.awayScore?.current??e.awayScore?.normaltime??'-';
+ const o=document.createElement('div');o.className='overlay';o.innerHTML=`<div class="detalhe-header"><button class="voltar" onclick="this.closest('.overlay').remove()">← Voltar</button></div><div class="detalhe"><div class="jogo-grande"><div class="equipas"><div class="equipa">${esc(h.name||'Casa')}</div><div><div class="bigscore">${esc(hs)} - ${esc(as)}</div><div class="estado">${e.status?.type==='inprogress'?'🔴 AO VIVO':e.status?.type==='finished'?'FINAL':dataLocal(new Date(e.startTimestamp*1000))}</div></div><div class="equipa">${esc(a.name||'Fora')}</div></div></div><div class="carregando">A carregar 5 inicial e tática...</div></div>`;document.body.appendChild(o);
+ try{
+  const r=await fetch(`https://www.sofascore.com/api/v1/event/${encodeURIComponent(id)}/lineups`); if(!r.ok)throw 0; const d=await r.json();
+  const gs=[];
+  for(const side of ['home','away']){const src=d?.[side];if(!src)continue;const arr=src.players||src.lineup||[];const p=arr.filter(x=>x?.substitute!==true).map(x=>({n:x.player?.name||x.name||'',num:x.player?.jerseyNumber||x.jerseyNumber||'',pos:x.player?.position||x.position||'',tit:true})).filter(x=>x.n);gs.push({nome:side==='home'?h.name:a.name,p})}
+  const forms=[d?.home?.formation?.name||d?.home?.formation||'',d?.away?.formation?.name||d?.away?.formation||''];
+  const detalhe=o.querySelector('.detalhe'); detalhe.insertAdjacentHTML('beforeend',campoFutzone(gs,'futsal',forms[0],forms[1])); const load=o.querySelector('.carregando');if(load)load.remove();
+ }catch(err){const load=o.querySelector('.carregando');if(load)load.outerHTML='<div class="vazio">O 5 inicial e a tática ainda não estão disponíveis para este jogo.</div>'}
+} 
 async function abrirJogo(id,code){
  const j=jogosAtuais.find(x=>x.id===id);if(!j)return;
  const o=document.createElement("div");o.className="overlay";o.innerHTML=`<div class="detalhe-header"><button class="voltar" onclick="this.closest('.overlay').remove()">← Voltar</button></div><div class="detalhe"><div class="jogo-grande"><div class="equipas"><div class="equipa">${logo(j.home.logo)}${esc(j.home.nome)}</div><div><div class="bigscore">${esc(j.home.score)} - ${esc(j.away.score)}</div><div class="estado">${esc(j.estado.txt||dataLocal(j.date))}</div></div><div class="equipa">${logo(j.away.logo)}${esc(j.away.nome)}</div></div></div><div class="carregando">A carregar detalhes...</div></div>`;document.body.appendChild(o);
- try{const r=await fetch(`${ESPN}${encodeURIComponent(code)}/summary?event=${encodeURIComponent(id)}&_=${Date.now()}`);if(!r.ok)throw 0;const d=await r.json();o.querySelector(".detalhe").insertAdjacentHTML("beforeend",blocoEventos(extrairEventos(d))+blocoStats(extrairStats(d))+blocoPlantel(extrairPlantel(d)));o.querySelector(".carregando").remove()}catch(e){o.querySelector(".carregando").outerHTML='<div class="erro">Não foi possível carregar os detalhes deste jogo.</div>'}
+ try{const r=await fetch(`${ESPN}${encodeURIComponent(code)}/summary?event=${encodeURIComponent(id)}&_=${Date.now()}`);if(!r.ok)throw 0;const d=await r.json();const plantel=extrairPlantel(d);o.querySelector(".detalhe").insertAdjacentHTML("beforeend",prepararCampoFutebol(d)+blocoEventos(extrairEventos(d))+blocoStats(extrairStats(d))+blocoPlantel(plantel));o.querySelector(".carregando").remove()}catch(e){o.querySelector(".carregando").outerHTML='<div class="erro">Não foi possível carregar os detalhes deste jogo.</div>'}
 }
 function mostrarFavoritos(){nav("navFav");app.innerHTML='<h2>⭐ Favoritos</h2><div class="vazio">Seleciona jogos favoritos para os guardares aqui.</div>'}
 function valorStat(e,keys,def='-'){
