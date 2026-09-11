@@ -161,7 +161,18 @@ function extrairPlantel(d){
   if(!team||!Array.isArray(arr))return;
   const id=team.id||team.team?.id||team.displayName||team.team?.displayName;let g=gs.find(x=>String(x.id)===String(id));
   if(!g){g={id,nome:team.displayName||team.name||team.team?.displayName||"Equipa",p:[]};gs.push(g)}
-  arr.forEach(x=>{const a=x?.athlete||x?.player||x;if(!a?.displayName&&!a?.fullName)return;const n=a.displayName||a.fullName;if(!g.p.some(p=>p.n===n))g.p.push({n,num:a.jersey||x.jersey||"",pos:a.position?.abbreviation||a.position?.displayName||"",tit:x.starter===true})})
+  arr.forEach(x=>{
+   const a=x?.athlete||x?.player||x;
+   if(!a?.displayName&&!a?.fullName)return;
+   const n=a.displayName||a.fullName;
+   const pos=a.position?.abbreviation||a.position?.displayName||x.position?.abbreviation||x.position?.displayName||x.position||"";
+   const grid=x?.grid||a?.grid||x?.formationPlace||a?.formationPlace||"";
+   const starter=x?.starter===true||x?.isStarter===true||x?.starter?.value===true||x?.substitute===false||x?.isSubstitute===false;
+   const item={n,num:a.jersey||a.jerseyNumber||x.jersey||x.jerseyNumber||"",pos:String(pos),grid:String(grid),tit:starter};
+   const existente=g.p.find(p=>p.n===n);
+   if(!existente)g.p.push(item);
+   else {if(!existente.grid&&item.grid)existente.grid=item.grid;if(!existente.pos&&item.pos)existente.pos=item.pos;if(item.tit)existente.tit=true;}
+  })
  }
  (d.rosters||[]).forEach(r=>add(r.team||r,r.roster||r.athletes||r.players));
  (d.boxscore?.players||[]).forEach(r=>add(r.team||r,r.statistics||r.athletes||r.roster||r.players));
@@ -171,6 +182,18 @@ function blocoEventos(a){return`<div class="secao"><h3>⚽ Golos, cartões e eve
 function blocoStats(a){return`<div class="secao"><h3>📊 Estatísticas</h3>${a.length?`<div class="stats-head"><span>Casa</span><span>ESTAT.</span><span>Fora</span></div>${a.map(x=>`<div class="stat-row"><div class="stat-home">${esc(x.h)}</div><div class="nome">${esc(x.n)}</div><div class="stat-away">${esc(x.a)}</div></div>`).join("")}`:'<div class="vazio">Estatísticas não disponíveis para este jogo.</div>'}</div>`}
 function blocoPlantel(gs){return gs.length?`<div class="secao"><h3>👥 Titulares / Plantel</h3>${gs.map(g=>`<div style="margin-bottom:14px"><b>${esc(g.nome)}</b><div class="subtitulo">Jogadores</div><div class="lista-jogadores">${g.p.map(p=>`<div class="jogador"><b>${esc(p.num)}</b>${esc(p.n)}${p.pos?`<small style="display:block;color:#9DAABB">${esc(p.pos)}</small>`:""}</div>`).join("")}</div></div>`).join("")}</div>`:""}
 function normalizarPosicao(p,i,total,fora){
+ const g=String(p?.grid||'').trim();
+ if(g){
+  const m=g.match(/(\d+)[:\-](\d+)/);
+  if(m){
+   let gx=Number(m[1]),gy=Number(m[2]);
+   const maxX=total===5?5:11,maxY=total===5?5:11;
+   let x=8+(Math.min(gx,maxX)-1)*(84/Math.max(1,maxX-1));
+   let y=8+(Math.min(gy,maxY)-1)*(84/Math.max(1,maxY-1));
+   if(fora)x=100-x;
+   return {x,y};
+  }
+ }
  const pos=String(p?.pos||p?.position||'').toUpperCase();
  let x,y;
  if(total===5){
@@ -180,7 +203,7 @@ function normalizarPosicao(p,i,total,fora){
  }else{
   const map={G:[8,50],GK:[8,50],D:[28,50],DF:[28,50],M:[53,50],MF:[53,50],F:[80,50],FW:[80,50],A:[80,50]};
   [x,y]=map[pos]||[50,50];
-  if(!map[pos]){const slots=[[8,50],[28,20],[28,40],[28,60],[28,80],[53,25],[53,50],[53,75],[80,30],[80,50],[80,70]];[x,y]=slots[i]||[50,50]}
+  if(!map[pos]){const slots=[[8,50],[28,20],[28,40],[28,60],[28,80],[53,25],[53,50],[53,75],[80,30],[80,70],[80,50]];[x,y]=slots[i]||[50,50]}
  }
  if(fora)x=100-x;
  return {x,y};
@@ -193,9 +216,11 @@ function jogadoresCampo(grupo,total,fora){
 function campoFutzone(grupos,tipo='futebol',formHome='',formAway=''){
  const total=tipo==='futsal'?5:11;
  const gh=grupos?.[0],ga=grupos?.[1];
- if(!gh||!ga||!gh.p?.length||!ga.p?.length)return `<div class="secao"><h3>🟩 Campo e titulares</h3><div class="vazio">Onze inicial ainda não divulgado pela fonte de dados.</div></div>`;
+ const nomeH=gh?.nome||'Casa',nomeA=ga?.nome||'Fora';
  const sh=formHome?` • ${esc(formHome)}`:''; const sa=formAway?` • ${esc(formAway)}`:'';
- return `<div class="secao"><h3>${tipo==='futsal'?'🥅 5 inicial / Tática':'⚽ 11 inicial / Tática'}</h3><div class="campo-titulo">${esc(gh.nome)}${sh} — ${esc(ga.nome)}${sa}</div><div class="campo-sub">${tipo==='futsal'?'5×5':'11×11'}</div><div class="campo-futzone ${tipo==='futsal'?'campo-futsal':''}"><div class="area-home"></div><div class="area-away"></div><div class="campo-meio"></div>${jogadoresCampo(gh,total,false)}${jogadoresCampo(ga,total,true)}</div><div class="campo-legenda"><span><i class="bola-leg"></i>${esc(gh.nome)}</span><span><i class="bola-leg fora"></i>${esc(ga.nome)}</span></div></div>`;
+ const jogadores=(gh?.p?.length&&ga?.p?.length)?`${jogadoresCampo(gh,total,false)}${jogadoresCampo(ga,total,true)}`:'';
+ const aviso=jogadores?'':'<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:4;background:rgba(3,6,11,.88);border:1px solid #1683FF;border-radius:10px;padding:10px;text-align:center;font-size:11px;width:75%">'+(tipo==='futsal'?'5 inicial ainda não divulgado':'11 inicial ainda não divulgado')+'</div>';
+ return `<div class="secao"><h3>${tipo==='futsal'?'🥅 5 inicial / Tática':'⚽ 11 inicial / Tática'}</h3><div class="campo-titulo">${esc(nomeH)}${sh} — ${esc(nomeA)}${sa}</div><div class="campo-sub">${tipo==='futsal'?'5×5':'11×11'}${jogadores?'':' • aguardamos escalações oficiais'}</div><div class="campo-futzone ${tipo==='futsal'?'campo-futsal':''}"><div class="area-home"></div><div class="area-away"></div><div class="campo-meio"></div>${jogadores}${aviso}</div><div class="campo-legenda"><span><i class="bola-leg"></i>${esc(nomeH)}</span><span><i class="bola-leg fora"></i>${esc(nomeA)}</span></div></div>`;
 }
 function prepararCampoFutebol(d){
  const gs=extrairPlantel(d);
