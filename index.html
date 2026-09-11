@@ -123,18 +123,27 @@ function cartaoFutsal(e){
  const hs=live||fin?e.homeScore?.current??e.homeScore?.normaltime??0:'-';
  const as=live||fin?e.awayScore?.current??e.awayScore?.normaltime??0:'-';
  const hora=live?'🔴 AO VIVO':fin?'FINAL':dataLocal(new Date(e.startTimestamp*1000));
- return `<div class="jogo" onclick="abrirFutsalJogo('${esc(e.id)}')"><div class="jogo-top"><span>${esc(e.tournament?.name||'Futsal')}</span><span>${hora}</span></div><div class="equipas"><div class="equipa"><div style="height:35px"></div>${esc(h.name||'Casa')}</div><div class="resultado">${esc(hs)} - ${esc(as)}</div><div class="equipa"><div style="height:35px"></div>${esc(a.name||'Fora')}</div></div></div>`;
+ const torneio=e.tournament?.name||e.tournament?.uniqueTournament?.name||'Futsal';
+ const estadoTxt=live?'direto':fin?'resultado final':'agendado';
+ return `<div class="fs-card" onclick="abrirFutsalJogo('${esc(e.id)}')"><div class="fs-card-main"><div class="fs-time ${live?'live':''}">${hora}</div><div class="fs-teams"><div class="fs-team"><span onclick="event.stopPropagation();abrirEquipaFutsal('${esc(h.id||'')}','${esc(h.name||'Casa')}')">${esc(h.name||'Casa')}</span>${logo(h.logo)}</div><div class="fs-team"><span onclick="event.stopPropagation();abrirEquipaFutsal('${esc(a.id||'')}','${esc(a.name||'Fora')}')">${esc(a.name||'Fora')}</span>${logo(a.logo)}</div></div><div class="fs-score ${live?'live':''}">${esc(hs)}<br>${esc(as)}</div></div><div class="fs-bottom"><span>${esc(torneio)}</span><span>${estadoTxt}</span></div></div>`;
 }
 async function carregarFutsal(){
  desportoAtual='futsal';nav('navJogos');app.innerHTML=`<h2>Jogos</h2>${botoesDesporto()}<div class="carregando">A carregar futsal...</div>`;
- try{futsalAtuais=await buscarFutsal();const l=futsalAtuais;app.innerHTML=`<h2>Jogos</h2>${botoesDesporto()}<button class="live-button" onclick="mostrarFutsalLive()"><span class="dot"></span>🥅 Futsal ao Vivo</button>${l.length?htmlJogosFutsalLiga(l):'<div class="vazio">Não foram encontrados jogos de futsal neste período.</div>'}`}
- catch(e){app.innerHTML=`<h2>Jogos</h2>${botoesDesporto()}<div class="erro">Não foi possível carregar o futsal.</div>`}
+ try{
+  futsalAtuais=await buscarFutsal();
+  const l=futsalAtuais;
+  app.innerHTML=`<h2>Jogos</h2>${botoesDesporto()}<button class="live-button" onclick="mostrarFutsalLive()"><span class="dot"></span>🥅 Futsal ao Vivo</button><div class="score-toolbar"><button class="active" onclick="futsalFiltro='todos';renderFutsalLista()">TODOS</button><button onclick="futsalFiltro='live';renderFutsalLista()">AO VIVO</button><button onclick="futsalFiltro='futuros';renderFutsalLista()">PRÓXIMOS</button><button onclick="futsalFiltro='resultados';renderFutsalLista()">RESULTADOS</button></div><div id="futsalLista">${l.length?htmlJogosFutsalLiga(l):'<div class="vazio">Não foram encontrados jogos de futsal neste período.</div>'}</div>`;
+  atualizarBotoesFutsal();
+ }catch(e){app.innerHTML=`<h2>Jogos</h2>${botoesDesporto()}<div class="erro">Não foi possível carregar o futsal.</div>`}
 }
-function mostrarFutsalLive(){const l=futsalAtuais.filter(e=>e.status?.type==='inprogress');app.innerHTML=`<h2>🥅 Futsal ao Vivo</h2>${botoesDesporto()}${l.length?l.map(cartaoFutsal).join(''):'<div class="vazio">Não há jogos de futsal ao vivo neste momento.</div>'}`}
-function mostrarJogos(){
- nav("navJogos");let l=jogosAtuais.filter(j=>j.liga===ligaAtual.name);if(modoJogos==="passados")l=l.filter(j=>j.estado.final);if(modoJogos==="futuros")l=l.filter(j=>!j.estado.final&&!j.estado.live);if(modoJogos==="live")l=l.filter(j=>j.estado.live);
- app.innerHTML=`<h2>Jogos</h2>${botoesDesporto()}<button class="live-button" onclick="modoJogos='live';mostrarJogos()"><span class="dot"></span>🔴 Jogos Ao Vivo</button>${botoesLigas()}<div class="score-toolbar"><button class="active">TODOS</button><button onclick="modoJogos='live';mostrarJogos()">AO VIVO</button><button onclick="modoJogos='futuros';mostrarJogos()">PRÓXIMOS</button><button onclick="modoJogos='passados';mostrarJogos()">RESULTADOS</button></div><div class="filtro"><button class="${modoJogos==='todos'?'active':''}" onclick="modoJogos='todos';mostrarJogos()">Todos</button><button class="${modoJogos==='passados'?'active':''}" onclick="modoJogos='passados';mostrarJogos()">Já realizados</button><button class="${modoJogos==='futuros'?'active':''}" onclick="modoJogos='futuros';mostrarJogos()">Futuros</button></div><h2>${esc(ligaAtual.name)}</h2>${l.length?htmlJogosFutebol(l):'<div class="vazio">Não há jogos encontrados neste período.</div>'}`
+let futsalFiltro='todos';
+function renderFutsalLista(){
+ const l=futsalAtuais.filter(e=>futsalFiltro==='live'?e.status?.type==='inprogress':futsalFiltro==='resultados'?e.status?.type==='finished':futsalFiltro==='futuros'?!['inprogress','finished'].includes(e.status?.type):true);
+ const el=document.getElementById('futsalLista');if(el)el.innerHTML=l.length?htmlJogosFutsalLiga(l):'<div class="vazio">Não há jogos nesta categoria.</div>';
+ atualizarBotoesFutsal();
 }
+function atualizarBotoesFutsal(){document.querySelectorAll('.score-toolbar button').forEach((b,i)=>b.classList.toggle('active',['todos','live','futuros','resultados'][i]===futsalFiltro))}
+function mostrarFutsalLive(){futsalFiltro='live';carregarFutsal().then(()=>{futsalFiltro='live';renderFutsalLista()})}
 
 function mostrarJogosAoVivo(){modoJogos="live";mostrarJogos()}
 function txt(v){return typeof v==="object"?(v?.displayValue??v?.value??v?.text??""):String(v??"")}
@@ -237,6 +246,20 @@ function prepararCampoFutebol(d){
  const forms=comps.map(x=>x?.formation||x?.form||'');
  return campoFutzone(gs,'futebol',forms[0]||'',forms[1]||'');
 }
+async function abrirEquipaFutsal(id,nome){
+ if(!id)return;
+ const o=document.createElement('div');o.className='overlay';o.innerHTML=`<div class="detalhe-header"><button class="voltar" onclick="this.closest('.overlay').remove()">← Voltar</button></div><div class="detalhe"><div class="jogo-grande"><div style="text-align:center"><h2 style="margin:4px 0">🥅 ${esc(nome)}</h2><div class="subtitulo">Equipa de futsal</div></div></div><div class="carregando">A carregar equipa...</div></div>`;document.body.appendChild(o);
+ try{
+  const [tr,sr,er]=await Promise.all([fetch(`https://www.sofascore.com/api/v1/team/${encodeURIComponent(id)}`),fetch(`https://www.sofascore.com/api/v1/team/${encodeURIComponent(id)}/squad`),fetch(`https://www.sofascore.com/api/v1/team/${encodeURIComponent(id)}/events/next/0`)]);
+  const team=tr.ok?await tr.json():{};const squad=sr.ok?await sr.json():{};const next=er.ok?await er.json():{};
+  const jogadores=(squad?.players||squad?.squad||[]).map(x=>x.player||x).filter(x=>x?.name).slice(0,20);
+  const lista=jogadores.length?`<div class="secao"><h3>👥 Plantel</h3><div class="lista-jogadores">${jogadores.map(x=>`<div class="jogador"><b>${esc(x.jerseyNumber||'')}</b>${esc(x.name)}${x.position?`<small style="display:block;color:#9DAABB">${esc(x.position)}</small>`:''}</div>`).join('')}</div></div>`:'<div class="vazio">Plantel não disponível.</div>';
+  const eventos=(next?.events||[]).slice(0,8);
+  const jogos=eventos.length?`<div class="secao"><h3>📅 Próximos jogos</h3>${eventos.map(e=>cartaoFutsal(e)).join('')}</div>`:'';
+  const load=o.querySelector('.carregando');load.outerHTML=`${team?.team?.logo?`<div class="secao" style="text-align:center"><img src="${esc(team.team.logo)}" style="width:65px;height:65px;object-fit:contain"><div class="subtitulo">${esc(team.team.name||nome)}</div></div>`:''}${lista}${jogos}`;
+ }catch(err){const load=o.querySelector('.carregando');if(load)load.outerHTML='<div class="erro">Não foi possível carregar esta equipa.</div>'}
+}
+
 async function abrirFutsalJogo(id){
  const e=futsalAtuais.find(x=>String(x.id)===String(id)); if(!e)return;
  const h=e.homeTeam||{},a=e.awayTeam||{}; const hs=e.homeScore?.current??e.homeScore?.normaltime??'-',as=e.awayScore?.current??e.awayScore?.normaltime??'-';
