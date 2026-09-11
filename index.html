@@ -251,32 +251,96 @@ function valorStat(e,keys,def='-'){
  return x?.displayValue??x?.value??def;
 }
 function gruposTabela(d){
- const out=[];const walk=n=>{if(!n||typeof n!=='object')return;if(Array.isArray(n.entries)&&n.entries.length)out.push({nome:n.name||n.displayName||'Classificação',entries:n.entries});if(Array.isArray(n.children))n.children.forEach(walk)};
- if(Array.isArray(d?.children))d.children.forEach(walk);if(!out.length&&Array.isArray(d?.entries)&&d.entries.length)out.push({nome:'Classificação',entries:d.entries});return out;
+ const out=[];const seen=new Set();
+ const add=(nome,entries)=>{if(!Array.isArray(entries)||!entries.length)return;const k=(nome||'Classificação')+entries.map(e=>e?.team?.id||e?.competitor?.id||e?.id||'').join(',');if(seen.has(k))return;seen.add(k);out.push({nome:nome||'Classificação',entries})};
+ const walk=n=>{
+  if(!n||typeof n!=='object')return;
+  if(Array.isArray(n.entries)&&n.entries.length)add(n.name||n.displayName,n.entries);
+  if(Array.isArray(n.standings)){n.standings.forEach(x=>{if(Array.isArray(x?.entries)&&x.entries.length)add(x.name||x.displayName,x.entries);walk(x)})}
+  if(n.standings&&typeof n.standings==='object'&&!Array.isArray(n.standings)){if(Array.isArray(n.standings.entries)&&n.standings.entries.length)add(n.name||n.displayName,n.standings.entries);walk(n.standings)}
+  if(Array.isArray(n.children))n.children.forEach(walk);
+ };
+ walk(d);
+ if(!out.length&&Array.isArray(d?.entries))add('Classificação',d.entries);
+ return out;
+}
+function ordenarTabelaEntries(entries){
+ return [...(entries||[])].sort((a,b)=>{
+  const pa=Number(valorStat(a,['rank','position'],9999));
+  const pb=Number(valorStat(b,['rank','position'],9999));
+  if(pa!==pb)return pa-pb;
+  const aa=String((a?.team||a?.competitor||{}).displayName||'');const bb=String((b?.team||b?.competitor||{}).displayName||'');
+  return aa.localeCompare(bb,'pt');
+ });
 }
 function htmlTabela(grupos){
  if(!grupos.length)return '<div class="vazio">Classificação não disponível.</div>';
- return grupos.map(g=>`<div class="secao"><h3>🏆 ${esc(g.nome)}</h3><div style="overflow-x:auto"><table><thead><tr><th>#</th><th style="text-align:left">Equipa</th><th>J</th><th>V</th><th>E</th><th>D</th><th>DG</th><th>Pts</th></tr></thead><tbody>${[...g.entries].sort((a,b)=>Number(valorStat(a,['rank','position'],9999))-Number(valorStat(b,['rank','position'],9999))).map((e,i)=>{const t=e.team||e.competitor||{};const n=t.displayName||t.shortDisplayName||t.name||e.name||'Equipa';const pos=valorStat(e,['rank','position'],i+1);return `<tr><td><b>${esc(pos)}</b></td><td style="text-align:left">${esc(n)}</td><td>${esc(valorStat(e,['gamesplayed','played','gp']))}</td><td>${esc(valorStat(e,['wins','won','w']))}</td><td>${esc(valorStat(e,['ties','draws','drawn']))}</td><td>${esc(valorStat(e,['losses','lost','l']))}</td><td>${esc(valorStat(e,['goaldifference','pointdifferential','gd']))}</td><td><b>${esc(valorStat(e,['points','pts','p']))}</b></td></tr>`}).join('')}</tbody></table></div></div>`).join('');
+ return grupos.map(g=>`<div class="secao"><h3>🏆 ${esc(g.nome)}</h3><div style="overflow-x:auto"><table><thead><tr><th>#</th><th style="text-align:left">Equipa</th><th>J</th><th>V</th><th>E</th><th>D</th><th>DG</th><th>Pts</th></tr></thead><tbody>${ordenarTabelaEntries(g.entries).map((e,i)=>{const t=e.team||e.competitor||{};const n=t.displayName||t.shortDisplayName||t.name||e.name||'Equipa';const pos=valorStat(e,['rank','position'],i+1);return `<tr><td><b>${esc(pos)}</b></td><td style="text-align:left">${esc(n)}</td><td>${esc(valorStat(e,['gamesplayed','played','gp']))}</td><td>${esc(valorStat(e,['wins','won','w']))}</td><td>${esc(valorStat(e,['ties','draws','drawn']))}</td><td>${esc(valorStat(e,['losses','lost','l']))}</td><td>${esc(valorStat(e,['goaldifference','pointdifferential','gd']))}</td><td><b>${esc(valorStat(e,['points','pts','p']))}</b></td></tr>`}).join('')}</tbody></table></div></div>`).join('');
+}
+async function obterFutsalLigaPlacard(){
+ if(!futsalAtuais.length)futsalAtuais=await buscarFutsal();
+ const candidatos=futsalAtuais.filter(e=>{
+  const nomes=[e?.tournament?.name,e?.tournament?.uniqueTournament?.name,e?.uniqueTournament?.name].filter(Boolean).join(' ').toLowerCase();
+  return nomes.includes('liga placard')&&!nomes.includes('feminina');
+ });
+ let e=candidatos.find(x=>x?.tournament?.uniqueTournament?.id||x?.uniqueTournament?.id)||candidatos[0];
+ if(!e)throw new Error('Liga Placard de futsal não encontrada');
+ const tid=e?.tournament?.uniqueTournament?.id||e?.uniqueTournament?.id||e?.tournament?.id;
+ let sid=e?.season?.id||e?.tournament?.season?.id||null;
+ if(!sid&&tid){
+  const r=await fetch(`https://www.sofascore.com/api/v1/unique-tournament/${tid}/seasons`);if(!r.ok)throw 0;
+  const d=await r.json();const ss=d?.seasons||[];
+  sid=(ss.find(x=>String(x.year||'').includes('26/27'))||ss.find(x=>String(x.name||'').includes('26/27'))||ss[0])?.id||null;
+ }
+ if(!tid||!sid)throw new Error('Época da Liga Placard não encontrada');
+ return {event:e,tid,sid};
+}
+function jornadaFutsal(e){
+ const r=e?.roundInfo?.round||e?.roundInfo?.name||e?.round?.round||e?.round?.name||e?.tournament?.roundInfo?.round;
+ return r?String(r):'';
+}
+function gruposFutsalPorJornada(lista){
+ const mapa=new Map();
+ (lista||[]).forEach(e=>{
+  const j=jornadaFutsal(e)||'Jornada não indicada';
+  if(!mapa.has(j))mapa.set(j,[]);mapa.get(j).push(e);
+ });
+ return [...mapa.entries()].sort((a,b)=>{const na=Number(String(a[0]).match(/\d+/)?.[0]||9999),nb=Number(String(b[0]).match(/\d+/)?.[0]||9999);return na-nb});
+}
+function htmlJogosFutsalLiga(lista){
+ const jogos=(lista||[]).filter(e=>{const n=String(e?.tournament?.name||e?.tournament?.uniqueTournament?.name||'').toLowerCase();return n.includes('liga placard')&&!n.includes('feminina')});
+ if(!jogos.length)return '<div class="vazio">Não foram encontrados jogos da Liga Placard neste período.</div>';
+ return gruposFutsalPorJornada(jogos).map(([j,arr])=>`<div class="secao"><h3>📅 ${esc(/^jornada/i.test(j)?j:`Jornada ${j}`)}</h3>${arr.sort((a,b)=>(a.startTimestamp||0)-(b.startTimestamp||0)).map(cartaoFutsal).join('')}</div>`).join('');
 }
 async function mostrarTabelas(){
  nav('navTabelas');
  app.innerHTML=`<h2>🏆 Tabelas</h2>${botoesDesporto()}${desportoAtual==='futebol'?botoesLigas():''}<div class="carregando">A carregar classificação...</div>`;
  try{
   if(desportoAtual==='futsal'){
-   if(!futsalAtuais.length)futsalAtuais=await buscarFutsal();
-   const e=futsalAtuais.find(x=>x.tournament?.uniqueTournament?.id&&x.season?.id)||futsalAtuais.find(x=>x.tournament?.uniqueTournament?.id);
-   if(!e)throw 0;
-   const tid=e.tournament.uniqueTournament.id, sid=e.season?.id;
-   if(!sid)throw 0;
-   const r=await fetch(`https://www.sofascore.com/api/v1/unique-tournament/${tid}/season/${sid}/standings/total`);if(!r.ok)throw 0;const d=await r.json();
-   const entries=(d?.standings?.[0]?.rows||[]).map(x=>({team:x.team,stats:[{name:'rank',value:x.position},{name:'gamesplayed',value:x.matches},{name:'wins',value:x.wins},{name:'ties',value:x.draws},{name:'losses',value:x.losses},{name:'goaldifference',value:x.goalDifference},{name:'points',value:x.points}]}));
-   const a=app.querySelector('.carregando');a.outerHTML=htmlTabela([{nome:e.tournament.uniqueTournament.name,entries}]);
+   const info=await obterFutsalLigaPlacard();
+   const r=await fetch(`https://www.sofascore.com/api/v1/unique-tournament/${info.tid}/season/${info.sid}/standings/total`);if(!r.ok)throw 0;
+   const d=await r.json();
+   const entries=(d?.standings||[]).flatMap(st=>(st?.rows||[])).map(x=>({team:x.team,stats:[
+    {name:'rank',value:x.position},{name:'gamesplayed',value:x.matches},{name:'wins',value:x.wins},{name:'ties',value:x.draws},{name:'losses',value:x.losses},{name:'goaldifference',value:x.goalDifference},{name:'points',value:x.points}
+   ]}));
+   const a=app.querySelector('.carregando');
+   a.outerHTML=`${htmlTabela([{nome:'Liga Placard',entries}])}<div class="secao"><h3>⚽ Jogos da Liga Placard</h3>${htmlJogosFutsalLiga(futsalAtuais)}</div>`;
   }else{
-   const urls=[`https://site.api.espn.com/apis/v2/sports/soccer/${encodeURIComponent(ligaAtual.code)}/standings?_=${Date.now()}`,`https://site.api.espn.com/apis/v2/sports/soccer/${encodeURIComponent(ligaAtual.code)}/standings?season=${new Date().getFullYear()}&_=${Date.now()}`];let d=null;
-   for(const u of urls){try{const r=await fetch(u);if(r.ok){d=await r.json();if(d)break}}catch(e){}}
-   if(!d)throw 0;app.querySelector('.carregando').outerHTML=htmlTabela(gruposTabela(d));
+   const urls=[
+    `https://site.api.espn.com/apis/v2/sports/soccer/${encodeURIComponent(ligaAtual.code)}/standings?_=${Date.now()}`,
+    `https://site.api.espn.com/apis/v2/sports/soccer/${encodeURIComponent(ligaAtual.code)}/standings?season=${new Date().getFullYear()}&_=${Date.now()}`
+   ];
+   let d=null;
+   for(const u of urls){try{const r=await fetch(u);if(r.ok){const x=await r.json();if(x&&(x.children||x.entries||x.standings)){d=x;break}}}catch(e){}}
+   if(!d)throw 0;
+   const grupos=gruposTabela(d);
+   if(!grupos.length)throw 0;
+   app.querySelector('.carregando').outerHTML=htmlTabela(grupos);
   }
- }catch(e){const a=app.querySelector('.carregando');if(a)a.outerHTML='<div class="erro">Não foi possível carregar a classificação desta competição.</div>'}
+ }catch(e){
+  const a=app.querySelector('.carregando');
+  if(a)a.outerHTML=`<div class="erro">Não foi possível carregar a classificação. Tenta novamente dentro de alguns segundos.</div>`;
+ }
 }
 
 carregarJogos();setInterval(carregarJogos,120000);
