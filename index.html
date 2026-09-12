@@ -2133,6 +2133,131 @@ function abrirFutsalEquipa(nome){
   document.getElementById("overlay").classList.add("show");
 }
 
+/* =========================================================
+   FUTZONE — LIGA BPI 2026/27
+   BLOCO SEGURO
+   Não altera as restantes competições
+   ========================================================= */
+
+const BPI_ID = "liga-bpi-feminina";
+
+const BPI_JOGOS = [
+  {
+    id:"bpi-001",
+    date:"2026-09-12T17:00:00+01:00",
+    home:"Valadares Gaia",
+    away:"FC Porto"
+  },
+  {
+    id:"bpi-002",
+    date:"2026-09-12T17:00:00+01:00",
+    home:"SC Braga",
+    away:"Marítimo"
+  },
+  {
+    id:"bpi-003",
+    date:"2026-09-12T18:00:00+01:00",
+    home:"Sporting",
+    away:"Vitória SC"
+  },
+  {
+    id:"bpi-004",
+    date:"2026-09-12T20:30:00+01:00",
+    home:"Benfica",
+    away:"Racing Power FC"
+  },
+  {
+    id:"bpi-005",
+    date:"2026-09-14T18:00:00+01:00",
+    home:"Torreense",
+    away:"Rio Ave"
+  }
+];
+
+function bpiCriarEvento(jogo){
+
+  return {
+    id:jogo.id,
+
+    date:jogo.date,
+
+    league:{
+      name:"Liga BPI"
+    },
+
+    season:{
+      displayName:"2026/27"
+    },
+
+    status:{
+      type:{
+        completed:false,
+        state:"pre",
+        name:"STATUS_SCHEDULED",
+        shortDetail:"AGENDADO"
+      }
+    },
+
+    competitions:[
+      {
+        id:"bpi-"+jogo.id,
+
+        competitors:[
+          {
+            homeAway:"home",
+            team:{
+              id:"bpi-"+jogo.home,
+              displayName:jogo.home,
+              name:jogo.home
+            },
+            score:""
+          },
+          {
+            homeAway:"away",
+            team:{
+              id:"bpi-"+jogo.away,
+              displayName:jogo.away,
+              name:jogo.away
+            },
+            score:""
+          }
+        ]
+      }
+    ]
+  };
+}
+
+
+/* ---------- RENDER BPI ---------- */
+
+function bpiMostrarJogos(){
+
+  const box=document.getElementById("footballContent");
+
+  const eventos=BPI_JOGOS.map(bpiCriarEvento);
+
+  jogosFutebol=eventos;
+
+  renderizarJogos();
+}
+
+
+/* ---------- INTERCEPTAR APENAS A BPI ---------- */
+
+const buscarJogosLigaOriginal=buscarJogosLiga;
+
+buscarJogosLiga=async function(liga){
+
+  if(liga===BPI_ID){
+
+    return BPI_JOGOS.map(bpiCriarEvento);
+
+  }
+
+  return buscarJogosLigaOriginal(liga);
+};
+
+
 /* ---------- ARRANQUE ---------- */
 
 desenharLigas();
