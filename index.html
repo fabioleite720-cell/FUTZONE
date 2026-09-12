@@ -2137,6 +2137,838 @@ carregarJogos();
 
 /* evita que o browser faça zoom estranho em alguns Android */
 document.addEventListener("gesturestart",e=>e.preventDefault());
+  /* ============================================================
+   FUTZONE — CORREÇÃO FINAL LIGA 2 + LIGA 3
+   Resultados + Próximos jogos + Tabelas completas
+   Não altera as restantes ligas.
+   ============================================================ */
+
+(function(){
+
+  /* ==========================================================
+     DADOS — LIGA PORTUGAL 2 2026/27
+     ========================================================== */
+
+  const FZ_LIGA2_RESULTADOS = [
+
+    ["05/09/2026","CD Tondela","FC Porto B","3","0"],
+    ["05/09/2026","FC Penafiel","Académica OAF","4","1"],
+    ["05/09/2026","Benfica B","Torreense","0","2"],
+    ["05/09/2026","Feirense","Sporting B","1","3"],
+
+    ["06/09/2026","FC Vizela","FC Felgueiras","1","0"],
+    ["06/09/2026","Leixões","Amarante FC","3","1"],
+    ["06/09/2026","UD Leiria","Portimonense","1","0"],
+
+    ["07/09/2026","Lusitânia de Lourosa","AFS","2","1"],
+
+    ["11/09/2026","Torreense","Leixões","0","0"],
+    ["11/09/2026","Académica OAF","Benfica B","0","3"]
+
+  ];
+
+
+  const FZ_LIGA2_PROXIMOS = [
+
+    ["12/09/2026","Portimonense","CD Tondela","12:00"],
+    ["12/09/2026","FC Felgueiras","FC Penafiel","15:00"],
+
+    ["13/09/2026","AFS","Farense","12:00"],
+    ["13/09/2026","GD Chaves","Feirense","15:00"],
+    ["13/09/2026","Amarante FC","UD Leiria","16:30"],
+
+    ["14/09/2026","FC Porto B","FC Vizela","17:00"],
+    ["14/09/2026","Sporting B","Lusitânia de Lourosa","17:00"]
+
+  ];
+
+
+  const FZ_LIGA2_TABELA = [
+
+    ["Lusitânia de Lourosa",13,5,4,1,0,9,3],
+    ["Sporting B",12,5,4,0,1,7,4],
+    ["FC Penafiel",10,5,3,1,1,11,4],
+    ["FC Vizela",10,5,3,1,1,5,2],
+    ["UD Leiria",9,5,3,0,2,8,5],
+    ["Leixões",9,5,3,0,2,8,6],
+    ["Académica OAF",9,5,3,0,2,8,7],
+    ["Farense",7,4,2,1,1,7,5],
+    ["Portimonense",7,5,2,1,2,4,4],
+    ["Benfica B",7,5,2,1,2,4,5],
+    ["FC Felgueiras",6,5,1,3,1,4,4],
+    ["CD Tondela",6,5,2,0,3,5,6],
+    ["AFS",5,4,1,2,1,5,4],
+    ["Torreense",5,5,1,2,2,7,9],
+    ["Amarante FC",4,5,1,1,3,3,6],
+    ["FC Porto B",3,5,1,0,4,2,11],
+    ["GD Chaves",1,4,0,1,3,4,9],
+    ["Feirense",1,5,0,1,4,1,7]
+
+  ];
+
+
+  /* ==========================================================
+     DADOS — LIGA 3 2026/27
+     ========================================================== */
+
+  const FZ_LIGA3_RESULTADOS = [
+
+    /* SÉRIE A */
+
+    ["05/09/2026","Vianense","Paços de Ferreira","2","2"],
+    ["05/09/2026","Vitória SC B","Trofense","0","0"],
+    ["05/09/2026","Varzim","USC Paredes","0","1"],
+
+    ["06/09/2026","Leça FC","Fafe","0","3"],
+    ["06/09/2026","S. João de Ver","AD Marco 09","0","0"],
+
+    /* SÉRIE B */
+
+    ["04/09/2026","UD Santarém","Caldas SC","0","1"],
+
+    ["05/09/2026","Mafra","SC Covilhã","1","0"],
+
+    ["06/09/2026","Vitória de Sernache","Belenenses","1","3"],
+    ["06/09/2026","Atlético CP","Oliveirense","3","1"],
+    ["06/09/2026","Louletano","Lusitano GC","1","0"]
+
+  ];
+
+
+  const FZ_LIGA3_PROXIMOS = [
+
+    /* 12 SETEMBRO — SÉRIE A */
+
+    ["12/09/2026","Varzim","Vianense","15:00"],
+    ["12/09/2026","AD Marco 09","Vitória SC B","16:00"],
+    ["12/09/2026","Trofense","Leça FC","16:00"],
+
+    /* 12 SETEMBRO — SÉRIE B */
+
+    ["12/09/2026","Oliveirense","Mafra","11:00"],
+    ["12/09/2026","Louletano","UD Santarém","16:00"],
+    ["12/09/2026","Lusitano GC","SC Covilhã","17:00"],
+
+    /* 13 SETEMBRO */
+
+    ["13/09/2026","Belenenses","Atlético CP","11:00"],
+    ["13/09/2026","Caldas SC","Vitória de Sernache","17:00"],
+
+    /* 13 SETEMBRO — SÉRIE A */
+
+    ["13/09/2026","Paços de Ferreira","S. João de Ver","17:00"],
+    ["13/09/2026","USC Paredes","Fafe","20:30"]
+
+  ];
+
+
+  const FZ_LIGA3_A_TABELA = [
+
+    ["USC Paredes",9,4,3,0,1,6,3],
+    ["Varzim",9,4,3,0,1,7,3],
+    ["Fafe",8,4,2,2,0,7,2],
+    ["AD Marco 09",7,4,2,1,1,5,3],
+    ["Vitória SC B",5,4,1,2,1,4,4],
+    ["Vianense",5,4,1,2,1,4,4],
+    ["Trofense",4,4,1,1,2,1,3],
+    ["Leça FC",4,4,1,1,2,3,7],
+    ["S. João de Ver",2,4,0,2,2,2,5],
+    ["Paços de Ferreira",1,4,0,1,3,4,9]
+
+  ];
+
+
+  const FZ_LIGA3_B_TABELA = [
+
+    ["Belenenses",12,4,4,0,0,12,2],
+    ["Atlético CP",10,4,3,1,0,8,2],
+    ["Mafra",7,4,2,1,1,8,3],
+    ["Louletano",7,4,2,1,1,6,5],
+    ["Oliveirense",5,4,1,2,1,6,6],
+    ["UD Santarém",5,4,1,2,1,1,2],
+    ["Lusitano GC",4,4,1,1,2,2,3],
+    ["SC Covilhã",4,4,1,1,2,2,4],
+    ["Caldas SC",4,4,1,1,2,3,5],
+    ["Vitória de Sernache",1,4,0,1,3,3,11]
+
+  ];
+
+
+  /* ==========================================================
+     CRIAR EVENTO PARA O SISTEMA EXISTENTE
+     ========================================================== */
+
+  function fzDataISO(data, hora){
+
+    const partes=data.split("/");
+
+    const d=partes[0];
+    const m=partes[1];
+    const a=partes[2];
+
+    let h="15";
+    let min="00";
+
+    if(hora){
+
+      const p=hora.split(":");
+
+      h=p[0];
+      min=p[1];
+
+    }
+
+    return `${a}-${m}-${d}T${h}:${min}:00+01:00`;
+
+  }
+
+
+  function fzEventoResultado(id,data,casa,fora,gc,gf,nomeLiga){
+
+    return {
+
+      id:id,
+
+      date:fzDataISO(data),
+
+      league:{
+        name:nomeLiga
+      },
+
+      season:{
+        displayName:"2026/27"
+      },
+
+      status:{
+        type:{
+          completed:true,
+          state:"post",
+          shortDetail:"FINAL"
+        }
+      },
+
+      competitions:[{
+
+        competitors:[
+
+          {
+            homeAway:"home",
+            score:String(gc),
+            team:{
+              id:"fz-"+id+"-home",
+              displayName:casa,
+              name:casa
+            }
+          },
+
+          {
+            homeAway:"away",
+            score:String(gf),
+            team:{
+              id:"fz-"+id+"-away",
+              displayName:fora,
+              name:fora
+            }
+          }
+
+        ]
+
+      }]
+
+    };
+
+  }
+
+
+  function fzEventoProximo(id,data,casa,fora,hora,nomeLiga){
+
+    return {
+
+      id:id,
+
+      date:fzDataISO(data,hora),
+
+      league:{
+        name:nomeLiga
+      },
+
+      season:{
+        displayName:"2026/27"
+      },
+
+      status:{
+        type:{
+          completed:false,
+          state:"pre",
+          shortDetail:"AGENDADO"
+        }
+      },
+
+      competitions:[{
+
+        competitors:[
+
+          {
+            homeAway:"home",
+            score:"",
+            team:{
+              id:"fz-"+id+"-home",
+              displayName:casa,
+              name:casa
+            }
+          },
+
+          {
+            homeAway:"away",
+            score:"",
+            team:{
+              id:"fz-"+id+"-away",
+              displayName:fora,
+              name:fora
+            }
+          }
+
+        ]
+
+      }]
+
+    };
+
+  }
+
+
+  /* ==========================================================
+     LIGA 2 — RESULTADOS + PRÓXIMOS
+     ========================================================== */
+
+  function fzLiga2Eventos(){
+
+    const resultado=FZ_LIGA2_RESULTADOS.map((j,i)=>
+      fzEventoResultado(
+        "fz-l2-r-"+i,
+        j[0],
+        j[1],
+        j[2],
+        j[3],
+        j[4],
+        "Liga Portugal 2 Meu Super"
+      )
+    );
+
+    const proximos=FZ_LIGA2_PROXIMOS.map((j,i)=>
+      fzEventoProximo(
+        "fz-l2-p-"+i,
+        j[0],
+        j[1],
+        j[2],
+        j[3],
+        "Liga Portugal 2 Meu Super"
+      )
+    );
+
+    return resultado.concat(proximos);
+
+  }
+
+
+  /* ==========================================================
+     LIGA 3 — RESULTADOS + PRÓXIMOS
+     ========================================================== */
+
+  function fzLiga3Eventos(){
+
+    const resultado=FZ_LIGA3_RESULTADOS.map((j,i)=>{
+
+      const serieB=[
+        "UD Santarém",
+        "Caldas SC",
+        "Mafra",
+        "SC Covilhã",
+        "Vitória de Sernache",
+        "Belenenses",
+        "Atlético CP",
+        "Oliveirense",
+        "Louletano",
+        "Lusitano GC"
+      ];
+
+      const isB=
+        serieB.includes(j[1]) ||
+        serieB.includes(j[2]);
+
+      return fzEventoResultado(
+        "fz-l3-r-"+i,
+        j[0],
+        j[1],
+        j[2],
+        j[3],
+        j[4],
+        isB
+          ? "Liga 3 Placard — Série B"
+          : "Liga 3 Placard — Série A"
+      );
+
+    });
+
+
+    const proximos=FZ_LIGA3_PROXIMOS.map((j,i)=>{
+
+      const serieB=[
+        "Oliveirense",
+        "Mafra",
+        "Louletano",
+        "UD Santarém",
+        "Lusitano GC",
+        "SC Covilhã",
+        "Belenenses",
+        "Atlético CP",
+        "Caldas SC",
+        "Vitória de Sernache"
+      ];
+
+      const isB=
+        serieB.includes(j[1]) ||
+        serieB.includes(j[2]);
+
+      return fzEventoProximo(
+        "fz-l3-p-"+i,
+        j[0],
+        j[1],
+        j[2],
+        j[3],
+        isB
+          ? "Liga 3 Placard — Série B"
+          : "Liga 3 Placard — Série A"
+      );
+
+    });
+
+
+    return resultado.concat(proximos);
+
+  }
+
+
+  /* ==========================================================
+     SUBSTITUIR APENAS A BUSCA DESTAS DUAS LIGAS
+     ========================================================== */
+
+  if(typeof buscarJogosLiga==="function"){
+
+    const fzBuscarJogosLigaOriginal=buscarJogosLiga;
+
+    buscarJogosLiga=async function(liga){
+
+      if(liga==="por.2"){
+
+        return fzLiga2Eventos();
+
+      }
+
+      if(liga==="por.3"){
+
+        return fzLiga3Eventos();
+
+      }
+
+      return fzBuscarJogosLigaOriginal(liga);
+
+    };
+
+  }
+
+
+  /* ==========================================================
+     TABELA LIGA 2
+     ========================================================== */
+
+  function fzTabelaHTML(tabela,titulo){
+
+    return `
+
+      <div style="
+        margin-top:12px;
+        background:#09111C;
+        border:1px solid #1B2A3B;
+        border-radius:12px;
+        overflow:hidden;
+      ">
+
+        <div style="
+          padding:14px;
+          font-size:17px;
+          font-weight:800;
+          color:#fff;
+          border-bottom:1px solid #1B2A3B;
+        ">
+          ${titulo}
+        </div>
+
+        <div style="
+          display:grid;
+          grid-template-columns:30px minmax(120px,1fr) 32px 32px 32px 32px 55px 38px;
+          gap:0;
+          padding:9px 8px;
+          font-size:10px;
+          color:#9DAABB;
+          background:#0D1724;
+        ">
+          <span>#</span>
+          <span>Equipa</span>
+          <span>J</span>
+          <span>V</span>
+          <span>E</span>
+          <span>D</span>
+          <span>GM-GS</span>
+          <span>P</span>
+        </div>
+
+        ${tabela.map((t,i)=>`
+
+          <div style="
+            display:grid;
+            grid-template-columns:30px minmax(120px,1fr) 32px 32px 32px 32px 55px 38px;
+            gap:0;
+            align-items:center;
+            padding:11px 8px;
+            border-top:1px solid #1B2A3B;
+            font-size:12px;
+            color:#fff;
+          ">
+
+            <span style="
+              color:${i<4 ? "#1683FF" : "#9DAABB"};
+              font-weight:800;
+            ">
+              ${i+1}
+            </span>
+
+            <span style="font-weight:700">
+              ${t[0]}
+            </span>
+
+            <span>${t[2]}</span>
+            <span>${t[3]}</span>
+            <span>${t[4]}</span>
+            <span>${t[5]}</span>
+
+            <span>${t[6]}-${t[7]}</span>
+
+            <span style="
+              color:#1683FF;
+              font-weight:900;
+            ">
+              ${t[1]}
+            </span>
+
+          </div>
+
+        `).join("")}
+
+      </div>
+
+    `;
+
+  }
+
+
+  /* ==========================================================
+     RESULTADOS / PRÓXIMOS PARA A TABELA
+     ========================================================== */
+
+  function fzResultadosHTML(resultados,titulo){
+
+    return `
+
+      <div style="
+        margin-top:12px;
+        background:#09111C;
+        border:1px solid #1B2A3B;
+        border-radius:12px;
+        overflow:hidden;
+      ">
+
+        <div style="
+          padding:14px;
+          font-size:17px;
+          font-weight:800;
+          color:#fff;
+          border-bottom:1px solid #1B2A3B;
+        ">
+          ${titulo}
+        </div>
+
+        ${resultados.map(j=>`
+
+          <div style="
+            padding:11px 12px;
+            border-top:1px solid #1B2A3B;
+          ">
+
+            <div style="
+              font-size:10px;
+              color:#9DAABB;
+              margin-bottom:6px;
+            ">
+              ${j[0]}
+            </div>
+
+            <div style="
+              display:grid;
+              grid-template-columns:1fr 45px 1fr;
+              align-items:center;
+              gap:6px;
+              font-size:13px;
+              color:#fff;
+            ">
+
+              <span style="font-weight:700">
+                ${j[1]}
+              </span>
+
+              <strong style="
+                text-align:center;
+                font-size:15px;
+              ">
+                ${j[3]} - ${j[4]}
+              </strong>
+
+              <span style="
+                text-align:right;
+                font-weight:700;
+              ">
+                ${j[2]}
+              </span>
+
+            </div>
+
+          </div>
+
+        `).join("")}
+
+      </div>
+
+    `;
+
+  }
+
+
+  function fzProximosHTML(proximos,titulo){
+
+    return `
+
+      <div style="
+        margin-top:12px;
+        background:#09111C;
+        border:1px solid #1B2A3B;
+        border-radius:12px;
+        overflow:hidden;
+      ">
+
+        <div style="
+          padding:14px;
+          font-size:17px;
+          font-weight:800;
+          color:#fff;
+          border-bottom:1px solid #1B2A3B;
+        ">
+          ${titulo}
+        </div>
+
+        ${proximos.map(j=>`
+
+          <div style="
+            padding:12px;
+            border-top:1px solid #1B2A3B;
+          ">
+
+            <div style="
+              font-size:10px;
+              color:#9DAABB;
+              margin-bottom:6px;
+            ">
+              ${j[0]}
+            </div>
+
+            <div style="
+              display:grid;
+              grid-template-columns:1fr 55px 1fr;
+              align-items:center;
+              gap:5px;
+              color:#fff;
+              font-size:13px;
+            ">
+
+              <span style="font-weight:700">
+                ${j[1]}
+              </span>
+
+              <strong style="
+                text-align:center;
+                color:#1683FF;
+              ">
+                ${j[3]}
+              </strong>
+
+              <span style="
+                text-align:right;
+                font-weight:700;
+              ">
+                ${j[2]}
+              </span>
+
+            </div>
+
+          </div>
+
+        `).join("")}
+
+      </div>
+
+    `;
+
+  }
+
+
+  /* ==========================================================
+     MOSTRAR TABELAS
+     ========================================================== */
+
+  window.fzMostrarTabelaLiga2=function(){
+
+    const box=document.getElementById("footballContent");
+
+    if(!box)return;
+
+    box.innerHTML=`
+
+      <div class="day">
+
+        <div class="dayHead">
+
+          <div class="dayName">
+            🇵🇹 LIGA PORTUGAL 2
+          </div>
+
+          <div class="dayCount">
+            2026/27
+          </div>
+
+        </div>
+
+        ${fzTabelaHTML(
+          FZ_LIGA2_TABELA,
+          "Classificação — Liga Portugal 2"
+        )}
+
+        ${fzResultadosHTML(
+          FZ_LIGA2_RESULTADOS.slice().reverse(),
+          "Últimos resultados"
+        )}
+
+        ${fzProximosHTML(
+          FZ_LIGA2_PROXIMOS,
+          "Próximos jogos"
+        )}
+
+      </div>
+
+    `;
+
+  };
+
+
+  window.fzMostrarTabelaLiga3=function(){
+
+    const box=document.getElementById("footballContent");
+
+    if(!box)return;
+
+    box.innerHTML=`
+
+      <div class="day">
+
+        <div class="dayHead">
+
+          <div class="dayName">
+            🇵🇹 LIGA 3
+          </div>
+
+          <div class="dayCount">
+            2026/27
+          </div>
+
+        </div>
+
+        ${fzTabelaHTML(
+          FZ_LIGA3_A_TABELA,
+          "Série A — Classificação"
+        )}
+
+        ${fzTabelaHTML(
+          FZ_LIGA3_B_TABELA,
+          "Série B — Classificação"
+        )}
+
+        ${fzResultadosHTML(
+          FZ_LIGA3_RESULTADOS.slice().reverse(),
+          "Últimos resultados"
+        )}
+
+        ${fzProximosHTML(
+          FZ_LIGA3_PROXIMOS,
+          "Próximos jogos"
+        )}
+
+      </div>
+
+    `;
+
+  };
+
+
+  /* ==========================================================
+     INTERCEPTAR A TABELA EXISTENTE
+     ========================================================== */
+
+  if(typeof mostrarTabelaFutebol==="function"){
+
+    const fzMostrarTabelaOriginal=mostrarTabelaFutebol;
+
+    mostrarTabelaFutebol=function(){
+
+      if(typeof ligaAtual!=="undefined"){
+
+        if(ligaAtual==="por.2"){
+
+          fzMostrarTabelaLiga2();
+
+          return;
+
+        }
+
+        if(ligaAtual==="por.3"){
+
+          fzMostrarTabelaLiga3();
+
+          return;
+
+        }
+
+      }
+
+      return fzMostrarTabelaOriginal.apply(this,arguments);
+
+    };
+
+  }
+
+
+  console.log(
+    "FUTZONE: Liga 2 e Liga 3 corrigidas — resultados, próximos jogos e tabelas."
+  );
+
+})();
 </script>
 
 </body>
