@@ -3796,24 +3796,23 @@ document.addEventListener("gesturestart",e=>e.preventDefault());
   );
 
 })();
-  /* =========================================================
+ /* =========================================================
    FUTZONE — LIGA BPI FEMININA
+   RESULTADOS + CLASSIFICAÇÃO
    BLOCO ISOLADO
    Não altera as restantes competições
    ========================================================= */
 
 (function(){
 
-  const FZ_LIGA_BPI = "por.w.1";
-
+  const FZ_LIGA_BPI = "liga-bpi-feminina";
   const FZ_LIGA_BPI_NOME = "🇵🇹 Liga BPI Feminina";
 
-  /*
-     Adiciona a Liga BPI à lista de competições.
-     O resto das ligas permanece exatamente igual.
-  */
+  /* ---------------------------------------------------------
+     ADICIONAR LIGA BPI
+     --------------------------------------------------------- */
 
-  if(!ligas.some(x=>x[0]===FZ_LIGA_BPI)){
+  if(!ligas.some(x => x[0] === FZ_LIGA_BPI)){
 
     ligas.splice(
       3,
@@ -3823,245 +3822,470 @@ document.addEventListener("gesturestart",e=>e.preventDefault());
 
   }
 
-  /*
-     Reforça a pesquisa da Liga BPI através da ESPN.
-  */
+  /* ---------------------------------------------------------
+     JOGOS / RESULTADOS CONFIRMADOS
+     Liga BPI Feminina 2026/27
+     --------------------------------------------------------- */
 
-  const fzBuscarLigaOriginal = buscarJogosLiga;
+  const FZ_BPI_JOGOS = [
 
-  buscarJogosLiga = async function(liga){
+    {
+      id:"bpi-001",
+      date:"2026-09-12T17:00:00+01:00",
+      home:"Valadares Gaia",
+      away:"FC Porto",
+      homeScore:1,
+      awayScore:3,
+      final:true
+    },
 
-    if(liga !== FZ_LIGA_BPI){
-      return fzBuscarLigaOriginal(liga);
+    {
+      id:"bpi-002",
+      date:"2026-09-12T17:00:00+01:00",
+      home:"SC Braga",
+      away:"Marítimo",
+      homeScore:5,
+      awayScore:0,
+      final:true
+    },
+
+    {
+      id:"bpi-003",
+      date:"2026-09-12T18:00:00+01:00",
+      home:"Sporting",
+      away:"Vitória SC",
+      homeScore:2,
+      awayScore:0,
+      final:true
+    },
+
+    {
+      id:"bpi-004",
+      date:"2026-09-12T20:30:00+01:00",
+      home:"Benfica",
+      away:"Racing Power FC",
+      homeScore:null,
+      awayScore:null,
+      final:false
+    },
+
+    {
+      id:"bpi-005",
+      date:"2026-09-13T13:00:00+01:00",
+      home:"Torreense",
+      away:"Rio Ave",
+      homeScore:null,
+      awayScore:null,
+      final:false
     }
 
-    const hoje = new Date();
+  ];
 
-    const datas = [];
+  /* ---------------------------------------------------------
+     EQUIPAS
+     --------------------------------------------------------- */
 
-    /*
-       Procuramos alguns dias para trás e para a frente,
-       mantendo o mesmo sistema usado no FUTZONE.
-    */
+  const FZ_BPI_EQUIPAS = [
 
-    for(let i=-3;i<=10;i++){
+    "Benfica",
+    "FC Porto",
+    "Sporting",
+    "SC Braga",
+    "Racing Power FC",
+    "Valadares Gaia",
+    "Vitória SC",
+    "Torreense",
+    "Rio Ave",
+    "Marítimo"
 
-      const d = new Date(hoje);
+  ];
 
-      d.setDate(d.getDate()+i);
+  /* ---------------------------------------------------------
+     CRIAR CLASSIFICAÇÃO
+     --------------------------------------------------------- */
 
-      const y=d.getFullYear();
-      const m=String(d.getMonth()+1).padStart(2,"0");
-      const day=String(d.getDate()).padStart(2,"0");
+  function fzCriarTabela(){
 
-      datas.push(`${y}${m}${day}`);
+    return FZ_BPI_EQUIPAS.map(nome => ({
 
-    }
+      nome:nome,
 
-    const pedidos = datas.map(async data=>{
+      J:0,
+      V:0,
+      E:0,
+      D:0,
 
-      try{
+      GM:0,
+      GS:0,
 
-        const url =
-          `${API}${FZ_LIGA_BPI}/scoreboard?dates=${data}`;
+      PTS:0
 
-        const r=await fetch(url,{
-          cache:"no-store"
-        });
+    }));
 
-        if(!r.ok) return [];
+  }
 
-        const j=await r.json();
+  /* ---------------------------------------------------------
+     CALCULAR CLASSIFICAÇÃO
+     --------------------------------------------------------- */
 
-        return j.events || [];
+  function fzCalcularTabela(){
 
-      }catch(e){
+    const tabela = fzCriarTabela();
 
-        return [];
+    const mapa = {};
+
+    tabela.forEach(e => {
+      mapa[e.nome] = e;
+    });
+
+    FZ_BPI_JOGOS.forEach(jogo => {
+
+      if(
+        jogo.homeScore === null ||
+        jogo.awayScore === null
+      ){
+
+        return;
+
+      }
+
+      const casa = mapa[jogo.home];
+      const fora = mapa[jogo.away];
+
+      if(!casa || !fora) return;
+
+      casa.J++;
+      fora.J++;
+
+      casa.GM += jogo.homeScore;
+      casa.GS += jogo.awayScore;
+
+      fora.GM += jogo.awayScore;
+      fora.GS += jogo.homeScore;
+
+      if(jogo.homeScore > jogo.awayScore){
+
+        casa.V++;
+        fora.D++;
+
+        casa.PTS += 3;
+
+      }
+      else if(jogo.homeScore < jogo.awayScore){
+
+        fora.V++;
+        casa.D++;
+
+        fora.PTS += 3;
+
+      }
+      else{
+
+        casa.E++;
+        fora.E++;
+
+        casa.PTS++;
+        fora.PTS++;
 
       }
 
     });
 
-    const resultados =
-      await Promise.all(pedidos);
+    tabela.sort((a,b) => {
 
-    const mapa = new Map();
+      if(b.PTS !== a.PTS)
+        return b.PTS-a.PTS;
 
-    resultados
-      .flat()
-      .forEach(event=>{
+      const dgA = a.GM-a.GS;
+      const dgB = b.GM-b.GS;
 
-        if(event?.id){
-          mapa.set(String(event.id),event);
-        }
+      if(dgB !== dgA)
+        return dgB-dgA;
 
-      });
+      return b.GM-a.GM;
 
-    return Array.from(mapa.values());
+    });
+
+    return tabela;
+
+  }
+
+  /* ---------------------------------------------------------
+     CONVERTER JOGO PARA O FORMATO DO FUTZONE
+     --------------------------------------------------------- */
+
+  function fzEvento(jogo){
+
+    return {
+
+      id:jogo.id,
+
+      date:jogo.date,
+
+      name:
+        `${jogo.home} vs ${jogo.away}`,
+
+      competitions:[{
+
+        name:"Liga BPI",
+
+        abbreviation:"BPI",
+
+        competitors:[
+
+          {
+
+            id:"bpi-home-"+jogo.id,
+
+            homeAway:"home",
+
+            team:{
+
+              displayName:jogo.home,
+              shortDisplayName:jogo.home,
+              name:jogo.home
+
+            },
+
+            score:
+              jogo.homeScore === null
+                ? undefined
+                : String(jogo.homeScore)
+
+          },
+
+          {
+
+            id:"bpi-away-"+jogo.id,
+
+            homeAway:"away",
+
+            team:{
+
+              displayName:jogo.away,
+              shortDisplayName:jogo.away,
+              name:jogo.away
+
+            },
+
+            score:
+              jogo.awayScore === null
+                ? undefined
+                : String(jogo.awayScore)
+
+          }
+
+        ]
+
+      }],
+
+      _liga:FZ_LIGA_BPI,
+      _bpi:true
+
+    };
+
+  }
+
+  /* ---------------------------------------------------------
+     SUBSTITUI A PESQUISA APENAS PARA A LIGA BPI
+     --------------------------------------------------------- */
+
+  const fzBuscarOriginal = buscarJogosLiga;
+
+  buscarJogosLiga = async function(liga){
+
+    if(liga !== FZ_LIGA_BPI){
+
+      return fzBuscarOriginal(liga);
+
+    }
+
+    return FZ_BPI_JOGOS.map(fzEvento);
 
   };
 
-  /*
-     Liga BPI no botão "LIVE — TODAS AS LIGAS".
-  */
+  /* ---------------------------------------------------------
+     MOSTRAR CLASSIFICAÇÃO
+     --------------------------------------------------------- */
 
-  const fzMostrarLiveOriginal = mostrarTodosLive;
-
-  mostrarTodosLive = async function(){
+  function fzMostrarClassificacao(){
 
     const box =
       document.getElementById("footballContent");
 
     if(!box) return;
 
-    box.innerHTML =
-      '<div class="loading">🔴 A procurar jogos em direto...</div>';
+    const tabela =
+      fzCalcularTabela();
 
-    const ligasLive = [
+    box.innerHTML = `
 
-      "por.1",
-      "por.2",
-      "por.3",
+      <div class="day">
 
-      "por.w.1",
+        <div class="dayHead">
 
-      "eng.1",
-      "eng.2",
-
-      "esp.1",
-      "esp.2",
-
-      "ita.1",
-      "ita.2",
-
-      "ger.1",
-      "ger.2",
-
-      "fra.1",
-      "fra.2",
-
-      "ned.1",
-      "bel.1",
-
-      "uefa.champions",
-      "uefa.europa",
-      "uefa.europa.conf"
-
-    ];
-
-    try{
-
-      const pedidos = ligasLive.map(async liga=>{
-
-        try{
-
-          const r =
-            await fetch(`${API}${liga}/scoreboard`,{
-              cache:"no-store"
-            });
-
-          if(!r.ok) return [];
-
-          const data=await r.json();
-
-          return (data.events || [])
-            .filter(e=>isLive(e))
-            .map(e=>({
-              ...e,
-              _liga:liga
-            }));
-
-        }catch(e){
-
-          return [];
-
-        }
-
-      });
-
-      const resultados =
-        await Promise.all(pedidos);
-
-      const jogosLive =
-        resultados
-          .flat()
-          .filter((e,i,a)=>
-            a.findIndex(
-              x=>String(x.id)===String(e.id)
-            )===i
-          );
-
-      if(!jogosLive.length){
-
-        box.innerHTML=`
-          <div class="empty">
-            🔴<br><br>
-            Não existem jogos em direto neste momento.
+          <div class="dayName">
+            🇵🇹 LIGA BPI FEMININA
           </div>
-        `;
+
+          <div class="dayCount">
+            CLASSIFICAÇÃO
+          </div>
+
+        </div>
+
+        <div style="
+          overflow-x:auto;
+          width:100%;
+        ">
+
+          <table style="
+            width:100%;
+            min-width:650px;
+            border-collapse:collapse;
+            font-size:13px;
+          ">
+
+            <thead>
+
+              <tr>
+
+                <th style="padding:10px;text-align:left">
+                  #
+                </th>
+
+                <th style="padding:10px;text-align:left">
+                  Equipa
+                </th>
+
+                <th>J</th>
+                <th>V</th>
+                <th>E</th>
+                <th>D</th>
+                <th>GM</th>
+                <th>GS</th>
+                <th>DG</th>
+                <th>PTS</th>
+
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              ${tabela.map((e,i) => `
+
+                <tr style="
+                  border-top:1px solid var(--border);
+                ">
+
+                  <td style="padding:10px">
+                    ${i+1}
+                  </td>
+
+                  <td style="
+                    padding:10px;
+                    font-weight:700;
+                  ">
+                    ${escapeHtml(e.nome)}
+                  </td>
+
+                  <td style="text-align:center">
+                    ${e.J}
+                  </td>
+
+                  <td style="text-align:center">
+                    ${e.V}
+                  </td>
+
+                  <td style="text-align:center">
+                    ${e.E}
+                  </td>
+
+                  <td style="text-align:center">
+                    ${e.D}
+                  </td>
+
+                  <td style="text-align:center">
+                    ${e.GM}
+                  </td>
+
+                  <td style="text-align:center">
+                    ${e.GS}
+                  </td>
+
+                  <td style="text-align:center">
+                    ${e.GM-e.GS}
+                  </td>
+
+                  <td style="
+                    text-align:center;
+                    font-weight:800;
+                  ">
+                    ${e.PTS}
+                  </td>
+
+                </tr>
+
+              `).join("")}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </div>
+
+    `;
+
+  }
+
+  /* ---------------------------------------------------------
+     QUANDO FOR PEDIDA A TABELA DA LIGA BPI
+     --------------------------------------------------------- */
+
+  const fzTabelaOriginal =
+    typeof mostrarTabelaFutebol === "function"
+      ? mostrarTabelaFutebol
+      : null;
+
+  if(fzTabelaOriginal){
+
+    mostrarTabelaFutebol = function(){
+
+      if(
+        typeof ligaAtual !== "undefined" &&
+        ligaAtual === FZ_LIGA_BPI
+      ){
+
+        fzMostrarClassificacao();
 
         return;
 
       }
 
-      jogosLive.sort(
-        (a,b)=>
-          new Date(a.date)-new Date(b.date)
+      return fzTabelaOriginal.apply(
+        this,
+        arguments
       );
 
-      box.innerHTML=`
+    };
 
-        <div class="day">
+  }
 
-          <div class="dayHead">
-
-            <div class="dayName">
-              🔴 JOGOS EM DIRETO
-            </div>
-
-            <div class="dayCount">
-              ${jogosLive.length}
-              ${jogosLive.length===1
-                ?"jogo"
-                :"jogos"}
-            </div>
-
-          </div>
-
-          ${jogosLive
-            .map(event=>cartaoJogo(event))
-            .join("")}
-
-        </div>
-
-      `;
-
-    }catch(e){
-
-      box.innerHTML=`
-        <div class="error">
-          Não foi possível consultar os jogos
-          em direto neste momento.
-        </div>
-      `;
-
-    }
-
-  };
-
-  /*
-     Depois de adicionar a competição,
-     redesenha os botões.
-  */
+  /* ---------------------------------------------------------
+     DESENHAR LIGAS
+     --------------------------------------------------------- */
 
   desenharLigas();
 
   console.log(
-    "FUTZONE: Liga BPI Feminina ativada."
+    "FUTZONE: Liga BPI Feminina — resultados e classificação ativos."
   );
 
-})();
+})(); 
+
 </script>
 
 </body>
