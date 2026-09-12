@@ -1,1 +1,2145 @@
-<!DOCTYPE html> <html lang="pt-PT"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width,initial-scale=1.0"> <meta name="theme-color" content="#0057B8"> <link rel="manifest" href="./manifest.json"> <meta name="mobile-web-app-capable" content="yes"> <meta name="apple-mobile-web-app-capable" content="yes"> <title>FUTZONE</title> <style> *{ box-sizing:border-box } body{ margin:0; background:#03060B; color:#FFF; font-family:Arial,sans-serif } header{ position:sticky; top:0; z-index:20; background:#09111C; border-bottom:1px solid #1B2A3B; padding:10px 12px } .logo{ font-size:24px; font-weight:900 } .logo span{ color:#1683FF } .sub{ font-size:9px; color:#9DAABB; margin-top:1px } main{ padding:10px 9px 78px; max-width:720px; margin:auto } h2{ font-size:17px; margin:10px 0 9px } h3{ font-size:13px } /* ========================= LIGAS ========================= */ .seletor-ligas{ display:grid; grid-template-columns:repeat(2,1fr); gap:7px; margin-bottom:10px } .liga-btn{ background:#09111C; border:1px solid #1B2A3B; border-radius:10px; padding:8px 4px; color:#FFF; font-size:11px; font-weight:bold; cursor:pointer } .liga-btn:active{ opacity:.7 } .liga-btn.active{ background:#003B7A; border-color:#1683FF } .liga-icon{ display:block; font-size:19px; margin-bottom:3px } /* ========================= CATEGORIAS ========================= */ .categorias-jogos{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin:7px 0 9px } .categoria-btn{ background:#09111C; border:1px solid #1B2A3B; color:#9DAABB; border-radius:9px; padding:8px 3px; font-size:10px; font-weight:900; cursor:pointer } .categoria-btn.active{ background:#003B7A; border-color:#1683FF; color:#FFF } .categoria-icon{ display:block; font-size:17px; margin-bottom:3px } .categoria-btn.live{ border-color:#FF4054 } /* ========================= VOLTAR ========================= */ .voltar-ligas{ width:100%; background:#09111C; border:1px solid #1B2A3B; color:#FFF; border-radius:9px; padding:8px; font-size:11px; font-weight:bold; margin-bottom:8px; cursor:pointer } .voltar-ligas:active{ opacity:.7 } /* ========================= JOGOS ========================= */ .grupo-jogos{ background:#09111C; border:1px solid #1B2A3B; border-radius:11px; margin:7px 0; padding:8px } .grupo-titulo{ display:flex; align-items:center; justify-content:space-between; font-size:12px; font-weight:900; padding:1px 2px 7px } .grupo-contagem{ color:#9DAABB; font-size:9px; font-weight:normal } .jogo{ background:#0D1724; border:1px solid #1B2A3B; border-radius:9px; padding:8px; margin-bottom:5px; cursor:pointer } .jogo:last-child{ margin-bottom:0 } .jogo-top{ display:flex; justify-content:space-between; color:#9DAABB; font-size:9px; margin-bottom:6px } .equipas{ display:grid; grid-template-columns:1fr 55px 1fr; align-items:center; gap:4px } .equipa{ text-align:center; font-size:11px; font-weight:bold } .equipa-clicavel{ cursor:pointer } .equipa-clicavel:active{ opacity:.7 } .escudo{ width:27px; height:27px; object-fit:contain; display:block; margin:0 auto 3px } .resultado{ text-align:center; font-size:16px; font-weight:900 } .estado-live{ color:#FF4054; font-weight:900 } .estado-final{ color:#9DAABB } .vazio, .erro, .carregando{ background:#09111C; border:1px solid #1B2A3B; border-radius:9px; padding:15px; text-align:center; color:#9DAABB; font-size:11px } .erro{ color:#FF8F8F } /* ========================= NOTÍCIAS ========================= */ .noticias{ margin-top:12px } .noticias-titulo{ display:flex; justify-content:space-between; align-items:center; margin:0 2px 7px; font-size:14px; font-weight:900 } .noticias-sub{ color:#9DAABB; font-size:9px; font-weight:normal } .noticia{ display:block; background:#09111C; border:1px solid #1B2A3B; border-radius:9px; padding:9px; margin-bottom:6px; text-decoration:none; color:#FFF } .noticia:active{ opacity:.7 } .noticia-titulo{ font-size:11px; font-weight:bold; line-height:1.35 } .noticia-info{ color:#9DAABB; font-size:9px; margin-top:5px } .noticia-fonte{ color:#1683FF; font-size:9px; margin-top:4px } /* ========================= MENU ========================= */ .bottom{ position:fixed; bottom:0; left:0; right:0; height:59px; background:#09111C; border-top:1px solid #1B2A3B; display:flex; z-index:30 } .bottom button{ background:none; border:0; color:#9DAABB; font-weight:bold; width:33%; font-size:11px; cursor:pointer } .bottom button.active{ color:#1683FF } /* ========================= DETALHES ========================= */ .overlay{ position:fixed; inset:0; background:#03060B; z-index:50; overflow:auto } .detalhe-header{ position:sticky; top:0; background:#09111C; border-bottom:1px solid #1B2A3B; padding:9px; z-index:5 } .voltar{ background:#0D1724; border:1px solid #243653; color:#FFF; border-radius:8px; padding:7px 11px; font-weight:bold; font-size:11px } .detalhe{ max-width:720px; margin:auto; padding:8px 9px 30px } .jogo-grande{ background:#09111C; border:1px solid #1B2A3B; border-radius:12px; padding:15px 7px; margin-bottom:8px } .jogo-grande .equipas{ grid-template-columns:1fr 80px 1fr } .jogo-grande .escudo{ width:48px; height:48px } .jogo-grande .equipa{ font-size:13px } .bigscore{ text-align:center; font-size:27px; font-weight:900 } .estado{ text-align:center; color:#1683FF; font-size:10px; margin-top:3px } .secao{ background:#09111C; border:1px solid #1B2A3B; border-radius:10px; margin:8px 0; padding:9px } .secao h3{ margin:0 0 7px } .evento{ display:flex; gap:7px; padding:7px 0; border-bottom:1px solid #1B2A3B; font-size:11px } .evento:last-child{ border:0 } .minuto{ color:#1683FF; font-weight:bold; min-width:32px } /* ========================= ESTATÍSTICAS ========================= */ .stats-head, .stat-row{ display:grid; grid-template-columns:1fr 90px 1fr; text-align:center } .stats-head{ font-size:10px; color:#9DAABB } .stat-row{ padding:7px 0; border-top:1px solid #1B2A3B; font-size:10px } .nome{ color:#9DAABB; font-size:9px } .stat-home{ text-align:right; font-weight:bold } .stat-away{ text-align:left; font-weight:bold } /* ========================= PLANTEL ========================= */ .lista-jogadores{ display:grid; grid-template-columns:1fr 1fr; gap:5px } .jogador{ background:#0D1724; border:1px solid #1B2A3B; border-radius:7px; padding:7px; font-size:10px } .jogador b{ color:#1683FF; margin-right:3px } .subtitulo{ color:#9DAABB; font-size:9px; margin:6px 0 } /* ========================= TABELAS ========================= */ .tabela-caixa{ background:#09111C; border:1px solid #1B2A3B; border-radius:11px; padding:9px; margin-top:8px; overflow-x:auto } .tabela-titulo{ display:flex; align-items:center; gap:7px; font-size:13px; font-weight:900; margin-bottom:8px } .tabela-scroll{ overflow-x:auto } table{ width:100%; min-width:500px; border-collapse:collapse; font-size:10px } th, td{ padding:7px 3px; border-bottom:1px solid #1B2A3B; text-align:center } th{ color:#9DAABB } .team-cell{ text-align:left; font-weight:bold; cursor:pointer } .team-cell:active{ color:#1683FF } .posicao{ color:#9DAABB; width:23px } /* ========================= CLUBE ========================= */ .equipa-header{ background:#09111C; border:1px solid #1B2A3B; border-radius:11px; padding:15px 9px; text-align:center; margin-bottom:8px } .equipa-header .escudo{ width:65px; height:65px } .equipa-nome{ font-size:17px; font-weight:900; margin-top:7px } .jogo-equipa{ background:#0D1724; border:1px solid #1B2A3B; border-radius:9px; padding:8px; margin-bottom:5px; cursor:pointer } .clube-equipas{ display:grid; grid-template-columns:1fr 50px 1fr; align-items:center; text-align:center; font-size:10px; font-weight:bold } .clube-score{ font-size:15px; font-weight:900 } /* ========================= FUTEBOL / FUTSAL ========================= */ .modo-desporto{ display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:7px 9px; background:#03060B; } .modo{ background:#09111C; border:1px solid #1B2A3B; color:#9DAABB; border-radius:9px; padding:9px 5px; font-size:11px; font-weight:900; cursor:pointer } .modo.ativo{ background:#003B7A; border-color:#1683FF; color:#FFF } .card{ background:#09111C; border:1px solid #1B2A3B; border-radius:11px; padding:9px; margin:8px 0; } .liga-titulo{ font-size:14px; font-weight:900; margin-bottom:8px; } .botoes-futsal{ display:grid; grid-template-columns:1fr 1fr; gap:6px; } .botoes-futsal button{ background:#0D1724; border:1px solid #1B2A3B; color:#FFF; border-radius:8px; padding:8px; font-size:10px; font-weight:bold; } .jogo-card{ background:#0D1724; border:1px solid #1B2A3B; border-radius:8px; padding:9px; margin:6px 0; display:grid; gap:4px; } .jogo-card small{ color:#9DAABB; } .jogo-card span{ color:#1683FF; font-size:9px; } /* ========================= CAMPO FUTZONE ========================= */ .campo-futzone{ background:#063B22; border:2px solid #1683FF; border-radius:12px; padding:10px 5px; margin-top:8px; position:relative; overflow:hidden; min-height:500px; } .campo-futzone:before{ content:""; position:absolute; left:50%; top:0; bottom:0; width:1px; background:rgba(255,255,255,.45); } .campo-meio{ position:absolute; left:50%; top:50%; width:72px; height:72px; transform:translate(-50%,-50%); border:1px solid rgba(255,255,255,.5); border-radius:50%; } .campo-ponto{ position:absolute; left:50%; top:50%; width:5px; height:5px; transform:translate(-50%,-50%); background:#FFF; border-radius:50%; } .campo-area{ position:absolute; left:50%; width:115px; height:65px; transform:translateX(-50%); border:1px solid rgba(255,255,255,.5); } .campo-area.top{ top:0; border-top:0; } .campo-area.bottom{ bottom:0; border-bottom:0; } .campo-equipa{ position:relative; height:225px; display:flex; justify-content:space-around; align-items:center; flex-direction:column; z-index:2; } .campo-linha{ display:flex; justify-content:center; gap:5px; width:100%; } .campo-jogador{ width:55px; min-height:45px; background:#09111C; border:1px solid #1683FF; border-radius:8px; padding:4px 2px; text-align:center; cursor:pointer; box-shadow:0 2px 5px rgba(0,0,0,.35); color:#FFF; } .campo-jogador:active{ transform:scale(.94); } .campo-num{ display:block; color:#1683FF; font-size:9px; font-weight:900; } .campo-nome{ display:block; color:#FFF; font-size:8px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .campo-nota{ display:block; font-size:9px; font-weight:900; margin-top:2px; } .campo-titulo{ position:relative; z-index:3; text-align:center; color:#FFF; font-size:12px; font-weight:900; margin-bottom:5px; } .campo-titulo-fora{ margin-top:5px; } .campo-separador{ height:4px; } .jogador-detalhe{ margin-top:8px; } </style> </head> <body> <header> <div class="logo"> FUT<span>ZONE</span> </div> <div class="sub"> FUTEBOL EM DIRETO </div> </header> <div class="modo-desporto"> <button id="btnFutebol" class="modo ativo" onclick="mudarDesporto('futebol')"> ⚽ FUTEBOL </button> <button id="btnFutsal" class="modo" onclick="mudarDesporto('futsal')"> 🥅 FUTSAL </button> </div> <main id="app"></main> <div class="bottom"> <button id="navJogos" class="active" onclick="mostrarJogos()"> ⚽<br>Jogos </button> <button id="navTabelas" onclick="mostrarTabelas()"> 🏆<br>Tabelas </button> <button id="navFav" onclick="mostrarFavoritos()"> ⭐<br>Favoritos </button> </div> <script> /* ===================================================== CONFIGURAÇÃO ===================================================== */ const ESPN= "https://site.api.espn.com/apis/site/v2/sports/soccer/"; const ESPN2= "https://site.api.espn.com/apis/v2/sports/soccer/"; const ligas=[ { name:"Portugal", code:"por.1", icon:"🇵🇹" }, { name:"Inglaterra", code:"eng.1", icon:"🏴" }, { name:"Espanha", code:"esp.1", icon:"🇪🇸" }, { name:"Itália", code:"ita.1", icon:"🇮🇹" }, { name:"Alemanha", code:"ger.1", icon:"🇩🇪" }, { name:"França", code:"fra.1", icon:"🇫🇷" }, { name:"Países Baixos", code:"ned.1", icon:"🇳🇱" }, { name:"Bélgica", code:"bel.1", icon:"🇧🇪" }, { name:"Champions", code:"uefa.champions", icon:"🏆" }, { name:"Liga Europa", code:"uefa.europa", icon:"🏆" }, { name:"Conference", code:"uefa.europa.conf", icon:"🏆" } ]; let ligaAtual=ligas[0]; let jogosAtuais=[]; let modoJogos="todos"; let paginaJogos="ligas"; let paginaTabelas="ligas"; let clubeAtual=null; const app= document.getElementById("app"); /* ===================================================== SEGURANÇA ===================================================== */ const esc=v=> String(v??"").replace( /[&<>"']/g, m=>({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" }[m]) ); /* ===================================================== LOGO ===================================================== */ function logo(u){ return u ? `<img class="escudo" src="${esc(u)}" onerror="this.style.visibility='hidden'" >` : `<div style="height:30px"></div>`; } /* ===================================================== MODO FUTEBOL / FUTSAL ===================================================== */ let desportoAtual="futebol"; function mudarDesporto(tipo){ desportoAtual=tipo; document .getElementById("btnFutebol") ?.classList .toggle( "ativo", tipo==="futebol" ); document .getElementById("btnFutsal") ?.classList .toggle( "ativo", tipo==="futsal" ); if(tipo==="futsal"){ mostrarFutsal(); }else{ mostrarJogos(); } } /* ===================================================== NAVEGAÇÃO ===================================================== */ function nav(id){ [ "navJogos", "navTabelas", "navFav" ].forEach(x=>{ document .getElementById(x) ?.classList .toggle( "active", x===id ); }); } /* ===================================================== DATA ===================================================== */ function data8(d){ return d.getFullYear()+ String( d.getMonth()+1 ).padStart(2,"0")+ String( d.getDate() ).padStart(2,"0"); } /* ===================================================== ESTADO DO JOGO ===================================================== */ function estado(ev){ const s= ev?.status|| ev?.competitions?.[0]?.status|| {}; const t= s.type|| {}; if(t.state==="in"){ return{ txt: t.shortDetail|| t.detail|| t.displayClock|| "DIRETO", live:true, final:false }; } if(t.state==="post"){ return{ txt: t.shortDetail|| t.detail|| "FINAL", live:false, final:true }; } return{ txt: t.shortDetail|| t.detail|| t.name|| "", live:false, final:false }; } /* ===================================================== NORMALIZAR JOGO ===================================================== */ function normalizar(ev,l){ const c= ev.competitions?.[0]|| {}; const cs= c.competitors|| []; const h= cs.find( x=>x.homeAway==="home" )|| cs[0]|| {}; const a= cs.find( x=>x.homeAway==="away" )|| cs[1]|| {}; const s= estado(ev); return{ id:String(ev.id), date:ev.date||"", status: ev.status|| c.status|| {}, home:{ nome: h.team?.displayName|| h.team?.shortDisplayName|| "Casa", logo: h.team?.logo|| h.team?.logos?.[0]?.href|| "", score: h.score??"-", id: h.team?.id|| "" }, away:{ nome: a.team?.displayName|| a.team?.shortDisplayName|| "Fora", logo: a.team?.logo|| a.team?.logos?.[0]?.href|| "", score: a.score??"-", id: a.team?.id|| "" }, estado:s, liga:l.name, code:l.code }; } /* ===================================================== BUSCAR EVENTOS ===================================================== */ async function buscarEventos(l){ const hoje= new Date(); const ini= new Date(hoje); const fim= new Date(hoje); ini.setDate( ini.getDate()-120 ); fim.setDate( fim.getDate()+120 ); const urls=[ `${ESPN}${encodeURIComponent(l.code)}/scoreboard?limit=500&dates=${data8(ini)}-${data8(fim)}&_=${Date.now()}`, `${ESPN}${encodeURIComponent(l.code)}/scoreboard?limit=100&dates=${data8(hoje)}&_=${Date.now()}`, `${ESPN}${encodeURIComponent(l.code)}/scoreboard?limit=100&_=${Date.now()}` ]; for( const u of urls ){ try{ const r= await fetch(u); if(!r.ok) continue; const d= await r.json(); if( Array.isArray(d.events)&& d.events.length ){ return d.events; } }catch(e){} } return[]; } /* ===================================================== CARREGAR JOGOS ===================================================== */ async function carregarJogos(){ let lista=[]; for( const l of ligas ){ const evs= await buscarEventos(l); evs.forEach(e=>{ lista.push( normalizar(e,l) ); }); } const mapa= new Map(); lista.forEach(j=>{ mapa.set( j.id, j ); }); jogosAtuais= [...mapa.values()] .sort( (a,b)=> new Date(a.date)- new Date(b.date) ); if( document .getElementById("navJogos") ?.classList .contains("active") ){ if( paginaJogos==="liga" ){ mostrarJogosLiga(); }else{ mostrarJogos(); } } } /* ===================================================== BOTÕES DAS LIGAS ===================================================== */ function botoesLigas(tipo){ const func= tipo==="tabelas" ? "selecionarLigaTabela" : "selecionarLiga"; return ` <div class="seletor-ligas"> ${ligas.map(l=>` <button class="liga-btn" onclick="${func}('${esc(l.code)}')"> <span class="liga-icon"> ${l.icon} </span> ${esc(l.name)} </button> `).join("")} </div> `; } /* ===================================================== FUTSAL ===================================================== */ function mostrarFutsal(){ app.innerHTML = ` <h2>🥅 Futsal</h2> <div class="card"> <div class="liga-titulo"> 🇵🇹 Liga Placard </div> <div class="botoes-futsal"> <button onclick="futsalJogos()"> 📅 Jogos </button> <button onclick="futsalResultados()"> ✅ Resultados </button> <button onclick="futsalTabela()"> 🏆 Tabela </button> <button onclick="futsalEquipas()"> 👥 Equipas </button> </div> </div> <div id="futsalConteudo"></div> `; futsalJogos(); } function futsalJogos(){ const jogos = [ ["11/09","19:30","AD Fundão","SC Braga"], ["11/09","20:30","Torreense","Eléctrico"], ["11/09","21:15","Sporting CP","Portimonense"], ["12/09","17:00","Leões Porto Salvo","Ferreira do Zêzere"], ["12/09","19:00","Benfica","UPVN"], ["13/09","15:00","Rio Ave","FC Famalicão"] ]; document.getElementById( "futsalConteudo" ).innerHTML = ` <div class="card"> <h3> 📅 Próximos jogos </h3> ${jogos.map(j => ` <div class="jogo-card"> <small> ${esc(j[0])} • ${esc(j[1])} </small> <strong> ${esc(j[2])} </strong> <span> vs </span> <strong> ${esc(j[3])} </strong> </div> `).join("")} </div> `; } function futsalResultados(){ document.getElementById( "futsalConteudo" ).innerHTML = ` <div class="card"> <h3>✅ Resultados</h3> <div class="empty vazio"> Ainda não existem resultados registados. </div> </div> `; } function futsalTabela(){ document.getElementById( "futsalConteudo" ).innerHTML = ` <div class="card"> <h3>🏆 Liga Placard</h3> <div class="vazio"> A classificação será preenchida com os resultados oficiais. </div> </div> `; } function futsalEquipas(){ const equipas = [ "AD Fundão", "SC Braga", "Torreense", "Eléctrico", "Sporting CP", "Portimonense", "Leões Porto Salvo", "Ferreira do Zêzere", "Benfica", "UPVN", "Rio Ave", "FC Famalicão" ]; document.getElementById( "futsalConteudo" ).innerHTML = ` <div class="card"> <h3>👥 Equipas</h3> ${equipas.map(e => ` <div class="jogador"> <strong>${esc(e)}</strong> </div> `).join("")} </div> `; } /* ===================================================== JOGOS ===================================================== */ function mostrarJogos(){ nav("navJogos"); paginaJogos="ligas"; app.innerHTML=` <h2>⚽ Escolher liga</h2> ${botoesLigas("jogos")} <div class="noticias"> <div class="noticias-titulo"> <span> 📰 Notícias desportivas </span> <span class="noticias-sub"> Últimas notícias </span> </div> <div id="listaNoticias" class="carregando"> A carregar notícias... </div> </div> `; carregarNoticias(); } /* ===================================================== SELECIONAR LIGA ===================================================== */ function selecionarLiga(code){ ligaAtual= ligas.find( l=>l.code===code )|| ligas[0]; modoJogos="todos"; paginaJogos="liga"; mostrarJogosLiga(); } /* ===================================================== CATEGORIAS ===================================================== */ function botoesCategorias(){ return ` <div class="categorias-jogos"> <button class="categoria-btn live ${modoJogos==="live"?"active":""}" onclick=" modoJogos='live'; mostrarJogosLiga(); "> <span class="categoria-icon"> 🔴 </span> Ao Vivo </button> <button class="categoria-btn ${modoJogos==="futuros"?"active":""}" onclick=" modoJogos='futuros'; mostrarJogosLiga(); "> <span class="categoria-icon"> 📅 </span> Futuros </button> <button class="categoria-btn ${modoJogos==="passados"?"active":""}" onclick=" modoJogos='passados'; mostrarJogosLiga(); "> <span class="categoria-icon"> ✅ </span> Realizados </button> </div> `; } /* ===================================================== DATA LOCAL ===================================================== */ function dataLocal(d){ try{ return new Intl.DateTimeFormat( "pt-PT", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" } ).format( new Date(d) ); }catch(e){ return ""; } } /* ===================================================== EQUIPA CLICÁVEL ===================================================== */ function teamHtml(team,code){ if(!team) return ""; return ` <div class="equipa equipa-clicavel" onclick=" event.stopPropagation(); abrirEquipa( '${esc(code)}', '${esc(team.id||"")}', '${esc(team.nome||"Equipa")}', '${esc(team.logo||"")}' ) "> ${logo(team.logo)} ${esc(team.nome)} </div> `; } /* ===================================================== CARTÃO DO JOGO ===================================================== */ function cartao(j){ let estadoJogo; if(j.estado.live){ estadoJogo= `<span class="estado-live"> 🔴 ${esc(j.estado.txt)} </span>`; }else if(j.estado.final){ estadoJogo= `<span class="estado-final"> ${esc(j.estado.txt)} </span>`; }else{ estadoJogo= esc( dataLocal(j.date) ); } return ` <div class="jogo" onclick=" abrirJogo( '${esc(j.id)}', '${esc(j.code)}' ) "> <div class="jogo-top"> <span> ${esc(j.liga)} </span> <span> ${estadoJogo} </span> </div> <div class="equipas"> ${teamHtml( j.home, j.code )} <div class="resultado"> ${esc(j.home.score)} - ${esc(j.away.score)} </div> ${teamHtml( j.away, j.code )} </div> </div> `; } /* ===================================================== GRUPO DE JOGOS ===================================================== */ function grupoJogos( titulo, lista, icone ){ if(!lista.length) return ""; return ` <div class="grupo-jogos"> <div class="grupo-titulo"> <span> ${icone} ${titulo} </span> <span class="grupo-contagem"> ${lista.length} ${lista.length!==1?"jogos":"jogo"} </span> </div> ${lista .map(cartao) .join("")} </div> `; } /* ===================================================== JOGOS DA LIGA ===================================================== */ function mostrarJogosLiga(){ nav("navJogos"); paginaJogos="liga"; const daLiga= jogosAtuais.filter( j=> j.code=== ligaAtual.code ); if(modoJogos==="live"){ const aoVivo= jogosAtuais.filter( j=>j.estado.live ); app.innerHTML=` <button class="voltar-ligas" onclick="mostrarJogos()"> ← Voltar às ligas </button> <h2> 🔴 Jogos ao Vivo </h2> ${aoVivo.length ?grupoJogos( "Todos os jogos ao vivo", aoVivo, "🔴" ) :` <div class="vazio"> Não existem jogos ao vivo neste momento. </div> ` } `; return; } if( modoJogos==="futuros" ){ const futuros= daLiga.filter( j=> !j.estado.final&& !j.estado.live ); app.innerHTML=` <button class="voltar-ligas" onclick="mostrarJogos()"> ← Voltar às ligas </button> <h2> ${ligaAtual.icon} ${esc(ligaAtual.name)} </h2> ${botoesCategorias()} ${ futuros.length ?grupoJogos( "Próximos jogos", futuros, "📅" ) :` <div class="vazio"> Não há próximos jogos encontrados. </div> ` } `; return; } if( modoJogos==="passados" ){ const passados= daLiga.filter( j=>j.estado.final ); app.innerHTML=` <button class="voltar-ligas" onclick="mostrarJogos()"> ← Voltar às ligas </button> <h2> ${ligaAtual.icon} ${esc(ligaAtual.name)} </h2> ${botoesCategorias()} ${ passados.length ?grupoJogos( "Jogos realizados", passados, "✅" ) :` <div class="vazio"> Não há jogos realizados encontrados. </div> ` } `; return; } const aoVivo= daLiga.filter( j=>j.estado.live ); const futuros= daLiga.filter( j=> !j.estado.final&& !j.estado.live ); const realizados= daLiga.filter( j=>j.estado.final ); app.innerHTML=` <button class="voltar-ligas" onclick="mostrarJogos()"> ← Voltar às ligas </button> <h2> ${ligaAtual.icon} ${esc(ligaAtual.name)} </h2> ${botoesCategorias()} ${ aoVivo.length ?grupoJogos( "Ao Vivo", aoVivo, "🔴" ) :"" } ${ futuros.length ?grupoJogos( "Próximos jogos", futuros, "📅" ) :"" } ${ realizados.length ?grupoJogos( "Jogos realizados", realizados, "✅" ) :"" } ${ !aoVivo.length&& !futuros.length&& !realizados.length ?` <div class="vazio"> Não há jogos encontrados para esta competição. </div> ` :"" } `; } /* ===================================================== TABELAS ===================================================== */ function mostrarTabelas(){ nav("navTabelas"); paginaTabelas="ligas"; app.innerHTML=` <h2>🏆 Escolher liga</h2> ${botoesLigas("tabelas")} `; } async function selecionarLigaTabela(code){ ligaAtual= ligas.find( l=>l.code===code )|| ligas[0]; paginaTabelas="liga"; await mostrarTabelaLiga(); } /* ===================================================== NORMALIZAR TABELA ===================================================== */ function normalizarTabela(d){ const entries=[]; function recolher(obj){ if( !obj|| typeof obj!=="object" ) return; if( Array.isArray(obj.entries) ){ obj.entries.forEach(e=>{ if( e&& typeof e==="object" ){ entries.push(e); } }); } if( Array.isArray(obj.children) ){ obj.children.forEach( recolher ); } if(obj.standings){ if( Array.isArray(obj.standings) ){ obj.standings.forEach( recolher ); }else{ recolher( obj.standings ); } } } recolher(d); if( !entries.length&& Array.isArray(d?.entries) ){ entries.push( ...d.entries ); } const mapa= new Map(); entries.forEach(e=>{ const id= e?.team?.id|| e?.teamId|| e?.id|| ""; const chave= id|| JSON.stringify(e); if( !mapa.has(chave) ){ mapa.set( chave, e ); } }); return[ ...mapa.values() ]; } /* ===================================================== ESTATÍSTICAS DA TABELA ===================================================== */ function numeroStat( entry, nomes ){ const stats= Array.isArray(entry?.stats) ?entry.stats :[]; for( const s of stats ){ const nomesStat=[ s?.name, s?.shortName, s?.abbreviation, s?.displayName, s?.label ] .filter(Boolean) .map( x=> String(x) .toLowerCase() .replace( /[^a-z0-9]/g, "" ) ); const corresponde= nomes.some( nome=>{ const n= String(nome) .toLowerCase() .replace( /[^a-z0-9]/g, "" ); return nomesStat.includes(n); } ); if(!corresponde) continue; let valor= s?.value?? s?.displayValue?? s?.display?? 0; if( typeof valor==="string" ){ valor= valor .replace(",",".") .replace( /[^\d.-]/g, "" ); } const n= parseFloat(valor); if( Number.isFinite(n) ){ return n; } } return 0; } /* ===================================================== BUSCAR TABELA ===================================================== */ async function buscarTabela(){ const urls=[ `${ESPN2}${encodeURIComponent(ligaAtual.code)}/standings?_=${Date.now()}`, `${ESPN}${encodeURIComponent(ligaAtual.code)}/standings?_=${Date.now()}` ]; for( const u of urls ){ try{ const r= await fetch(u); if(!r.ok) continue; const d= await r.json(); const entries= normalizarTabela(d); if(entries.length){ return{ data:d, entries }; } }catch(e){ console.log( "Erro tabela:", e ); } } return null; } /* ===================================================== MOSTRAR TABELA ===================================================== */ async function mostrarTabelaLiga(){ nav("navTabelas"); app.innerHTML=` <button class="voltar-ligas" onclick="mostrarTabelas()"> ← Voltar às ligas </button> <h2> ${ligaAtual.icon} ${esc(ligaAtual.name)} </h2> <div class="carregando"> A carregar classificação... </div> `; const resultado= await buscarTabela(); if(!resultado){ const box= app.querySelector( ".carregando" ); if(box){ box.outerHTML=` <div class="erro"> Não foi possível carregar a classificação de ${esc(ligaAtual.name)}. <br><br> Tenta escolher outra competição. </div> `; } return; } const tabela= resultado.entries.map( (entry,index)=>{ const team= entry?.team|| entry?.teamInfo|| {}; const id= team?.id|| entry?.teamId|| ""; const nome= team?.displayName|| team?.name|| team?.shortDisplayName|| entry?.teamName|| "Equipa"; const logoUrl= team?.logos?.[0]?.href|| team?.logo|| entry?.teamLogo|| ""; const jogos= numeroStat( entry, [ "gamesPlayed", "gp", "played", "games" ] ); const vitorias= numeroStat( entry, [ "wins", "w" ] ); const empates= numeroStat( entry, [ "ties", "draws", "d" ] ); const derrotas= numeroStat( entry, [ "losses", "l" ] ); const pontos= numeroStat( entry, [ "points", "pts", "totalPoints" ] ); const rank= numeroStat( entry, [ "rank", "position", "order" ] ); return{ entry, id, nome, logoUrl, jogos, vitorias, empates, derrotas, pontos, rank: rank|| index+1 }; } ); tabela.sort( (a,b)=>{ if( a.pontos!==b.pontos ){ return b.pontos-a.pontos; } return a.rank-b.rank; } ); let linhas=""; tabela.forEach( (t,i)=>{ linhas+=` <tr> <td class="posicao"> ${i+1} </td> <td class="team-cell" onclick=" abrirEquipa( '${esc(ligaAtual.code)}', '${esc(t.id)}', '${esc(t.nome)}', '${esc(t.logoUrl)}' ) "> <div style=" display:flex; align-items:center; gap:5px "> ${ t.logoUrl ?` <img src="${esc(t.logoUrl)}" style=" width:22px; height:22px; object-fit:contain " onerror=" this.style.visibility='hidden' " > ` :"" } <span> ${esc(t.nome)} </span> </div> </td> <td>${t.jogos}</td> <td>${t.vitorias}</td> <td>${t.empates}</td> <td>${t.derrotas}</td> <td> <b>${t.pontos}</b> </td> </tr> `; } ); app.innerHTML=` <button class="voltar-ligas" onclick="mostrarTabelas()"> ← Voltar às ligas </button> <h2> ${ligaAtual.icon} ${esc(ligaAtual.name)} </h2> <div class="tabela-caixa"> <div class="tabela-titulo"> ${ligaAtual.icon} ${esc(ligaAtual.name)} </div> <div class="tabela-scroll"> <table> <thead> <tr> <th>#</th> <th style="text-align:left"> Equipa </th> <th>J</th> <th>V</th> <th>E</th> <th>D</th> <th>PTS</th> </tr> </thead> <tbody> ${ linhas|| ` <tr> <td colspan="7"> Não existem dados de classificação. </td> </tr> ` } </tbody> </table> </div> <div class="subtitulo"> Toca numa equipa para abrir o clube. </div> </div> `; } /* ===================================================== EQUIPA ===================================================== */ async function abrirEquipa( code, id, nome, logoUrl ){ if(!id){ app.innerHTML=` <h2> ⚽ ${esc(nome)} </h2> <div class="vazio"> Informação da equipa não disponível. </div> `; return; } clubeAtual={ code, id, nome, logo:logoUrl }; const o= document.createElement( "div" ); o.className="overlay"; o.innerHTML=` <div class="detalhe-header"> <button class="voltar" onclick=" this.closest('.overlay').remove() "> ← Voltar </button> </div> <div class="detalhe"> <div class="equipa-header"> ${logo(logoUrl)} <div class="equipa-nome"> ${esc(nome)} </div> </div> <div class="carregando"> A carregar informações do clube... </div> </div> `; document.body.appendChild(o); try{ const info= await buscarInfoEquipa( code, id ); const roster= await buscarPlantelEquipa( code, id ); const jogos= await buscarJogosEquipa( code, id ); const detalhe= o.querySelector( ".detalhe" ); let plantelHtml=""; if(roster.length){ plantelHtml=` <div class="secao"> <h3> 👥 Plantel </h3> <div class="lista-jogadores"> ${roster.map(p=>` <div class="jogador"> <b> ${esc(p.num||"")} </b> ${esc(p.nome)} ${ p.pos ?` <small style=" display:block; color:#9DAABB "> ${esc(p.pos)} </small> ` :"" } </div> `).join("")} </div> </div> `; }else{ plantelHtml=` <div class="secao"> <h3> 👥 Plantel </h3> <div class="vazio"> Plantel não disponível. </div> </div> `; } let jogosHtml=""; if(jogos.length){ jogosHtml=` <div class="secao"> <h3> ⚽ Jogos da equipa </h3> ${jogos .slice(0,20) .map(j=>` <div class="jogo-equipa" onclick=" abrirJogo( '${esc(j.id)}', '${esc(j.code)}' ) "> <div class="jogo-top"> <span> ${esc(j.liga)} </span> <span> ${ j.estado.live ?"🔴 "+esc(j.estado.txt) :j.estado.final ?esc(j.estado.txt) :esc(dataLocal(j.date)) } </span> </div> <div class="clube-equipas"> <div> ${esc(j.home.nome)} </div> <div class="clube-score"> ${esc(j.home.score)} - ${esc(j.away.score)} </div> <div> ${esc(j.away.nome)} </div> </div> </div> `).join("")} </div> `; } const loading= o.querySelector( ".carregando" ); if(loading) loading.remove(); detalhe.insertAdjacentHTML( "beforeend", ` ${ info?.description ?` <div class="secao"> ${esc(info.description)} </div> ` :"" } ${jogosHtml} ${plantelHtml} ` ); }catch(e){ console.log( "Erro equipa:", e ); const loading= o.querySelector( ".carregando" ); if(loading){ loading.outerHTML=` <div class="erro"> Não foi possível carregar os dados do clube. </div> `; } } } /* ===================================================== INFORMAÇÃO DA EQUIPA ===================================================== */ async function buscarInfoEquipa( code, id ){ const urls=[ `${ESPN}${encodeURIComponent(code)}/teams/${encodeURIComponent(id)}?_=${Date.now()}`, `${ESPN}${encodeURIComponent(code)}/teams/${encodeURIComponent(id)}/?_=${Date.now()}` ]; for( const u of urls ){ try{ const r= await fetch(u); if(!r.ok) continue; const d= await r.json(); return d.team||d; }catch(e){} } return null; } /* ===================================================== PLANTEL DA EQUIPA ===================================================== */ async function buscarPlantelEquipa( code, id ){ const urls=[ `${ESPN}${encodeURIComponent(code)}/teams/${encodeURIComponent(id)}/roster?_=${Date.now()}`, `${ESPN}${encodeURIComponent(code)}/teams/${encodeURIComponent(id)}?enable=roster&_=${Date.now()}` ]; for( const u of urls ){ try{ const r= await fetch(u); if(!r.ok) continue; const d= await r.json(); const arr= d.athletes|| d.roster|| d.team?.athletes|| []; if( Array.isArray(arr) ){ return arr.map( x=>{ const a= x.athlete|| x; return{ nome: a.displayName|| a.fullName|| "Jogador", num: a.jersey|| x.jersey|| "", pos: a.position?.abbreviation|| a.position?.displayName|| "" }; } ); } }catch(e){} } return[]; } /* ===================================================== JOGOS DA EQUIPA ===================================================== */ async function buscarJogosEquipa( code, id ){ const urls=[ `${ESPN}${encodeURIComponent(code)}/teams/${encodeURIComponent(id)}/schedule?_=${Date.now()}`, `${ESPN}${encodeURIComponent(code)}/teams/${encodeURIComponent(id)}?enable=events&_=${Date.now()}` ]; for( const u of urls ){ try{ const r= await fetch(u); if(!r.ok) continue; const d= await r.json(); const evs= d.events|| d.schedule?.events|| d.team?.events|| []; if( Array.isArray(evs)&& evs.length ){ return evs.map( e=> normalizar( e, ligas.find( x=>x.code===code )|| ligaAtual ) ); } }catch(e){} } return[]; } /* ===================================================== TEXTO ===================================================== */ function txt(v){ return typeof v==="object" ? ( v?.displayValue?? v?.value?? v?.text?? "" ) : String(v??""); } /* ===================================================== EVENTOS ===================================================== */ function extrairEventos(d){ let out=[]; let seen= new Set(); let arr=[ ...(d.plays||[]), ...(d.keyEvents||[]), ...(d.scoringPlays||[]) ]; for( const e of arr ){ const raw=( (e?.type?.text||"")+ " "+ ( e?.text|| e?.shortText|| e?.description|| "" ) ).toLowerCase(); if( !/goal|gol|yellow|amarelo|red|vermelho|substitut/.test(raw) ){ continue; } const k= String(e?.id||"")+ raw+ ( e?.clock?.displayValue|| "" ); if( seen.has(k) ) continue; seen.add(k); const ic= /yellow|amarelo/.test(raw) ?"🟨" :/red|vermelho/.test(raw) ?"🟥" :/substitut/.test(raw) ?"🔄" :"⚽"; out.push({ m: e?.clock?.displayValue|| "", t: e?.text|| e?.shortText|| e?.description|| e?.type?.text|| "Evento", i:ic }); } return out; } /* ===================================================== ESTATÍSTICAS ===================================================== */ function extrairStats(d){ const gs=[]; function add( team, stats ){ if( !team|| !Array.isArray(stats) ) return; const id= team.id|| team.team?.id|| team.displayName|| team.team?.displayName; let g= gs.find( x=>String(x.id)===String(id) ); if(!g){ g={ id, nome: team.displayName|| team.name|| team.team?.displayName|| "Equipa", s:[] }; gs.push(g); } stats.forEach(x=>{ const n= x.displayName|| x.shortDisplayName|| x.name|| x.label|| x.description; if(n){ g.s.push({ n, v: txt( x.displayValue?? x.value?? x.display ) }); } }); } ( d.boxscore?.teams|| [] ).forEach( x=> add( x.team||x, x.statistics|| x.stats ) ); ( d.header?.competitions?.[0]?.competitors|| [] ).forEach( x=> add( x.team||x, x.statistics ) ); ( d.competitions?.[0]?.competitors|| [] ).forEach( x=> add( x.team||x, x.statistics ) ); if(gs.length<2) return[]; const m= new Map(); gs.slice(0,2) .forEach( (g,i)=>{ g.s.forEach(x=>{ const k= x.n.toLowerCase(); if(!m.has(k)){ m.set( k, { n:x.n, h:"-", a:"-" } ); } if(i===0){ m.get(k).h= x.v; }else{ m.get(k).a= x.v; } }); } ); return[ ...m.values() ]; } /* ===================================================== PLANTEL DO JOGO ===================================================== */ function extrairPlantel(d){ const gs=[]; function add( team, arr ){ if( !team|| !Array.isArray(arr) ) return; const id= team.id|| team.team?.id|| team.displayName|| team.team?.displayName; let g= gs.find( x=>String(x.id)===String(id) ); if(!g){ g={ id, nome: team.displayName|| team.name|| team.team?.displayName|| "Equipa", p:[] }; gs.push(g); } arr.forEach(x=>{ const a= x?.athlete|| x?.player|| x; if( !a?.displayName&& !a?.fullName ) return; const n= a.displayName|| a.fullName; if( !g.p.some( p=>p.n===n ) ){ g.p.push({ n, num: a.jersey|| x.jersey|| "", pos: a.position?.abbreviation|| a.position?.displayName|| "", tit: x.starter===true, rating: x.rating|| a.rating|| null }); } }); } ( d.rosters|| [] ).forEach( r=> add( r.team||r, r.roster|| r.athletes|| r.players ) ); ( d.boxscore?.players|| [] ).forEach( r=> add( r.team||r, r.statistics|| r.athletes|| r.roster|| r.players ) ); return gs.filter( x=>x.p.length ); } /* ===================================================== EVENTOS HTML ===================================================== */ function blocoEventos(a){ return ` <div class="secao"> <h3> ⚽ Golos, cartões e eventos </h3> ${ a.length ?a.map(e=>` <div class="evento"> <span class="minuto"> ${esc(e.m)} </span> <span> ${e.i} ${esc(e.t)} </span> </div> `).join("") :` <div class="vazio"> Sem eventos disponíveis. </div> ` } </div> `; } /* ===================================================== ESTATÍSTICAS HTML ===================================================== */ function blocoStats(a){ return ` <div class="secao"> <h3> 📊 Estatísticas </h3> ${ a.length ?` <div class="stats-head"> <span>Casa</span> <span> ESTAT. </span> <span>Fora</span> </div> ${a.map(x=>` <div class="stat-row"> <div class="stat-home"> ${esc(x.h)} </div> <div class="nome"> ${esc(x.n)} </div> <div class="stat-away"> ${esc(x.a)} </div> </div> `).join("")} ` :` <div class="vazio"> Estatísticas não disponíveis para este jogo. </div> ` } </div> `; } /* ===================================================== PLANTEL HTML ===================================================== */ function blocoPlantel(gs){ if(!gs.length) return ""; return ` <div class="secao"> <h3> 👥 Titulares / Plantel </h3> ${ gs.map(g=>` <div style="margin-bottom:12px"> <b> ${esc(g.nome)} </b> <div class="subtitulo"> Jogadores </div> <div class="lista-jogadores"> ${g.p.map(p=>` <div class="jogador"> <b> ${esc(p.num)} </b> ${esc(p.n)} ${ p.tit ?` <span style=" color:#1683FF; font-size:9px "> ⭐ Titular </span> ` :"" } ${ p.pos ?` <small style=" display:block; color:#9DAABB "> ${esc(p.pos)} </small> ` :"" } </div> `).join("")} </div> </div> `).join("") } </div> `; } /* ===================================================== CAMPO — JOGADOR ===================================================== */ function ratingFutzone(p){ const r = p.rating ?? p.nota ?? p.score ?? null; if( r===null|| r==="" ) return "—"; const n= Number(r); return Number.isFinite(n) ?n.toFixed(1) :"—"; } /* ===================================================== DETALHE DO JOGADOR ===================================================== */ function jogadorFutzone(p){ const nome= p.n|| p.nome|| p.name|| "Jogador"; const num= p.num|| p.numero|| ""; const pos= p.pos|| p.position|| ""; const nota= ratingFutzone(p); return ` <button class="campo-jogador" onclick="detalheJogadorFutzone(this)" data-nome="${esc(nome)}" data-num="${esc(num)}" data-pos="${esc(pos)}" data-rating="${esc(nota)}"> <span class="campo-num"> ${esc(num)} </span> <span class="campo-nome"> ${esc(nome)} </span> <span class="campo-nota"> ⭐ ${esc(nota)} </span> </button> `; } function detalheJogadorFutzone(el){ const nome= el.dataset.nome|| "Jogador"; const num= el.dataset.num|| "—"; const pos= el.dataset.pos|| "—"; const rating= el.dataset.rating|| "—"; const msg= "👤 "+nome+ "\n\n"+ "Número: "+num+ "\n"+ "Posição: "+pos+ "\n"+ "⭐ Nota FUTZONE: "+rating; alert(msg); } /* ===================================================== CAMPO FUTZONE RECEBE O PLANTEL DO JOGO ===================================================== */ function campoFutzoneJogo( gs, jogo ){ if( !Array.isArray(gs)|| gs.length<1 ) return ""; const casaId= String( jogo?.home?.id|| "" ); const foraId= String( jogo?.away?.id|| "" ); let casa= gs.find( g=> String(g.id)===casaId ); let fora= gs.find( g=> String(g.id)===foraId ); /* Se a API não devolver os IDs exatamente iguais, usamos a ordem das duas equipas recebidas. */ if(!casa) casa=gs[0]; if(!fora) fora= gs.find( g=>g!==casa )|| gs[1]; if(!casa||!fora) return ""; /* Primeiro tentamos usar apenas os jogadores marcados como titulares. Se a API não indicar titulares, usamos os primeiros 11. */ function titulares(g){ if(!g?.p?.length) return []; const t= g.p.filter( p=>p.tit===true ); if(t.length>=7) return t.slice(0,11); return g.p.slice(0,11); } const jogadoresCasa= titulares(casa); const jogadoresFora= titulares(fora); if( !jogadoresCasa.length|| !jogadoresFora.length ) return ""; function jogador(p,lado){ const nome= p.n|| p.nome|| "Jogador"; const num= p.num|| ""; const nota= ratingFutzone(p); return ` <button class="campo-jogador campo-${lado}" onclick="detalheJogadorFutzone(this)" data-nome="${esc(nome)}" data-num="${esc(num)}" data-pos="${esc(p.pos||"")}" data-rating="${esc(nota)}"> <span class="campo-num"> ${esc(num)} </span> <span class="campo-nome"> ${esc(nome)} </span> <span class="campo-nota"> ⭐ ${esc(nota)} </span> </button> `; } /* Organização visual: Guarda-redes Defesa Meio-campo Ataque */ function linhas(jogadores){ const n= jogadores.length; if(n>=11){ return [ jogadores.slice(0,1), jogadores.slice(1,5), jogadores.slice(5,9), jogadores.slice(9,11) ]; } if(n>=8){ return [ jogadores.slice(0,1), jogadores.slice(1,4), jogadores.slice(4,6), jogadores.slice(6,8) ]; } if(n>=5){ return [ jogadores.slice(0,1), jogadores.slice(1,3), jogadores.slice(3,4), jogadores.slice(4,5) ]; } return[ jogadores ]; } const linhasCasa= linhas(jogadoresCasa); const linhasFora= linhas(jogadoresFora); return ` <div class="secao"> <h3> ⚽ Titulares — Casa vs Fora </h3> <div class="campo-futzone"> <div class="campo-area top"></div> <div class="campo-area bottom"></div> <div class="campo-meio"></div> <div class="campo-ponto"></div> <div class="campo-titulo"> ${esc(casa.nome||jogo.home.nome)} </div> <div class="campo-equipa"> ${linhasCasa.map( linha=>` <div class="campo-linha"> ${linha.map( p=> jogador( p, "casa" ) ).join("")} </div> ` ).join("")} </div> <div class="campo-separador"></div> <div class="campo-equipa"> ${linhasFora .slice() .reverse() .map( linha=>` <div class="campo-linha"> ${linha.map( p=> jogador( p, "fora" ) ).join("")} </div> ` ).join("")} </div> <div class="campo-titulo campo-titulo-fora"> ${esc(fora.nome||jogo.away.nome)} </div> </div> <div class="subtitulo"> 👆 Toca num jogador para ver os dados disponíveis. </div> </div> `; } /* ===================================================== COMPATIBILIDADE ===================================================== */ function campoFutzone( rosterCasa, rosterFora ){ if( !Array.isArray(rosterCasa)|| !Array.isArray(rosterFora) ) return ""; if( !rosterCasa.length|| !rosterFora.length ) return ""; const casa={ id:"casa", nome:"CASA", p:rosterCasa.map( p=>({ n:p.n||p.nome, num:p.num||"", pos:p.pos||"", tit:true, rating:p.rating||null }) ) }; const fora={ id:"fora", nome:"FORA", p:rosterFora.map( p=>({ n:p.n||p.nome, num:p.num||"", pos:p.pos||"", tit:true, rating:p.rating||null }) ) }; return campoFutzoneJogo( [casa,fora], { home:{ id:"casa", nome:"CASA" }, away:{ id:"fora", nome:"FORA" } } ); } /* ===================================================== ABRIR JOGO ===================================================== */ async function abrirJogo( id, code ){ const j= jogosAtuais.find( x=>x.id===id ); if(!j) return; const o= document.createElement( "div" ); o.className="overlay"; o.innerHTML=` <div class="detalhe-header"> <button class="voltar" onclick=" this.closest('.overlay').remove() "> ← Voltar </button> </div> <div class="detalhe"> <div class="jogo-grande"> <div class="equipas"> ${teamHtml( j.home, code )} <div> <div class="bigscore"> ${esc(j.home.score)} - ${esc(j.away.score)} </div> <div class="estado"> ${esc( j.estado.txt|| dataLocal(j.date) )} </div> </div> ${teamHtml( j.away, code )} </div> </div> <div class="carregando"> A carregar detalhes... </div> </div> `; document.body.appendChild(o); try{ const r= await fetch( `${ESPN}${encodeURIComponent(code)}/summary?event=${encodeURIComponent(id)}&_=${Date.now()}` ); if(!r.ok) throw new Error("Erro no resumo"); const d= await r.json(); const detalhe= o.querySelector( ".detalhe" ); const plantelJogo= extrairPlantel(d); const campo= campoFutzoneJogo( plantelJogo, j ); detalhe.insertAdjacentHTML( "beforeend", blocoEventos( extrairEventos(d) )+ blocoStats( extrairStats(d) )+ campo+ blocoPlantel( plantelJogo ) ); o.querySelector( ".carregando" )?.remove(); }catch(e){ console.log( "Erro jogo:", e ); const loading= o.querySelector( ".carregando" ); if(loading){ loading.outerHTML=` <div class="erro"> Não foi possível carregar os detalhes deste jogo. </div> `; } } } /* ===================================================== NOTÍCIAS ===================================================== */ async function carregarNoticias(){ const box= document.getElementById( "listaNoticias" ); if(!box) return; const feeds=[ "https://news.google.com/rss/search?q=futebol%20Portugal&hl=pt-PT&gl=PT&ceid=PT:pt", "https://news.google.com/rss/search?q=futebol%20internacional&hl=pt-PT&gl=PT&ceid=PT:pt" ]; try{ let noticias=[]; for( const feed of feeds ){ try{ const url= "https://api.rss2json.com/v1/api.json?rss_url="+ encodeURIComponent(feed); const r= await fetch( url, { method:"GET", cache:"no-store" } ); if(!r.ok) continue; const data= await r.json(); if( data.status==="ok"&& Array.isArray(data.items) ){ noticias.push( ...data.items ); } }catch(e){ console.log( "Erro feed:", e ); } } const mapa= new Map(); noticias.forEach( n=>{ const chave= String( n.title|| "" ).trim(); if( chave&& !mapa.has(chave) ){ mapa.set( chave, n ); } } ); noticias= [...mapa.values()] .slice(0,10); if(!noticias.length) throw new Error( "Sem notícias" ); box.outerHTML=` <div id="listaNoticias"> ${noticias.map( n=>{ const titulo= n.title|| "Notícia desportiva"; const link= n.link|| "#"; const fonte= n.author|| n.feedTitle|| "Notícias desportivas"; let dataPT=""; if(n.pubDate){ try{ dataPT= new Intl.DateTimeFormat( "pt-PT", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" } ).format( new Date(n.pubDate) ); }catch(e){} } return ` <a class="noticia" href="${esc(link)}" target="_blank" rel="noopener noreferrer"> <div class="noticia-titulo"> 📰 ${esc(titulo)} </div> ${ dataPT ?` <div class="noticia-info"> ${esc(dataPT)} </div> ` :"" } <div class="noticia-fonte"> ${esc(fonte)} </div> </a> `; } ).join("")} </div> `; }catch(e){ console.log( "Erro notícias:", e ); box.outerHTML=` <div id="listaNoticias" class="vazio"> Não foi possível carregar as notícias neste momento. </div> `; } } /* ===================================================== FAVORITOS ===================================================== */ function mostrarFavoritos(){ nav("navFav"); app.innerHTML=` <h2> ⭐ Favoritos </h2> <div class="vazio"> Seleciona jogos favoritos para os guardares aqui. </div> `; } /* ===================================================== ARRANQUE ===================================================== */ mostrarJogos(); carregarJogos(); /* ===================================================== ATUALIZAÇÃO ===================================================== */ setInterval( carregarJogos, 120000 ); /* ===================================================== PWA ===================================================== */ if( "serviceWorker" in navigator ){ window.addEventListener( "load", ()=> navigator .serviceWorker .register("./sw.js") .catch(()=>{}) ); } </script> </body> </html> 
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="theme-color" content="#0057B8">
+<title>FUTZONE</title>
+
+<style>
+*{box-sizing:border-box}
+
+:root{
+  --blue:#1683FF;
+  --blue-dark:#003B7A;
+  --blue-light:#0057B8;
+  --bg:#03060B;
+  --panel:#09111C;
+  --card:#0D1724;
+  --border:#1B2A3B;
+  --text:#FFF;
+  --muted:#9DAABB;
+  --red:#FF4054;
+  --green:#20D68A;
+  --yellow:#FFD43B;
+}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial,Helvetica,sans-serif;
+}
+
+button{
+  font-family:inherit;
+}
+
+header{
+  position:sticky;
+  top:0;
+  z-index:50;
+  background:var(--panel);
+  border-bottom:1px solid var(--border);
+  padding:10px 12px;
+}
+
+.logo{
+  font-size:24px;
+  font-weight:900;
+  letter-spacing:-1px;
+}
+
+.logo span{color:var(--blue)}
+
+.sub{
+  color:var(--muted);
+  font-size:9px;
+  margin-top:2px;
+}
+
+.modo-desporto{
+  position:sticky;
+  top:59px;
+  z-index:45;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:5px;
+  padding:7px;
+  background:var(--bg);
+  border-bottom:1px solid var(--border);
+}
+
+.modo{
+  border:1px solid var(--border);
+  background:var(--panel);
+  color:var(--muted);
+  border-radius:8px;
+  padding:9px;
+  font-size:11px;
+  font-weight:900;
+}
+
+.modo.ativo{
+  background:var(--blue-dark);
+  border-color:var(--blue);
+  color:#fff;
+}
+
+main{
+  max-width:720px;
+  margin:auto;
+  padding:8px 8px 75px;
+}
+
+h2{
+  font-size:17px;
+  margin:8px 2px;
+}
+
+h3{
+  font-size:12px;
+  margin:0 0 7px;
+}
+
+.seletor-ligas{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:6px;
+}
+
+.liga-btn{
+  background:var(--panel);
+  color:#fff;
+  border:1px solid var(--border);
+  border-radius:9px;
+  padding:9px 5px;
+  font-size:10px;
+  font-weight:900;
+}
+
+.liga-btn.active{
+  background:var(--blue-dark);
+  border-color:var(--blue);
+}
+
+.liga-icon{
+  display:block;
+  font-size:18px;
+  margin-bottom:3px;
+}
+
+.filtros{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:5px;
+  margin:7px 0;
+}
+
+.filtro{
+  background:var(--panel);
+  border:1px solid var(--border);
+  color:var(--muted);
+  border-radius:8px;
+  padding:8px 3px;
+  font-size:10px;
+  font-weight:900;
+}
+
+.filtro.ativo{
+  color:#fff;
+  background:var(--blue-dark);
+  border-color:var(--blue);
+}
+
+.filtro.live{
+  border-color:var(--red);
+}
+
+.voltar{
+  width:100%;
+  background:var(--panel);
+  color:#fff;
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:8px;
+  margin-bottom:7px;
+  font-size:10px;
+  font-weight:900;
+}
+
+/* DIAS */
+
+.dia{
+  margin:8px 0;
+  border:1px solid var(--border);
+  border-radius:10px;
+  overflow:hidden;
+  background:var(--panel);
+}
+
+.dia-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#101C2A;
+  border-bottom:1px solid var(--border);
+  padding:8px 9px;
+}
+
+.dia-nome{
+  font-size:12px;
+  font-weight:900;
+}
+
+.dia-contagem{
+  color:var(--muted);
+  font-size:9px;
+}
+
+/* COMPETIÇÃO */
+
+.competicao{
+  border-bottom:1px solid var(--border);
+}
+
+.competicao:last-child{
+  border-bottom:0;
+}
+
+.competicao-header{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:7px 8px;
+  background:#0A1420;
+  color:#dbe6f5;
+  font-size:10px;
+  font-weight:900;
+}
+
+.competicao-header .bola{
+  color:var(--blue);
+}
+
+/* JOGO */
+
+.jogo{
+  display:grid;
+  grid-template-columns:55px 1fr 35px;
+  gap:7px;
+  align-items:center;
+  min-height:66px;
+  padding:7px 8px;
+  border-bottom:1px solid #172332;
+  background:var(--card);
+  cursor:pointer;
+}
+
+.jogo:last-child{
+  border-bottom:0;
+}
+
+.jogo:active{
+  background:#122238;
+}
+
+.hora{
+  text-align:center;
+  color:#fff;
+  font-size:11px;
+  font-weight:900;
+}
+
+.hora.live{
+  color:var(--red);
+}
+
+.hora.final{
+  color:var(--muted);
+}
+
+.estado-live{
+  display:block;
+  color:var(--red);
+  font-size:8px;
+  margin-top:3px;
+  font-weight:900;
+}
+
+.estado-final{
+  display:block;
+  color:var(--muted);
+  font-size:8px;
+  margin-top:3px;
+}
+
+.equipas{
+  display:grid;
+  gap:5px;
+}
+
+.equipa-linha{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  min-width:0;
+}
+
+.equipa-linha img{
+  width:22px;
+  height:22px;
+  object-fit:contain;
+  flex:none;
+}
+
+.equipa-nome{
+  font-size:11px;
+  font-weight:700;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.placar{
+  text-align:right;
+  font-size:13px;
+  font-weight:900;
+}
+
+.estrela{
+  color:#596779;
+  font-size:17px;
+}
+
+.estrela.favorito{
+  color:var(--yellow);
+}
+
+/* LIVE */
+
+.live-bar{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:8px;
+  margin:7px 0;
+  background:#241018;
+  border:1px solid #5D1D2A;
+  border-radius:9px;
+  color:#fff;
+  font-size:10px;
+  font-weight:900;
+}
+
+.live-dot{
+  width:8px;
+  height:8px;
+  background:var(--red);
+  border-radius:50%;
+  box-shadow:0 0 8px var(--red);
+}
+
+/* CARDS */
+
+.card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:9px;
+  margin:7px 0;
+}
+
+.vazio,
+.carregando,
+.erro{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:9px;
+  padding:14px;
+  text-align:center;
+  color:var(--muted);
+  font-size:10px;
+}
+
+.erro{
+  color:#ff8b96;
+}
+
+/* TABELAS */
+
+.tabela{
+  overflow-x:auto;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;
+}
+
+table{
+  width:100%;
+  min-width:480px;
+  border-collapse:collapse;
+  font-size:10px;
+}
+
+th,td{
+  padding:7px 4px;
+  border-bottom:1px solid var(--border);
+  text-align:center;
+}
+
+th{
+  color:var(--muted);
+  font-size:9px;
+}
+
+td:first-child{
+  color:var(--muted);
+}
+
+.team-cell{
+  text-align:left;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.team-cell div{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.team-cell img{
+  width:22px;
+  height:22px;
+  object-fit:contain;
+}
+
+/* OVERLAY */
+
+.overlay{
+  position:fixed;
+  inset:0;
+  z-index:100;
+  background:var(--bg);
+  overflow:auto;
+}
+
+.overlay-header{
+  position:sticky;
+  top:0;
+  z-index:5;
+  background:var(--panel);
+  border-bottom:1px solid var(--border);
+  padding:9px;
+}
+
+.detalhe{
+  max-width:720px;
+  margin:auto;
+  padding:8px 9px 35px;
+}
+
+.jogo-detalhe{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:15px 8px;
+}
+
+.jogo-detalhe-equipas{
+  display:grid;
+  grid-template-columns:1fr 75px 1fr;
+  align-items:center;
+}
+
+.jogo-detalhe .equipa{
+  text-align:center;
+  font-size:12px;
+  font-weight:900;
+}
+
+.jogo-detalhe img{
+  width:48px;
+  height:48px;
+  display:block;
+  object-fit:contain;
+  margin:0 auto 5px;
+}
+
+.resultado-grande{
+  text-align:center;
+  font-size:25px;
+  font-weight:900;
+}
+
+.estado-grande{
+  text-align:center;
+  color:var(--blue);
+  font-size:9px;
+  margin-top:3px;
+}
+
+.secao{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;
+  margin-top:8px;
+  padding:9px;
+}
+
+.evento{
+  display:flex;
+  gap:7px;
+  padding:7px 0;
+  border-bottom:1px solid var(--border);
+  font-size:10px;
+}
+
+.minuto{
+  color:var(--blue);
+  font-weight:900;
+  min-width:30px;
+}
+
+/* EQUIPA */
+
+.equipa-header{
+  text-align:center;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:11px;
+  padding:16px 8px;
+}
+
+.equipa-header img{
+  width:70px;
+  height:70px;
+  object-fit:contain;
+}
+
+.equipa-titulo{
+  font-size:18px;
+  font-weight:900;
+  margin-top:7px;
+}
+
+.jogadores{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:5px;
+}
+
+.jogador{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:7px;
+  padding:7px;
+  font-size:10px;
+}
+
+.jogador b{
+  color:var(--blue);
+}
+
+/* FUTSAL */
+
+.futsal-menu{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:6px;
+}
+
+.futsal-btn{
+  background:var(--card);
+  color:#fff;
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:9px;
+  font-size:10px;
+  font-weight:900;
+}
+
+.futsal-jogo{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:9px;
+  padding:9px;
+  margin:6px 0;
+}
+
+.futsal-jogo-top{
+  display:flex;
+  justify-content:space-between;
+  color:var(--muted);
+  font-size:9px;
+  margin-bottom:7px;
+}
+
+.futsal-equipas{
+  display:grid;
+  grid-template-columns:1fr 45px 1fr;
+  align-items:center;
+  text-align:center;
+  gap:5px;
+}
+
+.futsal-equipa{
+  font-size:10px;
+  font-weight:900;
+  cursor:pointer;
+}
+
+.futsal-equipa:active{
+  color:var(--blue);
+}
+
+.futsal-score{
+  font-size:15px;
+  font-weight:900;
+}
+
+/* QUADRA */
+
+.quadra{
+  position:relative;
+  min-height:470px;
+  margin-top:8px;
+  padding:10px;
+  background:#07502d;
+  border:2px solid #fff;
+  border-radius:10px;
+  overflow:hidden;
+}
+
+.quadra:before{
+  content:"";
+  position:absolute;
+  top:50%;
+  left:0;
+  right:0;
+  height:1px;
+  background:rgba(255,255,255,.7);
+}
+
+.circulo-meio{
+  position:absolute;
+  top:50%;
+  left:50%;
+  width:80px;
+  height:80px;
+  transform:translate(-50%,-50%);
+  border:1px solid rgba(255,255,255,.8);
+  border-radius:50%;
+}
+
+.area-cima,
+.area-baixo{
+  position:absolute;
+  left:50%;
+  width:150px;
+  height:75px;
+  transform:translateX(-50%);
+  border:1px solid rgba(255,255,255,.8);
+}
+
+.area-cima{
+  top:0;
+  border-top:0;
+}
+
+.area-baixo{
+  bottom:0;
+  border-bottom:0;
+}
+
+.formacao{
+  position:relative;
+  z-index:2;
+  height:220px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-around;
+  align-items:center;
+}
+
+.linha{
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  width:100%;
+}
+
+.futsal-jogador{
+  width:60px;
+  min-height:43px;
+  background:var(--panel);
+  border:1px solid var(--blue);
+  border-radius:8px;
+  color:#fff;
+  text-align:center;
+  padding:4px 2px;
+}
+
+.futsal-jogador small{
+  display:block;
+  color:var(--blue);
+  font-weight:900;
+}
+
+.futsal-jogador span{
+  display:block;
+  font-size:8px;
+  font-weight:900;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+/* BOTTOM */
+
+.bottom{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  height:59px;
+  z-index:80;
+  display:flex;
+  background:var(--panel);
+  border-top:1px solid var(--border);
+}
+
+.bottom button{
+  flex:1;
+  border:0;
+  background:none;
+  color:var(--muted);
+  font-size:10px;
+  font-weight:900;
+}
+
+.bottom button.active{
+  color:var(--blue);
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">FUT<span>ZONE</span></div>
+  <div class="sub">FUTEBOL EM DIRETO</div>
+</header>
+
+<div class="modo-desporto">
+  <button id="btnFutebol" class="modo ativo" onclick="mudarDesporto('futebol')">
+    ⚽ FUTEBOL
+  </button>
+  <button id="btnFutsal" class="modo" onclick="mudarDesporto('futsal')">
+    🥅 FUTSAL
+  </button>
+</div>
+
+<main id="app"></main>
+
+<div class="bottom">
+  <button id="navJogos" class="active" onclick="mostrarJogos()">⚽<br>Jogos</button>
+  <button id="navTabelas" onclick="mostrarTabelas()">🏆<br>Tabelas</button>
+  <button id="navFav" onclick="mostrarFavoritos()">⭐<br>Favoritos</button>
+</div>
+
+<script>
+
+/* =========================================================
+   CONFIGURAÇÃO
+========================================================= */
+
+const ESPN="https://site.api.espn.com/apis/site/v2/sports/soccer/";
+const ESPN2="https://site.api.espn.com/apis/v2/sports/soccer/";
+
+const ligas=[
+ {name:"Portugal",code:"por.1",icon:"🇵🇹"},
+ {name:"Liga Portugal 2",code:"por.2",icon:"🇵🇹"},
+ {name:"Liga 3",code:"por.3",icon:"🇵🇹"},
+ {name:"Inglaterra",code:"eng.1",icon:"🏴"},
+ {name:"Championship",code:"eng.2",icon:"🏴"},
+ {name:"Espanha",code:"esp.1",icon:"🇪🇸"},
+ {name:"LaLiga 2",code:"esp.2",icon:"🇪🇸"},
+ {name:"Itália",code:"ita.1",icon:"🇮🇹"},
+ {name:"Serie B",code:"ita.2",icon:"🇮🇹"},
+ {name:"Alemanha",code:"ger.1",icon:"🇩🇪"},
+ {name:"2. Bundesliga",code:"ger.2",icon:"🇩🇪"},
+ {name:"França",code:"fra.1",icon:"🇫🇷"},
+ {name:"Ligue 2",code:"fra.2",icon:"🇫🇷"},
+ {name:"Países Baixos",code:"ned.1",icon:"🇳🇱"},
+ {name:"Bélgica",code:"bel.1",icon:"🇧🇪"},
+ {name:"Champions League",code:"uefa.champions",icon:"🏆"},
+ {name:"Liga Europa",code:"uefa.europa",icon:"🏆"},
+ {name:"Conference League",code:"uefa.europa.conf",icon:"🏆"}
+];
+
+let ligaAtual=ligas[0];
+let jogos=[];
+let filtro="todos";
+let desporto="futebol";
+
+/* =========================================================
+   UTILITÁRIOS
+========================================================= */
+
+const app=document.getElementById("app");
+
+function esc(v){
+ return String(v??"").replace(/[&<>"']/g,m=>({
+  "&":"&amp;",
+  "<":"&lt;",
+  ">":"&gt;",
+  '"':"&quot;",
+  "'":"&#039;"
+ }[m]));
+}
+
+function data8(d){
+ return d.getFullYear()+
+ String(d.getMonth()+1).padStart(2,"0")+
+ String(d.getDate()).padStart(2,"0");
+}
+
+function hora(d){
+ try{
+  return new Intl.DateTimeFormat("pt-PT",{
+   hour:"2-digit",
+   minute:"2-digit"
+  }).format(new Date(d));
+ }catch(e){return "--:--";}
+}
+
+function diaTexto(d){
+ const x=new Date(d);
+ const hoje=new Date();
+
+ const a=new Date(hoje);
+ a.setHours(0,0,0,0);
+
+ const b=new Date(a);
+ b.setDate(b.getDate()+1);
+
+ const c=new Date(a);
+ c.setDate(c.getDate()-1);
+
+ const y=new Date(x);
+ y.setHours(0,0,0,0);
+
+ let nome;
+
+ if(y.getTime()===a.getTime()) nome="HOJE";
+ else if(y.getTime()===b.getTime()) nome="AMANHÃ";
+ else if(y.getTime()===c.getTime()) nome="ONTEM";
+ else{
+  nome=new Intl.DateTimeFormat("pt-PT",{
+   weekday:"long",
+   day:"2-digit",
+   month:"2-digit"
+  }).format(x);
+  nome=nome.charAt(0).toUpperCase()+nome.slice(1);
+ }
+
+ return nome;
+}
+
+function chaveDia(d){
+ const x=new Date(d);
+ return x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0")+"-"+String(x.getDate()).padStart(2,"0");
+}
+
+/* =========================================================
+   ESTADO
+========================================================= */
+
+function estado(ev){
+ const s=ev?.status||ev?.competitions?.[0]?.status||{};
+ const t=s.type||{};
+
+ if(t.state==="in")
+  return{
+   live:true,
+   final:false,
+   texto:t.shortDetail||t.detail||t.displayClock||"AO VIVO"
+  };
+
+ if(t.state==="post")
+  return{
+   live:false,
+   final:true,
+   texto:t.shortDetail||t.detail||"FINAL"
+  };
+
+ return{
+  live:false,
+  final:false,
+  texto:t.shortDetail||t.detail||""
+ };
+}
+
+/* =========================================================
+   NORMALIZAR
+========================================================= */
+
+function normalizar(ev,l){
+ const c=ev.competitions?.[0]||{};
+ const cs=c.competitors||[];
+
+ const h=cs.find(x=>x.homeAway==="home")||cs[0]||{};
+ const a=cs.find(x=>x.homeAway==="away")||cs[1]||{};
+ const s=estado(ev);
+
+ return{
+  id:String(ev.id),
+  date:ev.date||"",
+  code:l.code,
+  liga:l.name,
+  home:{
+   id:h.team?.id||"",
+   nome:h.team?.displayName||h.team?.shortDisplayName||"Casa",
+   logo:h.team?.logo||h.team?.logos?.[0]?.href||"",
+   score:h.score??"-"
+  },
+  away:{
+   id:a.team?.id||"",
+   nome:a.team?.displayName||a.team?.shortDisplayName||"Fora",
+   logo:a.team?.logo||a.team?.logos?.[0]?.href||"",
+   score:a.score??"-"
+  },
+  estado:s
+ };
+}
+
+/* =========================================================
+   BUSCAR JOGOS
+========================================================= */
+
+async function buscarLiga(l){
+
+ const hoje=new Date();
+ const inicio=new Date(hoje.getFullYear(),hoje.getMonth()-2,1);
+ const fim=new Date(hoje.getFullYear(),hoje.getMonth()+10,0);
+
+ let resultado=[];
+
+ let atual=new Date(inicio);
+
+ while(atual<fim){
+
+  const blocoFim=new Date(atual);
+  blocoFim.setDate(blocoFim.getDate()+89);
+
+  const fimReal=blocoFim<fim?blocoFim:fim;
+
+  const url=
+   `${ESPN}${encodeURIComponent(l.code)}/scoreboard`+
+   `?limit=500&dates=${data8(atual)}-${data8(fimReal)}`;
+
+  try{
+   const r=await fetch(url);
+   if(r.ok){
+    const d=await r.json();
+    if(Array.isArray(d.events))
+     resultado.push(...d.events.map(e=>normalizar(e,l)));
+   }
+  }catch(e){}
+
+  atual=new Date(fimReal);
+  atual.setDate(atual.getDate()+1);
+ }
+
+ return resultado;
+}
+
+async function carregarJogos(){
+
+ app.innerHTML=`
+  <div class="carregando">
+   A atualizar jogos e competições...
+  </div>
+ `;
+
+ let todos=[];
+
+ for(const l of ligas){
+  try{
+   const arr=await buscarLiga(l);
+   todos.push(...arr);
+  }catch(e){}
+ }
+
+ const mapa=new Map();
+
+ todos.forEach(j=>mapa.set(j.id,j));
+
+ jogos=[...mapa.values()].sort(
+  (a,b)=>new Date(a.date)-new Date(b.date)
+ );
+
+ mostrarJogos();
+}
+
+/* =========================================================
+   LIGAS
+========================================================= */
+
+function listaLigas(){
+
+ return`
+ <div class="seletor-ligas">
+ ${ligas.map(l=>`
+  <button
+   class="liga-btn ${ligaAtual.code===l.code?"active":""}"
+   onclick="selecionarLiga('${esc(l.code)}')">
+   <span class="liga-icon">${l.icon}</span>
+   ${esc(l.name)}
+  </button>
+ `).join("")}
+ </div>
+ `;
+}
+
+function selecionarLiga(code){
+ ligaAtual=ligas.find(x=>x.code===code)||ligas[0];
+ filtro="todos";
+ mostrarLiga();
+}
+
+/* =========================================================
+   FILTROS
+========================================================= */
+
+function filtros(){
+
+ return`
+ <div class="filtros">
+
+  <button
+   class="filtro ${filtro==="todos"?"ativo":""}"
+   onclick="filtro='todos';mostrarLiga()">
+   📅 TODOS
+  </button>
+
+  <button
+   class="filtro live ${filtro==="live"?"ativo":""}"
+   onclick="filtro='live';mostrarLiga()">
+   🔴 AO VIVO
+  </button>
+
+  <button
+   class="filtro ${filtro==="resultados"?"ativo":""}"
+   onclick="filtro='resultados';mostrarLiga()">
+   ✅ RESULTADOS
+  </button>
+
+ </div>
+ `;
+}
+
+/* =========================================================
+   JOGO
+========================================================= */
+
+function jogoHTML(j){
+
+ const favorito=
+  JSON.parse(localStorage.getItem("futzone_jogos_favoritos")||"[]")
+  .includes(j.id);
+
+ let estadoHTML="";
+
+ if(j.estado.live)
+  estadoHTML=`<span class="estado-live">🔴 AO VIVO</span>`;
+ else if(j.estado.final)
+  estadoHTML=`<span class="estado-final">FINAL</span>`;
+
+ return`
+ <div class="jogo"
+      onclick="abrirJogo('${esc(j.id)}','${esc(j.code)}')">
+
+  <div class="hora ${j.estado.live?"live":""} ${j.estado.final?"final":""}">
+   ${hora(j.date)}
+   ${estadoHTML}
+  </div>
+
+  <div class="equipas">
+
+   <div class="equipa-linha"
+        onclick="event.stopPropagation();abrirEquipa('${esc(j.code)}','${esc(j.home.id)}','${esc(j.home.nome)}','${esc(j.home.logo)}')">
+
+    ${j.home.logo?
+     `<img src="${esc(j.home.logo)}" onerror="this.style.visibility='hidden'">`
+     :""
+    }
+
+    <span class="equipa-nome">${esc(j.home.nome)}</span>
+
+   </div>
+
+   <div class="equipa-linha"
+        onclick="event.stopPropagation();abrirEquipa('${esc(j.code)}','${esc(j.away.id)}','${esc(j.away.nome)}','${esc(j.away.logo)}')">
+
+    ${j.away.logo?
+     `<img src="${esc(j.away.logo)}" onerror="this.style.visibility='hidden'">`
+     :""
+    }
+
+    <span class="equipa-nome">${esc(j.away.nome)}</span>
+
+   </div>
+
+  </div>
+
+  <div>
+   <div class="placar">${esc(j.home.score)}</div>
+   <div class="placar">${esc(j.away.score)}</div>
+   <div
+    class="estrela ${favorito?"favorito":""}"
+    onclick="event.stopPropagation();alternarFavorito('${esc(j.id)}')">
+    ${favorito?"★":"☆"}
+   </div>
+  </div>
+
+ </div>
+ `;
+}
+
+/* =========================================================
+   MOSTRAR JOGOS
+========================================================= */
+
+function mostrarJogos(){
+
+ nav("navJogos");
+
+ if(desporto==="futsal"){
+  mostrarFutsal();
+  return;
+ }
+
+ app.innerHTML=`
+  <h2>⚽ Futebol</h2>
+  ${listaLigas()}
+  ${filtros()}
+  <div id="jogos-area"></div>
+ `;
+
+ mostrarJogosPorDia();
+}
+
+function mostrarLiga(){
+
+ mostrarJogos();
+
+}
+
+/* =========================================================
+   JOGOS POR DIA
+========================================================= */
+
+function mostrarJogosPorDia(){
+
+ const area=document.getElementById("jogos-area");
+ if(!area)return;
+
+ let lista=jogos.filter(j=>j.code===ligaAtual.code);
+
+ if(filtro==="live")
+  lista=lista.filter(j=>j.estado.live);
+
+ if(filtro==="resultados")
+  lista=lista.filter(j=>j.estado.final);
+
+ if(!lista.length){
+
+  area.innerHTML=`
+   <div class="vazio">
+    Não existem jogos disponíveis nesta competição.
+   </div>
+  `;
+
+  return;
+ }
+
+ const grupos={};
+
+ lista.forEach(j=>{
+  const k=chaveDia(j.date);
+  if(!grupos[k])grupos[k]=[];
+  grupos[k].push(j);
+ });
+
+ let html="";
+
+ Object.keys(grupos)
+ .sort((a,b)=>new Date(a)-new Date(b))
+ .forEach(k=>{
+
+  const arr=grupos[k];
+
+  html+=`
+   <div class="dia">
+
+    <div class="dia-header">
+     <span class="dia-nome">
+      ${esc(diaTexto(arr[0].date))}
+     </span>
+
+     <span class="dia-contagem">
+      ${arr.length} ${arr.length===1?"jogo":"jogos"}
+     </span>
+    </div>
+
+    <div class="competicao">
+
+     <div class="competicao-header">
+      <span class="bola">${ligaAtual.icon}</span>
+      ${esc(ligaAtual.name)}
+     </div>
+
+     ${arr.map(jogoHTML).join("")}
+
+    </div>
+
+   </div>
+  `;
+ });
+
+ area.innerHTML=html;
+}
+
+/* =========================================================
+   FAVORITOS
+========================================================= */
+
+function alternarFavorito(id){
+
+ let lista=
+  JSON.parse(localStorage.getItem("futzone_jogos_favoritos")||"[]");
+
+ if(lista.includes(id))
+  lista=lista.filter(x=>x!==id);
+ else
+  lista.push(id);
+
+ localStorage.setItem(
+  "futzone_jogos_favoritos",
+  JSON.stringify(lista)
+ );
+
+ mostrarJogosPorDia();
+}
+
+function mostrarFavoritos(){
+
+ nav("navFav");
+
+ const ids=
+  JSON.parse(localStorage.getItem("futzone_jogos_favoritos")||"[]");
+
+ const lista=jogos.filter(j=>ids.includes(j.id));
+
+ app.innerHTML=`
+  <h2>⭐ Favoritos</h2>
+
+  ${
+   lista.length
+   ?lista.map(jogoHTML).join("")
+   :`<div class="vazio">
+      Ainda não tens jogos favoritos.
+     </div>`
+  }
+ `;
+}
+
+/* =========================================================
+   DETALHE DO JOGO
+========================================================= */
+
+async function abrirJogo(id,code){
+
+ const j=jogos.find(x=>x.id===id);
+ if(!j)return;
+
+ const o=document.createElement("div");
+ o.className="overlay";
+
+ o.innerHTML=`
+  <div class="overlay-header">
+   <button class="voltar"
+           onclick="this.closest('.overlay').remove()">
+    ← Voltar
+   </button>
+  </div>
+
+  <div class="detalhe">
+
+   <div class="jogo-detalhe">
+
+    <div class="jogo-detalhe-equipas">
+
+     <div class="equipa">
+
+      ${j.home.logo?
+       `<img src="${esc(j.home.logo)}">`
+       :""}
+
+      ${esc(j.home.nome)}
+
+     </div>
+
+     <div>
+
+      <div class="resultado-grande">
+       ${esc(j.home.score)} - ${esc(j.away.score)}
+      </div>
+
+      <div class="estado-grande">
+       ${j.estado.live?"🔴 AO VIVO":
+         j.estado.final?"FINAL":
+         hora(j.date)}
+      </div>
+
+     </div>
+
+     <div class="equipa">
+
+      ${j.away.logo?
+       `<img src="${esc(j.away.logo)}">`
+       :""}
+
+      ${esc(j.away.nome)}
+
+     </div>
+
+    </div>
+
+   </div>
+
+   <div class="carregando">
+    A carregar detalhes do jogo...
+   </div>
+
+  </div>
+ `;
+
+ document.body.appendChild(o);
+
+ try{
+
+  const r=await fetch(
+   `${ESPN}${encodeURIComponent(code)}/summary?event=${encodeURIComponent(id)}`
+  );
+
+  if(!r.ok)throw new Error();
+
+  const d=await r.json();
+
+  const detalhe=o.querySelector(".detalhe");
+
+  const eventos=extrairEventos(d);
+
+  detalhe.insertAdjacentHTML(
+   "beforeend",
+   `
+   <div class="secao">
+    <h3>⚽ Eventos</h3>
+
+    ${
+     eventos.length
+     ?eventos.map(e=>`
+       <div class="evento">
+        <span class="minuto">${esc(e.m)}</span>
+        <span>${e.i} ${esc(e.t)}</span>
+       </div>
+      `).join("")
+     :`<div class="vazio">
+        Ainda não existem eventos disponíveis.
+       </div>`
+    }
+
+   </div>
+
+   <div class="secao">
+    <h3>📊 Informações</h3>
+
+    <div class="evento">
+     <span class="minuto">🏆</span>
+     <span>${esc(j.liga)}</span>
+    </div>
+
+    <div class="evento">
+     <span class="minuto">📅</span>
+     <span>${esc(diaTexto(j.date))} · ${hora(j.date)}</span>
+    </div>
+
+   </div>
+   `
+  );
+
+  o.querySelector(".carregando")?.remove();
+
+ }catch(e){
+
+  const x=o.querySelector(".carregando");
+
+  if(x)
+   x.outerHTML=`
+    <div class="erro">
+     Não foi possível carregar os detalhes deste jogo.
+    </div>
+   `;
+ }
+}
+
+/* =========================================================
+   EVENTOS
+========================================================= */
+
+function extrairEventos(d){
+
+ const arr=[
+  ...(d.plays||[]),
+  ...(d.keyEvents||[]),
+  ...(d.scoringPlays||[])
+ ];
+
+ const vistos=new Set();
+ const saida=[];
+
+ arr.forEach(e=>{
+
+  const texto=
+   e?.text||
+   e?.shortText||
+   e?.description||
+   e?.type?.text||
+   "";
+
+  const k=String(e?.id||"")+texto;
+
+  if(vistos.has(k))return;
+
+  vistos.add(k);
+
+  const baixo=texto.toLowerCase();
+
+  let icone="⚽";
+
+  if(/yellow|amarelo/.test(baixo))
+   icone="🟨";
+
+  if(/red|vermelho/.test(baixo))
+   icone="🟥";
+
+  if(/substitut/.test(baixo))
+   icone="🔄";
+
+  saida.push({
+   m:e?.clock?.displayValue||"",
+   t:texto,
+   i:icone
+  });
+ });
+
+ return saida;
+}
+
+/* =========================================================
+   EQUIPA
+========================================================= */
+
+async function abrirEquipa(code,id,nome,logo){
+
+ if(!id){
+
+  alert("Informação desta equipa não está disponível.");
+  return;
+
+ }
+
+ const o=document.createElement("div");
+ o.className="overlay";
+
+ o.innerHTML=`
+  <div class="overlay-header">
+   <button class="voltar"
+           onclick="this.closest('.overlay').remove()">
+    ← Voltar
+   </button>
+  </div>
+
+  <div class="detalhe">
+
+   <div class="equipa-header">
+
+    ${logo?
+     `<img src="${esc(logo)}">`
+     :""
+    }
+
+    <div class="equipa-titulo">
+     ${esc(nome)}
+    </div>
+
+   </div>
+
+   <div class="carregando">
+    A carregar equipa...
+   </div>
+
+  </div>
+ `;
+
+ document.body.appendChild(o);
+
+ try{
+
+  const r=await fetch(
+   `${ESPN}${encodeURIComponent(code)}/teams/${encodeURIComponent(id)}/roster`
+  );
+
+  let jogadores=[];
+
+  if(r.ok){
+
+   const d=await r.json();
+
+   jogadores=
+    d.athletes||
+    d.roster||
+    d.team?.athletes||
+    [];
+  }
+
+  const detalhe=o.querySelector(".detalhe");
+
+  detalhe.insertAdjacentHTML(
+   "beforeend",
+   `
+   <div class="secao">
+
+    <h3>👥 Plantel</h3>
+
+    ${
+     jogadores.length
+     ?`
+      <div class="jogadores">
+       ${
+        jogadores.map(x=>{
+
+         const p=x.athlete||x;
+
+         return`
+          <div class="jogador">
+           <b>${esc(p.jersey||"")}</b>
+           ${esc(p.displayName||p.fullName||"Jogador")}
+           <small style="display:block;color:#9DAABB">
+            ${esc(
+             p.position?.displayName||
+             p.position?.abbreviation||
+             ""
+            )}
+           </small>
+          </div>
+         `;
+
+        }).join("")
+       }
+      </div>
+     `
+     :`<div class="vazio">
+        Plantel não disponível.
+       </div>`
+    }
+
+   </div>
+   `
+  );
+
+  o.querySelector(".carregando")?.remove();
+
+ }catch(e){
+
+  const x=o.querySelector(".carregando");
+
+  if(x)
+   x.outerHTML=`
+    <div class="erro">
+     Não foi possível carregar a equipa.
+    </div>
+   `;
+ }
+}
+
+/* =========================================================
+   TABELAS
+========================================================= */
+
+function mostrarTabelas(){
+
+ nav("navTabelas");
+
+ app.innerHTML=`
+  <h2>🏆 Tabelas</h2>
+  ${listaLigas()}
+  <div id="tabela-area"></div>
+ `;
+}
+
+document.addEventListener("click",function(e){
+
+ const b=e.target.closest(".liga-btn");
+
+ if(
+  b &&
+  document.getElementById("navTabelas")?.classList.contains("active")
+ ){
+  const texto=b.innerText;
+  const liga=ligas.find(x=>texto.includes(x.name));
+
+  if(liga)carregarTabela(liga);
+ }
+
+});
+
+async function carregarTabela(l){
+
+ const area=document.getElementById("tabela-area");
+
+ if(!area)return;
+
+ area.innerHTML=`
+  <div class="carregando">
+   A carregar ${esc(l.name)}...
+  </div>
+ `;
+
+ try{
+
+  const r=await fetch(
+   `${ESPN2}${encodeURIComponent(l.code)}/standings`
+  );
+
+  if(!r.ok)throw new Error();
+
+  const d=await r.json();
+
+  let entries=[];
+
+  function recolher(x){
+
+   if(!x||typeof x!=="object")return;
+
+   if(Array.isArray(x.entries))
+    entries.push(...x.entries);
+
+   if(Array.isArray(x.children))
+    x.children.forEach(recolher);
+
+   if(x.standings)
+    recolher(x.standings);
+  }
+
+  recolher(d);
+
+  if(!entries.length)throw new Error();
+
+  const vistos=new Map();
+
+  entries.forEach(x=>{
+   const id=x.team?.id||x.id;
+   if(!vistos.has(id))
+    vistos.set(id,x);
+  });
+
+  entries=[...vistos.values()];
+
+  area.innerHTML=`
+   <div class="tabela">
+
+    <table>
+
+     <thead>
+      <tr>
+       <th>#</th>
+       <th style="text-align:left">Equipa</th>
+       <th>J</th>
+       <th>V</th>
+       <th>E</th>
+       <th>D</th>
+       <th>PTS</th>
+      </tr>
+     </thead>
+
+     <tbody>
+
+      ${
+       entries.map((x,i)=>{
+
+        const t=x.team||{};
+
+        const stats=x.stats||[];
+
+        function stat(names){
+
+         for(const s of stats){
+
+          const n=String(
+           s.name||
+           s.shortName||
+           s.displayName||
+           ""
+          ).toLowerCase();
+
+          if(names.some(z=>n.includes(z)))
+           return s.value??s.displayValue??0;
+         }
+
+         return 0;
+        }
+
+        return`
+         <tr>
+
+          <td>${i+1}</td>
+
+          <td
+           class="team-cell"
+           onclick="abrirEquipa(
+            '${esc(l.code)}',
+            '${esc(t.id||"")}',
+            '${esc(t.displayName||t.name||"Equipa")}',
+            '${esc(t.logos?.[0]?.href||t.logo||"")}'
+           )">
+
+           <div>
+
+            ${
+             t.logos?.[0]?.href
+             ?`<img src="${esc(t.logos[0].href)}">`
+             :""
+            }
+
+            ${esc(t.displayName||t.name||"Equipa")}
+
+           </div>
+
+          </td>
+
+          <td>${stat(["gamesplayed","played","gp"])}</td>
+          <td>${stat(["wins","w"])}</td>
+          <td>${stat(["ties","draws","d"])}</td>
+          <td>${stat(["losses","l"])}</td>
+          <td><b>${stat(["points","pts"])}</b></td>
+
+         </tr>
+        `;
+
+       }).join("")
+      }
+
+     </tbody>
+
+    </table>
+
+   </div>
+  `;
+
+ }catch(e){
+
+  area.innerHTML=`
+   <div class="erro">
+    Não foi possível carregar a classificação.
+   </div>
+  `;
+ }
+}
+
+/* =========================================================
+   FUTSAL — LIGA PLACARD 2026/27
+========================================================= */
+
+const futsalEquipas=[
+ "AD Fundão",
+ "SC Braga",
+ "Torreense",
+ "Eléctrico",
+ "Sporting CP",
+ "Portimonense",
+ "Leões Porto Salvo",
+ "Ferreira do Zêzere",
+ "Benfica",
+ "UPVN",
+ "Rio Ave",
+ "FC Famalicão"
+];
+
+const futsalJogosLista=[
+ ["11/09","19:30","AD Fundão","SC Braga"],
+ ["11/09","20:30","Torreense","Eléctrico"],
+ ["11/09","21:15","Sporting CP","Portimonense"],
+ ["12/09","17:00","Leões Porto Salvo","Ferreira do Zêzere"],
+ ["12/09","19:00","Benfica","UPVN"],
+ ["13/09","15:00","Rio Ave","FC Famalicão"],
+ ["20/09","15:00","Portimonense","Benfica"],
+ ["20/09","17:00","Eléctrico","Rio Ave"],
+ ["20/09","19:00","SC Braga","Torreense"],
+ ["20/09","20:00","FC Famalicão","Sporting CP"],
+ ["21/09","17:00","UPVN","Leões Porto Salvo"],
+ ["21/09","19:00","Ferreira do Zêzere","AD Fundão"]
+];
+
+function mudarDesporto(tipo){
+
+ desporto=tipo;
+
+ document.getElementById("btnFutebol")
+  .classList.toggle("ativo",tipo==="futebol");
+
+ document.getElementById("btnFutsal")
+  .classList.toggle("ativo",tipo==="futsal");
+
+ if(tipo==="futsal")
+  mostrarFutsal();
+ else
+  mostrarJogos();
+}
+
+function mostrarFutsal(){
+
+ nav("navJogos");
+
+ app.innerHTML=`
+  <h2>🥅 Futsal</h2>
+
+  <div class="card">
+
+   <h3>🇵🇹 Liga Placard 2026/27</h3>
+
+   <div class="futsal-menu">
+
+    <button class="futsal-btn"
+            onclick="futsalJogos()">
+     📅 Jogos
+    </button>
+
+    <button class="futsal-btn"
+            onclick="futsalResultados()">
+     ✅ Resultados
+    </button>
+
+    <button class="futsal-btn"
+            onclick="futsalTabela()">
+     🏆 Tabela
+    </button>
+
+    <button class="futsal-btn"
+            onclick="futsalEquipas()">
+     👥 Equipas
+    </button>
+
+   </div>
+
+  </div>
+
+  <div id="futsal-area"></div>
+ `;
+
+ futsalJogos();
+}
+
+function futsalJogos(){
+
+ const area=document.getElementById("futsal-area");
+
+ area.innerHTML=`
+  <div class="card">
+
+   <h3>📅 Liga Placard — Jogos</h3>
+
+   ${
+    futsalJogosLista.map(j=>`
+
+     <div class="futsal-jogo">
+
+      <div class="futsal-jogo-top">
+       <span>${esc(j[0])}</span>
+       <span>${esc(j[1])}</span>
+      </div>
+
+      <div class="futsal-equipas">
+
+       <div
+        class="futsal-equipa"
+        onclick="futsalEquipa('${esc(j[2])}')">
+        ${esc(j[2])}
+       </div>
+
+       <div class="futsal-score">-</div>
+
+       <div
+        class="futsal-equipa"
+        onclick="futsalEquipa('${esc(j[3])}')">
+        ${esc(j[3])}
+       </div>
+
+      </div>
+
+     </div>
+
+    `).join("")
+   }
+
+  </div>
+ `;
+}
+
+function futsalResultados(){
+
+ document.getElementById("futsal-area").innerHTML=`
+  <div class="card">
+   <h3>✅ Resultados</h3>
+   <div class="vazio">
+    Os resultados oficiais serão apresentados aqui quando disponíveis.
+   </div>
+  </div>
+ `;
+}
+
+function futsalTabela(){
+
+ document.getElementById("futsal-area").innerHTML=`
+  <div class="card">
+
+   <h3>🏆 Liga Placard 2026/27</h3>
+
+   <div class="vazio">
+    Classificação da Liga Placard.
+   </div>
+
+   ${
+    futsalEquipas.map((e,i)=>`
+     <div class="jogador"
+          style="margin-top:5px;cursor:pointer"
+          onclick="futsalEquipa('${esc(e)}')">
+
+      <b>${i+1}.</b> ${esc(e)}
+
+     </div>
+    `).join("")
+   }
+
+  </div>
+ `;
+}
+
+function futsalEquipas(){
+
+ document.getElementById("futsal-area").innerHTML=`
+  <div class="card">
+
+   <h3>👥 Equipas Liga Placard 2026/27</h3>
+
+   ${
+    futsalEquipas.map(e=>`
+     <div
+      class="jogador"
+      style="margin-top:5px;cursor:pointer"
+      onclick="futsalEquipa('${esc(e)}')">
+
+      🥅 <b>${esc(e)}</b>
+
+     </div>
+    `).join("")
+   }
+
+  </div>
+ `;
+}
+
+/* =========================================================
+   EQUIPA FUTSAL + QUADRA
+========================================================= */
+
+function futsalEquipa(nome){
+
+ const jogadores=[
+  {n:"Guarda-redes 1",num:1},
+  {n:"Jogador 2",num:2},
+  {n:"Jogador 3",num:3},
+  {n:"Jogador 4",num:4},
+  {n:"Jogador 5",num:5}
+ ];
+
+ const o=document.createElement("div");
+ o.className="overlay";
+
+ o.innerHTML=`
+  <div class="overlay-header">
+
+   <button class="voltar"
+           onclick="this.closest('.overlay').remove()">
+    ← Voltar
+   </button>
+
+  </div>
+
+  <div class="detalhe">
+
+   <div class="equipa-header">
+
+    <div style="
+      font-size:48px;
+      margin-bottom:5px">
+      🥅
+    </div>
+
+    <div class="equipa-titulo">
+     ${esc(nome)}
+    </div>
+
+    <div style="
+      color:#9DAABB;
+      font-size:9px;
+      margin-top:4px">
+      Liga Placard 2026/27
+    </div>
+
+   </div>
+
+   <div class="secao">
+
+    <h3>🏟️ Quadra</h3>
+
+    <div class="quadra">
+
+     <div class="area-cima"></div>
+     <div class="area-baixo"></div>
+     <div class="circulo-meio"></div>
+
+     <div class="formacao">
+
+      <div class="linha">
+       <button class="futsal-jogador">
+        <small>1</small>
+        <span>GR</span>
+       </button>
+      </div>
+
+      <div class="linha">
+       <button class="futsal-jogador">
+        <small>2</small>
+        <span>Fixo</span>
+       </button>
+
+       <button class="futsal-jogador">
+        <small>3</small>
+        <span>Ala</span>
+       </button>
+      </div>
+
+      <div class="linha">
+       <button class="futsal-jogador">
+        <small>4</small>
+        <span>Ala</span>
+       </button>
+      </div>
+
+      <div class="linha">
+       <button class="futsal-jogador">
+        <small>5</small>
+        <span>Pivô</span>
+       </button>
+      </div>
+
+     </div>
+
+    </div>
+
+   </div>
+
+   <div class="secao">
+
+    <h3>📅 Jogos</h3>
+
+    ${
+     futsalJogosLista
+      .filter(x=>x[2]===nome||x[3]===nome)
+      .map(x=>`
+       <div class="futsal-jogo">
+
+        <div class="futsal-jogo-top">
+         <span>${esc(x[0])}</span>
+         <span>${esc(x[1])}</span>
+        </div>
+
+        <div class="futsal-equipas">
+         <div class="futsal-equipa">
+          ${esc(x[2])}
+         </div>
+
+         <div class="futsal-score">-</div>
+
+         <div class="futsal-equipa">
+          ${esc(x[3])}
+         </div>
+        </div>
+
+       </div>
+      `).join("")
+    }
+
+   </div>
+
+   <div class="secao">
+
+    <h3>👥 Plantel</h3>
+
+    ${
+     jogadores.map(p=>`
+      <div class="jogador" style="margin-top:5px">
+       <b>${p.num}</b> ${esc(p.n)}
+      </div>
+     `).join("")
+    }
+
+   </div>
+
+  </div>
+ `;
+
+ document.body.appendChild(o);
+}
+
+/* =========================================================
+   NAVEGAÇÃO
+========================================================= */
+
+function nav(id){
+
+ ["navJogos","navTabelas","navFav"].forEach(x=>{
+  document.getElementById(x)
+   ?.classList.toggle("active",x===id);
+ });
+}
+
+/* =========================================================
+   ARRANQUE
+========================================================= */
+
+mostrarJogos();
+
+carregarJogos();
+
+setInterval(carregarJogos,120000);
+
+</script>
+
+</body>
+</html>
