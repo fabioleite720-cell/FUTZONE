@@ -3796,6 +3796,272 @@ document.addEventListener("gesturestart",e=>e.preventDefault());
   );
 
 })();
+  /* =========================================================
+   FUTZONE — LIGA BPI FEMININA
+   BLOCO ISOLADO
+   Não altera as restantes competições
+   ========================================================= */
+
+(function(){
+
+  const FZ_LIGA_BPI = "por.w.1";
+
+  const FZ_LIGA_BPI_NOME = "🇵🇹 Liga BPI Feminina";
+
+  /*
+     Adiciona a Liga BPI à lista de competições.
+     O resto das ligas permanece exatamente igual.
+  */
+
+  if(!ligas.some(x=>x[0]===FZ_LIGA_BPI)){
+
+    ligas.splice(
+      3,
+      0,
+      [FZ_LIGA_BPI,FZ_LIGA_BPI_NOME]
+    );
+
+  }
+
+  /*
+     Reforça a pesquisa da Liga BPI através da ESPN.
+  */
+
+  const fzBuscarLigaOriginal = buscarJogosLiga;
+
+  buscarJogosLiga = async function(liga){
+
+    if(liga !== FZ_LIGA_BPI){
+      return fzBuscarLigaOriginal(liga);
+    }
+
+    const hoje = new Date();
+
+    const datas = [];
+
+    /*
+       Procuramos alguns dias para trás e para a frente,
+       mantendo o mesmo sistema usado no FUTZONE.
+    */
+
+    for(let i=-3;i<=10;i++){
+
+      const d = new Date(hoje);
+
+      d.setDate(d.getDate()+i);
+
+      const y=d.getFullYear();
+      const m=String(d.getMonth()+1).padStart(2,"0");
+      const day=String(d.getDate()).padStart(2,"0");
+
+      datas.push(`${y}${m}${day}`);
+
+    }
+
+    const pedidos = datas.map(async data=>{
+
+      try{
+
+        const url =
+          `${API}${FZ_LIGA_BPI}/scoreboard?dates=${data}`;
+
+        const r=await fetch(url,{
+          cache:"no-store"
+        });
+
+        if(!r.ok) return [];
+
+        const j=await r.json();
+
+        return j.events || [];
+
+      }catch(e){
+
+        return [];
+
+      }
+
+    });
+
+    const resultados =
+      await Promise.all(pedidos);
+
+    const mapa = new Map();
+
+    resultados
+      .flat()
+      .forEach(event=>{
+
+        if(event?.id){
+          mapa.set(String(event.id),event);
+        }
+
+      });
+
+    return Array.from(mapa.values());
+
+  };
+
+  /*
+     Liga BPI no botão "LIVE — TODAS AS LIGAS".
+  */
+
+  const fzMostrarLiveOriginal = mostrarTodosLive;
+
+  mostrarTodosLive = async function(){
+
+    const box =
+      document.getElementById("footballContent");
+
+    if(!box) return;
+
+    box.innerHTML =
+      '<div class="loading">🔴 A procurar jogos em direto...</div>';
+
+    const ligasLive = [
+
+      "por.1",
+      "por.2",
+      "por.3",
+
+      "por.w.1",
+
+      "eng.1",
+      "eng.2",
+
+      "esp.1",
+      "esp.2",
+
+      "ita.1",
+      "ita.2",
+
+      "ger.1",
+      "ger.2",
+
+      "fra.1",
+      "fra.2",
+
+      "ned.1",
+      "bel.1",
+
+      "uefa.champions",
+      "uefa.europa",
+      "uefa.europa.conf"
+
+    ];
+
+    try{
+
+      const pedidos = ligasLive.map(async liga=>{
+
+        try{
+
+          const r =
+            await fetch(`${API}${liga}/scoreboard`,{
+              cache:"no-store"
+            });
+
+          if(!r.ok) return [];
+
+          const data=await r.json();
+
+          return (data.events || [])
+            .filter(e=>isLive(e))
+            .map(e=>({
+              ...e,
+              _liga:liga
+            }));
+
+        }catch(e){
+
+          return [];
+
+        }
+
+      });
+
+      const resultados =
+        await Promise.all(pedidos);
+
+      const jogosLive =
+        resultados
+          .flat()
+          .filter((e,i,a)=>
+            a.findIndex(
+              x=>String(x.id)===String(e.id)
+            )===i
+          );
+
+      if(!jogosLive.length){
+
+        box.innerHTML=`
+          <div class="empty">
+            🔴<br><br>
+            Não existem jogos em direto neste momento.
+          </div>
+        `;
+
+        return;
+
+      }
+
+      jogosLive.sort(
+        (a,b)=>
+          new Date(a.date)-new Date(b.date)
+      );
+
+      box.innerHTML=`
+
+        <div class="day">
+
+          <div class="dayHead">
+
+            <div class="dayName">
+              🔴 JOGOS EM DIRETO
+            </div>
+
+            <div class="dayCount">
+              ${jogosLive.length}
+              ${jogosLive.length===1
+                ?"jogo"
+                :"jogos"}
+            </div>
+
+          </div>
+
+          ${jogosLive
+            .map(event=>cartaoJogo(event))
+            .join("")}
+
+        </div>
+
+      `;
+
+    }catch(e){
+
+      box.innerHTML=`
+        <div class="error">
+          Não foi possível consultar os jogos
+          em direto neste momento.
+        </div>
+      `;
+
+    }
+
+  };
+
+  /*
+     Depois de adicionar a competição,
+     redesenha os botões.
+  */
+
+  desenharLigas();
+
+  console.log(
+    "FUTZONE: Liga BPI Feminina ativada."
+  );
+
+})();
 </script>
 
 </body>
