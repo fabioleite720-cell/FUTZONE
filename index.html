@@ -835,8 +835,150 @@ function selecionarLiga(id){
 }
 
 /* ---------- API FUTEBOL ---------- */
+/* =========================================================
+   LIGA PORTUGAL 2 + LIGA 3
+   BLOCO ISOLADO - NÃO ALTERA O RESTO DA APP
+   ========================================================= */
 
+const liga2Resultados = [
+  ["CD Tondela","FC Porto B","3","0"],
+  ["FC Penafiel","Académica OAF","4","1"],
+  ["Benfica B","Torreense","0","2"],
+  ["Feirense","Sporting B","1","3"],
+  ["FC Vizela","FC Felgueiras","1","0"],
+  ["Leixões","Amarante FC","3","1"],
+  ["UD Leiria","Portimonense","1","0"],
+  ["Lusitânia de Lourosa","AFS","2","1"]
+];
+
+const liga2Tabela = [
+  ["Lusitânia de Lourosa",13,5,4,1,0,9,3],
+  ["Sporting B",12,5,4,0,1,7,4],
+  ["FC Penafiel",10,5,3,1,1,11,4],
+  ["FC Vizela",10,5,3,1,1,5,2],
+  ["UD Leiria",9,5,3,0,2,8,5],
+  ["Leixões",9,5,3,0,2,8,6],
+  ["Académica OAF",9,5,3,0,2,8,7],
+  ["Farense",7,4,2,1,1,7,5],
+  ["Portimonense",7,5,2,1,2,4,4],
+  ["Benfica B",7,5,2,1,2,4,5],
+  ["FC Felgueiras",6,5,1,3,1,4,4],
+  ["CD Tondela",6,5,2,0,3,5,6],
+  ["AFS",5,4,1,2,1,5,4],
+  ["Torreense",5,5,1,2,2,7,9],
+  ["Amarante FC",4,5,1,1,3,3,6],
+  ["FC Porto B",3,5,1,0,4,2,11],
+  ["GD Chaves",1,4,0,1,3,4,9],
+  ["Feirense",1,5,0,1,4,1,7]
+];
+
+const liga3AResultados = [
+  ["Vianense","Paços de Ferreira","2","2"],
+  ["Vitória SC B","Trofense","0","0"],
+  ["Varzim","USC Paredes","0","1"],
+  ["Leça FC","Fafe","0","3"],
+  ["S. João Ver","AD Marco 09","0","0"]
+];
+
+const liga3ATabela = [
+  ["USC Paredes",9,4,3,0,1,6,3],
+  ["Varzim",9,4,3,0,1,7,3],
+  ["Fafe",8,4,2,2,0,7,2],
+  ["AD Marco 09",7,4,2,1,1,5,3],
+  ["Vitória SC B",5,4,1,2,1,4,4]
+];
+
+const liga3BTabela = [
+  ["Belenenses",12,4,4,0,0,12,2],
+  ["Atlético CP",10,4,3,1,0,8,3],
+  ["CD Mafra",7,4,2,1,1,6,4]
+];
+
+/*
+  Cria eventos no mesmo formato usado pelo resto
+  da aplicação. Assim não mexemos nos cartões.
+*/
+
+function criarEventoLocal(id,casa,fora,gc,gf,data="2026-09-05"){
+  return {
+    id:id,
+    date:data+"T15:00:00Z",
+    league:{
+      name:"Liga Portugal"
+    },
+    season:{
+      displayName:"2026/27"
+    },
+    status:{
+      type:{
+        completed:true,
+        state:"post",
+        shortDetail:"FINAL"
+      }
+    },
+    competitions:[
+      {
+        competitors:[
+          {
+            homeAway:"home",
+            score:gc,
+            team:{
+              id:"local-"+id+"-1",
+              displayName:casa,
+              name:casa
+            }
+          },
+          {
+            homeAway:"away",
+            score:gf,
+            team:{
+              id:"local-"+id+"-2",
+              displayName:fora,
+              name:fora
+            }
+          }
+        ]
+      }
+    ]
+  };
+}
+
+async function jogosLiga2(){
+
+  return liga2Resultados.map((j,i)=>
+    criarEventoLocal(
+      "liga2-"+i,
+      j[0],
+      j[1],
+      j[2],
+      j[3]
+    )
+  );
+
+}
+
+async function jogosLiga3(){
+
+  return liga3AResultados.map((j,i)=>
+    criarEventoLocal(
+      "liga3a-"+i,
+      j[0],
+      j[1],
+      j[2],
+      j[3]
+    )
+  );
+
+                }
 async function buscarJogosLiga(liga){
+  
+  if (liga === "por.2") {
+  return await jogosLiga2();
+}
+
+if (liga === "por.3") {
+  return await jogosLiga3();
+}
   const hoje = new Date();
 
   const datas = [];
