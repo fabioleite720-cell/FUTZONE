@@ -2969,6 +2969,833 @@ document.addEventListener("gesturestart",e=>e.preventDefault());
   );
 
 })();
+  /* =========================================================
+   FUTZONE — DETALHE COMPLETO DOS JOGOS
+   Golos • Assistências • Cartões • Substituições
+   11 titular • Estatísticas • Atualização LIVE
+   ========================================================= */
+
+(function(){
+
+  let fzDetalheTimer = null;
+
+  function fzTexto(v){
+    return escapeHtml(v || "");
+  }
+
+  function fzEquipaPorId(summary, id){
+    const comps =
+      summary?.header?.competitions?.[0]?.competitors ||
+      summary?.competitions?.[0]?.competitors ||
+      [];
+
+    return comps.find(c =>
+      String(c?.team?.id || c?.id || "") === String(id)
+    );
+  }
+
+  function fzNomeJogador(a){
+    return a?.displayName ||
+           a?.fullName ||
+           a?.athlete?.displayName ||
+           a?.athlete?.fullName ||
+           "Jogador";
+  }
+
+  function fzNomeEquipaId(summary,id){
+    const c=fzEquipaPorId(summary,id);
+    return c?.team?.displayName ||
+           c?.team?.name ||
+           "";
+  }
+
+  function fzMinuto(play){
+
+    if(play?.clock?.displayValue)
+      return play.clock.displayValue;
+
+    if(play?.clock?.value != null){
+      const segundos=Number(play.clock.value);
+      if(!isNaN(segundos)){
+        return Math.floor(segundos/60)+":"
+          +String(Math.floor(segundos%60)).padStart(2,"0");
+      }
+    }
+
+    return "";
+  }
+
+  function fzTipoEvento(play){
+
+    const t=String(
+      play?.type?.text ||
+      play?.type?.name ||
+      play?.type?.id ||
+      ""
+    ).toLowerCase();
+
+    const texto=String(play?.text || "").toLowerCase();
+
+    if(play?.scoringPlay || t.includes("goal") ||
+       t.includes("score") ||
+       texto.includes("goal")){
+      return "goal";
+    }
+
+    if(play?.redCard || t.includes("red") ||
+       texto.includes("red card")){
+      return "red";
+    }
+
+    if(play?.yellowCard || t.includes("yellow") ||
+       texto.includes("yellow card")){
+      return "yellow";
+    }
+
+    if(t.includes("substitution") ||
+       t.includes("sub") ||
+       texto.includes("substitution")){
+      return "sub";
+    }
+
+    return "other";
+  }
+
+  function fzIconeEvento(tipo){
+    if(tipo==="goal") return "⚽";
+    if(tipo==="red") return "🟥";
+    if(tipo==="yellow") return "🟨";
+    if(tipo==="sub") return "🔄";
+    return "•";
+  }
+
+  function fzEventos(summary){
+
+    let plays =
+      summary?.plays ||
+      summary?.keyEvents ||
+      [];
+
+    if(!Array.isArray(plays)) plays=[];
+
+    return plays
+      .filter(p=>{
+        const tipo=fzTipoEvento(p);
+        return ["goal","red","yellow","sub"].includes(tipo);
+      })
+      .map(p=>{
+
+        const tipo=fzTipoEvento(p);
+
+        let jogadores=[];
+
+        if(Array.isArray(p.athletesInvolved))
+          jogadores=p.athletesInvolved;
+
+        if(Array.isArray(p.participants))
+          jogadores=jogadores.concat(p.participants);
+
+        const nomes=[...new Set(
+          jogadores
+            .map(x=>fzNomeJogador(x))
+            .filter(Boolean)
+        )];
+
+        return {
+          tipo:tipo,
+          minuto:fzMinuto(p),
+          equipa:fzNomeEquipaId(
+            summary,
+            p?.team?.id
+          ),
+          nomes:nomes,
+          texto:p?.text || ""
+        };
+
+      });
+  }
+
+  function fzRenderEventos(summary){
+
+    const eventos=fzEventos(summary);
+
+    if(!eventos.length){
+      return `
+        <div class="notice">
+          Não existem eventos detalhados disponíveis para este jogo.
+        </div>
+      `;
+    }
+
+    return eventos.map(e=>{
+
+      let descricao=e.texto;
+
+      if(!descricao){
+
+        if(e.nomes.length){
+          descricao=e.nomes.join(" · ");
+        }else{
+          descricao=e.equipa || "Evento";
+        }
+
+      }
+
+      return `
+        <div class="player">
+
+          <div>
+            <strong>
+              ${fzIconeEvento(e.tipo)}
+              ${fzTexto(descricao)}
+            </strong>
+
+            ${
+              e.equipa
+              ? `<small style="display:block;margin-top:3px">
+                   ${fzTexto(e.equipa)}
+                 </small>`
+              : ""
+            }
+          </div>
+
+          <small>
+            ${fzTexto(e.minuto || "")}
+          </small>
+
+        </div>
+      `;
+
+    }).join("");
+  }
+
+  function fzRenderTitulares(summary){
+
+    const rosters=summary?.rosters || [];
+
+    if(!Array.isArray(rosters) || !rosters.length){
+      return `
+        <div class="notice">
+          Os 11 titulares não estão disponíveis para este jogo.
+        </div>
+      `;
+    }
+
+    return rosters.map(r=>{
+
+      const equipa=
+        r?.team?.displayName ||
+        r?.team?.name ||
+        fzNomeEquipaId(summary,r?.team?.id) ||
+        "Equipa";
+
+      const jogadores=
+        r?.roster ||
+        r?.athletes ||
+        [];
+
+      const titulares=jogadores.filter(p=>
+        p?.starter === true ||
+        p?.starter === "true" ||
+        p?.isStarter === true
+      );
+
+      if(!titulares.length) return "";
+
+      return `
+        <div class="eventBox">
+
+          <div class="eventTitle">
+            👥 ${fzTexto(equipa)} — 11 titular
+          </div>
+
+          ${
+            titulares.map((p,i)=>{
+
+              const a=p?.athlete || p;
+
+              const nome=
+                a?.displayName ||
+                a?.fullName ||
+                "Jogador";
+
+              const pos=
+                a?.position?.displayName ||
+                a?.position?.abbreviation ||
+                p?.position?.displayName ||
+                "";
+
+              const numero=
+                a?.jersey ||
+                p?.jersey ||
+                "";
+
+              return `
+                <div class="player">
+
+                  <strong>
+                    ${i+1}. ${fzTexto(nome)}
+                  </strong>
+
+                  <small>
+                    ${numero ? "#"+fzTexto(numero)+" " : ""}
+                    ${fzTexto(pos)}
+                  </small>
+
+                </div>
+              `;
+
+            }).join("")
+          }
+
+        </div>
+      `;
+
+    }).join("");
+  }
+
+  function fzRenderEstatisticas(summary){
+
+    const teams=summary?.boxscore?.teams || [];
+
+    if(!Array.isArray(teams) || teams.length<1){
+
+      return `
+        <div class="notice">
+          As estatísticas deste jogo ainda não estão disponíveis.
+        </div>
+      `;
+
+    }
+
+    const dados=teams.map(t=>({
+
+      nome:
+        t?.team?.displayName ||
+        t?.team?.name ||
+        "Equipa",
+
+      stats:t?.statistics || []
+
+    }));
+
+    const nomes=new Set();
+
+    dados.forEach(t=>{
+      t.stats.forEach(s=>{
+        if(s?.name || s?.label){
+          nomes.add(s.name || s.label);
+        }
+      });
+    });
+
+    const lista=[...nomes];
+
+    const mapaNome={
+      possession:"Posse de bola",
+      shots:"Remates",
+      shotsOnTarget:"Remates à baliza",
+      corners:"Cantos",
+      fouls:"Faltas",
+      yellowCards:"Amarelos",
+      redCards:"Vermelhos",
+      offsides:"Fora de jogo",
+      saves:"Defesas",
+      totalShots:"Remates",
+      accuratePasses:"Passes certos",
+      totalPasses:"Passes"
+    };
+
+    return `
+      <div style="overflow-x:auto">
+
+        <table class="table">
+
+          <thead>
+            <tr>
+              <th>Estatística</th>
+
+              ${
+                dados.map(t=>
+                  `<th>${fzTexto(t.nome)}</th>`
+                ).join("")
+              }
+
+            </tr>
+          </thead>
+
+          <tbody>
+
+            ${
+              lista.map(nome=>{
+
+                const valores=dados.map(t=>{
+
+                  const s=t.stats.find(x=>
+                    x?.name===nome ||
+                    x?.label===nome
+                  );
+
+                  return s?.displayValue ??
+                         s?.value ??
+                         "-";
+                });
+
+                return `
+                  <tr>
+
+                    <td>
+                      ${fzTexto(
+                        mapaNome[nome] ||
+                        nome
+                      )}
+                    </td>
+
+                    ${
+                      valores.map(v=>
+                        `<td><strong>
+                          ${fzTexto(v)}
+                        </strong></td>`
+                      ).join("")
+                    }
+
+                  </tr>
+                `;
+
+              }).join("")
+            }
+
+          </tbody>
+
+        </table>
+
+      </div>
+    `;
+  }
+
+  function fzRenderJogadores(summary){
+
+    const jogadores=summary?.boxscore?.players || [];
+
+    if(!Array.isArray(jogadores) || !jogadores.length){
+      return "";
+    }
+
+    let html="";
+
+    jogadores.forEach(grupo=>{
+
+      const equipa=
+        grupo?.team?.displayName ||
+        grupo?.team?.name ||
+        "";
+
+      const atletas=grupo?.statistics || [];
+
+      if(!Array.isArray(atletas) || !atletas.length)
+        return;
+
+      html+=`
+        <div class="eventBox">
+
+          <div class="eventTitle">
+            📈 ${fzTexto(equipa)} — jogadores
+          </div>
+
+          ${
+            atletas.slice(0,30).map(p=>{
+
+              const a=p?.athlete || {};
+
+              const nome=
+                a?.displayName ||
+                p?.displayName ||
+                "Jogador";
+
+              let resumo="";
+
+              if(Array.isArray(p?.statistics)){
+                resumo=p.statistics
+                  .slice(0,4)
+                  .map(s=>
+                    `${s?.label || s?.name || ""}: ${s?.displayValue || s?.value || ""}`
+                  )
+                  .filter(x=>x.trim())
+                  .join(" · ");
+              }
+
+              return `
+                <div class="player">
+
+                  <strong>
+                    ${fzTexto(nome)}
+                  </strong>
+
+                  <small>
+                    ${fzTexto(resumo)}
+                  </small>
+
+                </div>
+              `;
+
+            }).join("")
+          }
+
+        </div>
+      `;
+
+    });
+
+    return html;
+  }
+
+  async function fzCarregarDetalhe(id){
+
+    const event=jogosFutebol.find(
+      x=>String(x.id)===String(id)
+    );
+
+    if(!event) return;
+
+    const box=document.getElementById("overlayContent");
+
+    if(!box) return;
+
+    const liga=ligaAtual;
+
+    /*
+      Liga 2/Liga 3 são dados locais no FUTZONE.
+      Não têm um event real da ESPN para consultar.
+    */
+
+    if(
+      liga==="por.2" ||
+      liga==="por.3"
+    ){
+
+      box.innerHTML+=`
+        <div class="eventBox">
+          <div class="eventTitle">
+            ℹ️ Detalhes
+          </div>
+
+          <div class="notice">
+            Esta competição está a usar dados locais no FUTZONE.
+            Os detalhes individuais do jogo dependem de uma
+            fonte de dados que forneça eventos e estatísticas.
+          </div>
+        </div>
+      `;
+
+      return;
+    }
+
+    try{
+
+      const url=
+        `${API}${liga}/summary?event=${encodeURIComponent(id)}`;
+
+      const r=await fetch(url,{
+        cache:"no-store"
+      });
+
+      if(!r.ok)
+        throw new Error("summary");
+
+      const summary=await r.json();
+
+      /*
+        Eventos
+      */
+
+      const eventosHtml=fzRenderEventos(summary);
+
+      /*
+        Estatísticas
+      */
+
+      const statsHtml=fzRenderEstatisticas(summary);
+
+      /*
+        Titulares
+      */
+
+      const titularesHtml=fzRenderTitulares(summary);
+
+      /*
+        Estatísticas dos jogadores
+      */
+
+      const jogadoresHtml=fzRenderJogadores(summary);
+
+      box.innerHTML+=`
+
+        <div class="eventBox">
+
+          <div class="eventTitle">
+            ⚽ Golos · cartões · substituições
+          </div>
+
+          ${eventosHtml}
+
+        </div>
+
+        <div class="eventBox">
+
+          <div class="eventTitle">
+            📊 Estatísticas
+          </div>
+
+          ${statsHtml}
+
+        </div>
+
+        ${titularesHtml}
+
+        ${jogadoresHtml}
+
+      `;
+
+      /*
+        Atualização automática durante jogos LIVE
+      */
+
+      const liveAtual=
+        summary?.header?.competitions?.[0]
+          ?.status?.type?.state==="in" ||
+        summary?.header?.competitions?.[0]
+          ?.status?.type?.name==="STATUS_IN_PROGRESS";
+
+      if(liveAtual){
+
+        clearTimeout(fzDetalheTimer);
+
+        fzDetalheTimer=setTimeout(()=>{
+          if(
+            document.getElementById("overlay")
+              ?.classList.contains("show")
+          ){
+            fzAtualizarDetalhe(id);
+          }
+        },20000);
+
+      }
+
+    }catch(e){
+
+      box.innerHTML+=`
+
+        <div class="eventBox">
+
+          <div class="eventTitle">
+            📊 Detalhes do jogo
+          </div>
+
+          <div class="notice">
+            Os detalhes completos deste jogo
+            não estão disponíveis neste momento.
+          </div>
+
+        </div>
+
+      `;
+
+    }
+
+  }
+
+  async function fzAtualizarDetalhe(id){
+
+    const box=document.getElementById("overlayContent");
+
+    if(!box) return;
+
+    /*
+      Guarda o cabeçalho atual e recarrega tudo.
+    */
+
+    const event=jogosFutebol.find(
+      x=>String(x.id)===String(id)
+    );
+
+    if(!event) return;
+
+    const comp=event.competitions?.[0];
+    const competitors=comp?.competitors || [];
+
+    const home=
+      competitors.find(x=>x.homeAway==="home") ||
+      competitors[0];
+
+    const away=
+      competitors.find(x=>x.homeAway==="away") ||
+      competitors[1];
+
+    box.innerHTML=`
+
+      <div class="bigTeams">
+
+        ${
+          home?.team?.logo
+          ? `<img class="bigLogo"
+               src="${fzTexto(home.team.logo)}">`
+          : ""
+        }
+
+        <div class="bigName">
+          ${fzTexto(nomeEquipa(home))}
+        </div>
+
+        <div class="bigScore">
+          ${fzTexto(home?.score ?? "-")}
+          -
+          ${fzTexto(away?.score ?? "-")}
+        </div>
+
+        <div class="bigName">
+          ${fzTexto(nomeEquipa(away))}
+        </div>
+
+        ${
+          away?.team?.logo
+          ? `<img class="bigLogo"
+               src="${fzTexto(away.team.logo)}">`
+          : ""
+        }
+
+        <div class="notice">
+          🔴 A atualizar dados...
+        </div>
+
+      </div>
+
+    `;
+
+    await fzCarregarDetalhe(id);
+  }
+
+  /*
+    Substitui a função original abrirJogo()
+  */
+
+  window.abrirJogo=async function(id){
+
+    clearTimeout(fzDetalheTimer);
+
+    const event=jogosFutebol.find(
+      x=>String(x.id)===String(id)
+    );
+
+    if(!event) return;
+
+    const comp=event.competitions?.[0];
+
+    const competitors=
+      comp?.competitors || [];
+
+    const home=
+      competitors.find(x=>x.homeAway==="home") ||
+      competitors[0];
+
+    const away=
+      competitors.find(x=>x.homeAway==="away") ||
+      competitors[1];
+
+    const live=isLive(event);
+
+    document.getElementById("overlayTitle").textContent=
+      getCompeticao(event);
+
+    document.getElementById("overlayContent").innerHTML=`
+
+      <div class="bigTeams">
+
+        ${
+          home?.team?.logo
+          ? `<img class="bigLogo"
+               src="${fzTexto(home.team.logo)}">`
+          : ""
+        }
+
+        <div class="bigName">
+          ${fzTexto(nomeEquipa(home))}
+        </div>
+
+        <div class="bigScore">
+          ${fzTexto(home?.score ?? "-")}
+          -
+          ${fzTexto(away?.score ?? "-")}
+        </div>
+
+        <div class="bigName">
+          ${fzTexto(nomeEquipa(away))}
+        </div>
+
+        ${
+          away?.team?.logo
+          ? `<img class="bigLogo"
+               src="${fzTexto(away.team.logo)}">`
+          : ""
+        }
+
+        <div class="notice">
+          ${horaEvento(event)} ·
+          ${
+            live
+            ? "🔴 AO VIVO"
+            : fzTexto(
+                event.status?.type?.shortDetail ||
+                "Jogo"
+              )
+          }
+        </div>
+
+      </div>
+
+      <div class="eventBox">
+
+        <div class="eventTitle">
+          📡 A carregar detalhes...
+        </div>
+
+        <div class="loading">
+          Golos, cartões, titulares e estatísticas.
+        </div>
+
+      </div>
+
+    `;
+
+    document.getElementById("overlay")
+      .classList.add("show");
+
+    await fzCarregarDetalhe(id);
+  };
+
+  /*
+    Fecha o temporizador quando se fecha o jogo.
+  */
+
+  const fzFecharOverlayOriginal=window.fecharOverlay;
+
+  window.fecharOverlay=function(){
+
+    clearTimeout(fzDetalheTimer);
+
+    if(typeof fzFecharOverlayOriginal==="function"){
+      fzFecharOverlayOriginal();
+    }else{
+      document.getElementById("overlay")
+        ?.classList.remove("show");
+    }
+
+  };
+
+  console.log(
+    "FUTZONE: detalhe completo dos jogos ativado."
+  );
+
+})();
 </script>
 
 </body>
