@@ -4013,17 +4013,91 @@ document.addEventListener("gesturestart",e=>e.preventDefault());
   /* ---------------------------------------------------------
      CONVERTER JOGO PARA O FORMATO DO FUTZONE
      --------------------------------------------------------- */
+function fzEvento(jogo){
 
-  function fzEvento(jogo){
+  return {
 
-    return {
+    id:jogo.id,
 
-      id:jogo.id,
+    date:jogo.date,
 
-      date:jogo.date,
+    name:`${jogo.home} vs ${jogo.away}`,
 
-      name:
-        `${jogo.home} vs ${jogo.away}`,
+    league:{
+      name:"Liga BPI"
+    },
+
+    season:{
+      displayName:"2026/27"
+    },
+
+    status:{
+      type:{
+        completed:jogo.final === true,
+        state:jogo.final === true ? "post" : "pre",
+        name:jogo.final === true
+          ? "STATUS_FINAL"
+          : "STATUS_SCHEDULED",
+        shortDetail:jogo.final === true
+          ? "FINAL"
+          : "AGENDADO"
+      }
+    },
+
+    competitions:[{
+
+      name:"Liga BPI",
+
+      abbreviation:"BPI",
+
+      competitors:[
+
+        {
+          id:"bpi-home-"+jogo.id,
+
+          homeAway:"home",
+
+          team:{
+            id:"bpi-team-"+jogo.home,
+            displayName:jogo.home,
+            shortDisplayName:jogo.home,
+            name:jogo.home
+          },
+
+          score:
+            jogo.homeScore === null
+              ? ""
+              : String(jogo.homeScore)
+        },
+
+        {
+          id:"bpi-away-"+jogo.id,
+
+          homeAway:"away",
+
+          team:{
+            id:"bpi-team-"+jogo.away,
+            displayName:jogo.away,
+            shortDisplayName:jogo.away,
+            name:jogo.away
+          },
+
+          score:
+            jogo.awayScore === null
+              ? ""
+              : String(jogo.awayScore)
+        }
+
+      ]
+
+    }],
+
+    _liga:FZ_LIGA_BPI,
+    _bpi:true
+
+  };
+
+}
 
       competitions:[{
 
