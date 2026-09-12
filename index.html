@@ -616,7 +616,13 @@ button{
     <div class="sectionTitle">Competições</div>
 
     <div class="leagues" id="leagueList"></div>
-
+<button
+  class="filter"
+  id="liveAllBtn"
+  onclick="mostrarTodosLive()"
+  style="width:100%;margin-bottom:7px">
+  🔴 LIVE — TODAS AS LIGAS
+</button>
     <div class="filters">
       <button class="filter active" onclick="setFiltro('todos',this)">Todos</button>
       <button class="filter" onclick="setFiltro('live',this)">🔴 Live</button>
@@ -890,7 +896,124 @@ async function carregarJogos(){
     `;
   }
 }
+/* ---------- LIVE TODAS AS LIGAS ---------- */
 
+async function mostrarTodosLive(){
+
+  const box=document.getElementById("footballContent");
+
+  box.innerHTML=
+    '<div class="loading">🔴 A procurar jogos em direto...</div>';
+
+  const ligasLive=[
+    "por.1",
+    "por.2",
+    "por.3",
+    "eng.1",
+    "eng.2",
+    "esp.1",
+    "esp.2",
+    "ita.1",
+    "ita.2",
+    "ger.1",
+    "ger.2",
+    "fra.1",
+    "fra.2",
+    "ned.1",
+    "bel.1",
+    "uefa.champions",
+    "uefa.europa",
+    "uefa.europa.conf"
+  ];
+
+  try{
+
+    const pedidos=ligasLive.map(async liga=>{
+
+      try{
+
+        const r=await fetch(
+          `${API}${liga}/scoreboard`
+        );
+
+        if(!r.ok) return [];
+
+        const data=await r.json();
+
+        return (data.events || [])
+          .filter(e=>isLive(e))
+          .map(e=>({
+            ...e,
+            _liga:liga
+          }));
+
+      }catch(e){
+
+        return [];
+
+      }
+
+    });
+
+    const resultados=await Promise.all(pedidos);
+
+    const jogosLive=resultados
+      .flat()
+      .filter((e,i,a)=>
+        a.findIndex(x=>String(x.id)===String(e.id))===i
+      );
+
+    if(!jogosLive.length){
+
+      box.innerHTML=`
+        <div class="empty">
+          🔴<br><br>
+          Não existem jogos em direto neste momento.
+        </div>
+      `;
+
+      return;
+    }
+
+    jogosLive.sort(
+      (a,b)=>new Date(a.date)-new Date(b.date)
+    );
+
+    box.innerHTML=`
+
+      <div class="day">
+
+        <div class="dayHead">
+
+          <div class="dayName">
+            🔴 JOGOS EM DIRETO
+          </div>
+
+          <div class="dayCount">
+            ${jogosLive.length}
+            ${jogosLive.length===1?"jogo":"jogos"}
+          </div>
+
+        </div>
+
+        ${jogosLive.map(event=>cartaoJogo(event)).join("")}
+
+      </div>
+
+    `;
+
+  }catch(e){
+
+    box.innerHTML=`
+      <div class="error">
+        Não foi possível consultar os jogos em direto.
+        <br><br>
+        Tenta novamente dentro de alguns segundos.
+      </div>
+    `;
+
+  }
+}
 /* ---------- FILTROS ---------- */
 
 function setFiltro(filtro,btn){
