@@ -3796,6 +3796,1289 @@ document.addEventListener("gesturestart",e=>e.preventDefault());
   );
 
 })();
+  <!-- =========================================================
+     FUTZONE — LIGA BPI FEMININA
+     BLOCO ISOLADO
+     Não altera as restantes competições
+     ========================================================= -->
+
+<script>
+(function(){
+
+  "use strict";
+
+  const FZ_BPI_ID = "por.w.1";
+  const FZ_BPI_NOME = "🇵🇹 Liga BPI Feminina";
+
+  /*
+   * =========================================================
+   * 1. ADICIONAR LIGA BPI À LISTA DE COMPETIÇÕES
+   * =========================================================
+   */
+
+  try {
+
+    if(typeof ligas !== "undefined" && Array.isArray(ligas)){
+
+      const existe = ligas.some(
+        l => String(l.id) === FZ_BPI_ID
+      );
+
+      if(!existe){
+
+        ligas.push({
+          id: FZ_BPI_ID,
+          nome: FZ_BPI_NOME
+        });
+
+      }
+
+    }
+
+  }catch(e){
+
+    console.warn("FUTZONE BPI: erro ao adicionar liga.",e);
+
+  }
+
+
+  /*
+   * =========================================================
+   * 2. EQUIPAS DA LIGA BPI 2026/27
+   * =========================================================
+   */
+
+  const FZ_BPI_EQUIPAS = [
+
+    "Benfica",
+    "FC Porto",
+    "Marítimo",
+    "Racing Power FC",
+    "Rio Ave",
+    "SC Braga",
+    "Sporting",
+    "Torreense",
+    "Valadares Gaia",
+    "Vitória SC"
+
+  ];
+
+
+  /*
+   * =========================================================
+   * 3. LOGOS
+   * =========================================================
+   */
+
+  const FZ_BPI_LOGOS = {
+
+    "Benfica":
+      "https://a.espncdn.com/i/teamlogos/soccer/500/192.png",
+
+    "FC Porto":
+      "https://a.espncdn.com/i/teamlogos/soccer/500/437.png",
+
+    "Sporting":
+      "https://a.espncdn.com/i/teamlogos/soccer/500/2250.png",
+
+    "SC Braga":
+      "https://a.espncdn.com/i/teamlogos/soccer/500/3718.png",
+
+    "Marítimo":
+      "https://a.espncdn.com/i/teamlogos/soccer/500/2827.png",
+
+    "Rio Ave":
+      "https://a.espncdn.com/i/teamlogos/soccer/500/2251.png",
+
+    "Torreense":
+      "",
+
+    "Valadares Gaia":
+      "",
+
+    "Vitória SC":
+      "",
+
+    "Racing Power FC":
+      ""
+
+  };
+
+
+  /*
+   * =========================================================
+   * 4. DADOS DE RESERVA
+   *
+   * Se o ESPN não responder, a app continua a mostrar
+   * jogos e classificação.
+   * =========================================================
+   */
+
+  const FZ_BPI_JOGOS = [
+
+    /*
+     * RESULTADOS
+     */
+
+    {
+      id:"bpi-2026-09-12-valadares-porto",
+      data:"2026-09-12",
+      hora:"15:00",
+      casa:"Valadares Gaia",
+      fora:"FC Porto",
+      golosCasa:1,
+      golosFora:3,
+      final:true
+    },
+
+    {
+      id:"bpi-2026-09-12-benfica-racing",
+      data:"2026-09-12",
+      hora:"15:00",
+      casa:"Benfica",
+      fora:"Racing Power FC",
+      golosCasa:3,
+      golosFora:0,
+      final:true
+    },
+
+
+    /*
+     * PRÓXIMOS
+     */
+
+    {
+      id:"bpi-2026-09-12-braga-maritimo",
+      data:"2026-09-12",
+      hora:"15:00",
+      casa:"SC Braga",
+      fora:"Marítimo",
+      final:false
+    },
+
+    {
+      id:"bpi-2026-09-12-sporting-vitoria",
+      data:"2026-09-12",
+      hora:"15:00",
+      casa:"Sporting",
+      fora:"Vitória SC",
+      final:false
+    },
+
+    {
+      id:"bpi-2026-09-14-torreense-rioave",
+      data:"2026-09-14",
+      hora:"15:00",
+      casa:"Torreense",
+      fora:"Rio Ave",
+      final:false
+    },
+
+    {
+      id:"bpi-2026-09-19-rioave-benfica",
+      data:"2026-09-19",
+      hora:"15:00",
+      casa:"Rio Ave",
+      fora:"Benfica",
+      final:false
+    },
+
+    {
+      id:"bpi-2026-09-19-vitoria-torreense",
+      data:"2026-09-19",
+      hora:"15:00",
+      casa:"Vitória SC",
+      fora:"Torreense",
+      final:false
+    },
+
+    {
+      id:"bpi-2026-09-19-racing-valadares",
+      data:"2026-09-19",
+      hora:"15:00",
+      casa:"Racing Power FC",
+      fora:"Valadares Gaia",
+      final:false
+    },
+
+    {
+      id:"bpi-2026-09-20-maritimo-sporting",
+      data:"2026-09-20",
+      hora:"15:00",
+      casa:"Marítimo",
+      fora:"Sporting",
+      final:false
+    },
+
+    {
+      id:"bpi-2026-09-21-porto-braga",
+      data:"2026-09-21",
+      hora:"15:00",
+      casa:"FC Porto",
+      fora:"SC Braga",
+      final:false
+    }
+
+  ];
+
+
+  /*
+   * =========================================================
+   * 5. CONVERTER JOGO LOCAL PARA FORMATO ESPN
+   * =========================================================
+   */
+
+  function fzBpiEvento(j){
+
+    const dataHora =
+      `${j.data}T${j.hora || "15:00"}:00+01:00`;
+
+    return {
+
+      id:String(j.id),
+
+      date:dataHora,
+
+      name:`${j.casa} vs ${j.fora}`,
+
+      competitions:[{
+
+        id:"bpi",
+
+        name:FZ_BPI_NOME,
+
+        competitors:[
+
+          {
+            id:"bpi-"+j.casa,
+            homeAway:"home",
+
+            team:{
+              id:"bpi-"+j.casa,
+              displayName:j.casa,
+              shortDisplayName:j.casa,
+              logo:FZ_BPI_LOGOS[j.casa] || ""
+            },
+
+            score:
+              j.final
+              ? String(j.golosCasa)
+              : undefined
+
+          },
+
+          {
+            id:"bpi-"+j.fora,
+            homeAway:"away",
+
+            team:{
+              id:"bpi-"+j.fora,
+              displayName:j.fora,
+              shortDisplayName:j.fora,
+              logo:FZ_BPI_LOGOS[j.fora] || ""
+            },
+
+            score:
+              j.final
+              ? String(j.golosFora)
+              : undefined
+
+          }
+
+        ],
+
+        status:{
+
+          type:{
+            state:
+              j.final
+              ? "post"
+              : "pre",
+
+            completed:!!j.final,
+
+            shortDetail:
+              j.final
+              ? "Final"
+              : "Agendado"
+          }
+
+        }
+
+      }],
+
+      status:{
+
+        type:{
+          state:
+            j.final
+            ? "post"
+            : "pre",
+
+          completed:!!j.final,
+
+          shortDetail:
+            j.final
+            ? "Final"
+            : "Agendado"
+        }
+
+      }
+
+    };
+
+  }
+
+
+  /*
+   * =========================================================
+   * 6. FALLBACK DE CLASSIFICAÇÃO
+   * =========================================================
+   */
+
+  const FZ_BPI_CLASSIFICACAO = [
+
+    {
+      nome:"FC Porto",
+      j:1,
+      v:1,
+      e:0,
+      d:0,
+      gm:3,
+      gs:1,
+      pts:3
+    },
+
+    {
+      nome:"Benfica",
+      j:1,
+      v:1,
+      e:0,
+      d:0,
+      gm:3,
+      gs:0,
+      pts:3
+    },
+
+    {
+      nome:"SC Braga",
+      j:0,
+      v:0,
+      e:0,
+      d:0,
+      gm:0,
+      gs:0,
+      pts:0
+    },
+
+    {
+      nome:"Marítimo",
+      j:0,
+      v:0,
+      e:0,
+      d:0,
+      gm:0,
+      gs:0,
+      pts:0
+    },
+
+    {
+      nome:"Sporting",
+      j:0,
+      v:0,
+      e:0,
+      d:0,
+      gm:0,
+      gs:0,
+      pts:0
+    },
+
+    {
+      nome:"Vitória SC",
+      j:0,
+      v:0,
+      e:0,
+      d:0,
+      gm:0,
+      gs:0,
+      pts:0
+    },
+
+    {
+      nome:"Torreense",
+      j:0,
+      v:0,
+      e:0,
+      d:0,
+      gm:0,
+      gs:0,
+      pts:0
+    },
+
+    {
+      nome:"Rio Ave",
+      j:0,
+      v:0,
+      e:0,
+      d:0,
+      gm:0,
+      gs:0,
+      pts:0
+    },
+
+    {
+      nome:"Valadares Gaia",
+      j:1,
+      v:0,
+      e:0,
+      d:1,
+      gm:1,
+      gs:3,
+      pts:0
+    },
+
+    {
+      nome:"Racing Power FC",
+      j:1,
+      v:0,
+      e:0,
+      d:1,
+      gm:0,
+      gs:3,
+      pts:0
+    }
+
+  ];
+
+
+  /*
+   * =========================================================
+   * 7. BUSCAR JOGOS BPI
+   *
+   * Primeiro tenta ESPN.
+   * Se não houver dados, utiliza fallback.
+   * =========================================================
+   */
+
+  const fzBuscarJogosOriginal =
+    window.buscarJogosLiga;
+
+  window.buscarJogosLiga = async function(liga){
+
+    if(String(liga) !== FZ_BPI_ID){
+
+      if(typeof fzBuscarJogosOriginal === "function"){
+        return await fzBuscarJogosOriginal(liga);
+      }
+
+      return [];
+
+    }
+
+
+    try{
+
+      const agora = new Date();
+
+      const inicio = new Date(agora);
+
+      inicio.setDate(inicio.getDate()-30);
+
+      const fim = new Date(agora);
+
+      fim.setDate(fim.getDate()+120);
+
+      const ini =
+        inicio.toISOString()
+        .slice(0,10)
+        .replaceAll("-","");
+
+      const end =
+        fim.toISOString()
+        .slice(0,10)
+        .replaceAll("-","");
+
+      const url =
+        API +
+        `${FZ_BPI_ID}/scoreboard?dates=${ini}-${end}`;
+
+      const resposta =
+        await fetch(url);
+
+      if(!resposta.ok){
+        throw new Error("ESPN BPI HTTP "+resposta.status);
+      }
+
+      const dados =
+        await resposta.json();
+
+      const eventos =
+        Array.isArray(dados?.events)
+        ? dados.events
+        : [];
+
+      if(eventos.length){
+
+        console.log(
+          "FUTZONE BPI: dados ESPN carregados:",
+          eventos.length
+        );
+
+        return eventos;
+
+      }
+
+    }catch(e){
+
+      console.warn(
+        "FUTZONE BPI: ESPN indisponível. A usar dados locais.",
+        e
+      );
+
+    }
+
+
+    return FZ_BPI_JOGOS.map(fzBpiEvento);
+
+  };
+
+
+  /*
+   * =========================================================
+   * 8. CLASSIFICAÇÃO
+   * ========================================================= */
+
+  async function fzBpiClassificacao(){
+
+    try{
+
+      const resposta =
+        await fetch(
+          "https://site.api.espn.com/apis/v2/sports/soccer/por.w.1/standings"
+        );
+
+      if(!resposta.ok){
+        throw new Error("Standings HTTP "+resposta.status);
+      }
+
+      const dados =
+        await resposta.json();
+
+      const grupos =
+        dados?.children ||
+        [];
+
+      let entries=[];
+
+      grupos.forEach(grupo=>{
+
+        if(Array.isArray(grupo?.standings?.entries)){
+          entries.push(
+            ...grupo.standings.entries
+          );
+        }
+
+      });
+
+      if(
+        !entries.length &&
+        Array.isArray(dados?.standings?.entries)
+      ){
+
+        entries =
+          dados.standings.entries;
+
+      }
+
+
+      if(entries.length){
+
+        return entries.map((entry,index)=>{
+
+          const team =
+            entry?.team ||
+            {};
+
+          const stats =
+            Array.isArray(entry?.stats)
+            ? entry.stats
+            : [];
+
+          function stat(...nomes){
+
+            for(const n of nomes){
+
+              const s =
+                stats.find(x=>
+                  String(x?.name||"")
+                    .toLowerCase() ===
+                  String(n).toLowerCase()
+                  ||
+                  String(x?.abbreviation||"")
+                    .toLowerCase() ===
+                  String(n).toLowerCase()
+                );
+
+              if(s){
+
+                const v =
+                  s.value ??
+                  s.displayValue ??
+                  s.displayValue;
+
+                if(v !== undefined){
+                  return Number(v) || 0;
+                }
+
+              }
+
+            }
+
+            return 0;
+
+          }
+
+          return {
+
+            pos:
+              index+1,
+
+            nome:
+              team.displayName ||
+              team.name ||
+              "Equipa",
+
+            logo:
+              team.logo ||
+              team.logos?.[0]?.href ||
+              "",
+
+            j:
+              stat("gamesPlayed","GP","played"),
+
+            v:
+              stat("wins","W"),
+
+            e:
+              stat("ties","T","draws"),
+
+            d:
+              stat("losses","L"),
+
+            gm:
+              stat("pointsFor","PF","goalsFor","GF"),
+
+            gs:
+              stat("pointsAgainst","PA","goalsAgainst","GA"),
+
+            pts:
+              stat("points","PTS")
+
+          };
+
+        });
+
+      }
+
+    }catch(e){
+
+      console.warn(
+        "FUTZONE BPI: classificação ESPN indisponível.",
+        e
+      );
+
+    }
+
+
+    return FZ_BPI_CLASSIFICACAO.map(
+      (x,i)=>({
+        ...x,
+        pos:i+1
+      })
+    );
+
+  }
+
+
+  /*
+   * =========================================================
+   * 9. HTML DA CLASSIFICAÇÃO
+   * ========================================================= */
+
+  function fzBpiTabelaHTML(tabela){
+
+    return `
+
+      <div class="sectionTitle">
+        🏆 ${FZ_BPI_NOME}
+      </div>
+
+      <div class="tableWrap">
+
+        <table class="standings">
+
+          <thead>
+
+            <tr>
+
+              <th>#</th>
+              <th>Equipa</th>
+              <th>J</th>
+              <th>V</th>
+              <th>E</th>
+              <th>D</th>
+              <th>GM</th>
+              <th>GS</th>
+              <th>Pts</th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            ${tabela.map((e,i)=>`
+
+              <tr>
+
+                <td>
+                  ${e.pos || i+1}
+                </td>
+
+                <td class="teamCell">
+
+                  ${
+                    e.logo
+                    ? `<img
+                         src="${escapeHtml(e.logo)}"
+                         class="tableLogo"
+                         onerror="this.style.display='none'"
+                       >`
+                    : ""
+                  }
+
+                  <span>
+                    ${escapeHtml(e.nome)}
+                  </span>
+
+                </td>
+
+                <td>${e.j ?? 0}</td>
+                <td>${e.v ?? 0}</td>
+                <td>${e.e ?? 0}</td>
+                <td>${e.d ?? 0}</td>
+                <td>${e.gm ?? 0}</td>
+                <td>${e.gs ?? 0}</td>
+
+                <td>
+                  <strong>
+                    ${e.pts ?? 0}
+                  </strong>
+                </td>
+
+              </tr>
+
+            `).join("")}
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    `;
+
+  }
+
+
+  /*
+   * =========================================================
+   * 10. RESULTADOS + PRÓXIMOS
+   * ========================================================= */
+
+  function fzBpiListaEventos(eventos){
+
+    if(!eventos.length){
+
+      return `
+        <div class="notice">
+          Não existem jogos disponíveis.
+        </div>
+      `;
+
+    }
+
+    return eventos.map(event=>{
+
+      const comp =
+        event.competitions?.[0];
+
+      const teams =
+        comp?.competitors || [];
+
+      const home =
+        teams.find(
+          x=>x.homeAway==="home"
+        ) || teams[0];
+
+      const away =
+        teams.find(
+          x=>x.homeAway==="away"
+        ) || teams[1];
+
+      return `
+
+        <div
+          class="matchCard"
+          onclick="abrirJogo('${String(event.id).replace(/'/g,"")}')"
+        >
+
+          <div class="matchCompetition">
+            ${FZ_BPI_NOME}
+          </div>
+
+          <div class="matchTeams">
+
+            <div>
+
+              ${
+                home?.team?.logo
+                ? `<img
+                    src="${escapeHtml(home.team.logo)}"
+                    class="teamLogo"
+                    onerror="this.style.display='none'"
+                  >`
+                : ""
+              }
+
+              <div>
+                ${escapeHtml(
+                  nomeEquipa(home)
+                )}
+              </div>
+
+            </div>
+
+            <div class="matchScore">
+
+              ${
+                isFinal(event)
+                ? `${escapeHtml(home?.score ?? "-")} - ${escapeHtml(away?.score ?? "-")}`
+                : horaEvento(event)
+              }
+
+            </div>
+
+            <div>
+
+              ${
+                away?.team?.logo
+                ? `<img
+                    src="${escapeHtml(away.team.logo)}"
+                    class="teamLogo"
+                    onerror="this.style.display='none'"
+                  >`
+                : ""
+              }
+
+              <div>
+                ${escapeHtml(
+                  nomeEquipa(away)
+                )}
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      `;
+
+    }).join("");
+
+  }
+
+
+  /*
+   * =========================================================
+   * 11. OVERRIDE DA TABELA
+   * ========================================================= */
+
+  const fzMostrarTabelaOriginal =
+    window.mostrarTabelaFutebol;
+
+  window.mostrarTabelaFutebol =
+    async function(){
+
+      if(String(ligaAtual) !== FZ_BPI_ID){
+
+        if(typeof fzMostrarTabelaOriginal === "function"){
+
+          return await fzMostrarTabelaOriginal();
+
+        }
+
+        return;
+
+      }
+
+
+      try{
+
+        mudarDesporto("futebol");
+
+      }catch(e){}
+
+
+      const content =
+        document.getElementById(
+          "footballContent"
+        );
+
+      if(!content) return;
+
+
+      content.innerHTML = `
+
+        <div class="loading">
+          A carregar classificação da Liga BPI...
+        </div>
+
+      `;
+
+
+      const tabela =
+        await fzBpiClassificacao();
+
+
+      content.innerHTML =
+
+        fzBpiTabelaHTML(tabela);
+
+    };
+
+
+  /*
+   * =========================================================
+   * 12. COMPETIÇÃO
+   * ========================================================= */
+
+  const fzGetCompeticaoOriginal =
+    window.getCompeticao;
+
+  window.getCompeticao =
+    function(event){
+
+      if(
+        event &&
+        (
+          String(event.league?.id) === FZ_BPI_ID ||
+          String(event.competitions?.[0]?.league?.id) === FZ_BPI_ID
+        )
+      ){
+
+        return FZ_BPI_NOME;
+
+      }
+
+      const nome =
+        typeof fzGetCompeticaoOriginal === "function"
+        ? fzGetCompeticaoOriginal(event)
+        : "";
+
+      return nome || FZ_BPI_NOME;
+
+    };
+
+
+  /*
+   * =========================================================
+   * 13. RENDER DOS JOGOS BPI
+   * ========================================================= */
+
+  const fzRenderizarJogosOriginal =
+    window.renderizarJogos;
+
+  window.renderizarJogos =
+    function(){
+
+      if(String(ligaAtual) !== FZ_BPI_ID){
+
+        if(typeof fzRenderizarJogosOriginal === "function"){
+
+          return fzRenderizarJogosOriginal();
+
+        }
+
+        return;
+
+      }
+
+
+      const content =
+        document.getElementById(
+          "footballContent"
+        );
+
+      if(!content) return;
+
+
+      let eventos =
+        Array.isArray(jogosFutebol)
+        ? [...jogosFutebol]
+        : [];
+
+
+      /*
+       * FILTROS
+       */
+
+      if(filtroAtual === "live"){
+
+        eventos =
+          eventos.filter(
+            e=>isLive(e)
+          );
+
+      }
+
+
+      if(filtroAtual === "resultados"){
+
+        eventos =
+          eventos.filter(
+            e=>isFinal(e)
+          );
+
+      }
+
+
+      if(filtroAtual === "proximos"){
+
+        eventos =
+          eventos.filter(
+            e=>!isFinal(e) && !isLive(e)
+          );
+
+      }
+
+
+      /*
+       * ORDENAR POR DATA
+       */
+
+      eventos.sort(
+        (a,b)=>
+          new Date(a.date || 0) -
+          new Date(b.date || 0)
+      );
+
+
+      /*
+       * SEPARAR RESULTADOS / PRÓXIMOS
+       */
+
+      const resultados =
+        eventos.filter(
+          e=>isFinal(e)
+        );
+
+      const proximos =
+        eventos.filter(
+          e=>!isFinal(e) && !isLive(e)
+        );
+
+      const live =
+        eventos.filter(
+          e=>isLive(e)
+        );
+
+
+      let html="";
+
+
+      if(filtroAtual === "todos"){
+
+        if(live.length){
+
+          html += `
+
+            <div class="sectionTitle">
+              🔴 AO VIVO
+            </div>
+
+            ${fzBpiListaEventos(live)}
+
+          `;
+
+        }
+
+
+        if(resultados.length){
+
+          html += `
+
+            <div class="sectionTitle">
+              ✅ RESULTADOS
+            </div>
+
+            ${fzBpiListaEventos(resultados)}
+
+          `;
+
+        }
+
+
+        if(proximos.length){
+
+          html += `
+
+            <div class="sectionTitle">
+              📅 PRÓXIMOS JOGOS
+            </div>
+
+            ${fzBpiListaEventos(proximos)}
+
+          `;
+
+        }
+
+      }else{
+
+        html =
+          fzBpiListaEventos(eventos);
+
+      }
+
+
+      if(!html){
+
+        html = `
+
+          <div class="notice">
+
+            ${
+              filtroAtual === "proximos"
+              ? "Não existem próximos jogos disponíveis."
+              : filtroAtual === "resultados"
+              ? "Não existem resultados disponíveis."
+              : filtroAtual === "live"
+              ? "Não existem jogos ao vivo."
+              : "Não existem jogos disponíveis."
+            }
+
+          </div>
+
+        `;
+
+      }
+
+
+      content.innerHTML = html;
+
+    };
+
+
+  /*
+   * =========================================================
+   * 14. ABRIR A LIGA BPI
+   * ========================================================= */
+
+  window.fzAbrirLigaBPI =
+    async function(){
+
+      ligaAtual = FZ_BPI_ID;
+
+      filtroAtual = "todos";
+
+
+      try{
+
+        desenharLigas();
+
+      }catch(e){}
+
+
+      try{
+
+        mudarDesporto("futebol");
+
+      }catch(e){}
+
+
+      try{
+
+        await carregarJogos();
+
+      }catch(e){
+
+        console.error(
+          "FUTZONE BPI:",
+          e
+        );
+
+      }
+
+    };
+
+
+  /*
+   * =========================================================
+   * 15. GARANTIR QUE A LIGA É DESENHADA
+   * ========================================================= */
+
+  try{
+
+    desenharLigas();
+
+  }catch(e){
+
+    console.warn(
+      "FUTZONE BPI: não foi possível redesenhar ligas.",
+      e
+    );
+
+  }
+
+
+  /*
+   * =========================================================
+   * 16. ATUALIZAÇÃO AUTOMÁTICA
+   * ========================================================= */
+
+  setInterval(
+    async function(){
+
+      if(
+        String(ligaAtual) !== FZ_BPI_ID
+      ) return;
+
+      try{
+
+        await carregarJogos();
+
+      }catch(e){
+
+        console.warn(
+          "FUTZONE BPI: atualização falhou.",
+          e
+        );
+
+      }
+
+    },
+    60000
+  );
+
+
+  console.log(
+    "FUTZONE: Liga BPI Feminina ativada."
+  );
+
+})();
+</script>
+  
 </script>
 
 </body>
