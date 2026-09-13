@@ -1171,10 +1171,53 @@ function setFiltro(filtro,btn){
 }
 
 function passaFiltro(event){
+
   if(filtroAtual==="todos") return true;
-  if(filtroAtual==="live") return isLive(event);
-  if(filtroAtual==="resultados") return isFinal(event);
-  if(filtroAtual==="proximos") return !isFinal(event);
+
+  if(filtroAtual==="live"){
+    return isLive(event);
+  }
+
+  if(filtroAtual==="resultados"){
+
+    // Liga BPI
+    if(event?.id && String(event.id).startsWith("bpi-")){
+
+      const jogoBPI = BPI_JOGOS.find(j =>
+        j.id === event.id
+      );
+
+      if(jogoBPI){
+        return BPI_RESULTADOS.some(r =>
+          r.home === jogoBPI.home &&
+          r.away === jogoBPI.away
+        );
+      }
+    }
+
+    return isFinal(event);
+  }
+
+  if(filtroAtual==="proximos"){
+
+    // Liga BPI
+    if(event?.id && String(event.id).startsWith("bpi-")){
+
+      const jogoBPI = BPI_JOGOS.find(j =>
+        j.id === event.id
+      );
+
+      if(jogoBPI){
+        return !BPI_RESULTADOS.some(r =>
+          r.home === jogoBPI.home &&
+          r.away === jogoBPI.away
+        );
+      }
+    }
+
+    return !isFinal(event);
+  }
+
   return true;
 }
 
