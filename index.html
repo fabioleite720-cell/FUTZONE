@@ -4257,23 +4257,1717 @@ function distribuirTitularesCampo(lista,away=false){
             grupos[linha.grupo] || [];
 
         const total =
-            jogadores.length;
+/* =========================================================
+   FUTZONE — CORREÇÃO FINAL
+   =========================================================
+   1. LIVE GLOBAL
+   2. CLASSIFICAÇÕES ROBUSTAS
+   3. 11 INICIAL NO CAMPO
+   4. FUTSAL MASCULINO ATUALIZADO
+   5. FUTSAL FEMININO ATUALIZADO
+   6. LIGA BPI ATUALIZADA
+   ========================================================= */
+
+
+/* =========================================================
+   LIVE GLOBAL — TODOS OS CAMPEONATOS
+   ========================================================= */
+
+let modoLiveGlobal = false;
+let cacheJogosLiveGlobal = [];
+let cacheLiveGlobalTime = 0;
+
+async function carregarTodosJogosAoVivo(){
+
+    const agora = Date.now();
+
+    if(
+        cacheJogosLiveGlobal.length &&
+        agora-cacheLiveGlobalTime < 20000
+    ){
+        jogosFutebol=[...cacheJogosLiveGlobal];
+        renderJogos();
+        return;
+    }
+
+    const box=document.getElementById("footballContent");
+
+    box.innerHTML=
+        '<div class="loading">🔴 A procurar jogos ao vivo em todos os campeonatos...</div>';
+
+    const resultados=[];
+
+    const pedidos=LIGAS.map(async liga=>{
+
+        try{
+
+            const data=await fetchJSON(
+                API+
+                encodeURIComponent(liga.id)+
+                "/scoreboard?limit=100"
+            );
+
+            if(!Array.isArray(data.events))return;
+
+            data.events.forEach(e=>{
+
+                e.__futzoneLiga=liga.id;
+
+                if(!e.league){
+                    e.league={name:liga.nome};
+                }
+
+                if(isLive(e)){
+                    resultados.push(e);
+                }
+
+            });
+
+        }catch(err){
+
+            console.warn(
+                "Erro live:",
+                liga.id,
+                err
+            );
+
+        }
+
+    });
+
+    await Promise.allSettled(pedidos);
+
+    const vistos=new Set();
+
+    const unicos=resultados.filter(e=>{
+
+        const id=String(e.id);
+
+        if(vistos.has(id)){
+            return false;
+        }
+
+        vistos.add(id);
+
+        return true;
+
+    });
+
+    unicos.sort(
+        (a,b)=>
+        new Date(a.date)-new Date(b.date)
+    );
+
+    cacheJogosLiveGlobal=unicos;
+    cacheLiveGlobalTime=Date.now();
+
+    jogosFutebol=[...unicos];
+
+    renderJogos();
+
+}
+
+
+/* =========================================================
+   FILTROS
+   ========================================================= */
+
+async function setFiltro(f){
+
+    filtroAtual=f;
+
+    document
+        .querySelectorAll("#futebolSection .filter")
+        .forEach(x=>x.classList.remove("active"));
+
+    const mapa={
+        todos:"fTodos",
+        live:"fLive",
+        proximos:"fProximos",
+        resultados:"fResultados"
+    };
+
+    const botao=document.getElementById(mapa[f]);
+
+    if(botao){
+        botao.classList.add("active");
+    }
+
+    if(f==="live"){
+
+        modoLiveGlobal=true;
+
+        await carregarTodosJogosAoVivo();
+
+        return;
+    }
+
+    modoLiveGlobal=false;
+
+    await carregarJogos();
+
+}
+
+
+/* =========================================================
+   SELECIONAR LIGA
+   ========================================================= */
+
+async function selecionarLiga(id){
+
+    ligaAtual=id;
+
+    modoLiveGlobal=false;
+
+    desenharLigas();
+
+    filtroAtual="todos";
+
+    document
+        .querySelectorAll("#futebolSection .filter")
+        .forEach(x=>x.classList.remove("active"));
+
+    const todos=document.getElementById("fTodos");
+
+    if(todos){
+        todos.classList.add("active");
+    }
+
+    await carregarJogos();
+
+}
+
+
+/* =========================================================
+   LIGA BPI — DADOS ATUALIZADOS
+   ========================================================= */
+
+const FUTZONE_BPI_ATUAL={
+
+    jogos:[
+
+        {
+            id:"bpi-2026-01",
+            date:"2026-09-12T17:00:00+01:00",
+            home:"Valadares Gaia",
+            away:"FC Porto",
+            homeScore:1,
+            awayScore:3
+        },
+
+        {
+            id:"bpi-2026-02",
+            date:"2026-09-12T17:00:00+01:00",
+            home:"SC Braga",
+            away:"Marítimo",
+            homeScore:5,
+            awayScore:0
+        },
+
+        {
+            id:"bpi-2026-03",
+            date:"2026-09-12T18:00:00+01:00",
+            home:"Sporting",
+            away:"Vitória SC",
+            homeScore:2,
+            awayScore:0
+        },
+
+        {
+            id:"bpi-2026-04",
+            date:"2026-09-12T20:30:00+01:00",
+            home:"Benfica",
+            away:"Racing Power FC"
+        },
+
+        {
+            id:"bpi-2026-05",
+            date:"2026-09-13T19:00:00+01:00",
+            home:"Torreense",
+            away:"Rio Ave"
+        },
+
+        {
+            id:"bpi-2026-06",
+            date:"2026-09-18T18:30:00+01:00",
+            home:"Rio Ave",
+            away:"Benfica"
+        },
+
+        {
+            id:"bpi-2026-07",
+            date:"2026-09-19T11:00:00+01:00",
+            home:"Vitória SC",
+            away:"Torreense"
+        },
+
+        {
+            id:"bpi-2026-08",
+            date:"2026-09-19T15:00:00+01:00",
+            home:"Racing Power FC",
+            away:"Valadares Gaia"
+        },
+
+        {
+            id:"bpi-2026-09",
+            date:"2026-09-21T20:30:00+01:00",
+            home:"FC Porto",
+            away:"SC Braga"
+        }
+
+    ],
+
+    tabela:[
+
+        ["FC Porto",3,1,1,0,0,3,1],
+
+        ["SC Braga",3,1,1,0,0,5,0],
+
+        ["Sporting",3,1,1,0,0,2,0],
+
+        ["Benfica",0,0,0,0,0,0,0],
+
+        ["Racing Power FC",0,0,0,0,0,0,0],
+
+        ["Rio Ave",0,0,0,0,0,0,0],
+
+        ["Torreense",0,0,0,0,0,0,0],
+
+        ["Marítimo",0,1,0,0,1,0,5],
+
+        ["Valadares Gaia",0,1,0,0,1,1,3],
+
+        ["Vitória SC",0,1,0,0,1,0,2]
+
+    ]
+
+};
+
+
+/* =========================================================
+   FUTSAL — LIGA PLACARD 2026/27
+   ========================================================= */
+
+const FUTZONE_FUTSAL_MASC={
+
+    nome:"Liga Placard Futsal",
+
+    jogos:[
+
+        {
+            id:"futsal-m-01",
+            date:"2026-09-11T19:30:00+01:00",
+            home:"AD Fundão",
+            away:"SC Braga",
+            estado:"realizado"
+        },
+
+        {
+            id:"futsal-m-02",
+            date:"2026-09-11T20:30:00+01:00",
+            home:"Torreense",
+            away:"Eléctrico",
+            estado:"realizado"
+        },
+
+        {
+            id:"futsal-m-03",
+            date:"2026-09-11T21:15:00+01:00",
+            home:"Sporting",
+            away:"Portimonense",
+            homeScore:1,
+            awayScore:0,
+            estado:"realizado"
+        },
+
+        {
+            id:"futsal-m-04",
+            date:"2026-09-12T17:00:00+01:00",
+            home:"Leões Porto Salvo",
+            away:"Ferreira do Zêzere",
+            estado:"realizado"
+        },
+
+        {
+            id:"futsal-m-05",
+            date:"2026-09-12T19:00:00+01:00",
+            home:"Benfica",
+            away:"UPVN",
+            estado:"realizado"
+        },
+
+        {
+            id:"futsal-m-06",
+            date:"2026-09-13T15:00:00+01:00",
+            home:"Rio Ave",
+            away:"FC Famalicão",
+            estado:"realizado"
+        },
+
+        {
+            id:"futsal-m-07",
+            date:"2026-09-19T15:00:00+01:00",
+            home:"Portimonense",
+            away:"Benfica",
+            estado:"futuro"
+        },
+
+        {
+            id:"futsal-m-08",
+            date:"2026-09-19T17:00:00+01:00",
+            home:"Eléctrico",
+            away:"Rio Ave",
+            estado:"futuro"
+        },
+
+        {
+            id:"futsal-m-09",
+            date:"2026-09-19T17:00:00+01:00",
+            home:"SC Braga",
+            away:"Torreense",
+            estado:"futuro"
+        },
+
+        {
+            id:"futsal-m-10",
+            date:"2026-09-20T17:00:00+01:00",
+            home:"FC Famalicão",
+            away:"Sporting",
+            estado:"futuro"
+        },
+
+        {
+            id:"futsal-m-11",
+            date:"2026-09-20T18:00:00+01:00",
+            home:"UPVN",
+            away:"Leões Porto Salvo",
+            estado:"futuro"
+        },
+
+        {
+            id:"futsal-m-12",
+            date:"2026-09-21T19:00:00+01:00",
+            home:"Ferreira do Zêzere",
+            away:"AD Fundão",
+            estado:"futuro"
+        }
+
+    ]
+
+};
+
+
+/* =========================================================
+   FUTSAL FEMININO — LIGA FEMININA PLACARD 2026/27
+   ========================================================= */
+
+const FUTZONE_FUTSAL_FEM={
+
+    nome:"Liga Feminina Placard",
+
+    jogos:[
+
+        {
+            id:"futsal-f-01",
+            date:"2026-09-12T16:00:00+01:00",
+            home:"Maia Futsal",
+            away:"Nun'Álvares",
+            estado:"realizado"
+        },
+
+        {
+            id:"futsal-f-02",
+            date:"2026-09-12T18:00:00+01:00",
+            home:"Santa Luzia",
+            away:"Atlético CP",
+            estado:"realizado"
+        },
+
+        {
+            id:"futsal-f-03",
+            date:"2026-09-12T19:15:00+01:00",
+            home:"Torreense",
+            away:"Leões Porto Salvo",
+            estado:"realizado"
+        },
+
+        {
+            id:"futsal-f-04",
+            date:"2026-09-13T17:30:00+01:00",
+            home:"GD Árvore",
+            away:"Novasemente",
+            estado:"futuro"
+        },
+
+        {
+            id:"futsal-f-05",
+            date:"2026-09-13T19:00:00+01:00",
+            home:"Futsal Feijó",
+            away:"Benfica",
+            estado:"futuro"
+        }
+
+    ]
+
+};
+
+
+/* =========================================================
+   RENDER FUTSAL
+   ========================================================= */
+
+let futsalCompeticaoAtual="masculino";
+let futsalModoAtual="jogos";
+
+
+function obterFutsalAtual(){
+
+    return futsalCompeticaoAtual==="feminino"
+        ? FUTZONE_FUTSAL_FEM
+        : FUTZONE_FUTSAL_MASC;
+
+}
+
+
+function renderizarFutsalJogos(){
+
+    const box=document.getElementById("futsalContent");
+
+    const dados=obterFutsalAtual();
+
+    let html=`
+
+        <div class="sectionTitle">
+            🥅 ${escapeHtml(dados.nome)}
+        </div>
+
+        <div class="filters">
+
+            <button
+                class="filter ${futsalCompeticaoAtual==="masculino"?"active":""}"
+                onclick="mudarFutsalCompeticao('masculino')"
+            >
+                Masculino
+            </button>
+
+            <button
+                class="filter ${futsalCompeticaoAtual==="feminino"?"active":""}"
+                onclick="mudarFutsalCompeticao('feminino')"
+            >
+                Feminino
+            </button>
+
+        </div>
+
+        <div class="filters">
+
+            <button
+                class="filter ${futsalModoAtual==="jogos"?"active":""}"
+                onclick="futsalModo('jogos')"
+            >
+                Jogos
+            </button>
+
+            <button
+                class="filter ${futsalModoAtual==="tabela"?"active":""}"
+                onclick="futsalModo('tabela')"
+            >
+                Tabela
+            </button>
+
+        </div>
+
+    `;
+
+    if(futsalModoAtual==="tabela"){
+
+        html+=renderTabelaFutsal();
+
+        box.innerHTML=html;
+
+        return;
+    }
+
+
+    const realizados=dados.jogos.filter(
+        j=>j.estado==="realizado"
+    );
+
+    const futuros=dados.jogos.filter(
+        j=>j.estado==="futuro"
+    );
+
+
+    html+=`
+
+        <div class="sectionTitle" style="margin-top:18px">
+            Resultados
+        </div>
+
+    `;
+
+
+    if(!realizados.length){
+
+        html+=`
+            <div class="empty">
+                Ainda não existem resultados.
+            </div>
+        `;
+
+    }else{
+
+        html+=realizados
+            .map(renderJogoFutsal)
+            .join("");
+
+    }
+
+
+    html+=`
+
+        <div class="sectionTitle" style="margin-top:22px">
+            Próximos jogos
+        </div>
+
+    `;
+
+
+    if(!futuros.length){
+
+        html+=`
+            <div class="empty">
+                Não existem próximos jogos.
+            </div>
+        `;
+
+    }else{
+
+        html+=futuros
+            .map(renderJogoFutsal)
+            .join("");
+
+    }
+
+
+    box.innerHTML=html;
+
+}
+
+
+function mudarFutsalCompeticao(tipo){
+
+    futsalCompeticaoAtual=tipo;
+
+    futsalModoAtual="jogos";
+
+    renderizarFutsalJogos();
+
+}
+
+
+function futsalModo(tipo){
+
+    futsalModoAtual=tipo;
+
+    renderizarFutsalJogos();
+
+}
+
+
+function renderJogoFutsal(j){
+
+    const realizado=j.estado==="realizado";
+
+    let resultado="";
+
+    if(realizado){
+
+        resultado=
+            j.homeScore!=null &&
+            j.awayScore!=null
+            ? `${j.homeScore} - ${j.awayScore}`
+            : "FINAL";
+
+    }else{
+
+        resultado=horaEvento({
+            date:j.date
+        });
+
+    }
+
+
+    return`
+
+        <div class="game">
+
+            <div class="gameTop">
+
+                <div class="comp">
+                    🥅 ${escapeHtml(
+                        obterFutsalAtual().nome
+                    )}
+                </div>
+
+                <div
+                    class="status ${
+                        realizado ? "final" : ""
+                    }"
+                >
+                    ${
+                        realizado
+                        ? "FINAL"
+                        : escapeHtml(
+                            horaEvento({
+                                date:j.date
+                            })
+                        )
+                    }
+                </div>
+
+            </div>
+
+            <div class="teams">
+
+                <div class="team">
+
+                    <div class="teamName">
+                        ${escapeHtml(j.home)}
+                    </div>
+
+                </div>
+
+                <div class="score">
+                    ${resultado}
+                </div>
+
+                <div class="team away">
+
+                    <div class="teamName">
+                        ${escapeHtml(j.away)}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   TABELA FUTSAL
+   ========================================================= */
+
+function calcularTabelaFutsal(){
+
+    const jogos=obterFutsalAtual().jogos;
+
+    const tabela={};
+
+
+    jogos.forEach(j=>{
+
+        if(!tabela[j.home]){
+
+            tabela[j.home]={
+                nome:j.home,
+                j:0,
+                v:0,
+                e:0,
+                d:0,
+                gm:0,
+                gs:0,
+                pts:0
+            };
+
+        }
+
+
+        if(!tabela[j.away]){
+
+            tabela[j.away]={
+                nome:j.away,
+                j:0,
+                v:0,
+                e:0,
+                d:0,
+                gm:0,
+                gs:0,
+                pts:0
+            };
+
+        }
+
+
+        if(
+            j.homeScore==null ||
+            j.awayScore==null
+        ){
+
+            return;
+
+        }
+
+
+        const h=tabela[j.home];
+        const a=tabela[j.away];
+
+        h.j++;
+        a.j++;
+
+        h.gm+=Number(j.homeScore);
+        h.gs+=Number(j.awayScore);
+
+        a.gm+=Number(j.awayScore);
+        a.gs+=Number(j.homeScore);
+
+
+        if(j.homeScore>j.awayScore){
+
+            h.v++;
+            h.pts+=3;
+
+            a.d++;
+
+        }else if(j.homeScore<j.awayScore){
+
+            a.v++;
+            a.pts+=3;
+
+            h.d++;
+
+        }else{
+
+            h.e++;
+            a.e++;
+
+            h.pts++;
+            a.pts++;
+
+        }
+
+    });
+
+
+    return Object.values(tabela)
+        .sort((a,b)=>{
+
+            if(b.pts!==a.pts)
+                return b.pts-a.pts;
+
+            const dgA=a.gm-a.gs;
+            const dgB=b.gm-b.gs;
+
+            if(dgB!==dgA)
+                return dgB-dgA;
+
+            return b.gm-a.gm;
+
+        });
+
+}
+
+
+function renderTabelaFutsal(){
+
+    const tabela=calcularTabelaFutsal();
+
+    if(!tabela.length){
+
+        return`
+            <div class="empty">
+                Classificação ainda indisponível.
+            </div>
+        `;
+
+    }
+
+
+    return`
+
+        <div class="sectionTitle">
+            🏆 Classificação
+        </div>
+
+        <div class="tableWrap">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+                        <th>#</th>
+                        <th>Equipa</th>
+                        <th>J</th>
+                        <th>V</th>
+                        <th>E</th>
+                        <th>D</th>
+                        <th>GM</th>
+                        <th>GS</th>
+                        <th>Pts</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    ${tabela.map((x,i)=>`
+
+                        <tr>
+
+                            <td class="pos">
+                                ${i+1}
+                            </td>
+
+                            <td>
+                                <div class="teamTable">
+
+                                    <span>
+                                        ${escapeHtml(x.nome)}
+                                    </span>
+
+                                </div>
+                            </td>
+
+                            <td>${x.j}</td>
+                            <td>${x.v}</td>
+                            <td>${x.e}</td>
+                            <td>${x.d}</td>
+                            <td>${x.gm}</td>
+                            <td>${x.gs}</td>
+
+                            <td>
+                                <strong>
+                                    ${x.pts}
+                                </strong>
+                            </td>
+
+                        </tr>
+
+                    `).join("")}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   FUTSAL TAB — COMPATIBILIDADE COM O MENU EXISTENTE
+   ========================================================= */
+
+function futsalTab(tab,btn){
+
+    futsalModoAtual=
+        tab==="tabela"
+        ? "tabela"
+        : "jogos";
+
+    if(tab==="equipas"){
+
+        document
+            .querySelectorAll(
+                "#futsalSection .filter"
+            )
+            .forEach(x=>
+                x.classList.remove("active")
+            );
+
+        if(btn)btn.classList.add("active");
+
+        document.getElementById(
+            "futsalContent"
+        ).innerHTML=`
+
+            <div class="sectionTitle">
+                🥅 Equipas
+            </div>
+
+            <div class="empty">
+
+                A lista de equipas será
+                apresentada aqui.
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    if(tab==="competicoes"){
+
+        document
+            .querySelectorAll(
+                "#futsalSection .filter"
+            )
+            .forEach(x=>
+                x.classList.remove("active")
+            );
+
+        if(btn)btn.classList.add("active");
+
+        document.getElementById(
+            "futsalContent"
+        ).innerHTML=`
+
+            <div class="sectionTitle">
+                🏆 Competições
+            </div>
+
+            <div class="game">
+
+                🥅 Liga Placard Futsal
+
+            </div>
+
+            <div class="game">
+
+                👩 Liga Feminina Placard
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    renderizarFutsalJogos();
+
+}
+
+
+/* =========================================================
+   CLASSIFICAÇÕES DE FUTEBOL
+   ========================================================= */
+
+async function carregarTabela(){
+
+    let dados=null;
+
+    const endpoints=[
+
+        API_CORE+
+        "leagues/"+
+        encodeURIComponent(ligaAtual)+
+        "/standings",
+
+        "https://site.web.api.espn.com/apis/v2/sports/soccer/"+
+        encodeURIComponent(ligaAtual)+
+        "/standings"
+
+    ];
+
+
+    for(const url of endpoints){
+
+        try{
+
+            dados=await fetchJSON(url);
+
+            if(
+                dados &&
+                (
+                    dados.children ||
+                    dados.standings ||
+                    dados.groups
+                )
+            ){
+
+                break;
+
+            }
+
+        }catch(err){
+
+            console.warn(
+                "Erro classificação:",
+                err
+            );
+
+        }
+
+    }
+
+
+    tabelaAtual=[];
+
+
+    if(dados){
+
+        const grupos=
+            dados.children ||
+            dados.groups ||
+            dados.standings ||
+            [];
+
+
+        for(const grupo of grupos){
+
+            const entries=
+                grupo?.standings?.entries ||
+                grupo?.entries ||
+                grupo?.standings ||
+                [];
+
+
+            for(const entry of entries){
+
+                const team=
+                    entry?.team ||
+                    entry;
+
+
+                const stats=
+                    entry?.stats ||
+                    [];
+
+
+                function stat(...nomes){
+
+                    if(Array.isArray(stats)){
+
+                        const s=stats.find(x=>
+                            nomes.includes(x?.name) ||
+                            nomes.includes(x?.displayName) ||
+                            nomes.includes(
+                                x?.shortDisplayName
+                            )
+                        );
+
+                        if(s){
+
+                            return(
+                                s.value ??
+                                s.displayValue ??
+                                s.displayValueText ??
+                                0
+                            );
+
+                        }
+
+                    }
+
+
+                    if(
+                        stats &&
+                        typeof stats==="object"
+                    ){
+
+                        for(const n of nomes){
+
+                            if(
+                                stats[n]!=null
+                            ){
+
+                                return stats[n];
+
+                            }
+
+                        }
+
+                    }
+
+                    return 0;
+
+                }
+
+
+                const nome=nomeEquipa(team);
+
+                if(
+                    !nome ||
+                    nome==="Equipa"
+                ){
+
+                    continue;
+
+                }
+
+
+                tabelaAtual.push({
+
+                    grupo:
+                        grupo?.name ||
+                        grupo?.displayName ||
+                        "",
+
+                    nome,
+
+                    logo:
+                        logoEquipa(team),
+
+                    j:stat(
+                        "gamesPlayed",
+                        "games",
+                        "played"
+                    ),
+
+                    v:stat(
+                        "wins",
+                        "win"
+                    ),
+
+                    e:stat(
+                        "ties",
+                        "draws",
+                        "draw"
+                    ),
+
+                    d:stat(
+                        "losses",
+                        "loss"
+                    ),
+
+                    gm:stat(
+                        "pointsFor",
+                        "goalsFor",
+                        "goals"
+                    ),
+
+                    gs:stat(
+                        "pointsAgainst",
+                        "goalsAgainst"
+                    ),
+
+                    pts:stat(
+                        "points",
+                        "pts"
+                    )
+
+                };
+
+            }
+
+        }
+
+    }
+
+
+    /*
+     * LIGA BPI:
+     * usamos os dados atualizados se a API
+     * ainda não devolver a classificação.
+     */
+
+    if(
+        ligaAtual==="por.w.1" &&
+        tabelaAtual.length===0
+    ){
+
+        tabelaAtual=
+            FUTZONE_BPI_ATUAL.tabela.map(x=>({
+
+                grupo:"",
+
+                nome:x[0],
+
+                logo:"",
+
+                pts:x[1],
+
+                j:x[2],
+
+                v:x[3],
+
+                e:x[4],
+
+                d:x[5],
+
+                gm:x[6],
+
+                gs:x[7]
+
+            }));
+
+    }
+
+
+    if(!tabelaAtual.length){
+
+        const f=FALLBACK[ligaAtual];
+
+        if(f?.tabela){
+
+            tabelaAtual=
+                f.tabela.map(x=>({
+
+                    grupo:"",
+
+                    nome:x[0],
+
+                    logo:"",
+
+                    pts:x[1]||0,
+
+                    j:x[2]||0,
+
+                    v:x[3]||0,
+
+                    e:x[4]||0,
+
+                    d:x[5]||0,
+
+                    gm:x[6]||0,
+
+                    gs:x[7]||0
+
+                }));
+
+        }
+
+    }
+
+
+    return tabelaAtual;
+
+}
+
+
+/* =========================================================
+   RENDER CLASSIFICAÇÃO
+   ========================================================= */
+
+function renderTabelaHTML(){
+
+    /*
+     * Liga BPI atualizada
+     */
+
+    if(ligaAtual==="por.w.1"){
+
+        const lista=tabelaAtual.length
+            ? tabelaAtual
+            : FUTZONE_BPI_ATUAL.tabela.map(x=>({
+
+                grupo:"",
+                nome:x[0],
+                logo:"",
+                pts:x[1],
+                j:x[2],
+                v:x[3],
+                e:x[4],
+                d:x[5],
+                gm:x[6],
+                gs:x[7]
+
+            }));
+
+
+        return`
+
+            <div class="sectionTitle">
+                🇵🇹 Liga BPI Feminina
+            </div>
+
+            <div class="tableWrap">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>#</th>
+                            <th>Equipa</th>
+                            <th>J</th>
+                            <th>V</th>
+                            <th>E</th>
+                            <th>D</th>
+                            <th>GM</th>
+                            <th>GS</th>
+                            <th>Pts</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        ${lista
+                            .sort((a,b)=>
+                                Number(b.pts||0)-
+                                Number(a.pts||0)
+                            )
+                            .map((x,i)=>`
+
+                                <tr>
+
+                                    <td class="pos">
+                                        ${i+1}
+                                    </td>
+
+                                    <td>
+
+                                        <div
+                                            class="teamTable clickTeam"
+                                            onclick="abrirEquipa('${encodeURIComponent(x.nome)}')"
+                                        >
+
+                                            ${
+                                                x.logo
+                                                ?
+                                                `<img
+                                                    class="tableLogo"
+                                                    src="${escapeHtml(x.logo)}"
+                                                >`
+                                                :
+                                                `<div style="
+                                                    width:23px;
+                                                    height:23px;
+                                                    border-radius:50%;
+                                                    background:var(--panel2);
+                                                    display:flex;
+                                                    align-items:center;
+                                                    justify-content:center;
+                                                    font-size:9px
+                                                ">⚽</div>`
+                                            }
+
+                                            <span>
+                                                ${escapeHtml(x.nome)}
+                                            </span>
+
+                                        </div>
+
+                                    </td>
+
+                                    <td>${x.j||0}</td>
+                                    <td>${x.v||0}</td>
+                                    <td>${x.e||0}</td>
+                                    <td>${x.d||0}</td>
+                                    <td>${x.gm||0}</td>
+                                    <td>${x.gs||0}</td>
+
+                                    <td>
+                                        <strong>
+                                            ${x.pts||0}
+                                        </strong>
+                                    </td>
+
+                                </tr>
+
+                            `).join("")}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        `;
+
+    }
+
+
+    if(!tabelaAtual.length){
+
+        return`
+
+            <div class="empty">
+                Classificação indisponível neste momento.
+            </div>
+
+        `;
+
+    }
+
+
+    const grupos={};
+
+
+    tabelaAtual.forEach(x=>{
+
+        const g=x.grupo||"Classificação";
+
+        if(!grupos[g]){
+            grupos[g]=[];
+        }
+
+        grupos[g].push(x);
+
+    });
+
+
+    return Object.entries(grupos)
+        .map(([grupo,lista])=>`
+
+            <div
+                class="sectionTitle"
+                style="margin-top:18px"
+            >
+                ${escapeHtml(grupo)}
+            </div>
+
+            <div class="tableWrap">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>#</th>
+                            <th>Equipa</th>
+                            <th>J</th>
+                            <th>V</th>
+                            <th>E</th>
+                            <th>D</th>
+                            <th>GM</th>
+                            <th>GS</th>
+                            <th>Pts</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        ${lista.map((x,i)=>`
+
+                            <tr>
+
+                                <td class="pos">
+                                    ${i+1}
+                                </td>
+
+                                <td>
+
+                                    <div
+                                        class="teamTable clickTeam"
+                                        onclick="abrirEquipa('${encodeURIComponent(x.nome)}')"
+                                    >
+
+                                        ${
+                                            x.logo
+                                            ?
+                                            `<img
+                                                class="tableLogo"
+                                                src="${escapeHtml(x.logo)}"
+                                            >`
+                                            :
+                                            `<div style="
+                                                width:23px;
+                                                height:23px;
+                                                border-radius:50%;
+                                                background:var(--panel2);
+                                                display:flex;
+                                                align-items:center;
+                                                justify-content:center;
+                                                font-size:9px
+                                            ">⚽</div>`
+                                        }
+
+                                        <span>
+                                            ${escapeHtml(x.nome)}
+                                        </span>
+
+                                    </div>
+
+                                </td>
+
+                                <td>${x.j||0}</td>
+                                <td>${x.v||0}</td>
+                                <td>${x.e||0}</td>
+                                <td>${x.d||0}</td>
+                                <td>${x.gm||0}</td>
+                                <td>${x.gs||0}</td>
+
+                                <td>
+                                    <strong>
+                                        ${x.pts||0}
+                                    </strong>
+                                </td>
+
+                            </tr>
+
+                        `).join("")}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        `)
+        .join("");
+
+}
+
+
+/* =========================================================
+   11 INICIAL — CAMPO DE FUTEBOL
+   ========================================================= */
+
+function obterTitulares(data,competitor){
+
+    const todos=
+        obterAtletas(data,competitor)||[];
+
+    if(!todos.length){
+        return[];
+    }
+
+
+    const unicos=[];
+    const ids=new Set();
+
+
+    for(const p of todos){
+
+        const id=
+            p?.id ||
+            p?.athlete?.id ||
+            p?.displayName ||
+            p?.fullName ||
+            Math.random();
+
+
+        if(ids.has(String(id))){
+            continue;
+        }
+
+        ids.add(String(id));
+
+        unicos.push(p);
+
+    }
+
+
+    const marcados=
+        unicos.filter(p=>
+            p?.starter===true ||
+            p?.starter===1 ||
+            p?.starter==="true" ||
+            p?.isStarter===true ||
+            p?.isStarter===1 ||
+            p?.statistics?.some?.(
+                s=>
+                    s?.starter===true ||
+                    s?.starter===1 ||
+                    s?.starter==="true"
+            )
+        );
+
+
+    if(marcados.length>=7){
+
+        return marcados.slice(0,11);
+
+    }
+
+
+    return unicos.slice(0,11);
+
+}
+
+
+function distribuirTitularesCampo(lista,away=false){
+
+    const grupos={
+
+        "Guarda-redes":[],
+        "Defesa":[],
+        "Médio":[],
+        "Avançado":[],
+        "Jogador":[]
+
+    };
+
+
+    lista.forEach(p=>{
+
+        const pos=posicaoJogador(p);
+
+        if(grupos[pos]){
+
+            grupos[pos].push(p);
+
+        }else{
+
+            grupos.Jogador.push(p);
+
+        }
+
+    });
+
+
+    if(grupos.Jogador.length){
+
+        grupos.Médio=
+            grupos.Médio.concat(
+                grupos.Jogador
+            );
+
+    }
+
+
+    const linhas=[
+
+        {
+            grupo:"Guarda-redes",
+            y:away?92:8
+        },
+
+        {
+            grupo:"Defesa",
+            y:away?77:23
+        },
+
+        {
+            grupo:"Médio",
+            y:away?63:37
+        },
+
+        {
+            grupo:"Avançado",
+            y:away?52:48
+        }
+
+    ];
+
+
+    const resultado=[];
+
+
+    linhas.forEach(linha=>{
+
+        const jogadores=
+            grupos[linha.grupo]||[];
+
+        const total=jogadores.length;
+
 
         jogadores.forEach((p,index)=>{
 
-            let x = 50;
+            let x=50;
 
-            if(total > 1){
+            if(total>1){
 
-                x =
-                    15 +
+                x=
+                    15+
                     (
-                        70 *
-                        index /
+                        70*
+                        index/
                         (total-1)
                     );
 
             }
+
 
             resultado.push({
 
@@ -4297,10 +5991,6 @@ function distribuirTitularesCampo(lista,away=false){
 }
 
 
-/* =========================================================
-   CAMPO DE FUTEBOL
-   ========================================================= */
-
 function renderCampoOnze(
     home,
     away,
@@ -4308,20 +5998,20 @@ function renderCampoOnze(
     awayNome
 ){
 
-    const homeCampo =
+    const homeCampo=
         distribuirTitularesCampo(
             home,
             false
         );
 
-    const awayCampo =
+    const awayCampo=
         distribuirTitularesCampo(
             away,
             true
         );
 
 
-    const jogadores =
+    const jogadores=
         homeCampo.concat(
             awayCampo
         );
@@ -4330,9 +6020,19 @@ function renderCampoOnze(
     if(!jogadores.length){
 
         return`
-        <div class="empty">
-            11 inicial não disponível neste momento.
-        </div>
+
+            <div class="detailCard">
+
+                <h3>
+                    ⚽ 11 Inicial
+                </h3>
+
+                <div class="empty">
+                    11 inicial não disponível.
+                </div>
+
+            </div>
+
         `;
 
     }
@@ -4340,171 +6040,163 @@ function renderCampoOnze(
 
     return`
 
-    <div class="detailCard">
+        <div class="detailCard">
 
-        <h3>⚽ 11 Inicial</h3>
+            <h3>
+                ⚽ 11 Inicial
+            </h3>
 
-        <div class="footballPitch">
+            <div class="footballPitch">
 
-            <div class="pitchHalf"></div>
+                <div class="pitchHalf"></div>
 
-            <div class="pitchCircle"></div>
+                <div class="pitchCircle"></div>
 
-            <div class="pitchCenter"></div>
+                <div class="pitchCenter"></div>
 
-            <div class="pitchBox top"></div>
+                <div class="pitchBox top"></div>
 
-            <div class="pitchBox bottom"></div>
+                <div class="pitchBox bottom"></div>
 
-            <div class="pitchSmallBox top"></div>
+                <div class="pitchSmallBox top"></div>
 
-            <div class="pitchSmallBox bottom"></div>
+                <div class="pitchSmallBox bottom"></div>
 
-            <div class="pitchGoal top"></div>
+                <div class="pitchGoal top"></div>
 
-            <div class="pitchGoal bottom"></div>
+                <div class="pitchGoal bottom"></div>
 
 
-            ${jogadores.map(item => {
+                ${jogadores.map(item=>{
 
-                const p =
-                    item.jogador;
+                    const p=item.jogador;
 
-                const nome =
-                    p?.displayName ||
-                    p?.fullName ||
-                    p?.shortName ||
-                    "Jogador";
+                    const nome=
+                        p?.displayName||
+                        p?.fullName||
+                        p?.shortName||
+                        "Jogador";
 
-                const numero =
-                    p?.jersey ??
-                    p?.jerseyNumber ??
-                    p?.uniformNumber ??
-                    p?.number ??
-                    "—";
 
-                const pos =
-                    posicaoJogador(p);
+                    const numero=
+                        p?.jersey??
+                        p?.jerseyNumber??
+                        p?.uniformNumber??
+                        p?.number??
+                        "—";
 
-                return`
 
-                <div
-                    class="pitchPlayer ${item.away?"away":""}"
-                    style="
-                        left:${item.x}%;
-                        top:${item.y}%;
-                    "
-                    title="${escapeHtml(nome)}"
-                >
+                    return`
 
-                    <div class="pitchPlayerDot">
-                        ${escapeHtml(numero)}
-                    </div>
+                        <div
+                            class="pitchPlayer ${
+                                item.away
+                                ?"away"
+                                :""
+                            }"
+                            style="
+                                left:${item.x}%;
+                                top:${item.y}%;
+                            "
+                        >
 
-                    <div class="pitchPlayerName">
-                        ${escapeHtml(nome)}
-                    </div>
+                            <div class="pitchPlayerDot">
 
-                </div>
+                                ${escapeHtml(numero)}
 
-                `;
+                            </div>
 
-            }).join("")}
+                            <div class="pitchPlayerName">
+
+                                ${escapeHtml(nome)}
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }).join("")}
+
+            </div>
+
+
+            <div class="lineupLegend">
+
+                <span>
+
+                    <i class="lineupDot"></i>
+
+                    ${escapeHtml(homeNome)}
+
+                </span>
+
+
+                <span>
+
+                    <i class="lineupDot away"></i>
+
+                    ${escapeHtml(awayNome)}
+
+                </span>
+
+            </div>
 
         </div>
-
-
-        <div class="lineupLegend">
-
-            <span>
-                <i class="lineupDot"></i>
-                ${escapeHtml(homeNome)}
-            </span>
-
-            <span>
-                <i class="lineupDot away"></i>
-                ${escapeHtml(awayNome)}
-            </span>
-
-        </div>
-
-    </div>
 
     `;
 
 }
 
 
-/* =========================================================
-   11 INICIAL — SUBSTITUI A LISTA ANTIGA NO JOGO
-   ========================================================= */
-
 function onzesHTML(data,e){
 
-    const comps =
-        data?.header?.competitions?.[0] ||
-        data?.competitions?.[0] ||
+    const comps=
+        data?.header?.competitions?.[0]||
+        data?.competitions?.[0]||
         e?.competitions?.[0];
 
-    const competitors =
-        comps?.competitors || [];
+
+    const competitors=
+        comps?.competitors||[];
+
 
     if(!competitors.length){
-        return "";
+        return"";
     }
 
 
-    const home =
+    const home=
         competitors.find(
             x=>x.homeAway==="home"
-        ) ||
+        )||
         competitors[0];
 
-    const away =
+
+    const away=
         competitors.find(
             x=>x.homeAway==="away"
-        ) ||
+        )||
         competitors[1];
 
 
-    if(!home || !away){
-        return "";
+    if(!home||!away){
+        return"";
     }
 
 
-    const homeTitulares =
+    const homeTitulares=
         obterTitulares(
             data,
             home
         );
 
-    const awayTitulares =
+
+    const awayTitulares=
         obterTitulares(
             data,
             away
         );
-
-
-    if(
-        !homeTitulares.length &&
-        !awayTitulares.length
-    ){
-
-        return`
-
-        <div class="detailCard">
-
-            <h3>⚽ 11 Inicial</h3>
-
-            <div class="empty">
-                Os titulares ainda não estão disponíveis para este jogo.
-            </div>
-
-        </div>
-
-        `;
-
-    }
 
 
     return renderCampoOnze(
@@ -4523,8 +6215,50 @@ function onzesHTML(data,e){
 
 
 /* =========================================================
-   FIM DAS CORREÇÕES FUTZONE
+   MOSTRAR TABELAS
    ========================================================= */
+
+async function mostrarTabelas(){
+
+    document
+        .getElementById("futebolSection")
+        .classList.remove("hide");
+
+    document
+        .getElementById("futsalSection")
+        .classList.remove("show");
+
+
+    document
+        .getElementById("footballContent")
+        .innerHTML=
+        '<div class="loading">⏳ A carregar classificação...</div>';
+
+
+    await carregarTabela();
+
+
+    document
+        .getElementById("footballContent")
+        .innerHTML=
+        renderTabelaHTML();
+
+}
+
+
+/* =========================================================
+   INICIALIZAÇÃO
+   ========================================================= */
+
+async function inicializar(){
+
+    desenharLigas();
+
+    await carregarJogos();
+
+}
+
+inicializar();
 </script>
 </body>
 </html>
