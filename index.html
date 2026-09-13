@@ -2181,6 +2181,70 @@ const BPI_JOGOS = [
 
 function bpiCriarEvento(jogo){
 
+  const resultado = BPI_RESULTADOS.find(r =>
+    r.home === jogo.home &&
+    r.away === jogo.away
+  );
+
+  return {
+    id:jogo.id,
+    date:jogo.date,
+
+    league:{
+      name:"Liga BPI"
+    },
+
+    season:{
+      displayName:"2026/27"
+    },
+
+    status:{
+      type:{
+        completed:!!resultado,
+        state:resultado ? "post" : "pre",
+        name:resultado ? "STATUS_FINAL" : "STATUS_SCHEDULED",
+        shortDetail:resultado ? "FINAL" : "AGENDADO"
+      }
+    },
+
+    competitions:[
+      {
+        id:"bpi-"+jogo.id,
+
+        competitors:[
+          {
+            homeAway:"home",
+
+            team:{
+              id:"bpi-"+jogo.home,
+              displayName:jogo.home,
+              name:jogo.home
+            },
+
+            score: resultado
+              ? String(resultado.homeScore)
+              : "-"
+          },
+
+          {
+            homeAway:"away",
+
+            team:{
+              id:"bpi-"+jogo.away,
+              displayName:jogo.away,
+              name:jogo.away
+            },
+
+            score: resultado
+              ? String(resultado.awayScore)
+              : "-"
+          }
+        ]
+      }
+    ]
+  };
+}
+
   return {
     id:jogo.id,
 
