@@ -2257,7 +2257,222 @@ buscarJogosLiga=async function(liga){
   return buscarJogosLigaOriginal(liga);
 };
 
+/* =========================================================
+   FUTZONE — LIGA BPI
+   CLASSIFICAÇÃO
+   BLOCO ISOLADO
+   ========================================================= */
 
+const BPI_RESULTADOS = [
+  {
+    home:"Valadares Gaia",
+    away:"FC Porto",
+    homeScore:1,
+    awayScore:3
+  },
+  {
+    home:"SC Braga",
+    away:"Marítimo",
+    homeScore:5,
+    awayScore:0
+  },
+  {
+    home:"Sporting",
+    away:"Vitória SC",
+    homeScore:2,
+    awayScore:0
+  }
+];
+
+const BPI_EQUIPAS = [
+  "Benfica",
+  "FC Porto",
+  "Sporting",
+  "SC Braga",
+  "Racing Power FC",
+  "Valadares Gaia",
+  "Vitória SC",
+  "Torreense",
+  "Rio Ave",
+  "Marítimo"
+];
+
+function bpiClassificacao(){
+
+  const tabela = BPI_EQUIPAS.map(nome => ({
+    nome: nome,
+    J: 0,
+    V: 0,
+    E: 0,
+    D: 0,
+    GM: 0,
+    GS: 0,
+    P: 0
+  }));
+
+  const mapa = {};
+
+  tabela.forEach(e => {
+    mapa[e.nome] = e;
+  });
+
+  BPI_RESULTADOS.forEach(jogo => {
+
+    const casa = mapa[jogo.home];
+    const fora = mapa[jogo.away];
+
+    if(!casa || !fora) return;
+
+    casa.J++;
+    fora.J++;
+
+    casa.GM += jogo.homeScore;
+    casa.GS += jogo.awayScore;
+
+    fora.GM += jogo.awayScore;
+    fora.GS += jogo.homeScore;
+
+    if(jogo.homeScore > jogo.awayScore){
+
+      casa.V++;
+      casa.P += 3;
+      fora.D++;
+
+    }else if(jogo.homeScore < jogo.awayScore){
+
+      fora.V++;
+      fora.P += 3;
+      casa.D++;
+
+    }else{
+
+      casa.E++;
+      fora.E++;
+
+      casa.P++;
+      fora.P++;
+
+    }
+
+  });
+
+  tabela.sort((a,b) => {
+
+    if(b.P !== a.P){
+      return b.P - a.P;
+    }
+
+    const dgA = a.GM - a.GS;
+    const dgB = b.GM - b.GS;
+
+    if(dgB !== dgA){
+      return dgB - dgA;
+    }
+
+    return b.GM - a.GM;
+
+  });
+
+  return tabela;
+}
+
+
+/* ---------- MOSTRAR CLASSIFICAÇÃO BPI ---------- */
+
+function bpiMostrarClassificacao(){
+
+  const box = document.getElementById("footballContent");
+
+  if(!box) return;
+
+  const tabela = bpiClassificacao();
+
+  box.innerHTML = `
+
+    <div class="card">
+
+      <div class="compHead">
+        🇵🇹 Liga BPI Feminina · 2026/27
+      </div>
+
+      <div style="overflow-x:auto">
+
+        <table class="table">
+
+          <thead>
+            <tr>
+              <th>Equipa</th>
+              <th>J</th>
+              <th>V</th>
+              <th>E</th>
+              <th>D</th>
+              <th>DG</th>
+              <th>Pts</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            ${tabela.map((e,i) => `
+
+              <tr>
+
+                <td>
+                  ${i+1}. ${escapeHtml(e.nome)}
+                </td>
+
+                <td>${e.J}</td>
+                <td>${e.V}</td>
+                <td>${e.E}</td>
+                <td>${e.D}</td>
+
+                <td>
+                  ${e.GM - e.GS > 0 ? "+" : ""}
+                  ${e.GM - e.GS}
+                </td>
+
+                <td>
+                  <strong>${e.P}</strong>
+                </td>
+
+              </tr>
+
+            `).join("")}
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+    <div class="notice">
+      Classificação calculada a partir dos resultados disponíveis nesta jornada.
+    </div>
+
+  `;
+
+}
+
+
+/* ---------- TABELAS: BPI SEM ALTERAR AS OUTRAS ---------- */
+
+const mostrarTabelaFutebolOriginal = mostrarTabelaFutebol;
+
+mostrarTabelaFutebol = function(){
+
+  if(ligaAtual === BPI_ID){
+
+    bpiMostrarClassificacao();
+
+    return;
+
+  }
+
+  return mostrarTabelaFutebolOriginal.apply(this, arguments);
+
+};
 /* ---------- ARRANQUE ---------- */
 
 desenharLigas();
