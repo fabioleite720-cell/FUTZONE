@@ -978,7 +978,192 @@ let paginaAtual = "jogos";
 
 let carregando = false;
 
+/* =========================================================
+   FUTZONE — AO VIVO
+   Todos os jogos LIVE das competições ESPN
+   ========================================================= */
 
+let modoAoVivo = false;
+
+let jogosAoVivo = [];
+
+let timerAoVivoFZ = null;
+
+
+/* =========================================================
+   URL DO SCOREBOARD AO VIVO
+   ========================================================= */
+
+function urlScoreboardLiga(liga){
+
+  return (
+    API +
+    encodeURIComponent(liga) +
+    "/scoreboard"
+  );
+
+}
+
+
+/* =========================================================
+   DETETAR SE UM JOGO ESTÁ AO VIVO
+   ========================================================= */
+
+function jogoEstaAoVivo(jogo){
+
+  if(!jogo){
+    return false;
+  }
+
+  if(jogo.estado === "live"){
+    return true;
+  }
+
+  const estado =
+    String(
+      jogo.estadoTexto ||
+      ""
+    ).toLowerCase();
+
+  return (
+    estado.includes("ao vivo") ||
+    estado.includes("live") ||
+    estado.includes("in progress") ||
+    estado.includes("início") ||
+    estado.includes("1st") ||
+    estado.includes("2nd") ||
+    estado.includes("ht") ||
+    estado.includes("extra time") ||
+    estado.includes("intervalo")
+  );
+
+}
+
+
+/* =========================================================
+   NORMALIZAÇÃO ESPECÍFICA DO LIVE
+   ========================================================= */
+
+function normalizarESPNLive(evento,liga){
+
+  const jogo =
+    normalizarESPN(
+      evento,
+      liga
+    );
+
+  if(!jogo){
+    return null;
+  }
+
+  const competicao =
+    evento?.competitions?.[0];
+
+  const status =
+    competicao?.status ||
+    evento?.status ||
+    {};
+
+  const tipo =
+    status.type ||
+    {};
+
+  const live =
+    tipo.state === "in" ||
+    tipo.name === "STATUS_IN_PROGRESS" ||
+    tipo.type === "in";
+
+  if(!live){
+    return null;
+  }
+
+  jogo.estado = "live";
+
+  jogo.estadoTexto =
+    tipo.shortDetail ||
+    tipo.detail ||
+    tipo.description ||
+    "AO VIVO";
+
+  return jogo;
+
+}
+
+
+/* =========================================================
+   CARREGAR TODOS OS JOGOS AO VIVO
+   ========================================================= */
+
+async function carregarTodosJogosAoVivo(){
+
+  const resultados = [];
+
+  /*
+    Todas as competições de futebol
+    existentes na aplicação.
+  */
+
+  const pedidos =
+    LIGAS.map(
+      async liga => {
+
+        const json =
+          await fetchJSON(
+            urlScoreboardLiga(
+              liga.id
+            )
+          );
+
+        if(!json){
+          return [];
+        }
+
+        const eventos =
+          Array.isArray(json.events)
+            ? json.events
+            : [];
+
+        return eventos
+          .map(
+            evento =>
+              normalizarESPNLive(
+                evento,
+                liga.id
+              )
+          )
+          .filter(Boolean);
+
+      }
+    );
+
+  const respostas =
+    await Promise.all(
+      pedidos
+    );
+
+  respostas.forEach(
+    lista => {
+
+      resultados.push(
+        ...lista
+      );
+
+    }
+  );
+
+  jogosAoVivo =
+    deduplicarJogos(
+      resultados
+    );
+
+  jogosAoVivo =
+    ordenarJogos(
+      jogosAoVivo
+    );
+
+  return jogosAoVivo;
+
+}
 /* =========================================================
    NOVO ESTADO — DETALHE DO JOGO
    ========================================================= */
