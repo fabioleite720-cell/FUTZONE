@@ -3,812 +3,3953 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+
 <meta name="theme-color" content="#0057B8">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+
 <title>FUTZONE — Futebol em Direto</title>
+
 <style>
 :root{
---blue:#0057B8;--blue2:#1683FF;--blue3:#003B7A;
---bg:#03060B;--panel:#09111C;--panel2:#0D1724;
---border:#1B2A3B;--text:#F5F7FA;--muted:#9DAABB;
---red:#FF4054;--green:#20D68A;--yellow:#FFD43B;--white:#fff
+  --blue:#0057B8;
+  --blue2:#1683FF;
+  --blue3:#003B7A;
+
+  --bg:#03060B;
+  --panel:#09111C;
+  --panel2:#0D1724;
+  --border:#1B2A3B;
+
+  --text:#F5F7FA;
+  --muted:#9DAABB;
+
+  --red:#FF4054;
+  --green:#20D68A;
+  --yellow:#FFD43B;
+  --white:#FFFFFF;
 }
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Arial,Helvetica,sans-serif}
-body{padding-bottom:78px}
-.app{width:100%;max-width:720px;margin:auto}
-.header{position:sticky;top:0;z-index:30;padding:16px 15px 13px;background:rgba(3,6,11,.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
-.logo{font-size:28px;line-height:1;font-weight:900;letter-spacing:-1px}
-.logo span{color:var(--blue2)}
-.subtitle{margin-top:4px;font-size:11px;color:var(--muted);letter-spacing:1.3px;font-weight:700}
-.sportSwitch{display:flex;gap:8px;margin-top:14px}
-.sportBtn{flex:1;border:1px solid var(--border);background:var(--panel);color:var(--muted);padding:10px 12px;border-radius:12px;font-weight:800}
-.sportBtn.active{background:var(--blue);color:white;border-color:var(--blue)}
-main{padding:14px}
-.sectionTitle{font-size:17px;font-weight:900;margin:5px 0 10px}
-.leagues{display:flex;gap:8px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
-.leagues::-webkit-scrollbar,.filters::-webkit-scrollbar{display:none}
-.league{flex:none;border:1px solid var(--border);background:var(--panel);color:var(--muted);border-radius:12px;padding:9px 12px;font-size:12px;font-weight:800}
-.league.active{color:white;background:var(--blue3);border-color:var(--blue2)}
-.liveAll{width:100%;border:0;border-radius:13px;padding:13px;margin:3px 0 12px;background:linear-gradient(135deg,#8f0012,#e01832);color:white;font-weight:900}
-.filters{display:flex;gap:7px;overflow-x:auto;margin-bottom:14px;scrollbar-width:none}
-.filter{flex:none;border:1px solid var(--border);background:var(--panel);color:var(--muted);padding:8px 12px;border-radius:10px;font-size:12px;font-weight:800}
-.filter.active{background:var(--blue);border-color:var(--blue);color:white}
-.search{width:100%;padding:11px 13px;border-radius:11px;border:1px solid var(--border);background:var(--panel);color:white;outline:none;margin-bottom:12px}
-.card{background:var(--panel);border:1px solid var(--border);border-radius:15px;margin-bottom:10px;padding:12px}
-.cardTop{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:10px;margin-bottom:9px}
-.teams{display:grid;grid-template-columns:1fr 80px 1fr;align-items:center;gap:8px}
-.team{text-align:center;font-size:12px;font-weight:800}
-.team img{display:block;width:34px;height:34px;object-fit:contain;margin:0 auto 5px}
-.score{text-align:center;font-size:18px;font-weight:900}
-.status{font-size:10px;color:var(--muted);margin-top:3px}
-.live{color:var(--red)!important}
-.star{background:none;border:0;color:var(--muted);font-size:20px;padding:0}
-.star.active{color:var(--yellow)}
-.empty{padding:30px 10px;text-align:center;color:var(--muted);font-size:13px}
-.tableWrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:11px}
-th,td{padding:8px 4px;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap}
-th{color:var(--muted)}
-td:first-child,th:first-child{text-align:left}
-.nav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:rgba(3,6,11,.97);border-top:1px solid var(--border);display:flex;justify-content:center}
-.nav button{width:25%;max-width:180px;border:0;background:transparent;color:var(--muted);padding:10px 4px 9px;font-size:11px;font-weight:800}
-.nav button.active{color:white}
-.nav button span{display:block;font-size:20px;margin-bottom:2px}
-.overlay{position:fixed;inset:0;background:var(--bg);z-index:100;overflow:auto;display:none}
-.overlay.show{display:block}
-.overlayHead{position:sticky;top:0;background:rgba(3,6,11,.97);border-bottom:1px solid var(--border);padding:13px 14px;z-index:2}
-.back{border:0;background:var(--panel);color:white;border:1px solid var(--border);border-radius:10px;padding:8px 12px;font-weight:800}
-.detail{padding:14px}
-.detailTitle{font-size:20px;font-weight:900;margin:10px 0}
-.section{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px;margin:10px 0}
-.section h3{font-size:14px;margin:0 0 10px}
-.pitch{height:330px;background:#075c36;border-radius:14px;position:relative;border:2px solid #1683FF}
-.pitch:before{content:"";position:absolute;left:50%;top:0;bottom:0;border-left:1px solid rgba(255,255,255,.6)}
-.pitch:after{content:"";position:absolute;width:90px;height:90px;border:1px solid rgba(255,255,255,.6);border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%)}
-.playerDot{position:absolute;width:28px;height:28px;border-radius:50%;background:white;color:#111;font-size:10px;font-weight:900;display:flex;align-items:center;justify-content:center;transform:translate(-50%,-50%)}
-.bottomSpace{height:15px}
+
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+html,
+body{
+  margin:0;
+  padding:0;
+  min-height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+  padding-bottom:78px;
+}
+
+button,
+input{
+  font-family:inherit;
+}
+
+button{
+  cursor:pointer;
+}
+
+.app{
+  width:100%;
+  max-width:720px;
+  margin:auto;
+}
+
+/* HEADER */
+
+.header{
+  position:sticky;
+  top:0;
+  z-index:30;
+  padding:16px 15px 13px;
+  background:rgba(3,6,11,.97);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+}
+
+.logo{
+  font-size:28px;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:-1px;
+}
+
+.logo span{
+  color:var(--blue2);
+}
+
+.subtitle{
+  margin-top:4px;
+  font-size:11px;
+  color:var(--muted);
+  letter-spacing:1.3px;
+  font-weight:700;
+}
+
+/* FUTEBOL / FUTSAL */
+
+.sportSwitch{
+  display:flex;
+  gap:8px;
+  margin-top:14px;
+}
+
+.sportBtn{
+  flex:1;
+  border:1px solid var(--border);
+  background:var(--panel);
+  color:var(--muted);
+  padding:10px 12px;
+  border-radius:12px;
+  font-weight:800;
+}
+
+.sportBtn.active{
+  background:var(--blue);
+  color:white;
+  border-color:var(--blue);
+}
+
+/* MAIN */
+
+main{
+  padding:14px;
+}
+
+.sectionTitle{
+  font-size:17px;
+  font-weight:900;
+  margin:5px 0 10px;
+}
+
+.sectionSub{
+  color:var(--muted);
+  font-size:12px;
+  margin:-4px 0 12px;
+}
+
+/* COMPETIÇÕES */
+
+.leagues{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding:2px 0 10px;
+  scrollbar-width:none;
+}
+
+.leagues::-webkit-scrollbar,
+.filters::-webkit-scrollbar{
+  display:none;
+}
+
+.league{
+  flex:none;
+  border:1px solid var(--border);
+  background:var(--panel);
+  color:var(--muted);
+  border-radius:12px;
+  padding:9px 12px;
+  font-size:12px;
+  font-weight:800;
+}
+
+.league.active{
+  color:white;
+  background:var(--blue3);
+  border-color:var(--blue2);
+}
+
+/* BOTÃO LIVE */
+
+.liveAll{
+  width:100%;
+  border:0;
+  border-radius:13px;
+  padding:13px;
+  margin:3px 0 12px;
+  background:linear-gradient(135deg,#8f0012,#e01832);
+  color:white;
+  font-weight:900;
+}
+
+/* FILTROS */
+
+.filters{
+  display:flex;
+  gap:7px;
+  overflow-x:auto;
+  margin-bottom:14px;
+  scrollbar-width:none;
+}
+
+.filter{
+  flex:none;
+  border:1px solid var(--border);
+  background:var(--panel);
+  color:var(--muted);
+  padding:8px 12px;
+  border-radius:10px;
+  font-size:12px;
+  font-weight:800;
+}
+
+.filter.active{
+  background:var(--blue);
+  border-color:var(--blue);
+  color:white;
+}
+
+/* PESQUISA */
+
+.search{
+  width:100%;
+  padding:11px 13px;
+  border-radius:11px;
+  border:1px solid var(--border);
+  background:var(--panel);
+  color:white;
+  outline:none;
+  margin-bottom:12px;
+}
+
+.search::placeholder{
+  color:#718096;
+}
+
+/* JOGOS */
+
+.card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:15px;
+  margin-bottom:10px;
+  padding:12px;
+}
+
+.cardTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  color:var(--muted);
+  font-size:10px;
+  margin-bottom:9px;
+}
+
+.teams{
+  display:grid;
+  grid-template-columns:1fr 80px 1fr;
+  align-items:center;
+  gap:8px;
+}
+
+.team{
+  text-align:center;
+  font-size:12px;
+  font-weight:800;
+}
+
+.team img{
+  display:block;
+  width:34px;
+  height:34px;
+  object-fit:contain;
+  margin:0 auto 5px;
+}
+
+.score{
+  text-align:center;
+  font-size:18px;
+  font-weight:900;
+}
+
+.status{
+  font-size:10px;
+  color:var(--muted);
+  margin-top:3px;
+  text-align:center;
+}
+
+.live{
+  color:var(--red)!important;
+}
+
+.star{
+  background:none;
+  border:0;
+  color:var(--muted);
+  font-size:20px;
+  padding:0;
+}
+
+.star.active{
+  color:var(--yellow);
+}
+
+.cardButton{
+  width:100%;
+  border:0;
+  background:none;
+  color:inherit;
+  padding:0;
+  text-align:inherit;
+}
+
+/* ESTADOS */
+
+.empty{
+  padding:30px 10px;
+  text-align:center;
+  color:var(--muted);
+  font-size:13px;
+}
+
+.loading{
+  padding:35px 10px;
+  text-align:center;
+  color:var(--muted);
+  font-size:13px;
+}
+
+.errorBox{
+  background:#210b10;
+  border:1px solid #63202a;
+  color:#ff9ca7;
+  padding:14px;
+  border-radius:13px;
+  font-size:12px;
+  line-height:1.5;
+}
+
+/* TABELAS */
+
+.tableWrap{
+  overflow-x:auto;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:4px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:11px;
+}
+
+th,
+td{
+  padding:8px 4px;
+  border-bottom:1px solid var(--border);
+  text-align:center;
+  white-space:nowrap;
+}
+
+th{
+  color:var(--muted);
+}
+
+td:first-child,
+th:first-child{
+  text-align:left;
+}
+
+tr:last-child td{
+  border-bottom:0;
+}
+
+/* EQUIPAS */
+
+.teamList{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:9px;
+}
+
+.teamBox{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:13px;
+  padding:13px 9px;
+  text-align:center;
+}
+
+.teamBox strong{
+  display:block;
+  font-size:12px;
+  margin-top:6px;
+}
+
+.teamLogo{
+  width:42px;
+  height:42px;
+  object-fit:contain;
+  display:block;
+  margin:auto;
+}
+
+/* SECÇÕES */
+
+.section{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:12px;
+  margin:10px 0;
+}
+
+.section h3{
+  font-size:14px;
+  margin:0 0 10px;
+}
+
+.detailTitle{
+  font-size:20px;
+  font-weight:900;
+  margin:10px 0;
+}
+
+/* NAVEGAÇÃO */
+
+.nav{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  z-index:50;
+  background:rgba(3,6,11,.98);
+  border-top:1px solid var(--border);
+  display:flex;
+  justify-content:center;
+}
+
+.nav button{
+  width:25%;
+  max-width:180px;
+  border:0;
+  background:transparent;
+  color:var(--muted);
+  padding:10px 4px 9px;
+  font-size:11px;
+  font-weight:800;
+}
+
+.nav button.active{
+  color:white;
+}
+
+.nav button span{
+  display:block;
+  font-size:20px;
+  margin-bottom:2px;
+}
+
+/* DETALHE */
+
+.overlay{
+  position:fixed;
+  inset:0;
+  background:var(--bg);
+  z-index:100;
+  overflow:auto;
+  display:none;
+}
+
+.overlay.show{
+  display:block;
+}
+
+.overlayHead{
+  position:sticky;
+  top:0;
+  background:rgba(3,6,11,.97);
+  border-bottom:1px solid var(--border);
+  padding:13px 14px;
+  z-index:2;
+}
+
+.back{
+  border:0;
+  background:var(--panel);
+  color:white;
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:8px 12px;
+  font-weight:800;
+}
+
+.detail{
+  padding:14px;
+}
+
+/* CAMPO */
+
+.pitch{
+  height:330px;
+  background:#075c36;
+  border-radius:14px;
+  position:relative;
+  border:2px solid #1683FF;
+  overflow:hidden;
+}
+
+.pitch:before{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:0;
+  bottom:0;
+  border-left:1px solid rgba(255,255,255,.6);
+}
+
+.pitch:after{
+  content:"";
+  position:absolute;
+  width:90px;
+  height:90px;
+  border:1px solid rgba(255,255,255,.6);
+  border-radius:50%;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+}
+
+.playerDot{
+  position:absolute;
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  background:white;
+  color:#111;
+  font-size:10px;
+  font-weight:900;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transform:translate(-50%,-50%);
+}
+
+.bottomSpace{
+  height:15px;
+}
+
+.smallBtn{
+  border:1px solid var(--border);
+  background:var(--panel);
+  color:white;
+  padding:8px 10px;
+  border-radius:9px;
+  font-size:11px;
+  font-weight:800;
+}
+
+.smallBtn.active{
+  background:var(--blue);
+  border-color:var(--blue);
+}
+
+.buttonRow{
+  display:flex;
+  gap:7px;
+  overflow-x:auto;
+  padding-bottom:5px;
+}
+
+.buttonRow::-webkit-scrollbar{
+  display:none;
+}
+
+.notice{
+  padding:12px;
+  border-radius:12px;
+  background:var(--panel2);
+  border:1px solid var(--border);
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.5;
+}
+
 @media(min-width:700px){
-main{padding:18px}
-.card{padding:14px}
+  main{
+    padding:18px;
+  }
+
+  .card{
+    padding:14px;
+  }
 }
 </style>
 </head>
+
 <body>
 
 <div class="app">
-<header class="header">
-<div class="logo">FUT<span>ZONE</span></div>
-<div class="subtitle">FUTEBOL EM DIRETO</div>
 
-<div class="sportSwitch">
-<button id="btnFutebol" class="sportBtn active" onclick="mudarDesporto('futebol')">⚽ Futebol</button>
-<button id="btnFutsal" class="sportBtn" onclick="mudarDesporto('futsal')">🥅 Futsal</button>
-</div>
+<header class="header">
+
+  <div class="logo">
+    FUT<span>ZONE</span>
+  </div>
+
+  <div class="subtitle">
+    FUTEBOL EM DIRETO
+  </div>
+
+  <div class="sportSwitch">
+
+    <button
+      id="btnFutebol"
+      class="sportBtn active"
+      onclick="mudarDesporto('futebol')">
+      ⚽ Futebol
+    </button>
+
+    <button
+      id="btnFutsal"
+      class="sportBtn"
+      onclick="mudarDesporto('futsal')">
+      🥅 Futsal
+    </button>
+
+  </div>
+
 </header>
 
 <main id="main"></main>
+
 </div>
 
 <nav class="nav">
-<button id="navJogos" class="active" onclick="mostrarJogos()"><span>⚽</span>Jogos</button>
-<button id="navTabelas" onclick="mostrarTabelas()"><span>🏆</span>Tabelas</button>
-<button id="navFav" onclick="mostrarFavoritos()"><span>⭐</span>Favoritos</button>
-<button id="navEquipas" onclick="mostrarEquipas()"><span>👥</span>Equipas</button>
+
+  <button
+    id="navJogos"
+    class="active"
+    onclick="mostrarJogos()">
+    <span>⚽</span>
+    Jogos
+  </button>
+
+  <button
+    id="navTabelas"
+    onclick="mostrarTabelas()">
+    <span>🏆</span>
+    Tabelas
+  </button>
+
+  <button
+    id="navFav"
+    onclick="mostrarFavoritos()">
+    <span>⭐</span>
+    Favoritos
+  </button>
+
+  <button
+    id="navEquipas"
+    onclick="mostrarEquipas()">
+    <span>👥</span>
+    Equipas
+  </button>
+
 </nav>
 
-<div id="overlay" class="overlay">
-<div class="overlayHead">
-<button class="back" onclick="fecharDetalhe()">← Voltar</button>
-</div>
-<div id="overlayContent" class="detail"></div>
+<div
+  id="overlay"
+  class="overlay">
+
+  <div class="overlayHead">
+
+    <button
+      class="back"
+      onclick="fecharDetalhe()">
+      ← Voltar
+    </button>
+
+  </div>
+
+  <div
+    id="overlayContent"
+    class="detail">
+  </div>
+
 </div>
 
 <script>
-const API="https://site.api.espn.com/apis/site/v2/sports/soccer/";
-const API_CORE="https://site.api.espn.com/apis/v2/sports/soccer/";
 
-const LIGAS=[
-{id:"por.1",nome:"🇵🇹 Liga Portugal",curta:"Liga Portugal"},
-{id:"por.2",nome:"🇵🇹 Liga Portugal 2",curta:"Liga 2"},
-{id:"por.3",nome:"🇵🇹 Liga 3",curta:"Liga 3"},
-{id:"por.w.1",nome:"🇵🇹 Liga BPI Feminina",curta:"Liga BPI"},
-{id:"eng.1",nome:"🏴 Premier League",curta:"Inglaterra"},
-{id:"eng.2",nome:"🏴 Championship",curta:"Championship"},
-{id:"esp.1",nome:"🇪🇸 La Liga",curta:"Espanha"},
-{id:"esp.2",nome:"🇪🇸 La Liga 2",curta:"La Liga 2"},
-{id:"ita.1",nome:"🇮🇹 Serie A",curta:"Itália"},
-{id:"ita.2",nome:"🇮🇹 Serie B",curta:"Serie B"},
-{id:"ger.1",nome:"🇩🇪 Bundesliga",curta:"Alemanha"},
-{id:"ger.2",nome:"🇩🇪 2. Bundesliga",curta:"2. Bundesliga"},
-{id:"fra.1",nome:"🇫🇷 Ligue 1",curta:"França"},
-{id:"fra.2",nome:"🇫🇷 Ligue 2",curta:"Ligue 2"},
-{id:"ned.1",nome:"🇳🇱 Eredivisie",curta:"Países Baixos"},
-{id:"bel.1",nome:"🇧🇪 Jupiler Pro League",curta:"Bélgica"},
-{id:"uefa.champions",nome:"🌍 Champions League",curta:"Champions"},
-{id:"uefa.europa",nome:"🌍 Europa League",curta:"Europa"},
-{id:"uefa.europa.conf",nome:"🌍 Conference League",curta:"Conference"}
-];
-
-let ligaAtual="por.1";
-let filtroAtual="todos";
-let jogosFutebol=[];
-let desportoAtual="futebol";
-
-let favoritosJogos=JSON.parse(localStorage.getItem("futzone_jogos_favoritos")||"[]");
-let favoritosEquipas=JSON.parse(localStorage.getItem("futzone_equipas_favoritas")||"[]");
-
-const FUTSAL_TEAMS=[
-"AD Fundão","Benfica","Eléctrico","FC Famalicão",
-"Ferreira do Zêzere","Leões Porto Salvo","Portimonense",
-"Rio Ave","SC Braga","Sporting","Torreense","UPVN"
-];
-
-const FUTSAL_GAMES=[
-["2026-09-11T19:30:00+01:00","AD Fundão","SC Braga",null,null],
-["2026-09-11T20:30:00+01:00","Torreense","Eléctrico",null,null],
-["2026-09-11T21:15:00+01:00","Sporting","Portimonense",1,0],
-["2026-09-12T17:00:00+01:00","Leões Porto Salvo","Ferreira do Zêzere",null,null],
-["2026-09-12T19:00:00+01:00","Benfica","UPVN",null,null],
-["2026-09-13T15:00:00+01:00","Rio Ave","FC Famalicão",null,null],
-["2026-09-16T20:30:00+01:00","Sporting","AD Fundão",null,null],
-["2026-09-19T15:00:00+01:00","Portimonense","Benfica",null,null],
-["2026-09-19T17:00:00+01:00","Eléctrico","Rio Ave",null,null],
-["2026-09-19T17:00:00+01:00","SC Braga","Torreense",null,null],
-["2026-09-20T17:00:00+01:00","FC Famalicão","Sporting",null,null],
-["2026-09-20T18:00:00+01:00","UPVN","Leões Porto Salvo",null,null],
-["2026-09-21T19:00:00+01:00","Ferreira do Zêzere","AD Fundão",null,null]
-];
-
-function esc(v){
-return String(v??"").replace(/[&<>"']/g,m=>({
-"&":"&amp;","<":"&lt;",">":"&gt;",
-'"':"&quot;","'":"&#039;"
-}[m]));
-}
-
-function dataTexto(v){
-const d=new Date(v);
-if(isNaN(d))return "";
-return d.toLocaleDateString("pt-PT",{day:"2-digit",month:"2-digit"})+
-" · "+
-d.toLocaleTimeString("pt-PT",{hour:"2-digit",minute:"2-digit"});
-}
-
-function hoje(){
-const d=new Date();
-return new Date(d.getFullYear(),d.getMonth(),d.getDate());
-}
-
-function nav(id){
-["navJogos","navTabelas","navFav","navEquipas"].forEach(x=>{
-const e=document.getElementById(x);
-if(e)e.classList.toggle("active",x===id);
-});
-}
-
-function mudarDesporto(d){
-desportoAtual=d;
-document.getElementById("btnFutebol").classList.toggle("active",d==="futebol");
-document.getElementById("btnFutsal").classList.toggle("active",d==="futsal");
-mostrarJogos();
-}
-
-function normalizarESPN(ev,liga){
-const c=ev?.competitions?.[0]||{};
-const cs=c.competitors||[];
-const h=cs.find(x=>x.homeAway==="home")||cs[0]||{};
-const a=cs.find(x=>x.homeAway==="away")||cs[1]||{};
-const st=c.status||ev.status||{};
-const type=st.type||{};
-let estado="";
-
-if(type.state==="in")estado="DIRETO";
-else if(type.state==="post")estado="FINAL";
-else if(type.name==="STATUS_POSTPONED")estado="ADIADO";
-else if(type.name==="STATUS_CANCELED")estado="CANCELADO";
-else estado=type.shortDetail||type.detail||type.description||"";
-
-return{
-id:String(ev.id),
-codigo:liga,
-data:ev.date||c.date||"",
-home:{
-id:h?.team?.id||h?.id||null,
-nome:h?.team?.displayName||h?.team?.shortDisplayName||h?.team?.name||"Casa",
-logo:h?.team?.logo||"",
-score:h?.score??null
-},
-away:{
-id:a?.team?.id||a?.id||null,
-nome:a?.team?.displayName||a?.team?.shortDisplayName||a?.team?.name||"Fora",
-logo:a?.team?.logo||"",
-score:a?.score??null
-},
-estado
-};
-}
-
-async function buscarESPN(liga){
-try{
-const r=await fetch(API+encodeURIComponent(liga)+"/scoreboard?limit=100");
-if(!r.ok)return[];
-const j=await r.json();
-return(j.events||[]).map(e=>normalizarESPN(e,liga));
-}catch(e){
-console.warn("ESPN:",e);
-return[];
-}
-}
-
-const FALLBACK={
-
-"por.2":{
-games:[
-["2026-09-13T15:00:00+01:00","AVS","Farense",null,null],
-["2026-09-13T15:00:00+01:00","Chaves","Feirense",null,null],
-["2026-09-13T15:00:00+01:00","Amarante","União de Leiria",null,null],
-["2026-09-14T18:00:00+01:00","Sporting CP B","Lusitânia Lourosa",null,null],
-["2026-09-14T20:15:00+01:00","FC Porto B","Vizela",null,null],
-
-["2026-09-12T15:00:00+01:00","Portimonense","Tondela",0,2],
-["2026-09-12T15:00:00+01:00","Felgueiras","Penafiel",1,2],
-["2026-09-11T20:15:00+01:00","Torreense","Leixões",0,0],
-["2026-09-11T18:00:00+01:00","Académica","Benfica B",0,3],
-["2026-09-07T20:15:00+01:00","Lusitânia Lourosa","AVS",2,1],
-["2026-09-06T15:00:00+01:00","União de Leiria","Portimonense",1,0],
-["2026-09-06T15:00:00+01:00","Leixões","Amarante",3,1],
-["2026-09-06T15:00:00+01:00","Vizela","Felgueiras",1,0],
-["2026-09-05T15:00:00+01:00","Benfica B","Torreense",0,2],
-["2026-09-05T15:00:00+01:00","Feirense","Sporting CP B",1,3],
-["2026-09-05T15:00:00+01:00","Penafiel","Académica",4,1],
-["2026-09-05T15:00:00+01:00","Tondela","FC Porto B",3,0]
-],
-table:[
-["Lusitânia Lourosa",5,4,1,0,9,3,13],
-["Sporting CP B",5,4,0,1,7,4,12],
-["Penafiel",5,3,1,1,11,4,10],
-["Vizela",5,3,1,1,5,2,10],
-["Leixões",6,3,1,2,8,6,10],
-["Benfica B",6,3,1,2,7,5,10],
-["União de Leiria",5,3,0,2,8,5,9],
-["Académica",6,3,0,3,8,10,9],
-["Farense",4,2,1,1,7,5,7],
-["Portimonense",5,2,1,2,4,4,7],
-["Felgueiras",5,1,3,1,4,4,6],
-["Tondela",5,2,0,3,5,6,6],
-["Torreense",6,1,3,2,7,9,6],
-["AVS",5,1,2,2,6,6,5],
-["Amarante",5,1,1,3,3,6,4],
-["FC Porto B",5,1,0,4,2,11,3],
-["Chaves",4,0,1,3,4,9,1],
-["Feirense",5,0,1,4,1,7,1]
-]
-},
-
-"por.3":{
-games:[
-["2026-09-13T10:00:00+01:00","Belenenses","Atlético CP",null,null],
-["2026-09-13T16:00:00+01:00","Caldas","Vitória de Sernache",null,null],
-["2026-09-13T16:00:00+01:00","Paços de Ferreira","São João de Ver",null,null],
-["2026-09-13T19:30:00+01:00","Paredes","AD Fafe",null,null],
-["2026-09-12T15:00:00+01:00","Varzim","SC Vianense",1,2],
-["2026-09-12T15:00:00+01:00","Oliveirense","Mafra",2,0],
-["2026-09-06T15:00:00+01:00","São João de Ver","Marco 09",0,0],
-["2026-09-06T15:00:00+01:00","Louletano","Lusitano Évora",1,0],
-["2026-09-06T15:00:00+01:00","Atlético CP","Oliveirense",3,1],
-["2026-09-06T15:00:00+01:00","Vitória de Sernache","Belenenses",1,3],
-["2026-09-06T15:00:00+01:00","Leça","AD Fafe",0,3],
-["2026-09-05T15:00:00+01:00","Varzim","Paredes",0,1],
-["2026-09-05T15:00:00+01:00","Vitória SC B","Trofense",0,0],
-["2026-09-05T15:00:00+01:00","Mafra","Covilhã",1,0],
-["2026-09-05T15:00:00+01:00","SC Vianense","Paços de Ferreira",2,2],
-["2026-09-04T20:00:00+01:00","União Santarém","Caldas",0,1]
-],
-groupA:[
-["Paredes",4,3,0,1,6,3,9],
-["Varzim",5,3,0,2,8,5,9],
-["AD Fafe",4,2,2,0,7,2,8],
-["AD Marco 09",4,2,1,1,5,3,7],
-["SC Vianense",5,2,2,1,6,5,8],
-["Vitória SC B",4,1,2,1,4,4,5],
-["Trofense",4,1,1,2,1,3,4],
-["Leça",4,1,1,2,3,7,4],
-["São João de Ver",4,0,2,2,2,5,2],
-["Paços de Ferreira",4,0,1,3,4,9,1]
-],
-groupB:[
-["Belenenses",4,4,0,0,10,2,12],
-["Atlético CP",4,3,1,0,9,4,10],
-["Oliveirense",5,2,2,1,7,4,8],
-["Mafra",5,2,1,2,4,4,7],
-["Louletano",4,2,1,1,4,3,7],
-["Lusitano Évora",4,1,1,2,3,4,4],
-["Caldas",4,1,1,2,3,5,4],
-["Covilhã",4,1,1,2,2,3,4],
-["Vitória de Sernache",4,0,1,3,3,7,1],
-["União Santarém",4,0,1,3,1,6,1]
-]
-},
-
-"por.w.1":{
-games:[
-["2026-09-13T19:00:00+01:00","Torreense","Rio Ave",null,null],
-["2026-09-12T16:00:00+01:00","SC Braga","Marítimo",5,0],
-["2026-09-12T17:00:00+01:00","Sporting CP","Vitória SC",2,0],
-["2026-09-12T19:30:00+01:00","Benfica","Racing Power",null,null],
-["2026-09-06T15:00:00+01:00","Valadares Gaia","FC Porto",1,3],
-["2026-09-18T17:30:00+01:00","Rio Ave","Benfica",null,null],
-["2026-09-20T14:00:00+01:00","Marítimo","Sporting CP",null,null],
-["2026-09-26T10:00:00+01:00","Valadares Gaia","Rio Ave",null,null],
-["2026-09-27T13:45:00+01:00","SC Braga","Sporting CP",null,null],
-["2026-09-27T14:00:00+01:00","Benfica","Vitória SC",null,null],
-["2026-10-18T13:00:00+01:00","Marítimo","Benfica",null,null],
-["2026-10-18T13:00:00+01:00","Vitória SC","Valadares Gaia",null,null]
-],
-table:[
-["Sporting CP",1,1,0,0,2,0,3],
-["SC Braga",1,1,0,0,5,0,3],
-["FC Porto",1,1,0,0,3,1,3],
-["Benfica",0,0,0,0,0,0,0],
-["Racing Power",0,0,0,0,0,0,0],
-["Torreense",0,0,0,0,0,0,0],
-["Rio Ave",0,0,0,0,0,0,0],
-["Valadares Gaia",1,0,0,1,1,3,0],
-["Marítimo",1,0,0,1,0,5,0],
-["Vitória SC",1,0,0,1,0,2,0]
-]
-}
-
-};
- <script>
 /* =========================================================
-   FUTZONE — PARTE 2/3
-   MOTOR DE JOGOS + TABELAS + FUTSAL + EQUIPAS
+   FUTZONE
+   PARTE 1/3
+   CONFIGURAÇÃO + DADOS
    ========================================================= */
 
-function makeFallbackGame(liga,row,i){
-  const [data,hora,casa,fora,hs,as] = row;
+/* APIs ESPN */
 
-  const id = "fzfb-" + liga + "-" + i + "-" +
-    String(casa+"-"+fora).toLowerCase()
-      .replace(/[^a-z0-9]+/g,"-");
+const API =
+  "https://site.api.espn.com/apis/site/v2/sports/soccer/";
 
-  let status = "scheduled";
-  let statusText = "Próximo";
-
-  if(hs !== null && as !== null){
-    status = "final";
-    statusText = "Final";
-  }
-
-  return {
-    id,
-    date: data,
-    dateStr: data + (hora ? "T" + hora + ":00Z" : ""),
-    league: liga,
-    home: {
-      name: casa,
-      logo: ""
-    },
-    away: {
-      name: fora,
-      logo: ""
-    },
-    homeScore: hs,
-    awayScore: as,
-    status,
-    statusText,
-    venue: "",
-    fallback: true
-  };
-}
-
-
-function fallbackGames(liga){
-  const rows = FALLBACK[liga] && FALLBACK[liga].games
-    ? FALLBACK[liga].games
-    : [];
-
-  return rows.map((r,i)=>makeFallbackGame(liga,r,i));
-}
-
-
-function jogoKey(j){
-  const d = j.date || j.dateStr || "";
-  const h = j.home?.name || "";
-  const a = j.away?.name || "";
-
-  return (
-    String(d).slice(0,10) + "|" +
-    normalizarESPN(h) + "|" +
-    normalizarESPN(a)
-  ).toLowerCase();
-}
-
-
-function ordenarJogos(lista){
-  return lista.sort((a,b)=>{
-    const da = new Date(a.dateStr || a.date || 0).getTime();
-    const db = new Date(b.dateStr || b.date || 0).getTime();
-    return da-db;
-  });
-}
-
-
-async function buscarJogosLiga(liga){
-
-  const fallback = fallbackGames(liga);
-  const encontrados = [];
-
-  const hojeBase = new Date();
-
-  for(let offset=-7; offset<=14; offset++){
-
-    const d = new Date(hojeBase);
-    d.setDate(d.getDate()+offset);
-
-    const data = d.toISOString().slice(0,10);
-
-    try{
-      const url =
-        API +
-        liga +
-        "/scoreboard?dates=" +
-        data.replaceAll("-","");
-
-      const dados = await buscarESPN(url);
-
-      if(dados && Array.isArray(dados.events)){
-        for(const ev of dados.events){
-
-          const c = ev.competitions?.[0];
-          if(!c) continue;
-
-          const comps = c.competitors || [];
-
-          const home = comps.find(x=>x.homeAway==="home");
-          const away = comps.find(x=>x.homeAway==="away");
-
-          if(!home || !away) continue;
-
-          encontrados.push({
-            id: ev.id,
-            date: ev.date,
-            dateStr: ev.date,
-            league: liga,
-            home:{
-              name: home.team?.displayName ||
-                   home.team?.shortDisplayName ||
-                   "Casa",
-              logo: home.team?.logo || ""
-            },
-            away:{
-              name: away.team?.displayName ||
-                   away.team?.shortDisplayName ||
-                   "Fora",
-              logo: away.team?.logo || ""
-            },
-            homeScore:
-              home.score !== undefined && home.score !== null
-                ? Number(home.score)
-                : null,
-            awayScore:
-              away.score !== undefined && away.score !== null
-                ? Number(away.score)
-                : null,
-            status:
-              c.status?.type?.state ||
-              ev.status?.type?.state ||
-              "scheduled",
-            statusText:
-              c.status?.type?.shortDetail ||
-              ev.status?.type?.shortDetail ||
-              c.status?.type?.description ||
-              "Próximo",
-            venue:
-              c.venue?.fullName ||
-              c.venue?.address?.city ||
-              ""
-          });
-        }
-      }
-
-    }catch(e){
-      console.warn("FUTZONE ESPN:",e);
-    }
-  }
-
-  const mapa = new Map();
-
-  for(const j of fallback){
-    mapa.set(jogoKey(j),j);
-  }
-
-  for(const j of encontrados){
-
-    const key = jogoKey(j);
-    const anterior = mapa.get(key);
-
-    /*
-      Se a ESPN tem o jogo, damos prioridade à ESPN.
-      Se o fallback tiver resultado e a ESPN não tiver,
-      mantemos o resultado confirmado.
-    */
-    if(!anterior){
-      mapa.set(key,j);
-    }else{
-
-      const temResultado =
-        j.homeScore !== null &&
-        j.awayScore !== null;
-
-      const fallbackTemResultado =
-        anterior.homeScore !== null &&
-        anterior.awayScore !== null;
-
-      if(temResultado || !fallbackTemResultado){
-        mapa.set(key,j);
-      }
-    }
-  }
-
-  return ordenarJogos([...mapa.values()]);
-}
+const API_CORE =
+  "https://site.api.espn.com/apis/v2/sports/soccer/";
 
 
 /* =========================================================
-   FORMATAÇÃO
+   COMPETIÇÕES
    ========================================================= */
 
-function formatarDataJogo(j){
+const LIGAS = [
 
-  const valor = j.dateStr || j.date;
+  {
+    id:"por.1",
+    nome:"🇵🇹 Liga Portugal",
+    curta:"Liga Portugal"
+  },
 
-  if(!valor) return "";
+  {
+    id:"por.2",
+    nome:"🇵🇹 Liga Portugal 2",
+    curta:"Liga 2"
+  },
 
-  const d = new Date(valor);
+  {
+    id:"por.3",
+    nome:"🇵🇹 Liga 3",
+    curta:"Liga 3"
+  },
 
-  if(Number.isNaN(d.getTime())){
+  {
+    id:"por.w.1",
+    nome:"🇵🇹 Liga BPI Feminina",
+    curta:"Liga BPI"
+  },
 
-    const partes = String(valor).split("-");
+  {
+    id:"eng.1",
+    nome:"🏴 Premier League",
+    curta:"Inglaterra"
+  },
 
-    if(partes.length===3){
-      return partes[2] + "/" +
-             partes[1] + "/" +
-             partes[0];
-    }
+  {
+    id:"eng.2",
+    nome:"🏴 Championship",
+    curta:"Championship"
+  },
 
-    return valor;
+  {
+    id:"esp.1",
+    nome:"🇪🇸 La Liga",
+    curta:"Espanha"
+  },
+
+  {
+    id:"esp.2",
+    nome:"🇪🇸 La Liga 2",
+    curta:"La Liga 2"
+  },
+
+  {
+    id:"ita.1",
+    nome:"🇮🇹 Serie A",
+    curta:"Itália"
+  },
+
+  {
+    id:"ita.2",
+    nome:"🇮🇹 Serie B",
+    curta:"Serie B"
+  },
+
+  {
+    id:"ger.1",
+    nome:"🇩🇪 Bundesliga",
+    curta:"Alemanha"
+  },
+
+  {
+    id:"ger.2",
+    nome:"🇩🇪 2. Bundesliga",
+    curta:"2. Bundesliga"
+  },
+
+  {
+    id:"fra.1",
+    nome:"🇫🇷 Ligue 1",
+    curta:"França"
+  },
+
+  {
+    id:"fra.2",
+    nome:"🇫🇷 Ligue 2",
+    curta:"Ligue 2"
+  },
+
+  {
+    id:"ned.1",
+    nome:"🇳🇱 Eredivisie",
+    curta:"Países Baixos"
+  },
+
+  {
+    id:"bel.1",
+    nome:"🇧🇪 Jupiler Pro League",
+    curta:"Bélgica"
+  },
+
+  {
+    id:"uefa.champions",
+    nome:"🌍 Champions League",
+    curta:"Champions"
+  },
+
+  {
+    id:"uefa.europa",
+    nome:"🌍 Europa League",
+    curta:"Europa"
+  },
+
+  {
+    id:"uefa.europa.conf",
+    nome:"🌍 Conference League",
+    curta:"Conference"
   }
 
-  return d.toLocaleDateString("pt-PT",{
-    day:"2-digit",
-    month:"2-digit"
-  });
-}
-
-
-function formatarHoraJogo(j){
-
-  const valor = j.dateStr || j.date;
-
-  if(!valor) return "";
-
-  const d = new Date(valor);
-
-  if(Number.isNaN(d.getTime())) return "";
-
-  return d.toLocaleTimeString("pt-PT",{
-    hour:"2-digit",
-    minute:"2-digit"
-  });
-}
-
-
-function estadoJogo(j){
-
-  if(j.status==="in" ||
-     j.status==="live" ||
-     j.status==="inprogress"){
-    return "live";
-  }
-
-  if(
-    j.homeScore !== null &&
-    j.awayScore !== null
-  ){
-    return "finished";
-  }
-
-  return "upcoming";
-}
+];
 
 
 /* =========================================================
-   CARD DE JOGO
+   ESTADO DA APP
    ========================================================= */
 
-function renderGameCard(j){
+let ligaAtual = "por.1";
 
-  const fav = favoritosJogos.has(String(j.id));
-  const estado = estadoJogo(j);
+let filtroAtual = "todos";
 
-  let estadoTexto = "PRÓXIMO";
+let jogosFutebol = [];
 
-  if(estado==="live") estadoTexto = "AO VIVO";
-  if(estado==="finished") estadoTexto = "FINAL";
+let desportoAtual = "futebol";
 
-  let resultado = "";
+let paginaAtual = "jogos";
 
-  if(
-    j.homeScore !== null &&
-    j.awayScore !== null
-  ){
-    resultado = `
-      <div class="score">
-        <strong>${j.homeScore}</strong>
-        <span>-</span>
-        <strong>${j.awayScore}</strong>
-      </div>
-    `;
-  }else{
-    resultado = `
-      <div class="score">
-        <strong>${esc(formatarHoraJogo(j))}</strong>
-      </div>
-    `;
-  }
-
-  const logoCasa = j.home?.logo
-    ? `<img src="${esc(j.home.logo)}" alt="">`
-    : `<span class="teamLogo">⚽</span>`;
-
-  const logoFora = j.away?.logo
-    ? `<img src="${esc(j.away.logo)}" alt="">`
-    : `<span class="teamLogo">⚽</span>`;
-
-  return `
-    <article class="gameCard ${estado}"
-      data-game-id="${esc(j.id)}"
-      onclick="abrirJogo('${esc(j.id)}')">
-
-      <div class="gameTop">
-        <span>${esc(formatarDataJogo(j))}</span>
-
-        <span class="${estado==="live" ? "liveBadge" : "statusBadge"}">
-          ${estadoTexto}
-        </span>
-
-        <button
-          class="starBtn ${fav ? "active" : ""}"
-          onclick="event.stopPropagation();toggleFavoritoJogo('${esc(j.id)}')">
-          ${fav ? "★" : "☆"}
-        </button>
-      </div>
-
-      <div class="teams">
-
-        <div class="team">
-          ${logoCasa}
-          <span>${esc(j.home?.name || "Casa")}</span>
-        </div>
-
-        ${resultado}
-
-        <div class="team">
-          ${logoFora}
-          <span>${esc(j.away?.name || "Fora")}</span>
-        </div>
-
-      </div>
-
-      ${
-        j.venue
-        ? `<div class="venue">📍 ${esc(j.venue)}</div>`
-        : ""
-      }
-
-    </article>
-  `;
-}
+let carregando = false;
 
 
 /* =========================================================
    FAVORITOS
    ========================================================= */
 
-function toggleFavoritoJogo(id){
-
-  id = String(id);
-
-  if(favoritosJogos.has(id)){
-    favoritosJogos.delete(id);
-  }else{
-    favoritosJogos.add(id);
-  }
-
-  localStorage.setItem(
-    "futzone_jogos_favoritos",
-    JSON.stringify([...favoritosJogos])
+let favoritosJogos =
+  JSON.parse(
+    localStorage.getItem("futzone_jogos_favoritos") || "[]"
   );
 
-  mostrarJogos();
+let favoritosEquipas =
+  JSON.parse(
+    localStorage.getItem("futzone_equipas_favoritas") || "[]"
+  );
+
+
+/* =========================================================
+   EQUIPAS FUTSAL
+   ========================================================= */
+
+const FUTSAL_TEAMS = [
+
+  "AD Fundão",
+  "Benfica",
+  "Eléctrico",
+  "FC Famalicão",
+  "Ferreira do Zêzere",
+  "Leões Porto Salvo",
+  "Portimonense",
+  "Rio Ave",
+  "SC Braga",
+  "Sporting",
+  "Torreense",
+  "UPVN"
+
+];
+
+
+/* =========================================================
+   JOGOS FUTSAL
+   [data, casa, fora, resultadoCasa, resultadoFora]
+   ========================================================= */
+
+const FUTSAL_GAMES = [
+
+  [
+    "2026-09-11T19:30:00+01:00",
+    "AD Fundão",
+    "SC Braga",
+    3,
+    2
+  ],
+
+  [
+    "2026-09-11T20:30:00+01:00",
+    "Torreense",
+    "Eléctrico",
+    null,
+    null
+  ],
+
+  [
+    "2026-09-11T21:15:00+01:00",
+    "Sporting",
+    "Portimonense",
+    1,
+    0
+  ],
+
+  [
+    "2026-09-12T17:00:00+01:00",
+    "Leões Porto Salvo",
+    "Ferreira do Zêzere",
+    null,
+    null
+  ],
+
+  [
+    "2026-09-12T19:00:00+01:00",
+    "Benfica",
+    "UPVN",
+    null,
+    null
+  ],
+
+  [
+    "2026-09-13T15:00:00+01:00",
+    "Rio Ave",
+    "FC Famalicão",
+    null,
+    null
+  ],
+
+  [
+    "2026-09-16T20:30:00+01:00",
+    "Sporting",
+    "AD Fundão",
+    null,
+    null
+  ],
+
+  [
+    "2026-09-19T15:00:00+01:00",
+    "Portimonense",
+    "Benfica",
+    null,
+    null
+  ],
+
+  [
+    "2026-09-19T17:00:00+01:00",
+    "Eléctrico",
+    "Rio Ave",
+    null,
+    null
+  ],
+
+  [
+    "2026-09-19T17:00:00+01:00",
+    "SC Braga",
+    "Torreense",
+    null,
+    null
+  ],
+
+  [
+    "2026-09-20T17:00:00+01:00",
+    "FC Famalicão",
+    "Sporting",
+    null,
+    null
+  ],
+
+  [
+    "2026-09-20T18:00:00+01:00",
+    "UPVN",
+    "Leões Porto Salvo",
+    null,
+    null
+  ],
+
+  [
+    "2026-09-21T19:00:00+01:00",
+    "Ferreira do Zêzere",
+    "AD Fundão",
+    null,
+    null
+  ]
+
+];
+
+
+/* =========================================================
+   FALLBACK
+   ========================================================= */
+
+const FALLBACK = {};
+
+
+/* =========================================================
+   FUNÇÕES BÁSICAS
+   ========================================================= */
+
+function esc(v){
+
+  return String(v ?? "")
+    .replace(/[&<>"']/g, function(m){
+
+      return {
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        '"':"&quot;",
+        "'":"&#039;"
+
+      }[m];
+
+    });
+
 }
 
 
-function toggleFavoritoEquipa(nome){
+function getLiga(id){
 
-  if(favoritosEquipas.has(nome)){
-    favoritosEquipas.delete(nome);
-  }else{
-    favoritosEquipas.add(nome);
-  }
-
-  localStorage.setItem(
-    "futzone_equipas_favoritas",
-    JSON.stringify([...favoritosEquipas])
+  return (
+    LIGAS.find(function(liga){
+      return liga.id === id;
+    })
+    ||
+    {
+      id:id,
+      nome:id,
+      curta:id
+    }
   );
 
-  mostrarEquipas();
+}
+
+
+function normalizarNome(nome){
+
+  return String(nome || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-z0-9]/g,"");
+
+}
+
+
+function dataTexto(valor){
+
+  const d = new Date(valor);
+
+  if(isNaN(d.getTime())){
+    return "";
+  }
+
+  return (
+    d.toLocaleDateString(
+      "pt-PT",
+      {
+        day:"2-digit",
+        month:"2-digit"
+      }
+    )
+    +
+    " · "
+    +
+    d.toLocaleTimeString(
+      "pt-PT",
+      {
+        hour:"2-digit",
+        minute:"2-digit"
+      }
+    )
+  );
+
+}
+
+
+function hojeISO(){
+
+  const d = new Date();
+
+  const y = d.getFullYear();
+
+  const m = String(d.getMonth()+1).padStart(2,"0");
+
+  const day = String(d.getDate()).padStart(2,"0");
+
+  return y + m + day;
+
+}
+
+
+function addDias(data, quantidade){
+
+  const d = new Date(data);
+
+  d.setDate(d.getDate() + quantidade);
+
+  return d;
+
+}
+
+
+function dataISO(d){
+
+  const y = d.getFullYear();
+
+  const m = String(d.getMonth()+1).padStart(2,"0");
+
+  const day = String(d.getDate()).padStart(2,"0");
+
+  return y + "-" + m + "-" + day;
+
+}
+
+
+function dataQuery(d){
+
+  return (
+    d.getFullYear() +
+    String(d.getMonth()+1).padStart(2,"0") +
+    String(d.getDate()).padStart(2,"0")
+  );
+
 }
 
 
 /* =========================================================
-   FILTROS
+   NAVEGAÇÃO VISUAL
+   ========================================================= */
+
+function nav(id){
+
+  [
+    "navJogos",
+    "navTabelas",
+    "navFav",
+    "navEquipas"
+  ].forEach(function(x){
+
+    const e = document.getElementById(x);
+
+    if(e){
+      e.classList.toggle(
+        "active",
+        x === id
+      );
+    }
+
+  });
+
+}
+
+
+/* =========================================================
+   MUDAR FUTEBOL / FUTSAL
+   ========================================================= */
+
+function mudarDesporto(d){
+
+  desportoAtual = d;
+
+  document
+    .getElementById("btnFutebol")
+    .classList.toggle(
+      "active",
+      d === "futebol"
+    );
+
+  document
+    .getElementById("btnFutsal")
+    .classList.toggle(
+      "active",
+      d === "futsal"
+    );
+
+  paginaAtual = "jogos";
+
+  nav("navJogos");
+
+  mostrarJogos();
+
+}
+
+
+/* =========================================================
+   FIM DA PARTE 1
+ ========================================================= */
+ /* =========================================================
+   FUTZONE — PARTE 2/3
+   DADOS FALLBACK + ESPN + CONVERSÃO DOS JOGOS
+   ========================================================= */
+
+
+/* =========================================================
+   FALLBACK — LIGA PORTUGAL 2
+   ========================================================= */
+
+FALLBACK["por.2"] = {
+
+  games:[
+    ["2026-09-13T15:00:00+01:00","AVS","Farense",null,null],
+    ["2026-09-13T15:00:00+01:00","Chaves","Feirense",null,null],
+    ["2026-09-13T15:00:00+01:00","Amarante","União de Leiria",null,null],
+    ["2026-09-14T18:00:00+01:00","Sporting CP B","Lusitânia Lourosa",null,null],
+    ["2026-09-14T20:15:00+01:00","FC Porto B","Vizela",null,null],
+
+    ["2026-09-12T15:00:00+01:00","Portimonense","Tondela",0,2],
+    ["2026-09-12T15:00:00+01:00","Felgueiras","Penafiel",1,2],
+    ["2026-09-11T20:15:00+01:00","Torreense","Leixões",0,0],
+    ["2026-09-11T18:00:00+01:00","Académica","Benfica B",0,3],
+    ["2026-09-07T20:15:00+01:00","Lusitânia Lourosa","AVS",2,1],
+    ["2026-09-06T15:00:00+01:00","União de Leiria","Portimonense",1,0],
+    ["2026-09-06T15:00:00+01:00","Leixões","Amarante",3,1],
+    ["2026-09-06T15:00:00+01:00","Vizela","Felgueiras",1,0],
+    ["2026-09-05T15:00:00+01:00","Benfica B","Torreense",0,2],
+    ["2026-09-05T15:00:00+01:00","Feirense","Sporting CP B",1,3],
+    ["2026-09-05T15:00:00+01:00","Penafiel","Académica",4,1],
+    ["2026-09-05T15:00:00+01:00","Tondela","FC Porto B",3,0]
+  ],
+
+  table:[
+    ["Lusitânia Lourosa",5,4,1,0,9,3,13],
+    ["Sporting CP B",5,4,0,1,7,4,12],
+    ["Penafiel",5,3,1,1,11,4,10],
+    ["Vizela",5,3,1,1,5,2,10],
+    ["Leixões",6,3,1,2,8,6,10],
+    ["Benfica B",6,3,1,2,7,5,10],
+    ["União de Leiria",5,3,0,2,8,5,9],
+    ["Académica",6,3,0,3,8,10,9],
+    ["Farense",4,2,1,1,7,5,7],
+    ["Portimonense",5,2,1,2,4,4,7],
+    ["Felgueiras",5,1,3,1,4,4,6],
+    ["Tondela",5,2,0,3,5,6,6],
+    ["Torreense",6,1,3,2,7,9,6],
+    ["AVS",5,1,2,2,6,6,5],
+    ["Amarante",5,1,1,3,3,6,4],
+    ["FC Porto B",5,1,0,4,2,11,3],
+    ["Chaves",4,0,1,3,4,9,1],
+    ["Feirense",5,0,1,4,1,7,1]
+  ]
+
+};
+
+
+/* =========================================================
+   FALLBACK — LIGA 3
+   ========================================================= */
+
+FALLBACK["por.3"] = {
+
+  games:[
+    ["2026-09-13T10:00:00+01:00","Belenenses","Atlético CP",null,null],
+    ["2026-09-13T16:00:00+01:00","Caldas","Vitória de Sernache",null,null],
+    ["2026-09-13T16:00:00+01:00","Paços de Ferreira","São João de Ver",null,null],
+    ["2026-09-13T19:30:00+01:00","Paredes","AD Fafe",null,null],
+
+    ["2026-09-12T15:00:00+01:00","Varzim","SC Vianense",1,2],
+    ["2026-09-12T15:00:00+01:00","Oliveirense","Mafra",2,0],
+    ["2026-09-06T15:00:00+01:00","São João de Ver","Marco 09",0,0],
+    ["2026-09-06T15:00:00+01:00","Louletano","Lusitano Évora",1,0],
+    ["2026-09-06T15:00:00+01:00","Atlético CP","Oliveirense",3,1],
+    ["2026-09-06T15:00:00+01:00","Vitória de Sernache","Belenenses",1,3],
+    ["2026-09-06T15:00:00+01:00","Leça","AD Fafe",0,3],
+    ["2026-09-05T15:00:00+01:00","Varzim","Paredes",0,1],
+    ["2026-09-05T15:00:00+01:00","Vitória SC B","Trofense",0,0],
+    ["2026-09-05T15:00:00+01:00","Mafra","Covilhã",1,0],
+    ["2026-09-05T15:00:00+01:00","SC Vianense","Paços de Ferreira",2,2],
+    ["2026-09-04T20:00:00+01:00","União Santarém","Caldas",0,1]
+  ],
+
+  groupA:[
+    ["Paredes",4,3,0,1,6,3,9],
+    ["Varzim",5,3,0,2,8,5,9],
+    ["AD Fafe",4,2,2,0,7,2,8],
+    ["AD Marco 09",4,2,1,1,5,3,7],
+    ["SC Vianense",5,2,2,1,6,5,8],
+    ["Vitória SC B",4,1,2,1,4,4,5],
+    ["Trofense",4,1,1,2,1,3,4],
+    ["Leça",4,1,1,2,3,7,4],
+    ["São João de Ver",4,0,2,2,2,5,2],
+    ["Paços de Ferreira",4,0,1,3,4,9,1]
+  ],
+
+  groupB:[
+    ["Belenenses",4,4,0,0,10,2,12],
+    ["Atlético CP",4,3,1,0,9,4,10],
+    ["Oliveirense",5,2,2,1,7,4,8],
+    ["Mafra",5,2,1,2,4,4,7],
+    ["Louletano",4,2,1,1,4,3,7],
+    ["Lusitano Évora",4,1,1,2,3,4,4],
+    ["Caldas",4,1,1,2,3,5,4],
+    ["Covilhã",4,1,1,2,2,3,4],
+    ["Vitória de Sernache",4,0,1,3,3,7,1],
+    ["União Santarém",4,0,1,3,1,6,1]
+  ]
+
+};
+
+
+/* =========================================================
+   FALLBACK — LIGA BPI FEMININA
+   ========================================================= */
+
+FALLBACK["por.w.1"] = {
+
+  games:[
+    ["2026-09-13T19:00:00+01:00","Torreense","Rio Ave",null,null],
+    ["2026-09-12T16:00:00+01:00","SC Braga","Marítimo",5,0],
+    ["2026-09-12T17:00:00+01:00","Sporting CP","Vitória SC",2,0],
+    ["2026-09-12T19:30:00+01:00","Benfica","Racing Power",null,null],
+    ["2026-09-06T15:00:00+01:00","Valadares Gaia","FC Porto",1,3],
+
+    ["2026-09-18T17:30:00+01:00","Rio Ave","Benfica",null,null],
+    ["2026-09-20T14:00:00+01:00","Marítimo","Sporting CP",null,null],
+    ["2026-09-26T10:00:00+01:00","Valadares Gaia","Rio Ave",null,null],
+    ["2026-09-27T13:45:00+01:00","SC Braga","Sporting CP",null,null],
+    ["2026-09-27T14:00:00+01:00","Benfica","Vitória SC",null,null],
+    ["2026-10-18T13:00:00+01:00","Marítimo","Benfica",null,null],
+    ["2026-10-18T13:00:00+01:00","Vitória SC","Valadares Gaia",null,null]
+  ],
+
+  table:[
+    ["Sporting CP",1,1,0,0,2,0,3],
+    ["SC Braga",1,1,0,0,5,0,3],
+    ["FC Porto",1,1,0,0,3,1,3],
+    ["Benfica",0,0,0,0,0,0,0],
+    ["Racing Power",0,0,0,0,0,0,0],
+    ["Torreense",0,0,0,0,0,0,0],
+    ["Rio Ave",0,0,0,0,0,0,0],
+    ["Valadares Gaia",1,0,0,1,1,3,0],
+    ["Marítimo",1,0,0,1,0,5,0],
+    ["Vitória SC",1,0,0,1,0,2,0]
+  ]
+
+};
+
+
+/* =========================================================
+   CONVERTER FALLBACK PARA O FORMATO DA APP
+   ========================================================= */
+
+function makeFallbackGame(liga,row,index){
+
+  const data = row[0];
+  const casa = row[1];
+  const fora = row[2];
+  const scoreCasa = row[3];
+  const scoreFora = row[4];
+
+  let estado = "upcoming";
+
+  if(
+    scoreCasa !== null &&
+    scoreCasa !== undefined &&
+    scoreFora !== null &&
+    scoreFora !== undefined
+  ){
+    estado = "finished";
+  }
+
+  return {
+
+    id:
+      "fb-" +
+      liga +
+      "-" +
+      index +
+      "-" +
+      normalizarNome(casa) +
+      "-" +
+      normalizarNome(fora),
+
+    league:liga,
+
+    date:data,
+
+    home:{
+      id:null,
+      name:casa,
+      logo:""
+    },
+
+    away:{
+      id:null,
+      name:fora,
+      logo:""
+    },
+
+    homeScore:scoreCasa,
+    awayScore:scoreFora,
+
+    state:estado,
+
+    statusText:
+      estado === "finished"
+        ? "FINAL"
+        : "Por começar"
+
+  };
+
+}
+
+
+/* =========================================================
+   NORMALIZAR EVENTO ESPN
+   ========================================================= */
+
+function normalizarESPN(ev,liga){
+
+  const competition =
+    ev?.competitions?.[0] || {};
+
+  const competitors =
+    competition.competitors || [];
+
+  const home =
+    competitors.find(
+      x => x.homeAway === "home"
+    )
+    ||
+    competitors[0]
+    ||
+    {};
+
+  const away =
+    competitors.find(
+      x => x.homeAway === "away"
+    )
+    ||
+    competitors[1]
+    ||
+    {};
+
+  const status =
+    competition.status ||
+    ev.status ||
+    {};
+
+  const type =
+    status.type ||
+    {};
+
+  let state = "upcoming";
+
+  if(type.state === "in"){
+    state = "live";
+  }
+  else if(type.state === "post"){
+    state = "finished";
+  }
+
+  let statusText =
+    type.shortDetail ||
+    type.detail ||
+    type.description ||
+    "";
+
+  if(state === "live"){
+    statusText = "DIRETO";
+  }
+
+  if(state === "finished"){
+    statusText = "FINAL";
+  }
+
+  const homeScore =
+    home.score !== undefined &&
+    home.score !== null &&
+    home.score !== ""
+      ? Number(home.score)
+      : null;
+
+  const awayScore =
+    away.score !== undefined &&
+    away.score !== null &&
+    away.score !== ""
+      ? Number(away.score)
+      : null;
+
+  return {
+
+    id:String(ev.id),
+
+    league:liga,
+
+    date:
+      ev.date ||
+      competition.date ||
+      "",
+
+    home:{
+      id:
+        home?.team?.id ||
+        home?.id ||
+        null,
+
+      name:
+        home?.team?.displayName ||
+        home?.team?.shortDisplayName ||
+        home?.team?.name ||
+        "Casa",
+
+      logo:
+        home?.team?.logo ||
+        ""
+    },
+
+    away:{
+      id:
+        away?.team?.id ||
+        away?.id ||
+        null,
+
+      name:
+        away?.team?.displayName ||
+        away?.team?.shortDisplayName ||
+        away?.team?.name ||
+        "Fora",
+
+      logo:
+        away?.team?.logo ||
+        ""
+    },
+
+    homeScore:
+      Number.isNaN(homeScore)
+        ? null
+        : homeScore,
+
+    awayScore:
+      Number.isNaN(awayScore)
+        ? null
+        : awayScore,
+
+    state:state,
+
+    statusText:statusText
+
+  };
+
+}
+
+
+/* =========================================================
+   BUSCAR UM DIA NA ESPN
+   ========================================================= */
+
+async function buscarESPNDia(liga,data){
+
+  try{
+
+    const url =
+      API +
+      encodeURIComponent(liga) +
+      "/scoreboard?dates=" +
+      dataQuery(data) +
+      "&limit=100";
+
+    const resposta =
+      await fetch(url,{
+        cache:"no-store"
+      });
+
+    if(!resposta.ok){
+      return [];
+    }
+
+    const json =
+      await resposta.json();
+
+    return (json.events || [])
+      .map(
+        evento =>
+          normalizarESPN(
+            evento,
+            liga
+          )
+      );
+
+  }
+  catch(erro){
+
+    console.warn(
+      "ESPN erro:",
+      liga,
+      erro
+    );
+
+    return [];
+
+  }
+
+}
+
+
+/* =========================================================
+   CHAVE PARA EVITAR DUPLICADOS
+   ========================================================= */
+
+function chaveJogo(jogo){
+
+  return [
+    jogo.league,
+    String(jogo.date).slice(0,10),
+    normalizarNome(jogo.home.name),
+    normalizarNome(jogo.away.name)
+  ].join("|");
+
+}
+
+
+/* =========================================================
+   REMOVER DUPLICADOS
+   ========================================================= */
+
+function deduplicarJogos(lista){
+
+  const mapa = new Map();
+
+  lista.forEach(function(jogo){
+
+    const chave =
+      chaveJogo(jogo);
+
+    if(!mapa.has(chave)){
+      mapa.set(chave,jogo);
+      return;
+    }
+
+    const antigo =
+      mapa.get(chave);
+
+    /*
+      Se a ESPN tiver informação mais completa,
+      damos prioridade ao jogo ESPN.
+    */
+
+    if(
+      jogo.id &&
+      !String(jogo.id).startsWith("fb-")
+    ){
+      mapa.set(chave,jogo);
+    }
+    else if(
+      antigo.state === "upcoming" &&
+      jogo.state === "finished"
+    ){
+      mapa.set(chave,jogo);
+    }
+
+  });
+
+  return Array.from(mapa.values());
+
+}
+
+
+/* =========================================================
+   ORDENAR JOGOS
+   ========================================================= */
+
+function ordenarJogos(lista){
+
+  return lista.sort(function(a,b){
+
+    return (
+      new Date(a.date).getTime() -
+      new Date(b.date).getTime()
+    );
+
+  });
+
+}
+
+
+/* =========================================================
+   CARREGAR JOGOS DA COMPETIÇÃO
+   ========================================================= */
+
+async function carregarJogosLiga(liga){
+
+  const fallback =
+    FALLBACK[liga]?.games || [];
+
+  const fallbackJogos =
+    fallback.map(function(row,index){
+
+      return makeFallbackGame(
+        liga,
+        row,
+        index
+      );
+
+    });
+
+  /*
+    Procuramos alguns dias para trás
+    e alguns dias para a frente.
+  */
+
+  const hoje = new Date();
+
+  const pedidos = [];
+
+  for(
+    let i = -7;
+    i <= 14;
+    i++
+  ){
+
+    pedidos.push(
+      buscarESPNDia(
+        liga,
+        addDias(hoje,i)
+      )
+    );
+
+  }
+
+  let resultados = [];
+
+  try{
+
+    const respostas =
+      await Promise.all(pedidos);
+
+    respostas.forEach(function(lista){
+
+      resultados =
+        resultados.concat(lista);
+
+    });
+
+  }
+  catch(erro){
+
+    console.warn(
+      "Falha ao carregar ESPN:",
+      erro
+    );
+
+  }
+
+  let jogos =
+    deduplicarJogos(
+      resultados.concat(fallbackJogos)
+    );
+
+  /*
+    Se não houver ESPN nem fallback,
+    devolvemos lista vazia.
+  */
+
+  ordenarJogos(jogos);
+
+  return jogos;
+
+}
+
+
+/* =========================================================
+   CONVERTER FUTSAL
+   ========================================================= */
+
+function getFutsalGames(){
+
+  return FUTSAL_GAMES.map(
+    function(row,index){
+
+      return {
+
+        id:
+          "futsal-" +
+          index +
+          "-" +
+          normalizarNome(row[1]) +
+          "-" +
+          normalizarNome(row[2]),
+
+        league:"futsal",
+
+        date:row[0],
+
+        home:{
+          id:null,
+          name:row[1],
+          logo:""
+        },
+
+        away:{
+          id:null,
+          name:row[2],
+          logo:""
+        },
+
+        homeScore:row[3],
+        awayScore:row[4],
+
+        state:
+          row[3] !== null &&
+          row[4] !== null
+            ? "finished"
+            : "upcoming",
+
+        statusText:
+          row[3] !== null &&
+          row[4] !== null
+            ? "FINAL"
+            : "Por confirmar"
+
+      };
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   FAVORITOS — JOGOS
+   ========================================================= */
+
+function isFavoritoJogo(id){
+
+  return favoritosJogos
+    .map(String)
+    .includes(String(id));
+
+}
+
+
+function guardarFavoritosJogos(){
+
+  localStorage.setItem(
+    "futzone_jogos_favoritos",
+    JSON.stringify(favoritosJogos)
+  );
+
+}
+
+
+function toggleFavoritoJogo(id){
+
+  id = String(id);
+
+  const pos =
+    favoritosJogos
+      .map(String)
+      .indexOf(id);
+
+  if(pos >= 0){
+
+    favoritosJogos.splice(
+      pos,
+      1
+    );
+
+  }
+  else{
+
+    favoritosJogos.push(id);
+
+  }
+
+  guardarFavoritosJogos();
+
+  renderPaginaAtual();
+
+}
+
+
+/* =========================================================
+   FAVORITOS — EQUIPAS
+   ========================================================= */
+
+function isFavoritaEquipa(nome){
+
+  return favoritosEquipas
+    .map(normalizarNome)
+    .includes(
+      normalizarNome(nome)
+    );
+
+}
+
+
+function guardarFavoritosEquipas(){
+
+  localStorage.setItem(
+    "futzone_equipas_favoritas",
+    JSON.stringify(favoritosEquipas)
+  );
+
+}
+
+
+function toggleFavoritaEquipa(nome){
+
+  const chave =
+    normalizarNome(nome);
+
+  const pos =
+    favoritosEquipas
+      .map(normalizarNome)
+      .indexOf(chave);
+
+  if(pos >= 0){
+
+    favoritosEquipas.splice(
+      pos,
+      1
+    );
+
+  }
+  else{
+
+    favoritosEquipas.push(nome);
+
+  }
+
+  guardarFavoritosEquipas();
+
+  renderPaginaAtual();
+
+}
+
+
+/* =========================================================
+   TEXTO DO ESTADO DO JOGO
+   ========================================================= */
+
+function textoEstado(jogo){
+
+  if(jogo.state === "live"){
+    return "DIRETO";
+  }
+
+  if(jogo.state === "finished"){
+
+    if(
+      jogo.homeScore !== null &&
+      jogo.awayScore !== null
+    ){
+      return "FINAL";
+    }
+
+    return "FINAL";
+  }
+
+  const d =
+    new Date(jogo.date);
+
+  if(!isNaN(d.getTime())){
+
+    return d.toLocaleTimeString(
+      "pt-PT",
+      {
+        hour:"2-digit",
+        minute:"2-digit"
+      }
+    );
+
+  }
+
+  return "Por começar";
+
+}
+
+
+/* =========================================================
+   FILTRAR JOGOS
    ========================================================= */
 
 function filtrarJogos(lista){
 
+  let resultado =
+    Array.from(lista);
+
+  if(filtroAtual === "hoje"){
+
+    const agora = new Date();
+
+    const ano =
+      agora.getFullYear();
+
+    const mes =
+      agora.getMonth();
+
+    const dia =
+      agora.getDate();
+
+    resultado =
+      resultado.filter(
+        function(jogo){
+
+          const d =
+            new Date(jogo.date);
+
+          return (
+            d.getFullYear() === ano &&
+            d.getMonth() === mes &&
+            d.getDate() === dia
+          );
+
+        }
+      );
+
+  }
+
+  else if(filtroAtual === "live"){
+
+    resultado =
+      resultado.filter(
+        jogo =>
+          jogo.state === "live"
+      );
+
+  }
+
+  else if(filtroAtual === "proximos"){
+
+    resultado =
+      resultado.filter(
+        jogo =>
+          jogo.state === "upcoming"
+      );
+
+  }
+
+  else if(filtroAtual === "resultados"){
+
+    resultado =
+      resultado.filter(
+        jogo =>
+          jogo.state === "finished"
+      );
+
+  }
+
+  const input =
+    document.getElementById(
+      "searchInput"
+    );
+
   const pesquisa =
-    document.getElementById("searchInput")?.value
-      ?.trim()
-      .toLowerCase() || "";
+    input
+      ? input.value.trim().toLowerCase()
+      : "";
 
-  return lista.filter(j=>{
+  if(pesquisa){
 
-    const texto =
-      `${j.home?.name || ""} ${j.away?.name || ""}`
-      .toLowerCase();
+    resultado =
+      resultado.filter(
+        function(jogo){
 
-    if(pesquisa && !texto.includes(pesquisa)){
-      return false;
-    }
+          return (
+            jogo.home.name
+              .toLowerCase()
+              .includes(pesquisa)
+            ||
+            jogo.away.name
+              .toLowerCase()
+              .includes(pesquisa)
+          );
 
-    const estado = estadoJogo(j);
+        }
+      );
 
-    if(filtroAtual==="live" && estado!=="live"){
-      return false;
-    }
+  }
 
-    if(filtroAtual==="upcoming" && estado!=="upcoming"){
-      return false;
-    }
+  return resultado;
 
-    if(filtroAtual==="results" && estado!=="finished"){
-      return false;
-    }
-
-    return true;
-  });
 }
 
 
-function setFiltro(filtro){
+/* =========================================================
+   FIM DA PARTE 2
+   ========================================================= */
+ /* =========================================================
+   FUTZONE — PARTE 2/3
+   DADOS FALLBACK + ESPN + CONVERSÃO DOS JOGOS
+   ========================================================= */
 
-  filtroAtual = filtro;
 
-  document
-    .querySelectorAll(".filterBtn")
-    .forEach(btn=>{
-      btn.classList.toggle(
-        "active",
-        btn.dataset.filter===filtro
+/* =========================================================
+   FALLBACK — LIGA PORTUGAL 2
+   ========================================================= */
+
+FALLBACK["por.2"] = {
+
+  games:[
+    ["2026-09-13T15:00:00+01:00","AVS","Farense",null,null],
+    ["2026-09-13T15:00:00+01:00","Chaves","Feirense",null,null],
+    ["2026-09-13T15:00:00+01:00","Amarante","União de Leiria",null,null],
+    ["2026-09-14T18:00:00+01:00","Sporting CP B","Lusitânia Lourosa",null,null],
+    ["2026-09-14T20:15:00+01:00","FC Porto B","Vizela",null,null],
+
+    ["2026-09-12T15:00:00+01:00","Portimonense","Tondela",0,2],
+    ["2026-09-12T15:00:00+01:00","Felgueiras","Penafiel",1,2],
+    ["2026-09-11T20:15:00+01:00","Torreense","Leixões",0,0],
+    ["2026-09-11T18:00:00+01:00","Académica","Benfica B",0,3],
+    ["2026-09-07T20:15:00+01:00","Lusitânia Lourosa","AVS",2,1],
+    ["2026-09-06T15:00:00+01:00","União de Leiria","Portimonense",1,0],
+    ["2026-09-06T15:00:00+01:00","Leixões","Amarante",3,1],
+    ["2026-09-06T15:00:00+01:00","Vizela","Felgueiras",1,0],
+    ["2026-09-05T15:00:00+01:00","Benfica B","Torreense",0,2],
+    ["2026-09-05T15:00:00+01:00","Feirense","Sporting CP B",1,3],
+    ["2026-09-05T15:00:00+01:00","Penafiel","Académica",4,1],
+    ["2026-09-05T15:00:00+01:00","Tondela","FC Porto B",3,0]
+  ],
+
+  table:[
+    ["Lusitânia Lourosa",5,4,1,0,9,3,13],
+    ["Sporting CP B",5,4,0,1,7,4,12],
+    ["Penafiel",5,3,1,1,11,4,10],
+    ["Vizela",5,3,1,1,5,2,10],
+    ["Leixões",6,3,1,2,8,6,10],
+    ["Benfica B",6,3,1,2,7,5,10],
+    ["União de Leiria",5,3,0,2,8,5,9],
+    ["Académica",6,3,0,3,8,10,9],
+    ["Farense",4,2,1,1,7,5,7],
+    ["Portimonense",5,2,1,2,4,4,7],
+    ["Felgueiras",5,1,3,1,4,4,6],
+    ["Tondela",5,2,0,3,5,6,6],
+    ["Torreense",6,1,3,2,7,9,6],
+    ["AVS",5,1,2,2,6,6,5],
+    ["Amarante",5,1,1,3,3,6,4],
+    ["FC Porto B",5,1,0,4,2,11,3],
+    ["Chaves",4,0,1,3,4,9,1],
+    ["Feirense",5,0,1,4,1,7,1]
+  ]
+
+};
+
+
+/* =========================================================
+   FALLBACK — LIGA 3
+   ========================================================= */
+
+FALLBACK["por.3"] = {
+
+  games:[
+    ["2026-09-13T10:00:00+01:00","Belenenses","Atlético CP",null,null],
+    ["2026-09-13T16:00:00+01:00","Caldas","Vitória de Sernache",null,null],
+    ["2026-09-13T16:00:00+01:00","Paços de Ferreira","São João de Ver",null,null],
+    ["2026-09-13T19:30:00+01:00","Paredes","AD Fafe",null,null],
+
+    ["2026-09-12T15:00:00+01:00","Varzim","SC Vianense",1,2],
+    ["2026-09-12T15:00:00+01:00","Oliveirense","Mafra",2,0],
+    ["2026-09-06T15:00:00+01:00","São João de Ver","Marco 09",0,0],
+    ["2026-09-06T15:00:00+01:00","Louletano","Lusitano Évora",1,0],
+    ["2026-09-06T15:00:00+01:00","Atlético CP","Oliveirense",3,1],
+    ["2026-09-06T15:00:00+01:00","Vitória de Sernache","Belenenses",1,3],
+    ["2026-09-06T15:00:00+01:00","Leça","AD Fafe",0,3],
+    ["2026-09-05T15:00:00+01:00","Varzim","Paredes",0,1],
+    ["2026-09-05T15:00:00+01:00","Vitória SC B","Trofense",0,0],
+    ["2026-09-05T15:00:00+01:00","Mafra","Covilhã",1,0],
+    ["2026-09-05T15:00:00+01:00","SC Vianense","Paços de Ferreira",2,2],
+    ["2026-09-04T20:00:00+01:00","União Santarém","Caldas",0,1]
+  ],
+
+  groupA:[
+    ["Paredes",4,3,0,1,6,3,9],
+    ["Varzim",5,3,0,2,8,5,9],
+    ["AD Fafe",4,2,2,0,7,2,8],
+    ["AD Marco 09",4,2,1,1,5,3,7],
+    ["SC Vianense",5,2,2,1,6,5,8],
+    ["Vitória SC B",4,1,2,1,4,4,5],
+    ["Trofense",4,1,1,2,1,3,4],
+    ["Leça",4,1,1,2,3,7,4],
+    ["São João de Ver",4,0,2,2,2,5,2],
+    ["Paços de Ferreira",4,0,1,3,4,9,1]
+  ],
+
+  groupB:[
+    ["Belenenses",4,4,0,0,10,2,12],
+    ["Atlético CP",4,3,1,0,9,4,10],
+    ["Oliveirense",5,2,2,1,7,4,8],
+    ["Mafra",5,2,1,2,4,4,7],
+    ["Louletano",4,2,1,1,4,3,7],
+    ["Lusitano Évora",4,1,1,2,3,4,4],
+    ["Caldas",4,1,1,2,3,5,4],
+    ["Covilhã",4,1,1,2,2,3,4],
+    ["Vitória de Sernache",4,0,1,3,3,7,1],
+    ["União Santarém",4,0,1,3,1,6,1]
+  ]
+
+};
+
+
+/* =========================================================
+   FALLBACK — LIGA BPI FEMININA
+   ========================================================= */
+
+FALLBACK["por.w.1"] = {
+
+  games:[
+    ["2026-09-13T19:00:00+01:00","Torreense","Rio Ave",null,null],
+    ["2026-09-12T16:00:00+01:00","SC Braga","Marítimo",5,0],
+    ["2026-09-12T17:00:00+01:00","Sporting CP","Vitória SC",2,0],
+    ["2026-09-12T19:30:00+01:00","Benfica","Racing Power",null,null],
+    ["2026-09-06T15:00:00+01:00","Valadares Gaia","FC Porto",1,3],
+
+    ["2026-09-18T17:30:00+01:00","Rio Ave","Benfica",null,null],
+    ["2026-09-20T14:00:00+01:00","Marítimo","Sporting CP",null,null],
+    ["2026-09-26T10:00:00+01:00","Valadares Gaia","Rio Ave",null,null],
+    ["2026-09-27T13:45:00+01:00","SC Braga","Sporting CP",null,null],
+    ["2026-09-27T14:00:00+01:00","Benfica","Vitória SC",null,null],
+    ["2026-10-18T13:00:00+01:00","Marítimo","Benfica",null,null],
+    ["2026-10-18T13:00:00+01:00","Vitória SC","Valadares Gaia",null,null]
+  ],
+
+  table:[
+    ["Sporting CP",1,1,0,0,2,0,3],
+    ["SC Braga",1,1,0,0,5,0,3],
+    ["FC Porto",1,1,0,0,3,1,3],
+    ["Benfica",0,0,0,0,0,0,0],
+    ["Racing Power",0,0,0,0,0,0,0],
+    ["Torreense",0,0,0,0,0,0,0],
+    ["Rio Ave",0,0,0,0,0,0,0],
+    ["Valadares Gaia",1,0,0,1,1,3,0],
+    ["Marítimo",1,0,0,1,0,5,0],
+    ["Vitória SC",1,0,0,1,0,2,0]
+  ]
+
+};
+
+
+/* =========================================================
+   CONVERTER FALLBACK PARA O FORMATO DA APP
+   ========================================================= */
+
+function makeFallbackGame(liga,row,index){
+
+  const data = row[0];
+  const casa = row[1];
+  const fora = row[2];
+  const scoreCasa = row[3];
+  const scoreFora = row[4];
+
+  let estado = "upcoming";
+
+  if(
+    scoreCasa !== null &&
+    scoreCasa !== undefined &&
+    scoreFora !== null &&
+    scoreFora !== undefined
+  ){
+    estado = "finished";
+  }
+
+  return {
+
+    id:
+      "fb-" +
+      liga +
+      "-" +
+      index +
+      "-" +
+      normalizarNome(casa) +
+      "-" +
+      normalizarNome(fora),
+
+    league:liga,
+
+    date:data,
+
+    home:{
+      id:null,
+      name:casa,
+      logo:""
+    },
+
+    away:{
+      id:null,
+      name:fora,
+      logo:""
+    },
+
+    homeScore:scoreCasa,
+    awayScore:scoreFora,
+
+    state:estado,
+
+    statusText:
+      estado === "finished"
+        ? "FINAL"
+        : "Por começar"
+
+  };
+
+}
+
+
+/* =========================================================
+   NORMALIZAR EVENTO ESPN
+   ========================================================= */
+
+function normalizarESPN(ev,liga){
+
+  const competition =
+    ev?.competitions?.[0] || {};
+
+  const competitors =
+    competition.competitors || [];
+
+  const home =
+    competitors.find(
+      x => x.homeAway === "home"
+    )
+    ||
+    competitors[0]
+    ||
+    {};
+
+  const away =
+    competitors.find(
+      x => x.homeAway === "away"
+    )
+    ||
+    competitors[1]
+    ||
+    {};
+
+  const status =
+    competition.status ||
+    ev.status ||
+    {};
+
+  const type =
+    status.type ||
+    {};
+
+  let state = "upcoming";
+
+  if(type.state === "in"){
+    state = "live";
+  }
+  else if(type.state === "post"){
+    state = "finished";
+  }
+
+  let statusText =
+    type.shortDetail ||
+    type.detail ||
+    type.description ||
+    "";
+
+  if(state === "live"){
+    statusText = "DIRETO";
+  }
+
+  if(state === "finished"){
+    statusText = "FINAL";
+  }
+
+  const homeScore =
+    home.score !== undefined &&
+    home.score !== null &&
+    home.score !== ""
+      ? Number(home.score)
+      : null;
+
+  const awayScore =
+    away.score !== undefined &&
+    away.score !== null &&
+    away.score !== ""
+      ? Number(away.score)
+      : null;
+
+  return {
+
+    id:String(ev.id),
+
+    league:liga,
+
+    date:
+      ev.date ||
+      competition.date ||
+      "",
+
+    home:{
+      id:
+        home?.team?.id ||
+        home?.id ||
+        null,
+
+      name:
+        home?.team?.displayName ||
+        home?.team?.shortDisplayName ||
+        home?.team?.name ||
+        "Casa",
+
+      logo:
+        home?.team?.logo ||
+        ""
+    },
+
+    away:{
+      id:
+        away?.team?.id ||
+        away?.id ||
+        null,
+
+      name:
+        away?.team?.displayName ||
+        away?.team?.shortDisplayName ||
+        away?.team?.name ||
+        "Fora",
+
+      logo:
+        away?.team?.logo ||
+        ""
+    },
+
+    homeScore:
+      Number.isNaN(homeScore)
+        ? null
+        : homeScore,
+
+    awayScore:
+      Number.isNaN(awayScore)
+        ? null
+        : awayScore,
+
+    state:state,
+
+    statusText:statusText
+
+  };
+
+}
+
+
+/* =========================================================
+   BUSCAR UM DIA NA ESPN
+   ========================================================= */
+
+async function buscarESPNDia(liga,data){
+
+  try{
+
+    const url =
+      API +
+      encodeURIComponent(liga) +
+      "/scoreboard?dates=" +
+      dataQuery(data) +
+      "&limit=100";
+
+    const resposta =
+      await fetch(url,{
+        cache:"no-store"
+      });
+
+    if(!resposta.ok){
+      return [];
+    }
+
+    const json =
+      await resposta.json();
+
+    return (json.events || [])
+      .map(
+        evento =>
+          normalizarESPN(
+            evento,
+            liga
+          )
       );
+
+  }
+  catch(erro){
+
+    console.warn(
+      "ESPN erro:",
+      liga,
+      erro
+    );
+
+    return [];
+
+  }
+
+}
+
+
+/* =========================================================
+   CHAVE PARA EVITAR DUPLICADOS
+   ========================================================= */
+
+function chaveJogo(jogo){
+
+  return [
+    jogo.league,
+    String(jogo.date).slice(0,10),
+    normalizarNome(jogo.home.name),
+    normalizarNome(jogo.away.name)
+  ].join("|");
+
+}
+
+
+/* =========================================================
+   REMOVER DUPLICADOS
+   ========================================================= */
+
+function deduplicarJogos(lista){
+
+  const mapa = new Map();
+
+  lista.forEach(function(jogo){
+
+    const chave =
+      chaveJogo(jogo);
+
+    if(!mapa.has(chave)){
+      mapa.set(chave,jogo);
+      return;
+    }
+
+    const antigo =
+      mapa.get(chave);
+
+    /*
+      Se a ESPN tiver informação mais completa,
+      damos prioridade ao jogo ESPN.
+    */
+
+    if(
+      jogo.id &&
+      !String(jogo.id).startsWith("fb-")
+    ){
+      mapa.set(chave,jogo);
+    }
+    else if(
+      antigo.state === "upcoming" &&
+      jogo.state === "finished"
+    ){
+      mapa.set(chave,jogo);
+    }
+
+  });
+
+  return Array.from(mapa.values());
+
+}
+
+
+/* =========================================================
+   ORDENAR JOGOS
+   ========================================================= */
+
+function ordenarJogos(lista){
+
+  return lista.sort(function(a,b){
+
+    return (
+      new Date(a.date).getTime() -
+      new Date(b.date).getTime()
+    );
+
+  });
+
+}
+
+
+/* =========================================================
+   CARREGAR JOGOS DA COMPETIÇÃO
+   ========================================================= */
+
+async function carregarJogosLiga(liga){
+
+  const fallback =
+    FALLBACK[liga]?.games || [];
+
+  const fallbackJogos =
+    fallback.map(function(row,index){
+
+      return makeFallbackGame(
+        liga,
+        row,
+        index
+      );
+
     });
 
-  mostrarJogos();
+  /*
+    Procuramos alguns dias para trás
+    e alguns dias para a frente.
+  */
+
+  const hoje = new Date();
+
+  const pedidos = [];
+
+  for(
+    let i = -7;
+    i <= 14;
+    i++
+  ){
+
+    pedidos.push(
+      buscarESPNDia(
+        liga,
+        addDias(hoje,i)
+      )
+    );
+
+  }
+
+  let resultados = [];
+
+  try{
+
+    const respostas =
+      await Promise.all(pedidos);
+
+    respostas.forEach(function(lista){
+
+      resultados =
+        resultados.concat(lista);
+
+    });
+
+  }
+  catch(erro){
+
+    console.warn(
+      "Falha ao carregar ESPN:",
+      erro
+    );
+
+  }
+
+  let jogos =
+    deduplicarJogos(
+      resultados.concat(fallbackJogos)
+    );
+
+  /*
+    Se não houver ESPN nem fallback,
+    devolvemos lista vazia.
+  */
+
+  ordenarJogos(jogos);
+
+  return jogos;
+
+}
+
+
+/* =========================================================
+   CONVERTER FUTSAL
+   ========================================================= */
+
+function getFutsalGames(){
+
+  return FUTSAL_GAMES.map(
+    function(row,index){
+
+      return {
+
+        id:
+          "futsal-" +
+          index +
+          "-" +
+          normalizarNome(row[1]) +
+          "-" +
+          normalizarNome(row[2]),
+
+        league:"futsal",
+
+        date:row[0],
+
+        home:{
+          id:null,
+          name:row[1],
+          logo:""
+        },
+
+        away:{
+          id:null,
+          name:row[2],
+          logo:""
+        },
+
+        homeScore:row[3],
+        awayScore:row[4],
+
+        state:
+          row[3] !== null &&
+          row[4] !== null
+            ? "finished"
+            : "upcoming",
+
+        statusText:
+          row[3] !== null &&
+          row[4] !== null
+            ? "FINAL"
+            : "Por confirmar"
+
+      };
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   FAVORITOS — JOGOS
+   ========================================================= */
+
+function isFavoritoJogo(id){
+
+  return favoritosJogos
+    .map(String)
+    .includes(String(id));
+
+}
+
+
+function guardarFavoritosJogos(){
+
+  localStorage.setItem(
+    "futzone_jogos_favoritos",
+    JSON.stringify(favoritosJogos)
+  );
+
+}
+
+
+function toggleFavoritoJogo(id){
+
+  id = String(id);
+
+  const pos =
+    favoritosJogos
+      .map(String)
+      .indexOf(id);
+
+  if(pos >= 0){
+
+    favoritosJogos.splice(
+      pos,
+      1
+    );
+
+  }
+  else{
+
+    favoritosJogos.push(id);
+
+  }
+
+  guardarFavoritosJogos();
+
+  renderPaginaAtual();
+
+}
+
+
+/* =========================================================
+   FAVORITOS — EQUIPAS
+   ========================================================= */
+
+function isFavoritaEquipa(nome){
+
+  return favoritosEquipas
+    .map(normalizarNome)
+    .includes(
+      normalizarNome(nome)
+    );
+
+}
+
+
+function guardarFavoritosEquipas(){
+
+  localStorage.setItem(
+    "futzone_equipas_favoritas",
+    JSON.stringify(favoritosEquipas)
+  );
+
+}
+
+
+function toggleFavoritaEquipa(nome){
+
+  const chave =
+    normalizarNome(nome);
+
+  const pos =
+    favoritosEquipas
+      .map(normalizarNome)
+      .indexOf(chave);
+
+  if(pos >= 0){
+
+    favoritosEquipas.splice(
+      pos,
+      1
+    );
+
+  }
+  else{
+
+    favoritosEquipas.push(nome);
+
+  }
+
+  guardarFavoritosEquipas();
+
+  renderPaginaAtual();
+
+}
+
+
+/* =========================================================
+   TEXTO DO ESTADO DO JOGO
+   ========================================================= */
+
+function textoEstado(jogo){
+
+  if(jogo.state === "live"){
+    return "DIRETO";
+  }
+
+  if(jogo.state === "finished"){
+
+    if(
+      jogo.homeScore !== null &&
+      jogo.awayScore !== null
+    ){
+      return "FINAL";
+    }
+
+    return "FINAL";
+  }
+
+  const d =
+    new Date(jogo.date);
+
+  if(!isNaN(d.getTime())){
+
+    return d.toLocaleTimeString(
+      "pt-PT",
+      {
+        hour:"2-digit",
+        minute:"2-digit"
+      }
+    );
+
+  }
+
+  return "Por começar";
+
+}
+
+
+/* =========================================================
+   FILTRAR JOGOS
+   ========================================================= */
+
+function filtrarJogos(lista){
+
+  let resultado =
+    Array.from(lista);
+
+  if(filtroAtual === "hoje"){
+
+    const agora = new Date();
+
+    const ano =
+      agora.getFullYear();
+
+    const mes =
+      agora.getMonth();
+
+    const dia =
+      agora.getDate();
+
+    resultado =
+      resultado.filter(
+        function(jogo){
+
+          const d =
+            new Date(jogo.date);
+
+          return (
+            d.getFullYear() === ano &&
+            d.getMonth() === mes &&
+            d.getDate() === dia
+          );
+
+        }
+      );
+
+  }
+
+  else if(filtroAtual === "live"){
+
+    resultado =
+      resultado.filter(
+        jogo =>
+          jogo.state === "live"
+      );
+
+  }
+
+  else if(filtroAtual === "proximos"){
+
+    resultado =
+      resultado.filter(
+        jogo =>
+          jogo.state === "upcoming"
+      );
+
+  }
+
+  else if(filtroAtual === "resultados"){
+
+    resultado =
+      resultado.filter(
+        jogo =>
+          jogo.state === "finished"
+      );
+
+  }
+
+  const input =
+    document.getElementById(
+      "searchInput"
+    );
+
+  const pesquisa =
+    input
+      ? input.value.trim().toLowerCase()
+      : "";
+
+  if(pesquisa){
+
+    resultado =
+      resultado.filter(
+        function(jogo){
+
+          return (
+            jogo.home.name
+              .toLowerCase()
+              .includes(pesquisa)
+            ||
+            jogo.away.name
+              .toLowerCase()
+              .includes(pesquisa)
+          );
+
+        }
+      );
+
+  }
+
+  return resultado;
+
+}
+
+
+/* =========================================================
+   FIM DA PARTE 2
+   ========================================================= */
+ /* =========================================================
+   FUTZONE — PARTE 2/3
+   DADOS FALLBACK + ESPN + CONVERSÃO DOS JOGOS
+   ========================================================= */
+
+
+/* =========================================================
+   FALLBACK — LIGA PORTUGAL 2
+   ========================================================= */
+
+FALLBACK["por.2"] = {
+
+  games:[
+    ["2026-09-13T15:00:00+01:00","AVS","Farense",null,null],
+    ["2026-09-13T15:00:00+01:00","Chaves","Feirense",null,null],
+    ["2026-09-13T15:00:00+01:00","Amarante","União de Leiria",null,null],
+    ["2026-09-14T18:00:00+01:00","Sporting CP B","Lusitânia Lourosa",null,null],
+    ["2026-09-14T20:15:00+01:00","FC Porto B","Vizela",null,null],
+
+    ["2026-09-12T15:00:00+01:00","Portimonense","Tondela",0,2],
+    ["2026-09-12T15:00:00+01:00","Felgueiras","Penafiel",1,2],
+    ["2026-09-11T20:15:00+01:00","Torreense","Leixões",0,0],
+    ["2026-09-11T18:00:00+01:00","Académica","Benfica B",0,3],
+    ["2026-09-07T20:15:00+01:00","Lusitânia Lourosa","AVS",2,1],
+    ["2026-09-06T15:00:00+01:00","União de Leiria","Portimonense",1,0],
+    ["2026-09-06T15:00:00+01:00","Leixões","Amarante",3,1],
+    ["2026-09-06T15:00:00+01:00","Vizela","Felgueiras",1,0],
+    ["2026-09-05T15:00:00+01:00","Benfica B","Torreense",0,2],
+    ["2026-09-05T15:00:00+01:00","Feirense","Sporting CP B",1,3],
+    ["2026-09-05T15:00:00+01:00","Penafiel","Académica",4,1],
+    ["2026-09-05T15:00:00+01:00","Tondela","FC Porto B",3,0]
+  ],
+
+  table:[
+    ["Lusitânia Lourosa",5,4,1,0,9,3,13],
+    ["Sporting CP B",5,4,0,1,7,4,12],
+    ["Penafiel",5,3,1,1,11,4,10],
+    ["Vizela",5,3,1,1,5,2,10],
+    ["Leixões",6,3,1,2,8,6,10],
+    ["Benfica B",6,3,1,2,7,5,10],
+    ["União de Leiria",5,3,0,2,8,5,9],
+    ["Académica",6,3,0,3,8,10,9],
+    ["Farense",4,2,1,1,7,5,7],
+    ["Portimonense",5,2,1,2,4,4,7],
+    ["Felgueiras",5,1,3,1,4,4,6],
+    ["Tondela",5,2,0,3,5,6,6],
+    ["Torreense",6,1,3,2,7,9,6],
+    ["AVS",5,1,2,2,6,6,5],
+    ["Amarante",5,1,1,3,3,6,4],
+    ["FC Porto B",5,1,0,4,2,11,3],
+    ["Chaves",4,0,1,3,4,9,1],
+    ["Feirense",5,0,1,4,1,7,1]
+  ]
+
+};
+
+
+/* =========================================================
+   FALLBACK — LIGA 3
+   ========================================================= */
+
+FALLBACK["por.3"] = {
+
+  games:[
+    ["2026-09-13T10:00:00+01:00","Belenenses","Atlético CP",null,null],
+    ["2026-09-13T16:00:00+01:00","Caldas","Vitória de Sernache",null,null],
+    ["2026-09-13T16:00:00+01:00","Paços de Ferreira","São João de Ver",null,null],
+    ["2026-09-13T19:30:00+01:00","Paredes","AD Fafe",null,null],
+
+    ["2026-09-12T15:00:00+01:00","Varzim","SC Vianense",1,2],
+    ["2026-09-12T15:00:00+01:00","Oliveirense","Mafra",2,0],
+    ["2026-09-06T15:00:00+01:00","São João de Ver","Marco 09",0,0],
+    ["2026-09-06T15:00:00+01:00","Louletano","Lusitano Évora",1,0],
+    ["2026-09-06T15:00:00+01:00","Atlético CP","Oliveirense",3,1],
+    ["2026-09-06T15:00:00+01:00","Vitória de Sernache","Belenenses",1,3],
+    ["2026-09-06T15:00:00+01:00","Leça","AD Fafe",0,3],
+    ["2026-09-05T15:00:00+01:00","Varzim","Paredes",0,1],
+    ["2026-09-05T15:00:00+01:00","Vitória SC B","Trofense",0,0],
+    ["2026-09-05T15:00:00+01:00","Mafra","Covilhã",1,0],
+    ["2026-09-05T15:00:00+01:00","SC Vianense","Paços de Ferreira",2,2],
+    ["2026-09-04T20:00:00+01:00","União Santarém","Caldas",0,1]
+  ],
+
+  groupA:[
+    ["Paredes",4,3,0,1,6,3,9],
+    ["Varzim",5,3,0,2,8,5,9],
+    ["AD Fafe",4,2,2,0,7,2,8],
+    ["AD Marco 09",4,2,1,1,5,3,7],
+    ["SC Vianense",5,2,2,1,6,5,8],
+    ["Vitória SC B",4,1,2,1,4,4,5],
+    ["Trofense",4,1,1,2,1,3,4],
+    ["Leça",4,1,1,2,3,7,4],
+    ["São João de Ver",4,0,2,2,2,5,2],
+    ["Paços de Ferreira",4,0,1,3,4,9,1]
+  ],
+
+  groupB:[
+    ["Belenenses",4,4,0,0,10,2,12],
+    ["Atlético CP",4,3,1,0,9,4,10],
+    ["Oliveirense",5,2,2,1,7,4,8],
+    ["Mafra",5,2,1,2,4,4,7],
+    ["Louletano",4,2,1,1,4,3,7],
+    ["Lusitano Évora",4,1,1,2,3,4,4],
+    ["Caldas",4,1,1,2,3,5,4],
+    ["Covilhã",4,1,1,2,2,3,4],
+    ["Vitória de Sernache",4,0,1,3,3,7,1],
+    ["União Santarém",4,0,1,3,1,6,1]
+  ]
+
+};
+
+
+/* =========================================================
+   FALLBACK — LIGA BPI FEMININA
+   ========================================================= */
+
+FALLBACK["por.w.1"] = {
+
+  games:[
+    ["2026-09-13T19:00:00+01:00","Torreense","Rio Ave",null,null],
+    ["2026-09-12T16:00:00+01:00","SC Braga","Marítimo",5,0],
+    ["2026-09-12T17:00:00+01:00","Sporting CP","Vitória SC",2,0],
+    ["2026-09-12T19:30:00+01:00","Benfica","Racing Power",null,null],
+    ["2026-09-06T15:00:00+01:00","Valadares Gaia","FC Porto",1,3],
+
+    ["2026-09-18T17:30:00+01:00","Rio Ave","Benfica",null,null],
+    ["2026-09-20T14:00:00+01:00","Marítimo","Sporting CP",null,null],
+    ["2026-09-26T10:00:00+01:00","Valadares Gaia","Rio Ave",null,null],
+    ["2026-09-27T13:45:00+01:00","SC Braga","Sporting CP",null,null],
+    ["2026-09-27T14:00:00+01:00","Benfica","Vitória SC",null,null],
+    ["2026-10-18T13:00:00+01:00","Marítimo","Benfica",null,null],
+    ["2026-10-18T13:00:00+01:00","Vitória SC","Valadares Gaia",null,null]
+  ],
+
+  table:[
+    ["Sporting CP",1,1,0,0,2,0,3],
+    ["SC Braga",1,1,0,0,5,0,3],
+    ["FC Porto",1,1,0,0,3,1,3],
+    ["Benfica",0,0,0,0,0,0,0],
+    ["Racing Power",0,0,0,0,0,0,0],
+    ["Torreense",0,0,0,0,0,0,0],
+    ["Rio Ave",0,0,0,0,0,0,0],
+    ["Valadares Gaia",1,0,0,1,1,3,0],
+    ["Marítimo",1,0,0,1,0,5,0],
+    ["Vitória SC",1,0,0,1,0,2,0]
+  ]
+
+};
+
+
+/* =========================================================
+   CONVERTER FALLBACK PARA O FORMATO DA APP
+   ========================================================= */
+
+function makeFallbackGame(liga,row,index){
+
+  const data = row[0];
+  const casa = row[1];
+  const fora = row[2];
+  const scoreCasa = row[3];
+  const scoreFora = row[4];
+
+  let estado = "upcoming";
+
+  if(
+    scoreCasa !== null &&
+    scoreCasa !== undefined &&
+    scoreFora !== null &&
+    scoreFora !== undefined
+  ){
+    estado = "finished";
+  }
+
+  return {
+
+    id:
+      "fb-" +
+      liga +
+      "-" +
+      index +
+      "-" +
+      normalizarNome(casa) +
+      "-" +
+      normalizarNome(fora),
+
+    league:liga,
+
+    date:data,
+
+    home:{
+      id:null,
+      name:casa,
+      logo:""
+    },
+
+    away:{
+      id:null,
+      name:fora,
+      logo:""
+    },
+
+    homeScore:scoreCasa,
+    awayScore:scoreFora,
+
+    state:estado,
+
+    statusText:
+      estado === "finished"
+        ? "FINAL"
+        : "Por começar"
+
+  };
+
+}
+
+
+/* =========================================================
+   NORMALIZAR EVENTO ESPN
+   ========================================================= */
+
+function normalizarESPN(ev,liga){
+
+  const competition =
+    ev?.competitions?.[0] || {};
+
+  const competitors =
+    competition.competitors || [];
+
+  const home =
+    competitors.find(
+      x => x.homeAway === "home"
+    )
+    ||
+    competitors[0]
+    ||
+    {};
+
+  const away =
+    competitors.find(
+      x => x.homeAway === "away"
+    )
+    ||
+    competitors[1]
+    ||
+    {};
+
+  const status =
+    competition.status ||
+    ev.status ||
+    {};
+
+  const type =
+    status.type ||
+    {};
+
+  let state = "upcoming";
+
+  if(type.state === "in"){
+    state = "live";
+  }
+  else if(type.state === "post"){
+    state = "finished";
+  }
+
+  let statusText =
+    type.shortDetail ||
+    type.detail ||
+    type.description ||
+    "";
+
+  if(state === "live"){
+    statusText = "DIRETO";
+  }
+
+  if(state === "finished"){
+    statusText = "FINAL";
+  }
+
+  const homeScore =
+    home.score !== undefined &&
+    home.score !== null &&
+    home.score !== ""
+      ? Number(home.score)
+      : null;
+
+  const awayScore =
+    away.score !== undefined &&
+    away.score !== null &&
+    away.score !== ""
+      ? Number(away.score)
+      : null;
+
+  return {
+
+    id:String(ev.id),
+
+    league:liga,
+
+    date:
+      ev.date ||
+      competition.date ||
+      "",
+
+    home:{
+      id:
+        home?.team?.id ||
+        home?.id ||
+        null,
+
+      name:
+        home?.team?.displayName ||
+        home?.team?.shortDisplayName ||
+        home?.team?.name ||
+        "Casa",
+
+      logo:
+        home?.team?.logo ||
+        ""
+    },
+
+    away:{
+      id:
+        away?.team?.id ||
+        away?.id ||
+        null,
+
+      name:
+        away?.team?.displayName ||
+        away?.team?.shortDisplayName ||
+        away?.team?.name ||
+        "Fora",
+
+      logo:
+        away?.team?.logo ||
+        ""
+    },
+
+    homeScore:
+      Number.isNaN(homeScore)
+        ? null
+        : homeScore,
+
+    awayScore:
+      Number.isNaN(awayScore)
+        ? null
+        : awayScore,
+
+    state:state,
+
+    statusText:statusText
+
+  };
+
+}
+
+
+/* =========================================================
+   BUSCAR UM DIA NA ESPN
+   ========================================================= */
+
+async function buscarESPNDia(liga,data){
+
+  try{
+
+    const url =
+      API +
+      encodeURIComponent(liga) +
+      "/scoreboard?dates=" +
+      dataQuery(data) +
+      "&limit=100";
+
+    const resposta =
+      await fetch(url,{
+        cache:"no-store"
+      });
+
+    if(!resposta.ok){
+      return [];
+    }
+
+    const json =
+      await resposta.json();
+
+    return (json.events || [])
+      .map(
+        evento =>
+          normalizarESPN(
+            evento,
+            liga
+          )
+      );
+
+  }
+  catch(erro){
+
+    console.warn(
+      "ESPN erro:",
+      liga,
+      erro
+    );
+
+    return [];
+
+  }
+
+}
+
+
+/* =========================================================
+   CHAVE PARA EVITAR DUPLICADOS
+   ========================================================= */
+
+function chaveJogo(jogo){
+
+  return [
+    jogo.league,
+    String(jogo.date).slice(0,10),
+    normalizarNome(jogo.home.name),
+    normalizarNome(jogo.away.name)
+  ].join("|");
+
+}
+
+
+/* =========================================================
+   REMOVER DUPLICADOS
+   ========================================================= */
+
+function deduplicarJogos(lista){
+
+  const mapa = new Map();
+
+  lista.forEach(function(jogo){
+
+    const chave =
+      chaveJogo(jogo);
+
+    if(!mapa.has(chave)){
+      mapa.set(chave,jogo);
+      return;
+    }
+
+    const antigo =
+      mapa.get(chave);
+
+    /*
+      Se a ESPN tiver informação mais completa,
+      damos prioridade ao jogo ESPN.
+    */
+
+    if(
+      jogo.id &&
+      !String(jogo.id).startsWith("fb-")
+    ){
+      mapa.set(chave,jogo);
+    }
+    else if(
+      antigo.state === "upcoming" &&
+      jogo.state === "finished"
+    ){
+      mapa.set(chave,jogo);
+    }
+
+  });
+
+  return Array.from(mapa.values());
+
+}
+
+
+/* =========================================================
+   ORDENAR JOGOS
+   ========================================================= */
+
+function ordenarJogos(lista){
+
+  return lista.sort(function(a,b){
+
+    return (
+      new Date(a.date).getTime() -
+      new Date(b.date).getTime()
+    );
+
+  });
+
+}
+
+
+/* =========================================================
+   CARREGAR JOGOS DA COMPETIÇÃO
+   ========================================================= */
+
+async function carregarJogosLiga(liga){
+
+  const fallback =
+    FALLBACK[liga]?.games || [];
+
+  const fallbackJogos =
+    fallback.map(function(row,index){
+
+      return makeFallbackGame(
+        liga,
+        row,
+        index
+      );
+
+    });
+
+  /*
+    Procuramos alguns dias para trás
+    e alguns dias para a frente.
+  */
+
+  const hoje = new Date();
+
+  const pedidos = [];
+
+  for(
+    let i = -7;
+    i <= 14;
+    i++
+  ){
+
+    pedidos.push(
+      buscarESPNDia(
+        liga,
+        addDias(hoje,i)
+      )
+    );
+
+  }
+
+  let resultados = [];
+
+  try{
+
+    const respostas =
+      await Promise.all(pedidos);
+
+    respostas.forEach(function(lista){
+
+      resultados =
+        resultados.concat(lista);
+
+    });
+
+  }
+  catch(erro){
+
+    console.warn(
+      "Falha ao carregar ESPN:",
+      erro
+    );
+
+  }
+
+  let jogos =
+    deduplicarJogos(
+      resultados.concat(fallbackJogos)
+    );
+
+  /*
+    Se não houver ESPN nem fallback,
+    devolvemos lista vazia.
+  */
+
+  ordenarJogos(jogos);
+
+  return jogos;
+
+}
+
+
+/* =========================================================
+   CONVERTER FUTSAL
+   ========================================================= */
+
+function getFutsalGames(){
+
+  return FUTSAL_GAMES.map(
+    function(row,index){
+
+      return {
+
+        id:
+          "futsal-" +
+          index +
+          "-" +
+          normalizarNome(row[1]) +
+          "-" +
+          normalizarNome(row[2]),
+
+        league:"futsal",
+
+        date:row[0],
+
+        home:{
+          id:null,
+          name:row[1],
+          logo:""
+        },
+
+        away:{
+          id:null,
+          name:row[2],
+          logo:""
+        },
+
+        homeScore:row[3],
+        awayScore:row[4],
+
+        state:
+          row[3] !== null &&
+          row[4] !== null
+            ? "finished"
+            : "upcoming",
+
+        statusText:
+          row[3] !== null &&
+          row[4] !== null
+            ? "FINAL"
+            : "Por confirmar"
+
+      };
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   FAVORITOS — JOGOS
+   ========================================================= */
+
+function isFavoritoJogo(id){
+
+  return favoritosJogos
+    .map(String)
+    .includes(String(id));
+
+}
+
+
+function guardarFavoritosJogos(){
+
+  localStorage.setItem(
+    "futzone_jogos_favoritos",
+    JSON.stringify(favoritosJogos)
+  );
+
+}
+
+
+function toggleFavoritoJogo(id){
+
+  id = String(id);
+
+  const pos =
+    favoritosJogos
+      .map(String)
+      .indexOf(id);
+
+  if(pos >= 0){
+
+    favoritosJogos.splice(
+      pos,
+      1
+    );
+
+  }
+  else{
+
+    favoritosJogos.push(id);
+
+  }
+
+  guardarFavoritosJogos();
+
+  renderPaginaAtual();
+
+}
+
+
+/* =========================================================
+   FAVORITOS — EQUIPAS
+   ========================================================= */
+
+function isFavoritaEquipa(nome){
+
+  return favoritosEquipas
+    .map(normalizarNome)
+    .includes(
+      normalizarNome(nome)
+    );
+
+}
+
+
+function guardarFavoritosEquipas(){
+
+  localStorage.setItem(
+    "futzone_equipas_favoritas",
+    JSON.stringify(favoritosEquipas)
+  );
+
+}
+
+
+function toggleFavoritaEquipa(nome){
+
+  const chave =
+    normalizarNome(nome);
+
+  const pos =
+    favoritosEquipas
+      .map(normalizarNome)
+      .indexOf(chave);
+
+  if(pos >= 0){
+
+    favoritosEquipas.splice(
+      pos,
+      1
+    );
+
+  }
+  else{
+
+    favoritosEquipas.push(nome);
+
+  }
+
+  guardarFavoritosEquipas();
+
+  renderPaginaAtual();
+
+}
+
+
+/* =========================================================
+   TEXTO DO ESTADO DO JOGO
+   ========================================================= */
+
+function textoEstado(jogo){
+
+  if(jogo.state === "live"){
+    return "DIRETO";
+  }
+
+  if(jogo.state === "finished"){
+
+    if(
+      jogo.homeScore !== null &&
+      jogo.awayScore !== null
+    ){
+      return "FINAL";
+    }
+
+    return "FINAL";
+  }
+
+  const d =
+    new Date(jogo.date);
+
+  if(!isNaN(d.getTime())){
+
+    return d.toLocaleTimeString(
+      "pt-PT",
+      {
+        hour:"2-digit",
+        minute:"2-digit"
+      }
+    );
+
+  }
+
+  return "Por começar";
+
+}
+
+
+/* =========================================================
+   FILTRAR JOGOS
+   ========================================================= */
+
+function filtrarJogos(lista){
+
+  let resultado =
+    Array.from(lista);
+
+  if(filtroAtual === "hoje"){
+
+    const agora = new Date();
+
+    const ano =
+      agora.getFullYear();
+
+    const mes =
+      agora.getMonth();
+
+    const dia =
+      agora.getDate();
+
+    resultado =
+      resultado.filter(
+        function(jogo){
+
+          const d =
+            new Date(jogo.date);
+
+          return (
+            d.getFullYear() === ano &&
+            d.getMonth() === mes &&
+            d.getDate() === dia
+          );
+
+        }
+      );
+
+  }
+
+  else if(filtroAtual === "live"){
+
+    resultado =
+      resultado.filter(
+        jogo =>
+          jogo.state === "live"
+      );
+
+  }
+
+  else if(filtroAtual === "proximos"){
+
+    resultado =
+      resultado.filter(
+        jogo =>
+          jogo.state === "upcoming"
+      );
+
+  }
+
+  else if(filtroAtual === "resultados"){
+
+    resultado =
+      resultado.filter(
+        jogo =>
+          jogo.state === "finished"
+      );
+
+  }
+
+  const input =
+    document.getElementById(
+      "searchInput"
+    );
+
+  const pesquisa =
+    input
+      ? input.value.trim().toLowerCase()
+      : "";
+
+  if(pesquisa){
+
+    resultado =
+      resultado.filter(
+        function(jogo){
+
+          return (
+            jogo.home.name
+              .toLowerCase()
+              .includes(pesquisa)
+            ||
+            jogo.away.name
+              .toLowerCase()
+              .includes(pesquisa)
+          );
+
+        }
+      );
+
+  }
+
+  return resultado;
+
+}
+
+
+/* =========================================================
+   FIM DA PARTE 2
+   ========================================================= */
+ /* =========================================================
+   FUTZONE — PARTE 3/3
+   INTERFACE + JOGOS + TABELAS + FAVORITOS + EQUIPAS
+   ========================================================= */
+
+
+/* =========================================================
+   RENDERIZAR ESTRUTURA DA PÁGINA DE JOGOS
+   ========================================================= */
+
+function renderCabecalhoJogos(){
+
+  const main =
+    document.getElementById("main");
+
+  const liga =
+    getLiga(ligaAtual);
+
+  main.innerHTML = `
+
+    <div class="sectionTitle">
+      Competições
+    </div>
+
+    <div
+      class="leagues"
+      id="leagueList">
+    </div>
+
+    <button
+      class="liveAll"
+      onclick="ativarFiltroLive()">
+      🔴 Ver jogos ao vivo
+    </button>
+
+    <div
+      class="filters"
+      id="filters">
+
+      <button
+        class="filter ${filtroAtual==="todos"?"active":""}"
+        onclick="mudarFiltro('todos')">
+        Todos
+      </button>
+
+      <button
+        class="filter ${filtroAtual==="hoje"?"active":""}"
+        onclick="mudarFiltro('hoje')">
+        Hoje
+      </button>
+
+      <button
+        class="filter ${filtroAtual==="live"?"active":""}"
+        onclick="mudarFiltro('live')">
+        🔴 Direto
+      </button>
+
+      <button
+        class="filter ${filtroAtual==="proximos"?"active":""}"
+        onclick="mudarFiltro('proximos')">
+        Próximos
+      </button>
+
+      <button
+        class="filter ${filtroAtual==="resultados"?"active":""}"
+        onclick="mudarFiltro('resultados')">
+        Resultados
+      </button>
+
+    </div>
+
+    <input
+      id="searchInput"
+      class="search"
+      type="search"
+      placeholder="🔎 Procurar equipa..."
+      oninput="renderListaJogos()">
+
+    <div
+      id="gamesList">
+    </div>
+
+    <div class="bottomSpace"></div>
+  `;
+
+  renderCompeticoes();
+
 }
 
 
@@ -818,1177 +3959,802 @@ function setFiltro(filtro){
 
 function renderCompeticoes(){
 
-  const el = document.getElementById("leagueList");
+  const lista =
+    document.getElementById(
+      "leagueList"
+    );
 
-  if(!el) return;
+  if(!lista){
+    return;
+  }
 
-  el.innerHTML = Object.entries(LIGAS)
-    .map(([id,nome])=>`
-      <button
-        class="leagueChip ${ligaAtual===id ? "active":""}"
-        onclick="selecionarLiga('${id}')">
-        ${esc(nome)}
-      </button>
-    `)
-    .join("");
+  lista.innerHTML =
+    LIGAS.map(function(liga){
+
+      return `
+
+        <button
+          class="league ${
+            liga.id === ligaAtual
+              ? "active"
+              : ""
+          }"
+          onclick="selecionarLiga('${esc(liga.id)}')">
+
+          ${esc(liga.nome)}
+
+        </button>
+
+      `;
+
+    }).join("");
+
 }
 
 
-function selecionarLiga(id){
+/* =========================================================
+   SELECIONAR LIGA
+   ========================================================= */
 
-  if(!LIGAS[id]) return;
+async function selecionarLiga(id){
 
   ligaAtual = id;
 
-  renderCompeticoes();
+  filtroAtual = "todos";
 
-  carregarJogos();
+  renderCabecalhoJogos();
+
+  const lista =
+    document.getElementById(
+      "gamesList"
+    );
+
+  lista.innerHTML =
+    `<div class="loading">
+       ⏳ A carregar jogos...
+     </div>`;
+
+  jogosFutebol =
+    await carregarJogosLiga(
+      ligaAtual
+    );
+
+  renderListaJogos();
+
 }
 
 
 /* =========================================================
-   CARREGAMENTO DE JOGOS
+   ALTERAR FILTRO
    ========================================================= */
 
-async function carregarJogos(){
+function mudarFiltro(filtro){
 
-  const container =
-    document.getElementById("gamesList");
+  filtroAtual = filtro;
 
-  if(container){
-    container.innerHTML = `
-      <div class="loading">
-        <div class="spinner"></div>
-        A carregar jogos...
-      </div>
-    `;
-  }
+  renderCabecalhoJogos();
 
-  jogosFutebol =
-    await buscarJogosLiga(ligaAtual);
+  renderListaJogos();
 
-  mostrarJogos();
 }
 
 
-function mostrarJogos(){
+function ativarFiltroLive(){
 
-  const container =
-    document.getElementById("gamesList");
+  filtroAtual = "live";
 
-  if(!container) return;
+  renderCabecalhoJogos();
+
+  renderListaJogos();
+
+}
+
+
+/* =========================================================
+   RENDERIZAR LISTA DE JOGOS
+   ========================================================= */
+
+function renderListaJogos(){
 
   const lista =
-    filtrarJogos(jogosFutebol);
+    document.getElementById(
+      "gamesList"
+    );
 
-  const nomeLiga =
-    LIGAS[ligaAtual] || "Futebol";
-
-  const titulo =
-    document.getElementById("sectionTitle");
-
-  if(titulo){
-    titulo.textContent = nomeLiga;
-  }
-
-  if(!lista.length){
-
-    container.innerHTML = `
-      <div class="emptyState">
-        <div class="emptyIcon">⚽</div>
-        <h3>Sem jogos para mostrar</h3>
-        <p>
-          Não existem jogos nesta categoria
-          para o filtro selecionado.
-        </p>
-      </div>
-    `;
-
+  if(!lista){
     return;
   }
 
-  container.innerHTML =
-    lista.map(renderGameCard).join("");
+  if(desportoAtual === "futsal"){
+
+    renderListaFutsal();
+
+    return;
+
+  }
+
+  const jogos =
+    filtrarJogos(
+      jogosFutebol
+    );
+
+  if(!jogos.length){
+
+    lista.innerHTML = `
+
+      <div class="empty">
+
+        Não existem jogos para mostrar
+        com os filtros selecionados.
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+  lista.innerHTML =
+    jogos.map(
+      renderJogoCard
+    ).join("");
+
 }
 
 
 /* =========================================================
-   TABELAS — FUNÇÕES GENÉRICAS
+   CARTÃO DE JOGO
    ========================================================= */
 
-function renderTabela(rows,titulo){
+function renderJogoCard(jogo){
 
-  if(!rows || !rows.length){
-    return `
-      <div class="emptyState">
-        <h3>Classificação indisponível</h3>
-        <p>Tente novamente mais tarde.</p>
+  const favorito =
+    isFavoritoJogo(
+      jogo.id
+    );
+
+  const hora =
+    dataTexto(
+      jogo.date
+    );
+
+  let centro = "";
+
+  if(
+    jogo.homeScore !== null &&
+    jogo.awayScore !== null
+  ){
+
+    centro = `
+
+      <div class="score">
+
+        ${esc(jogo.homeScore)}
+        -
+        ${esc(jogo.awayScore)}
+
+        <div
+          class="status ${
+            jogo.state === "live"
+              ? "live"
+              : ""
+          }">
+
+          ${esc(
+            textoEstado(jogo)
+          )}
+
+        </div>
+
       </div>
+
     `;
+
+  }
+  else{
+
+    centro = `
+
+      <div class="score">
+
+        <div style="font-size:14px">
+          ${esc(
+            textoEstado(jogo)
+          )}
+        </div>
+
+        <div class="status">
+          ${esc(hora)}
+        </div>
+
+      </div>
+
+    `;
+
   }
 
   return `
-    <div class="tableTitle">${esc(titulo)}</div>
 
-    <div class="standings">
+    <div
+      class="card"
+      onclick="abrirJogo('${esc(jogo.id)}')">
 
-      <div class="standingHead">
-        <span>#</span>
-        <span>Equipa</span>
-        <span>J</span>
-        <span>V</span>
-        <span>E</span>
-        <span>D</span>
-        <span>DG</span>
-        <span>Pts</span>
-      </div>
-
-      ${rows.map((r,i)=>{
-
-        const nome =
-          r.name ||
-          r.team ||
-          r.equipa ||
-          "";
-
-        const j =
-          r.played ??
-          r.j ??
-          r.jogos ??
-          0;
-
-        const v =
-          r.wins ??
-          r.v ??
-          r.vitorias ??
-          0;
-
-        const e =
-          r.draws ??
-          r.e ??
-          r.empates ??
-          0;
-
-        const d =
-          r.losses ??
-          r.d ??
-          r.derrotas ??
-          0;
-
-        const gf =
-          r.gf ??
-          r.golosMarcados ??
-          0;
-
-        const ga =
-          r.ga ??
-          r.golosSofridos ??
-          0;
-
-        const dg =
-          r.gd ??
-          (gf-ga);
-
-        const pts =
-          r.points ??
-          r.pts ??
-          r.pontos ??
-          (v*3+e);
-
-        return `
-          <div class="standingRow">
-
-            <span class="position">${i+1}</span>
-
-            <span class="standingTeam">
-              ${r.logo
-                ? `<img src="${esc(r.logo)}" alt="">`
-                : `<span class="miniBall">⚽</span>`
-              }
-              ${esc(nome)}
-            </span>
-
-            <span>${j}</span>
-            <span>${v}</span>
-            <span>${e}</span>
-            <span>${d}</span>
-            <span>${dg}</span>
-            <strong>${pts}</strong>
-
-          </div>
-        `;
-
-      }).join("")}
-
-    </div>
-  `;
-}
-
-
-/* =========================================================
-   LIGA PORTUGAL 2
-   ========================================================= */
-
-function renderTabelaFallback2(){
-
-  const dados =
-    FALLBACK["por.2"]?.table || [];
-
-  return renderTabela(
-    dados,
-    "Liga Portugal 2"
-  );
-}
-
-
-/* =========================================================
-   LIGA 3
-   ========================================================= */
-
-function renderTabelaLiga3(group,titulo){
-
-  const rows =
-    group === "A"
-      ? FALLBACK["por.3"]?.groupA || []
-      : FALLBACK["por.3"]?.groupB || [];
-
-  return renderTabela(rows,titulo);
-}
-
-
-/* =========================================================
-   LIGA BPI FEMININA
-   ========================================================= */
-
-function renderTabelaBPI(){
-
-  const rows =
-    FALLBACK["por.w.1"]?.table || [];
-
-  return renderTabela(
-    rows,
-    "Liga BPI Feminina"
-  );
-}
-
-
-/* =========================================================
-   CARREGAR CLASSIFICAÇÕES
-   ========================================================= */
-
-async function carregarTabela(){
-
-  const container =
-    document.getElementById("gamesList");
-
-  if(!container) return;
-
-  container.innerHTML = `
-    <div class="loading">
-      <div class="spinner"></div>
-      A carregar classificação...
-    </div>
-  `;
-
-  if(ligaAtual==="por.2"){
-    container.innerHTML =
-      renderTabelaFallback2();
-    return;
-  }
-
-  if(ligaAtual==="por.3"){
-    container.innerHTML =
-      renderTabelaLiga3(
-        "A",
-        "Liga 3 — Grupo A"
-      ) +
-      renderTabelaLiga3(
-        "B",
-        "Liga 3 — Grupo B"
-      );
-    return;
-  }
-
-  if(ligaAtual==="por.w.1"){
-    container.innerHTML =
-      renderTabelaBPI();
-    return;
-  }
-
-  try{
-
-    const url =
-      API_CORE +
-      "leagues/" +
-      ligaAtual +
-      "/standings";
-
-    const dados =
-      await buscarESPN(url);
-
-    let rows = [];
-
-    if(Array.isArray(dados?.standings)){
-      rows = dados.standings;
-    }
-
-    if(dados?.children){
-      dados.children.forEach(child=>{
-        if(Array.isArray(child.standings)){
-          rows.push(...child.standings);
-        }
-      });
-    }
-
-    if(!rows.length){
-
-      container.innerHTML = `
-        <div class="emptyState">
-          <h3>Classificação indisponível</h3>
-          <p>
-            A competição ainda não disponibilizou
-            a tabela através da fonte de dados.
-          </p>
-        </div>
-      `;
-
-      return;
-    }
-
-    const convertidas = rows.map((item)=>{
-
-      const team =
-        item.team ||
-        item.entry ||
-        {};
-
-      const stats = {};
-
-      if(Array.isArray(item.stats)){
-        item.stats.forEach(s=>{
-          if(s.name){
-            stats[s.name] =
-              s.value ??
-              s.displayValue ??
-              0;
-          }
-        });
-      }
-
-      return {
-        name:
-          team.displayName ||
-          team.name ||
-          "Equipa",
-
-        logo:
-          team.logos?.[0]?.href ||
-          team.logo ||
-          "",
-
-        played:
-          stats.gamesPlayed ||
-          stats.played ||
-          0,
-
-        wins:
-          stats.wins ||
-          0,
-
-        draws:
-          stats.ties ||
-          stats.draws ||
-          0,
-
-        losses:
-          stats.losses ||
-          0,
-
-        gf:
-          stats.pointsFor ||
-          stats.goalsFor ||
-          0,
-
-        ga:
-          stats.pointsAgainst ||
-          stats.goalsAgainst ||
-          0,
-
-        points:
-          stats.points ||
-          0
-      };
-    });
-
-    container.innerHTML =
-      renderTabela(
-        convertidas,
-        LIGAS[ligaAtual] || "Classificação"
-      );
-
-  }catch(e){
-
-    console.warn("Tabela:",e);
-
-    container.innerHTML = `
-      <div class="emptyState">
-        <h3>Não foi possível carregar</h3>
-        <p>Tente novamente.</p>
-      </div>
-    `;
-  }
-}
-
-
-/* =========================================================
-   FUTSAL — RESULTADOS CONFIRMADOS
-   ========================================================= */
-
-function corrigirResultadosFutsal(){
-
-  const x =
-    FUTSAL_GAMES.find(
-      g =>
-        g[1]==="AD Fundão" &&
-        g[2]==="SC Braga"
-    );
-
-  if(x){
-    x[3]=3;
-    x[4]=2;
-  }
-
-  const y =
-    FUTSAL_GAMES.find(
-      g =>
-        g[1]==="Sporting" &&
-        g[2]==="Portimonense"
-    );
-
-  if(y){
-    y[3]=1;
-    y[4]=0;
-  }
-}
-
-
-/* =========================================================
-   FUTSAL — EQUIPAS
-   ========================================================= */
-
-function renderFutsalEquipas(){
-
-  const container =
-    document.getElementById("gamesList");
-
-  if(!container) return;
-
-  const equipas =
-    [...FUTSAL_TEAMS];
-
-  container.innerHTML = `
-    <div class="tableTitle">
-      Liga Placard — Equipas
-    </div>
-
-    <div class="teamGrid">
-
-      ${equipas.map(nome=>{
-
-        const fav =
-          favoritosEquipas.has(nome);
-
-        return `
-          <div
-            class="teamCard"
-            onclick="abrirEquipa('${esc(nome)}')">
-
-            <div class="teamCardLogo">⚽</div>
-
-            <div class="teamCardName">
-              ${esc(nome)}
-            </div>
-
-            <button
-              class="starBtn ${fav ? "active":""}"
-              onclick="event.stopPropagation();
-                       toggleFavoritoEquipa('${esc(nome)}')">
-              ${fav ? "★":"☆"}
-            </button>
-
-          </div>
-        `;
-
-      }).join("")}
-
-    </div>
-  `;
-}
-
-
-/* =========================================================
-   FUTSAL — JOGOS
-   ========================================================= */
-
-function renderFutsalJogos(){
-
-  corrigirResultadosFutsal();
-
-  const container =
-    document.getElementById("gamesList");
-
-  if(!container) return;
-
-  const jogos =
-    FUTSAL_GAMES || [];
-
-  container.innerHTML = `
-    <div class="tableTitle">
-      Liga Placard — Jogos
-    </div>
-
-    <div class="gamesList">
-
-      ${jogos.map((g,i)=>{
-
-        const data = g[0];
-        const casa = g[1];
-        const fora = g[2];
-        const hs = g[3];
-        const as = g[4];
-
-        const terminado =
-          hs !== null &&
-          as !== null;
-
-        return `
-          <article class="gameCard futsalCard">
-
-            <div class="gameTop">
-              <span>${esc(data)}</span>
-
-              <span class="${
-                terminado
-                  ? "statusBadge"
-                  : "statusBadge"
-              }">
-                ${
-                  terminado
-                    ? "FINAL"
-                    : "POR CONFIRMAR"
-                }
-              </span>
-            </div>
-
-            <div class="teams">
-
-              <div class="team">
-                <span class="teamLogo">🥅</span>
-                <span>${esc(casa)}</span>
-              </div>
-
-              <div class="score">
-                ${
-                  terminado
-                    ? `<strong>${hs}</strong>
-                       <span>-</span>
-                       <strong>${as}</strong>`
-                    : `<strong>—</strong>`
-                }
-              </div>
-
-              <div class="team">
-                <span class="teamLogo">🥅</span>
-                <span>${esc(fora)}</span>
-              </div>
-
-            </div>
-
-            ${
-              !terminado
-                ? `<div class="pendingResult">
-                     Resultado por confirmar
-                   </div>`
-                : ""
-            }
-
-          </article>
-        `;
-
-      }).join("")}
-
-    </div>
-  `;
-}
-
-
-/* =========================================================
-   FUTSAL — CLASSIFICAÇÃO
-   ========================================================= */
-
-function calcularTabelaFutsal(){
-
-  corrigirResultadosFutsal();
-
-  const mapa = {};
-
-  FUTSAL_TEAMS.forEach(nome=>{
-    mapa[nome] = {
-      name:nome,
-      played:0,
-      wins:0,
-      draws:0,
-      losses:0,
-      gf:0,
-      ga:0,
-      gd:0,
-      points:0
-    };
-  });
-
-  FUTSAL_GAMES.forEach(g=>{
-
-    const casa = g[1];
-    const fora = g[2];
-    const hs = g[3];
-    const as = g[4];
-
-    if(
-      hs===null ||
-      as===null ||
-      hs===undefined ||
-      as===undefined
-    ){
-      return;
-    }
-
-    if(!mapa[casa]){
-      mapa[casa]={
-        name:casa,
-        played:0,
-        wins:0,
-        draws:0,
-        losses:0,
-        gf:0,
-        ga:0,
-        gd:0,
-        points:0
-      };
-    }
-
-    if(!mapa[fora]){
-      mapa[fora]={
-        name:fora,
-        played:0,
-        wins:0,
-        draws:0,
-        losses:0,
-        gf:0,
-        ga:0,
-        gd:0,
-        points:0
-      };
-    }
-
-    const C = mapa[casa];
-    const F = mapa[fora];
-
-    C.played++;
-    F.played++;
-
-    C.gf += Number(hs);
-    C.ga += Number(as);
-
-    F.gf += Number(as);
-    F.ga += Number(hs);
-
-    if(hs>as){
-
-      C.wins++;
-      C.points += 3;
-      F.losses++;
-
-    }else if(hs<as){
-
-      F.wins++;
-      F.points += 3;
-      C.losses++;
-
-    }else{
-
-      C.draws++;
-      F.draws++;
-
-      C.points++;
-      F.points++;
-    }
-  });
-
-  Object.values(mapa).forEach(t=>{
-    t.gd=t.gf-t.ga;
-  });
-
-  return Object.values(mapa).sort((a,b)=>{
-
-    if(b.points!==a.points){
-      return b.points-a.points;
-    }
-
-    if(b.gd!==a.gd){
-      return b.gd-a.gd;
-    }
-
-    return b.gf-a.gf;
-  });
-}
-
-
-function renderFutsalTabela(){
-
-  const container =
-    document.getElementById("gamesList");
-
-  if(!container) return;
-
-  const tabela =
-    calcularTabelaFutsal();
-
-  container.innerHTML =
-    renderTabela(
-      tabela,
-      "Liga Placard — Classificação"
-    );
-}
-
-
-/* =========================================================
-   FUTSAL — COMPETIÇÕES
-   ========================================================= */
-
-function renderFutsalCompeticoes(){
-
-  const container =
-    document.getElementById("gamesList");
-
-  if(!container) return;
-
-  const competicoes = [
-    "🇵🇹 Liga Placard",
-    "🇵🇹 Liga Feminina Placard",
-    "🏆 Taça de Portugal",
-    "🏆 Taça da Liga",
-    "🏆 Supertaça",
-    "🇪🇺 UEFA Futsal Champions League"
-  ];
-
-  container.innerHTML = `
-    <div class="tableTitle">
-      Competições de Futsal
-    </div>
-
-    <div class="competitionGrid">
-
-      ${competicoes.map((nome,i)=>`
-        <button
-          class="competitionCard"
-          onclick="selecionarCompeticaoFutsal(${i})">
-          <span>${esc(nome)}</span>
-          <b>›</b>
-        </button>
-      `).join("")}
-
-    </div>
-  `;
-}
-
-
-function selecionarCompeticaoFutsal(i){
-
-  if(i===0){
-    renderFutsalJogos();
-    return;
-  }
-
-  const container =
-    document.getElementById("gamesList");
-
-  if(!container) return;
-
-  const nomes = [
-    "Liga Placard",
-    "Liga Feminina Placard",
-    "Taça de Portugal",
-    "Taça da Liga",
-    "Supertaça",
-    "UEFA Futsal Champions League"
-  ];
-
-  container.innerHTML = `
-    <div class="emptyState">
-      <div class="emptyIcon">🥅</div>
-      <h3>${esc(nomes[i])}</h3>
-      <p>
-        Informação desta competição
-        será apresentada aqui.
-      </p>
-    </div>
-  `;
-}
-
-
-/* =========================================================
-   FUTSAL — NAVEGAÇÃO
-   ========================================================= */
-
-function mostrarFutsalJogos(){
-
-  desportoAtual="futsal";
-
-  renderFutsalJogos();
-}
-
-
-function mostrarFutsalTabela(){
-
-  desportoAtual="futsal";
-
-  renderFutsalTabela();
-}
-
-
-function mostrarFutsalEquipas(){
-
-  desportoAtual="futsal";
-
-  renderFutsalEquipas();
-}
-
-
-function mostrarFutsalCompeticoes(){
-
-  desportoAtual="futsal";
-
-  renderFutsalCompeticoes();
-}
-</script>
-<script>
-/* =========================================================
-   FUTZONE — PARTE 3/3
-   DETALHE DE JOGO + EQUIPAS + NAVEGAÇÃO + ARRANQUE
-   ========================================================= */
-
-
-/* =========================================================
-   DETALHE DO JOGO
-   ========================================================= */
-
-function abrirJogo(id){
-
-  const jogo =
-    jogosFutebol.find(
-      j=>String(j.id)===String(id)
-    );
-
-  if(!jogo) return;
-
-  const overlay =
-    document.getElementById("detailOverlay");
-
-  const content =
-    document.getElementById("detailContent");
-
-  if(!overlay || !content) return;
-
-  const terminado =
-    jogo.homeScore!==null &&
-    jogo.awayScore!==null;
-
-  const logoCasa =
-    jogo.home?.logo
-      ? `<img src="${esc(jogo.home.logo)}" alt="">`
-      : `<span class="detailLogo">⚽</span>`;
-
-  const logoFora =
-    jogo.away?.logo
-      ? `<img src="${esc(jogo.away.logo)}" alt="">`
-      : `<span class="detailLogo">⚽</span>`;
-
-  content.innerHTML = `
-
-    <div class="detailHeader">
-
-      <button
-        class="backBtn"
-        onclick="fecharDetalhe()">
-        ← Voltar
-      </button>
-
-      <span>
-        ${esc(LIGAS[jogo.league] || "Futebol")}
-      </span>
-
-    </div>
-
-    <div class="matchHero">
-
-      <div class="detailTeam">
-
-        ${logoCasa}
-
-        <strong>
-          ${esc(jogo.home?.name || "Casa")}
-        </strong>
-
-      </div>
-
-      <div class="detailScore">
-
-        ${
-          terminado
-            ? `
-              <strong>
-                ${jogo.homeScore}
-                -
-                ${jogo.awayScore}
-              </strong>
-            `
-            : `
-              <strong>
-                ${esc(formatarHoraJogo(jogo))}
-              </strong>
-            `
-        }
+      <div class="cardTop">
 
         <span>
-          ${
-            terminado
-              ? "FINAL"
-              : esc(formatarDataJogo(jogo))
-          }
+          ${esc(
+            getLiga(jogo.league).curta
+          )}
         </span>
 
+        <button
+          class="star ${
+            favorito
+              ? "active"
+              : ""
+          }"
+          onclick="
+            event.stopPropagation();
+            toggleFavoritoJogo('${esc(jogo.id)}')
+          ">
+
+          ${favorito ? "★" : "☆"}
+
+        </button>
+
       </div>
 
-      <div class="detailTeam">
+      <div class="teams">
 
-        ${logoFora}
+        <div class="team">
 
-        <strong>
-          ${esc(jogo.away?.name || "Fora")}
-        </strong>
+          ${
+            jogo.home.logo
+              ? `
+                <img
+                  src="${esc(jogo.home.logo)}"
+                  alt="">
+              `
+              : ""
+          }
+
+          ${esc(jogo.home.name)}
+
+        </div>
+
+        ${centro}
+
+        <div class="team">
+
+          ${
+            jogo.away.logo
+              ? `
+                <img
+                  src="${esc(jogo.away.logo)}"
+                  alt="">
+              `
+              : ""
+          }
+
+          ${esc(jogo.away.name)}
+
+        </div>
 
       </div>
 
-    </div>
-
-    <div class="detailSections">
-
-      <section class="detailBox">
-
-        <h3>Informação do jogo</h3>
-
-        <div class="infoLine">
-          <span>Competição</span>
-          <strong>
-            ${esc(LIGAS[jogo.league] || "Futebol")}
-          </strong>
-        </div>
-
-        <div class="infoLine">
-          <span>Data</span>
-          <strong>
-            ${esc(formatarDataJogo(jogo))}
-          </strong>
-        </div>
-
-        <div class="infoLine">
-          <span>Hora</span>
-          <strong>
-            ${esc(formatarHoraJogo(jogo))}
-          </strong>
-        </div>
-
-        ${
-          jogo.venue
+      ${
+        jogo.state === "upcoming"
           ? `
-            <div class="infoLine">
-              <span>Estádio</span>
-              <strong>${esc(jogo.venue)}</strong>
+            <div
+              style="
+                text-align:center;
+                color:var(--muted);
+                font-size:10px;
+                margin-top:8px;
+              ">
+              ${esc(hora)}
             </div>
           `
           : ""
-        }
-
-      </section>
-
-      <section class="detailBox">
-
-        <h3>Estado</h3>
-
-        <div class="detailStatus">
-          ${
-            estadoJogo(jogo)==="live"
-              ? "🔴 AO VIVO"
-              : terminado
-                ? "🏁 JOGO TERMINADO"
-                : "🕐 PRÓXIMO JOGO"
-          }
-        </div>
-
-      </section>
+      }
 
     </div>
+
   `;
 
-  overlay.classList.add("show");
-  overlay.style.display="block";
-}
-
-
-function fecharDetalhe(){
-
-  const overlay =
-    document.getElementById("detailOverlay");
-
-  if(!overlay) return;
-
-  overlay.classList.remove("show");
-  overlay.style.display="none";
 }
 
 
 /* =========================================================
-   EQUIPAS
+   JOGOS FUTSAL
    ========================================================= */
 
-function abrirEquipa(nome){
+function renderListaFutsal(){
 
-  const container =
-    document.getElementById("gamesList");
-
-  if(!container) return;
-
-  const fav =
-    favoritosEquipas.has(nome);
-
-  const jogos =
-    jogosFutebol.filter(j=>
-      j.home?.name===nome ||
-      j.away?.name===nome
+  const lista =
+    document.getElementById(
+      "gamesList"
     );
 
-  container.innerHTML = `
-
-    <div class="teamProfile">
-
-      <div class="teamProfileLogo">⚽</div>
-
-      <h2>${esc(nome)}</h2>
-
-      <button
-        class="primaryBtn"
-        onclick="toggleFavoritoEquipa('${esc(nome)}')">
-        ${fav
-          ? "★ Remover dos favoritos"
-          : "☆ Adicionar aos favoritos"}
-      </button>
-
-    </div>
-
-    <div class="tableTitle">
-      Jogos
-    </div>
-
-    ${
-      jogos.length
-      ? jogos.map(renderGameCard).join("")
-      : `
-        <div class="emptyState">
-          <p>
-            Não existem jogos disponíveis
-            para esta equipa.
-          </p>
-        </div>
-      `
-    }
-  `;
-}
-
-
-function mostrarEquipas(){
-
-  if(desportoAtual==="futsal"){
-    renderFutsalEquipas();
+  if(!lista){
     return;
   }
 
-  const container =
-    document.getElementById("gamesList");
+  let jogos =
+    getFutsalGames();
 
-  if(!container) return;
+  if(filtroAtual === "hoje"){
 
-  const nomes = new Set();
+    const agora =
+      new Date();
 
-  jogosFutebol.forEach(j=>{
-    if(j.home?.name) nomes.add(j.home.name);
-    if(j.away?.name) nomes.add(j.away.name);
-  });
+    jogos =
+      jogos.filter(
+        function(jogo){
+
+          const d =
+            new Date(jogo.date);
+
+          return (
+            d.getFullYear() ===
+              agora.getFullYear()
+            &&
+            d.getMonth() ===
+              agora.getMonth()
+            &&
+            d.getDate() ===
+              agora.getDate()
+          );
+
+        }
+      );
+
+  }
+
+  else if(filtroAtual === "proximos"){
+
+    jogos =
+      jogos.filter(
+        jogo =>
+          jogo.state === "upcoming"
+      );
+
+  }
+
+  else if(filtroAtual === "resultados"){
+
+    jogos =
+      jogos.filter(
+        jogo =>
+          jogo.state === "finished"
+      );
+
+  }
+
+  const input =
+    document.getElementById(
+      "searchInput"
+    );
+
+  const pesquisa =
+    input
+      ? input.value.trim().toLowerCase()
+      : "";
+
+  if(pesquisa){
+
+    jogos =
+      jogos.filter(
+        function(jogo){
+
+          return (
+            jogo.home.name
+              .toLowerCase()
+              .includes(pesquisa)
+            ||
+            jogo.away.name
+              .toLowerCase()
+              .includes(pesquisa)
+          );
+
+        }
+      );
+
+  }
+
+  jogos =
+    ordenarJogos(jogos);
+
+  if(!jogos.length){
+
+    lista.innerHTML = `
+      <div class="empty">
+        Não existem jogos para mostrar.
+      </div>
+    `;
+
+    return;
+
+  }
+
+  lista.innerHTML =
+    jogos.map(
+      renderJogoCard
+    ).join("");
+
+}
+
+
+/* =========================================================
+   PÁGINA JOGOS
+   ========================================================= */
+
+async function mostrarJogos(){
+
+  paginaAtual = "jogos";
+
+  nav("navJogos");
+
+  renderCabecalhoJogos();
 
   const lista =
-    [...nomes].sort();
+    document.getElementById(
+      "gamesList"
+    );
 
-  container.innerHTML = `
-    <div class="tableTitle">
-      Equipas
+  if(desportoAtual === "futsal"){
+
+    renderListaFutsal();
+
+    return;
+
+  }
+
+  lista.innerHTML =
+    `<div class="loading">
+       ⏳ A carregar jogos...
+     </div>`;
+
+  jogosFutebol =
+    await carregarJogosLiga(
+      ligaAtual
+    );
+
+  renderListaJogos();
+
+}
+
+
+/* =========================================================
+   TABELA
+   ========================================================= */
+
+function tabelaHTML(linhas){
+
+  if(!linhas || !linhas.length){
+
+    return `
+      <div class="empty">
+        Classificação indisponível.
+      </div>
+    `;
+
+  }
+
+  return `
+
+    <div class="tableWrap">
+
+      <table>
+
+        <thead>
+
+          <tr>
+            <th>#</th>
+            <th>Equipa</th>
+            <th>J</th>
+            <th>V</th>
+            <th>E</th>
+            <th>D</th>
+            <th>GM</th>
+            <th>GS</th>
+            <th>Pts</th>
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          ${
+            linhas.map(
+              function(row,index){
+
+                return `
+
+                  <tr>
+
+                    <td>
+                      <strong>
+                        ${index + 1}
+                      </strong>
+                    </td>
+
+                    <td>
+                      ${esc(row[0])}
+                    </td>
+
+                    <td>${row[1]}</td>
+                    <td>${row[2]}</td>
+                    <td>${row[3]}</td>
+                    <td>${row[4]}</td>
+                    <td>${row[5]}</td>
+                    <td>${row[6]}</td>
+
+                    <td>
+                      <strong>
+                        ${row[7]}
+                      </strong>
+                    </td>
+
+                  </tr>
+
+                `;
+
+              }
+            ).join("")
+          }
+
+        </tbody>
+
+      </table>
+
     </div>
 
-    <div class="teamGrid">
+  `;
 
-      ${
-        lista.length
-        ? lista.map(nome=>{
+}
 
-            const fav =
-              favoritosEquipas.has(nome);
 
-            return `
-              <div
-                class="teamCard"
-                onclick="abrirEquipa('${esc(nome)}')">
+/* =========================================================
+   CALCULAR TABELA FUTSAL
+   ========================================================= */
 
-                <div class="teamCardLogo">
-                  ⚽
-                </div>
+function tabelaFutsal(){
 
-                <div class="teamCardName">
-                  ${esc(nome)}
-                </div>
+  const mapa = {};
 
-                <button
-                  class="starBtn ${fav ? "active":""}"
-                  onclick="
-                    event.stopPropagation();
-                    toggleFavoritoEquipa('${esc(nome)}')
-                  ">
-                  ${fav ? "★":"☆"}
-                </button>
+  FUTSAL_TEAMS.forEach(
+    function(nome){
 
-              </div>
-            `;
+      mapa[
+        normalizarNome(nome)
+      ] = {
 
-          }).join("")
-        : `
-          <div class="emptyState">
-            <p>
-              Carregue primeiro os jogos
-              para visualizar as equipas.
-            </p>
-          </div>
-        `
+        nome:nome,
+        j:0,
+        v:0,
+        e:0,
+        d:0,
+        gm:0,
+        gs:0,
+        pts:0
+
+      };
+
+    }
+  );
+
+  FUTSAL_GAMES.forEach(
+    function(row){
+
+      const casa =
+        mapa[
+          normalizarNome(row[1])
+        ];
+
+      const fora =
+        mapa[
+          normalizarNome(row[2])
+        ];
+
+      if(
+        !casa ||
+        !fora ||
+        row[3] === null ||
+        row[4] === null
+      ){
+        return;
       }
 
+      const gc =
+        Number(row[3]);
+
+      const gf =
+        Number(row[4]);
+
+      casa.j++;
+      fora.j++;
+
+      casa.gm += gc;
+      casa.gs += gf;
+
+      fora.gm += gf;
+      fora.gs += gc;
+
+      if(gc > gf){
+
+        casa.v++;
+        casa.pts += 3;
+        fora.d++;
+
+      }
+      else if(gc < gf){
+
+        fora.v++;
+        fora.pts += 3;
+        casa.d++;
+
+      }
+      else{
+
+        casa.e++;
+        fora.e++;
+
+        casa.pts++;
+        fora.pts++;
+
+      }
+
+    }
+  );
+
+  return Object.values(mapa)
+    .sort(
+      function(a,b){
+
+        if(b.pts !== a.pts){
+          return b.pts - a.pts;
+        }
+
+        const dgA =
+          a.gm - a.gs;
+
+        const dgB =
+          b.gm - b.gs;
+
+        return dgB - dgA;
+
+      }
+    )
+    .map(
+      function(t){
+
+        return [
+          t.nome,
+          t.j,
+          t.v,
+          t.e,
+          t.d,
+          t.gm,
+          t.gs,
+          t.pts
+        ];
+
+      }
+    );
+
+}
+
+
+/* =========================================================
+   TABELAS — FUTEBOL
+   ========================================================= */
+
+function mostrarTabelas(){
+
+  paginaAtual = "tabelas";
+
+  nav("navTabelas");
+
+  const main =
+    document.getElementById(
+      "main"
+    );
+
+  const liga =
+    getLiga(ligaAtual);
+
+  if(desportoAtual === "futsal"){
+
+    main.innerHTML = `
+
+      <div class="sectionTitle">
+        🥅 Liga Placard Futsal
+      </div>
+
+      <div class="sectionSub">
+        Classificação com resultados confirmados.
+      </div>
+
+      ${tabelaHTML(
+        tabelaFutsal()
+      )}
+
+    `;
+
+    return;
+
+  }
+
+  const dados =
+    FALLBACK[ligaAtual];
+
+  main.innerHTML = `
+
+    <div class="sectionTitle">
+      🏆 ${esc(liga.nome)}
     </div>
+
   `;
+
+  if(ligaAtual === "por.3"){
+
+    main.innerHTML += `
+
+      <div class="section">
+
+        <h3>
+          Grupo A
+        </h3>
+
+        ${tabelaHTML(
+          dados?.groupA || []
+        )}
+
+      </div>
+
+      <div class="section">
+
+        <h3>
+          Grupo B
+        </h3>
+
+        ${tabelaHTML(
+          dados?.groupB || []
+        )}
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+  if(dados?.table){
+
+    main.innerHTML +=
+      tabelaHTML(
+        dados.table
+      );
+
+    return;
+
+  }
+
+  main.innerHTML += `
+
+    <div class="notice">
+
+      A classificação desta competição
+      será carregada automaticamente quando
+      estiver disponível na ESPN.
+
+    </div>
+
+  `;
+
 }
 
 
@@ -1998,343 +4764,658 @@ function mostrarEquipas(){
 
 function mostrarFavoritos(){
 
-  const container =
-    document.getElementById("gamesList");
+  paginaAtual = "favoritos";
 
-  if(!container) return;
+  nav("navFav");
 
-  const jogos =
-    jogosFutebol.filter(j=>
-      favoritosJogos.has(String(j.id))
+  const main =
+    document.getElementById(
+      "main"
     );
 
-  const equipas =
-    [...favoritosEquipas];
+  if(desportoAtual === "futsal"){
 
-  container.innerHTML = `
+    const jogos =
+      getFutsalGames()
+        .filter(
+          jogo =>
+            isFavoritoJogo(jogo.id)
+        );
 
-    <div class="tableTitle">
+    main.innerHTML = `
+
+      <div class="sectionTitle">
+        ⭐ Jogos favoritos
+      </div>
+
+      ${
+        jogos.length
+          ? jogos.map(
+              renderJogoCard
+            ).join("")
+          : `
+            <div class="empty">
+              Ainda não tens jogos favoritos.
+            </div>
+          `
+      }
+
+    `;
+
+    return;
+
+  }
+
+  const jogos =
+    jogosFutebol.filter(
+      jogo =>
+        isFavoritoJogo(jogo.id)
+    );
+
+  main.innerHTML = `
+
+    <div class="sectionTitle">
       ⭐ Jogos favoritos
     </div>
 
     ${
       jogos.length
-      ? jogos.map(renderGameCard).join("")
-      : `
-        <div class="emptyState">
-          <div class="emptyIcon">⭐</div>
-          <h3>Sem jogos favoritos</h3>
-          <p>
-            Toque na estrela de um jogo
-            para o guardar aqui.
-          </p>
-        </div>
-      `
+        ? jogos.map(
+            renderJogoCard
+          ).join("")
+        : `
+          <div class="empty">
+            Ainda não tens jogos favoritos.
+          </div>
+        `
     }
 
-    <div class="tableTitle favoritosEquipasTitle">
-      ⭐ Equipas favoritas
-    </div>
-
-    ${
-      equipas.length
-      ? `
-        <div class="teamGrid">
-          ${equipas.map(nome=>`
-            <div
-              class="teamCard"
-              onclick="abrirEquipa('${esc(nome)}')">
-
-              <div class="teamCardLogo">⚽</div>
-
-              <div class="teamCardName">
-                ${esc(nome)}
-              </div>
-
-              <button
-                class="starBtn active"
-                onclick="
-                  event.stopPropagation();
-                  toggleFavoritoEquipa('${esc(nome)}')
-                ">
-                ★
-              </button>
-
-            </div>
-          `).join("")}
-        </div>
-      `
-      : `
-        <div class="emptyState">
-          <p>
-            Ainda não existem equipas favoritas.
-          </p>
-        </div>
-      `
-    }
   `;
+
 }
 
 
 /* =========================================================
-   NAVEGAÇÃO PRINCIPAL
+   EQUIPAS
    ========================================================= */
 
-function ativarNav(id){
+function listaEquipasFutebol(){
 
-  document
-    .querySelectorAll(".bottomNav button")
-    .forEach(btn=>{
-      btn.classList.remove("active");
-    });
+  const nomes = [];
 
-  const btn =
-    document.getElementById(id);
+  jogosFutebol.forEach(
+    function(jogo){
 
-  if(btn){
-    btn.classList.add("active");
-  }
+      if(
+        jogo.home?.name &&
+        !nomes.some(
+          x =>
+            normalizarNome(x) ===
+            normalizarNome(jogo.home.name)
+        )
+      ){
+        nomes.push(
+          jogo.home.name
+        );
+      }
+
+      if(
+        jogo.away?.name &&
+        !nomes.some(
+          x =>
+            normalizarNome(x) ===
+            normalizarNome(jogo.away.name)
+        )
+      ){
+        nomes.push(
+          jogo.away.name
+        );
+      }
+
+    }
+  );
+
+  return nomes.sort(
+    function(a,b){
+      return a.localeCompare(
+        b,
+        "pt-PT"
+      );
+    }
+  );
+
 }
 
 
-function nav(section){
+function mostrarEquipas(){
 
-  if(section==="jogos"){
+  paginaAtual = "equipas";
 
-    ativarNav("navJogos");
+  nav("navEquipas");
 
-    desportoAtual="futebol";
+  const main =
+    document.getElementById(
+      "main"
+    );
 
-    const main =
-      document.getElementById("mainContent");
+  let equipas =
+    desportoAtual === "futsal"
+      ? FUTSAL_TEAMS.slice()
+      : listaEquipasFutebol();
 
-    if(main) main.style.display="block";
+  equipas =
+    equipas.sort(
+      function(a,b){
+        return a.localeCompare(
+          b,
+          "pt-PT"
+        );
+      }
+    );
 
-    carregarJogos();
+  main.innerHTML = `
 
+    <div class="sectionTitle">
+      👥 Equipas
+    </div>
+
+    <div class="sectionSub">
+      ${desportoAtual === "futsal"
+        ? "Equipas da Liga Placard."
+        : "Equipas encontradas nos jogos carregados."}
+    </div>
+
+    <div class="teamList">
+
+      ${
+        equipas.length
+          ? equipas.map(
+              renderEquipaBox
+            ).join("")
+          : `
+            <div class="empty">
+              Ainda não existem equipas carregadas.
+            </div>
+          `
+      }
+
+    </div>
+
+  `;
+
+}
+
+
+function renderEquipaBox(nome){
+
+  const favorita =
+    isFavoritaEquipa(nome);
+
+  return `
+
+    <div
+      class="teamBox"
+      onclick="abrirEquipa('${esc(nome)}')">
+
+      <button
+        class="star ${
+          favorita
+            ? "active"
+            : ""
+        }"
+        onclick="
+          event.stopPropagation();
+          toggleFavoritaEquipa('${esc(nome)}')
+        ">
+
+        ${favorita ? "★" : "☆"}
+
+      </button>
+
+      <strong>
+        ${esc(nome)}
+      </strong>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================================
+   ABRIR EQUIPA
+   ========================================================= */
+
+function abrirEquipa(nome){
+
+  const overlay =
+    document.getElementById(
+      "overlay"
+    );
+
+  const content =
+    document.getElementById(
+      "overlayContent"
+    );
+
+  let jogos = [];
+
+  if(desportoAtual === "futsal"){
+
+    jogos =
+      getFutsalGames()
+        .filter(
+          function(jogo){
+
+            return (
+              normalizarNome(
+                jogo.home.name
+              ) === normalizarNome(nome)
+              ||
+              normalizarNome(
+                jogo.away.name
+              ) === normalizarNome(nome)
+            );
+
+          }
+        );
+
+  }
+  else{
+
+    jogos =
+      jogosFutebol.filter(
+        function(jogo){
+
+          return (
+            normalizarNome(
+              jogo.home.name
+            ) === normalizarNome(nome)
+            ||
+            normalizarNome(
+              jogo.away.name
+            ) === normalizarNome(nome)
+          );
+
+        }
+      );
+
+  }
+
+  content.innerHTML = `
+
+    <div class="detailTitle">
+      ${esc(nome)}
+    </div>
+
+    <div class="section">
+
+      <h3>
+        ⭐ Favorito
+      </h3>
+
+      <button
+        class="smallBtn ${
+          isFavoritaEquipa(nome)
+            ? "active"
+            : ""
+        }"
+        onclick="
+          toggleFavoritaEquipa('${esc(nome)}');
+          abrirEquipa('${esc(nome)}');
+        ">
+
+        ${
+          isFavoritaEquipa(nome)
+            ? "★ Equipa favorita"
+            : "☆ Adicionar aos favoritos"
+        }
+
+      </button>
+
+    </div>
+
+    <div class="section">
+
+      <h3>
+        Jogos
+      </h3>
+
+      ${
+        jogos.length
+          ? jogos.map(
+              renderJogoCard
+            ).join("")
+          : `
+            <div class="empty">
+              Não existem jogos carregados
+              para esta equipa.
+            </div>
+          `
+      }
+
+    </div>
+
+  `;
+
+  overlay.classList.add(
+    "show"
+  );
+
+}
+
+
+/* =========================================================
+   ABRIR JOGO
+   ========================================================= */
+
+function abrirJogo(id){
+
+  let jogo =
+    jogosFutebol.find(
+      x =>
+        String(x.id) === String(id)
+    );
+
+  if(!jogo){
+
+    jogo =
+      getFutsalGames().find(
+        x =>
+          String(x.id) === String(id)
+      );
+
+  }
+
+  if(!jogo){
     return;
   }
 
-  if(section==="tabelas"){
+  const overlay =
+    document.getElementById(
+      "overlay"
+    );
 
-    ativarNav("navTabelas");
+  const content =
+    document.getElementById(
+      "overlayContent"
+    );
 
-    if(desportoAtual==="futsal"){
-      renderFutsalTabela();
-    }else{
-      carregarTabela();
-    }
+  const favorito =
+    isFavoritoJogo(jogo.id);
 
-    return;
+  let resultado =
+    "Por começar";
+
+  if(
+    jogo.homeScore !== null &&
+    jogo.awayScore !== null
+  ){
+
+    resultado =
+      jogo.homeScore +
+      " - " +
+      jogo.awayScore;
+
   }
 
-  if(section==="favoritos"){
+  content.innerHTML = `
 
-    ativarNav("navFav");
+    <div
+      class="detailTitle"
+      style="text-align:center">
+
+      ${esc(jogo.home.name)}
+      <br>
+
+      <span
+        style="
+          color:var(--blue2);
+          font-size:28px;
+          display:block;
+          margin:8px 0;
+        ">
+
+        ${esc(resultado)}
+
+      </span>
+
+      ${esc(jogo.away.name)}
+
+    </div>
+
+    <div
+      class="section"
+      style="text-align:center">
+
+      <div
+        style="
+          color:${
+            jogo.state === "live"
+              ? "var(--red)"
+              : "var(--muted)"
+          };
+          font-weight:900;
+          margin-bottom:8px;
+        ">
+
+        ${esc(
+          textoEstado(jogo)
+        )}
+
+      </div>
+
+      <div
+        style="
+          color:var(--muted);
+          font-size:12px;
+        ">
+
+        ${esc(
+          dataTexto(jogo.date)
+        )}
+
+      </div>
+
+    </div>
+
+    <div
+      class="section"
+      style="text-align:center">
+
+      <button
+        class="smallBtn ${
+          favorito
+            ? "active"
+            : ""
+        }"
+        onclick="
+          toggleFavoritoJogo('${esc(jogo.id)}');
+          abrirJogo('${esc(jogo.id)}');
+        ">
+
+        ${
+          favorito
+            ? "★ Jogo favorito"
+            : "☆ Adicionar aos favoritos"
+        }
+
+      </button>
+
+    </div>
+
+    <div class="section">
+
+      <h3>
+        📊 Informações
+      </h3>
+
+      <div class="notice">
+
+        Competição:
+        <strong>
+          ${esc(
+            getLiga(jogo.league).nome
+          )}
+        </strong>
+
+        <br><br>
+
+        ${
+          jogo.state === "finished"
+            ? "Jogo terminado."
+            : jogo.state === "live"
+              ? "Jogo a decorrer."
+              : "Jogo ainda não começou."
+        }
+
+      </div>
+
+    </div>
+
+  `;
+
+  overlay.classList.add(
+    "show"
+  );
+
+}
+
+
+/* =========================================================
+   FECHAR DETALHE
+   ========================================================= */
+
+function fecharDetalhe(){
+
+  document
+    .getElementById(
+      "overlay"
+    )
+    .classList.remove(
+      "show"
+    );
+
+}
+
+
+/* =========================================================
+   RENDERIZAR PÁGINA ATUAL
+   ========================================================= */
+
+function renderPaginaAtual(){
+
+  if(paginaAtual === "tabelas"){
+
+    mostrarTabelas();
+
+    return;
+
+  }
+
+  if(paginaAtual === "favoritos"){
 
     mostrarFavoritos();
 
     return;
+
   }
+
+  if(paginaAtual === "equipas"){
+
+    mostrarEquipas();
+
+    return;
+
+  }
+
+  mostrarJogos();
+
 }
 
 
 /* =========================================================
-   DESPORTO — FUTEBOL / FUTSAL
+   ARRANQUE DA APP
    ========================================================= */
 
-function mudarDesporto(tipo){
+async function iniciarApp(){
 
-  desportoAtual=tipo;
+  try{
 
-  const futebolBtn =
-    document.getElementById("btnFutebol");
+    desportoAtual = "futebol";
 
-  const futsalBtn =
-    document.getElementById("btnFutsal");
+    ligaAtual = "por.1";
 
-  if(futebolBtn){
-    futebolBtn.classList.toggle(
-      "active",
-      tipo==="futebol"
-    );
+    filtroAtual = "todos";
+
+    paginaAtual = "jogos";
+
+    document
+      .getElementById(
+        "btnFutebol"
+      )
+      .classList.add("active");
+
+    document
+      .getElementById(
+        "btnFutsal"
+      )
+      .classList.remove("active");
+
+    await mostrarJogos();
+
   }
+  catch(erro){
 
-  if(futsalBtn){
-    futsalBtn.classList.toggle(
-      "active",
-      tipo==="futsal"
+    console.error(
+      "Erro ao iniciar FUTZONE:",
+      erro
     );
-  }
 
-  const leagues =
-    document.getElementById("leagueList");
+    const main =
+      document.getElementById(
+        "main"
+      );
 
-  if(leagues){
+    if(main){
 
-    if(tipo==="futebol"){
+      main.innerHTML = `
 
-      renderCompeticoes();
+        <div class="errorBox">
 
-    }else{
+          <strong>
+            FUTZONE iniciou com um erro.
+          </strong>
 
-      leagues.innerHTML = `
-        <button
-          class="leagueChip active"
-          onclick="mostrarFutsalJogos()">
-          🇵🇹 Liga Placard
-        </button>
+          <br><br>
 
-        <button
-          class="leagueChip"
-          onclick="mostrarFutsalTabela()">
-          📊 Classificação
-        </button>
+          Atualiza a página e tenta novamente.
 
-        <button
-          class="leagueChip"
-          onclick="mostrarFutsalEquipas()">
-          👥 Equipas
-        </button>
+        </div>
 
-        <button
-          class="leagueChip"
-          onclick="mostrarFutsalCompeticoes()">
-          🏆 Competições
-        </button>
       `;
+
     }
+
   }
 
-  if(tipo==="futsal"){
-
-    mostrarFutsalJogos();
-
-  }else{
-
-    carregarJogos();
-  }
 }
 
 
 /* =========================================================
-   CABEÇALHO
+   INICIAR
    ========================================================= */
-
-function renderHeader(){
-
-  const title =
-    document.getElementById("sectionTitle");
-
-  if(title){
-
-    if(desportoAtual==="futsal"){
-      title.textContent="Futsal";
-    }else{
-      title.textContent =
-        LIGAS[ligaAtual] ||
-        "Jogos";
-    }
-  }
-}
-
-
-/* =========================================================
-   BASE DA APLICAÇÃO
-   ========================================================= */
-
-function renderBase(){
-
-  renderCompeticoes();
-
-  const input =
-    document.getElementById("searchInput");
-
-  if(input){
-
-    input.addEventListener(
-      "input",
-      ()=>{
-        if(desportoAtual==="futebol"){
-          mostrarJogos();
-        }
-      }
-    );
-  }
-
-  document
-    .querySelectorAll(".filterBtn")
-    .forEach(btn=>{
-      btn.addEventListener("click",()=>{
-        setFiltro(
-          btn.dataset.filter || "all"
-        );
-      });
-    });
-
-  const btnFutebol =
-    document.getElementById("btnFutebol");
-
-  const btnFutsal =
-    document.getElementById("btnFutsal");
-
-  if(btnFutebol){
-    btnFutebol.onclick=()=>{
-      mudarDesporto("futebol");
-    };
-  }
-
-  if(btnFutsal){
-    btnFutsal.onclick=()=>{
-      mudarDesporto("futsal");
-    };
-  }
-
-  const navJogos =
-    document.getElementById("navJogos");
-
-  const navTabelas =
-    document.getElementById("navTabelas");
-
-  const navFav =
-    document.getElementById("navFav");
-
-  if(navJogos){
-    navJogos.onclick=()=>{
-      nav("jogos");
-    };
-  }
-
-  if(navTabelas){
-    navTabelas.onclick=()=>{
-      nav("tabelas");
-    };
-  }
-
-  if(navFav){
-    navFav.onclick=()=>{
-      nav("favoritos");
-    };
-  }
-
-  renderHeader();
-}
-
-
-/* =========================================================
-   ARRANQUE
-   ========================================================= */
-
-corrigirResultadosFutsal();
-
-renderBase();
-
-carregarJogos();
 
 document.addEventListener(
-  "gesturestart",
-  e=>e.preventDefault()
+  "DOMContentLoaded",
+  iniciarApp
 );
+
+
+/* =========================================================
+   FECHO DO JAVASCRIPT
+   ========================================================= */
 
 </script>
 
