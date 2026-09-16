@@ -1921,17 +1921,42 @@ async function carregarJogos(){
   let eventos=[];
 
   if(
-    modoResultados
-  ){
+  modoResultados
+){
 
-    box.innerHTML=
-      `<div class="loading">
-        <div class="spinner"></div>
+  box.innerHTML=
+    `<div class="loading">
+      <div class="spinner"></div>
+      <div>
         A procurar resultados dos últimos 30 dias...
-      </div>`;
+      </div>
+      <div class="smallNote" style="margin-top:8px">
+        ${escapeHtml(
+          ligas.find(
+            x=>x[0]===ligaSelecionada
+          )?.[1] ||
+          "Competição selecionada"
+        )}
+      </div>
+    </div>`;
 
-    eventos=
-      await buscarResultadosTodasLigas();
+  /*
+    Importante:
+    os resultados são procurados apenas
+    na competição selecionada.
+    
+    Assim evitamos dezenas/centenas de
+    pedidos simultâneos e garantimos que
+    o histórico da liga é realmente carregado.
+  */
+
+  eventos=
+    await buscarResultadosHistoricosLiga(
+      ligaSelecionada,
+      RESULTADOS_DIAS
+    );
+
+  }
 
   }else if(
     modoTodos ||
