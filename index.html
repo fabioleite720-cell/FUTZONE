@@ -3562,7 +3562,102 @@ async function buscarHistoricoEventlog(
 
     );
 
+    respostas.forEach((data,indice)=>{
 
+      if(!data) return;
+
+      const ano=grupo[indice];
+
+      const equipas=
+        extrairEquipasEventlog(data);
+
+      equipas.forEach(e=>{
+
+        historico.push({
+
+          id:e.id,
+
+          nome:e.nome,
+
+          logo:e.logo,
+
+          ano:ano
+
+        });
+
+      });
+
+    });
+
+
+    if(i+2<anos.length){
+
+      await new Promise(
+        resolve=>setTimeout(resolve,80)
+      );
+
+    }
+
+  }
+
+
+  /*
+    Agrupar por clube
+  */
+
+  const mapa=new Map();
+
+  historico.forEach(item=>{
+
+    const chave=
+      item.id ||
+      item.nome.toLowerCase();
+
+    if(!chave) return;
+
+    if(!mapa.has(chave)){
+
+      mapa.set(chave,{
+
+        id:item.id,
+
+        nome:item.nome,
+
+        logo:item.logo,
+
+        anos:[item.ano]
+
+      });
+
+    }else{
+
+      const atual=mapa.get(chave);
+
+      if(!atual.anos.includes(item.ano)){
+
+        atual.anos.push(item.ano);
+
+      }
+
+      if(!atual.logo && item.logo){
+
+        atual.logo=item.logo;
+
+      }
+
+    }
+
+  });
+
+
+  return [...mapa.values()]
+    .sort(
+      (a,b)=>
+        Math.max(...b.anos)-
+        Math.max(...a.anos)
+    );
+
+      }
     respostas.forEach((data,indice)=>{
 
       if(!data) return;
