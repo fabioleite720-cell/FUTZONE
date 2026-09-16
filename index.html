@@ -3219,6 +3219,72 @@ async function buscarPerfilJogador(
 
   const urls=[
 
+    /*
+      Perfil Core
+    */
+
+    CORE_API+
+    encodeURIComponent(liga)+
+    "/athletes/"+
+    encodeURIComponent(id),
+
+    /*
+      Perfil Web
+    */
+
+    "https://site.web.api.espn.com/apis/common/v3/sports/soccer/"+
+    encodeURIComponent(liga)+
+    "/athletes/"+
+    encodeURIComponent(id)+
+    "/bio",
+
+    "https://site.web.api.espn.com/apis/common/v3/sports/soccer/"+
+    encodeURIComponent(liga)+
+    "/athletes/"+
+    encodeURIComponent(id)+
+    "/overview",
+
+    /*
+      Endpoint alternativo
+    */
+
+    API+
+    encodeURIComponent(liga)+
+    "/athletes/"+
+    encodeURIComponent(id)
+
+  ];
+
+  let perfil=null;
+
+  for(
+    const url of urls
+  ){
+
+    const data=
+      await fetchAPI(
+        url,
+        7000,
+        300000
+      );
+
+    if(data){
+
+      perfil=data;
+      break;
+
+    }
+
+  }
+
+  return perfil;
+
+}
+
+  if(!id) return null;
+
+  const urls=[
+
     CORE_API+
     encodeURIComponent(liga)+
     "/athletes/"+
