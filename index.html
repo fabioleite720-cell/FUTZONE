@@ -1330,129 +1330,176 @@ function renderizarJogos(){
 
 function cartaoJogo(e){
 
- const competitors=Array.isArray(e.competitors)
-   ?e.competitors
-   :[];
+  const competitors=Array.isArray(e?.competitors)
+    ?e.competitors
+    :[];
 
- const home=
-   competitors.find(x=>x.homeAway==="home") ||
-   competitors[0] ||
-   {};
+  let home=
+    competitors.find(x=>x.homeAway==="home") ||
+    competitors[0] ||
+    null;
 
- const away=
-   competitors.find(x=>x.homeAway==="away") ||
-   competitors[1] ||
-   {};
+  let away=
+    competitors.find(x=>x.homeAway==="away") ||
+    competitors[1] ||
+    null;
 
- const homeName=nomeEquipa(home);
- const awayName=nomeEquipa(away);
+  const homeName=nomeEquipa(home);
+  const awayName=nomeEquipa(away);
 
- const homeLogo=logoEquipa(home);
- const awayLogo=logoEquipa(away);
+  /*
+   * Não mostrar cartões incompletos.
+   * Evita aparecer "⚽ Equipa".
+   */
+  if(!homeName || !awayName){
+    return "";
+  }
 
- const live=isLive(e);
- const final=isFinal(e);
+  const homeLogo=logoEquipa(home);
+  const awayLogo=logoEquipa(away);
 
- const hs=
-   home.score ??
-   home.scoreValue ??
-   "";
+  const live=isLive(e);
+  const final=isFinal(e);
 
- const as=
-   away.score ??
-   away.scoreValue ??
-   "";
+  const hs=
+    home?.score ??
+    home?.scoreValue ??
+    "";
 
- const estado=
-   live
-   ?"AO VIVO"
-   :final
-   ?"FINAL"
-   :horaEvento(e);
+  const as=
+    away?.score ??
+    away?.scoreValue ??
+    "";
 
- const favorito=
-   favoritosJogos.map(String)
-   .includes(String(e.id));
+  const estado=
+    live
+      ?"AO VIVO"
+      :final
+        ?"FINAL"
+        :horaEvento(e);
 
- const liga=e.__futzoneLiga||ligaAtual;
+  const favorito=
+    favoritosJogos
+      .map(String)
+      .includes(String(e.id));
 
- return `
- <article
-   class="gameCard"
-   onclick="abrirJogo('${escapeHtml(e.id)}')">
+  const liga=e.__futzoneLiga || ligaAtual;
 
-   <div class="gameTop">
-     <span class="competition">
-       ${escapeHtml(
-         e.competitions?.[0]?.name ||
-         getCompeticao(liga)
-       )}
-     </span>
+  return `
+  <article
+    class="gameCard"
+    onclick="abrirJogo('${escapeHtml(e.id)}')">
 
-     <button
-       class="favBtn"
-       onclick="event.stopPropagation();toggleFavoritoJogo('${escapeHtml(e.id)}')">
-       ${favorito?"★":"☆"}
-     </button>
-   </div>
+    <div class="gameTop">
 
-   <div class="gameDate">
-     ${dataCurta(e.date)}
-   </div>
+      <span class="competition">
+        ${escapeHtml(
+          e.competitions?.[0]?.name ||
+          getCompeticao(liga)
+        )}
+      </span>
 
-   <div class="teams">
+      <button
+        class="favBtn"
+        onclick="
+          event.stopPropagation();
+          toggleFavoritoJogo('${escapeHtml(e.id)}')
+        ">
+        ${favorito ? "★" : "☆"}
+      </button>
 
-     <div
-       class="team"
-       onclick="event.stopPropagation();fzAbrirEquipa('${escapeHtml(idEquipa(home))}','${escapeHtml(homeName)}','${escapeHtml(homeLogo)}','${escapeHtml(liga)}')">
+    </div>
 
-       ${
-         homeLogo
-         ?`<img src="${escapeHtml(homeLogo)}" loading="lazy" alt="">`
-         :`<div class="teamLogo">⚽</div>`
-       }
+    <div class="gameDate">
+      ${escapeHtml(dataCurta(e.date))}
+    </div>
 
-       <span>${escapeHtml(homeName)}</span>
-     </div>
+    <div class="teams">
 
-     <div class="scoreBox">
+      <div
+        class="team"
+        onclick="
+          event.stopPropagation();
+          fzAbrirEquipa(
+            '${escapeHtml(idEquipa(home))}',
+            '${escapeHtml(homeName)}',
+            '${escapeHtml(homeLogo)}',
+            '${escapeHtml(liga)}'
+          )
+        ">
 
-       <div class="matchState ${live?"live":""}">
-         ${escapeHtml(estado)}
-       </div>
+        ${
+          homeLogo
+            ? `<img
+                 src="${escapeHtml(homeLogo)}"
+                 loading="lazy"
+                 alt="">`
+            : `<div class="teamLogo">⚽</div>`
+        }
 
-       <strong>
-         ${
-           final||live
-           ?escapeHtml(String(hs))+
-            " - "+
-            escapeHtml(String(as))
-           :"VS"
-         }
-       </strong>
+        <span>
+          ${escapeHtml(homeName)}
+        </span>
 
-     </div>
+      </div>
 
-     <div
-       class="team"
-       onclick="event.stopPropagation();fzAbrirEquipa('${escapeHtml(idEquipa(away))}','${escapeHtml(awayName)}','${escapeHtml(awayLogo)}','${escapeHtml(liga)}')">
+      <div class="scoreBox">
 
-       ${
-         awayLogo
-         ?`<img src="${escapeHtml(awayLogo)}" loading="lazy" alt="">`
-         :`<div class="teamLogo">⚽</div>`
-       }
+        <div class="matchState ${live ? "live" : ""}">
+          ${escapeHtml(estado)}
+        </div>
 
-       <span>${escapeHtml(awayName)}</span>
-     </div>
+        <strong>
+          ${
+            final || live
+              ? escapeHtml(String(hs)) +
+                " - " +
+                escapeHtml(String(as))
+              : "VS"
+          }
+        </strong>
 
-   </div>
+      </div>
 
-   ${live?`<div class="liveBar">● EM DIRETO</div>`:""}
+      <div
+        class="team"
+        onclick="
+          event.stopPropagation();
+          fzAbrirEquipa(
+            '${escapeHtml(idEquipa(away))}',
+            '${escapeHtml(awayName)}',
+            '${escapeHtml(awayLogo)}',
+            '${escapeHtml(liga)}'
+          )
+        ">
 
- </article>`;
+        ${
+          awayLogo
+            ? `<img
+                 src="${escapeHtml(awayLogo)}"
+                 loading="lazy"
+                 alt="">`
+            : `<div class="teamLogo">⚽</div>`
+        }
+
+        <span>
+          ${escapeHtml(awayName)}
+        </span>
+
+      </div>
+
+    </div>
+
+    ${
+      live
+        ? `<div class="liveBar">
+             ● EM DIRETO
+           </div>`
+        : ""
+    }
+
+  </article>`;
 }
-
 /* =========================================================
    FAVORITOS
    ========================================================= */
