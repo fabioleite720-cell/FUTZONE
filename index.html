@@ -1621,120 +1621,150 @@ async function buscarJogosLiga(
   );
 
 }
-
 /* =========================================================
-   RESULTADOS — ÚLTIMOS 30 DIAS
+   RESULTADOS — HISTÓRICO DIÁRIO
    ========================================================= */
 
-async function buscarJogosPeriodoLiga(
+const RESULTADOS_DIAS = 30;
+const RESULTADOS_GRUPO = 5;
+
+function dataOffset(iso, delta){
+
+  const base =
+    iso ||
+    dataHoje();
+
+  const d =
+    new Date(
+      base+"T12:00:00"
+    );
+
+  d.setDate(
+    d.getDate()+delta
+  );
+
+  return d
+    .toISOString()
+    .slice(0,10);
+
+}
+
+async function buscarJogosDiaHistorico(
   liga,
-  inicio,
-  fim
+  iso
 ){
 
-  const inicioApi =
-    inicio.replaceAll("-","");
-
-  const fimApi =
-    fim.replaceAll("-","");
+  const range =
+    iso.replaceAll("-","");
 
   const url =
     API+
     encodeURIComponent(liga)+
     "/scoreboard?dates="+
-    inicioApi+
-    "-"+
-    fimApi+
-    "&limit=500";
+    range+
+    "&limit=100";
 
   const json =
     await fetchAPI(
       url,
-      15000,
-      120000
+      9000,
+      60000
     );
 
   if(
     !json ||
     !Array.isArray(json.events)
   ){
+
     return [];
+
   }
 
   return deduplicarEventos(
     json.events
       .map(
-        e=>normalizarEvento(
-          e,
-          liga
-        )
+        e=>
+          normalizarEvento(
+            e,
+            liga
+          )
       )
       .filter(
-        e=>e && isFinal(e)
+        e=>
+          e &&
+          isFinal(e)
       )
   );
 
 }
 
-async function buscarResultadosTodasLigas(){
+async function buscarResultadosHistoricosLiga(
+  liga,
+  dias=RESULTADOS_DIAS
+){
 
-  const hoje=dataHoje();
+  const base =
+    diaSelecionado ||
+    dataHoje();
 
-  const inicio=
-    adicionarDiasISO(
-      hoje,
-      -30
+  const datas=[];
+
+  for(
+    let i=1;
+    i<=dias;
+    i++
+  ){
+
+    datas.push(
+      dataOffset(
+        base,
+        -i
+      )
     );
+
+  }
 
   const resultados=[];
 
-  /*
-    Fazemos apenas um pedido por liga,
-    usando intervalo de datas.
-    As ligas são processadas em grupos
-    para não bloquear o telemóvel.
-  */
-
-  const tamanhoGrupo=4;
-
   for(
     let i=0;
-    i<ligas.length;
-    i+=tamanhoGrupo
+    i<datas.length;
+    i+=RESULTADOS_GRUPO
   ){
 
-    const grupo=
-      ligas.slice(
+    const grupo =
+      datas.slice(
         i,
-        i+tamanhoGrupo
+        i+RESULTADOS_GRUPO
       );
 
-    const grupoResultados=
+    const respostas =
       await Promise.all(
         grupo.map(
-          x=>
-            buscarJogosPeriodoLiga(
-              x[0],
-              inicio,
-              hoje
+          data=>
+            buscarJogosDiaHistorico(
+              liga,
+              data
             )
         )
       );
 
-    grupoResultados.forEach(
+    respostas.forEach(
       lista=>{
-        resultados.push(...lista);
+        resultados.push(
+          ...lista
+        );
       }
     );
 
     /*
-      Pequena pausa entre grupos.
-      Evita disparar todos os pedidos
-      simultaneamente no telemóvel.
+      Pequena pausa para não
+      sobrecarregar o telemóvel.
     */
 
     if(
-      i+tamanhoGrupo<ligas.length
+      i+RESULTADOS_GRUPO<
+      datas.length
     ){
 
       await new Promise(
@@ -1759,8 +1789,7 @@ async function buscarResultadosTodasLigas(){
         new Date(a.date||0)
     );
 
-}
-
+    }
 /* =========================================================
    FALLBACK
    ========================================================= */
