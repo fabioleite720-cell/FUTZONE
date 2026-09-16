@@ -758,54 +758,61 @@ function horaEvento(e){
 }
 
 function nomeEquipa(c){
- if(!c)return "Equipa";
+  if(!c) return "";
 
- const t=c.team||c;
+  const t=c.team || c;
 
- return t.displayName ||
- t.shortDisplayName ||
- t.name ||
- c.displayName ||
- c.shortDisplayName ||
- c.name ||
- "Equipa";
+  const candidatos=[
+    t.displayName,
+    t.fullName,
+    t.shortDisplayName,
+    t.name,
+    c.displayName,
+    c.fullName,
+    c.shortDisplayName,
+    c.name
+  ];
+
+  for(const nome of candidatos){
+    if(nome && String(nome).trim()){
+      return String(nome).trim();
+    }
+  }
+
+  if(t.location && t.name){
+    return String(t.location+" "+t.name).trim();
+  }
+
+  return "";
 }
 
 function idEquipa(c){
- return String(
-   c?.team?.id ||
-   c?.id ||
-   ""
- );
+  if(!c) return "";
+
+  return String(
+    c.team?.id ||
+    c.id ||
+    c.team?.uid ||
+    ""
+  );
 }
 
 function logoEquipa(c){
- const t=c?.team||c;
- return t?.logo ||
- t?.logos?.[0]?.href ||
- t?.logos?.[0]?.url ||
- c?.logo ||
- c?.logos?.[0]?.href ||
- "";
+  if(!c) return "";
+
+  const t=c.team || c;
+
+  return (
+    t.logo ||
+    t.logos?.[0]?.href ||
+    t.logos?.[0]?.url ||
+    c.logo ||
+    c.logos?.[0]?.href ||
+    c.logos?.[0]?.url ||
+    ""
+  );
 }
 
-function getCompeticao(id){
- const x=ligas.find(a=>a[0]===id);
- return x?x[1]:"Futebol";
-}
-
-function isLive(e){
- const s=e?.status?.type||{};
- return !!(
-   s.state==="in" ||
-   s.state==="live" ||
-   s.name==="STATUS_IN_PROGRESS" ||
-   s.name==="STATUS_HALFTIME" ||
-   /LIVE|IN_PROGRESS|HALFTIME|IN_PLAY/i.test(
-     (s.name||"")+" "+(s.description||"")
-   )
- );
-}
 
 function isFinal(e){
  const s=e?.status?.type||{};
