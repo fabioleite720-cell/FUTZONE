@@ -3205,7 +3205,6 @@ async function buscarPlantelEquipa(
   );
 
 }
-
 /* =========================================================
    JOGADOR
    ========================================================= */
@@ -3219,18 +3218,10 @@ async function buscarPerfilJogador(
 
   const urls=[
 
-    /*
-      Perfil Core
-    */
-
     CORE_API+
     encodeURIComponent(liga)+
     "/athletes/"+
     encodeURIComponent(id),
-
-    /*
-      Perfil Web
-    */
 
     "https://site.web.api.espn.com/apis/common/v3/sports/soccer/"+
     encodeURIComponent(liga)+
@@ -3244,10 +3235,6 @@ async function buscarPerfilJogador(
     encodeURIComponent(id)+
     "/overview",
 
-    /*
-      Endpoint alternativo
-    */
-
     API+
     encodeURIComponent(liga)+
     "/athletes/"+
@@ -3255,177 +3242,62 @@ async function buscarPerfilJogador(
 
   ];
 
-  let perfil=null;
+  for(const url of urls){
 
-  for(
-    const url of urls
-  ){
+    try{
 
-    const data=
-      await fetchAPI(
+      const data=await fetchAPI(url,7000,300000);
+
+      if(data) return data;
+
+    }catch(e){
+
+      console.warn(
+        "FUTZONE: falha ao carregar perfil do jogador",
         url,
-        7000,
-        300000
+        e
       );
-
-    if(data){
-
-      perfil=data;
-      break;
-
-    }
-
-  }
-
-  return perfil;
-
-}
-
-  if(!id) return null;
-
-  const urls=[
-
-    CORE_API+
-    encodeURIComponent(liga)+
-    "/athletes/"+
-    encodeURIComponent(id),
-
-    API+
-    encodeURIComponent(liga)+
-    "/athletes/"+
-    encodeURIComponent(id),
-
-    "https://sports.core.api.espn.com/v2/sports/soccer/athletes/"+
-    encodeURIComponent(id)
-
-  ];
-
-  for(
-    const url of urls
-  ){
-
-    const data=
-      await fetchAPI(
-        url,
-        7000,
-        300000
-      );
-
-    if(data){
-
-      return data;
 
     }
 
   }
 
   return null;
+}
+
+
+/* =========================================================
+   HISTÓRICO DO JOGADOR — ESPN EVENTLOG
+   ========================================================= */
+
+function obterAnoAtual(){
+
+  return new Date().getFullYear();
 
 }
 
-function extrairHistoricoJogador(
-  data
-){
 
-  if(!data) return [];
+function extrairIDRef(valor){
 
-  const candidatos=[
+  if(!valor) return "";
 
-    data?.teamHistory,
-    data?.formerTeams,
-    data?.teams,
-    data?.athlete?.teamHistory,
-    data?.athlete?.formerTeams,
-    data?.athlete?.teams,
-    data?.history,
-    data?.athlete?.history
+  if(typeof valor==="string"){
 
-  ];
+    const m=valor.match(/\/(\d+)(?:\/)?$/);
 
-  for(
-    const arr of candidatos
-  ){
-
-    if(
-      !Array.isArray(arr)
-    ){
-      continue;
-    }
-
-    const resultado=
-      arr
-        .map(
-          x=>{
-
-            const team=
-              x?.team ||
-              x;
-
-            return {
-
-              clube:
-                team?.displayName ||
-                team?.fullName ||
-                team?.shortDisplayName ||
-                team?.name ||
-                x?.teamName ||
-                "",
-
-              inicio:
-                x?.startDate ||
-                x?.startYear ||
-                "",
-
-              fim:
-                x?.endDate ||
-                x?.endYear ||
-                "",
-
-              liga:
-                x?.league?.displayName ||
-                x?.league?.name ||
-                ""
-
-            };
-
-          }
-        )
-        .filter(
-          x=>x.clube
-        );
-
-    if(resultado.length){
-
-      return resultado;
-
-    }
+    return m ? m[1] : "";
 
   }
 
-  return [];
+  if(typeof valor==="object"){
 
-}
+    if(valor.id) return String(valor.id);
 
-function obterValorPerfil(
-  data,
-  nomes
-){
+    if(valor.$ref){
 
-  for(
-    const nome of nomes
-  ){
+      const m=String(valor.$ref).match(/\/(\d+)(?:\/)?$/);
 
-    const valor=
-      data?.[nome] ??
-      data?.athlete?.[nome];
-
-    if(
-      valor!==undefined &&
-      valor!==null &&
-      String(valor).trim()!==""
-    ){
-
-      return valor;
+      return m ? m[1] : "";
 
     }
 
@@ -3435,327 +3307,358 @@ function obterValorPerfil(
 
 }
 
-async function abrirJogador(
-  jogador
-){
 
-  if(!jogador) return;
+function extrairEquipasEventlog(data){
 
-  const nome=
-    jogador.nome ||
-    "Jogador";
+  const equipas=[];
 
-  const liga=
-    jogador.liga ||
-    ligaSelecionada;
+  if(!data) return equipas;
 
-  const foto=
-    safeUrl(
-      jogador.foto
-    );
 
-  const clube=
-    jogador.clube ||
-    jogador.teamName ||
-    "";
+  function adicionarEquipa(t){
 
-  const posicao=
-    jogador.posicao ||
-    "";
+    if(!t) return;
 
-  const numero=
-    jogador.numero ||
-    "";
+    if(typeof t==="string"){
 
-  abrirOverlayBase(
-    nome,
-    `
-
-    <div class="playerProfile">
-
-      ${
-        foto
-          ? `<img
-               class="playerPhoto"
-               src="${escapeHtml(foto)}"
-               onerror="this.style.display='none'"
-               alt="">`
-          : `<div class="playerInitial">
-               ${escapeHtml(
-                 nome
-                   .trim()
-                   .charAt(0)
-                   .toUpperCase()
-               )}
-             </div>`
-      }
-
-      <h2>
-        ${escapeHtml(nome)}
-      </h2>
-
-      ${
-        posicao
-          ? `<p>
-               Posição: ${escapeHtml(posicao)}
-             </p>`
-          : ""
-      }
-
-      ${
-        numero
-          ? `<p>
-               Número: ${escapeHtml(numero)}
-             </p>`
-          : ""
-      }
-
-      ${
-        clube
-          ? `<p>
-               Clube: ${escapeHtml(clube)}
-             </p>`
-          : ""
-      }
-
-    </div>
-
-    <div class="detailSection">
-
-      <h3>Histórico do jogador</h3>
-
-      <div id="playerHistory">
-
-        <div class="loading">
-          <div class="spinner"></div>
-          A carregar histórico...
-        </div>
-
-      </div>
-
-    </div>
-
-    `,
-    true
-  );
-
-  /*
-    O pedido tem timeout próprio.
-    Se a fonte não responder, a página
-    continua perfeitamente utilizável.
-  */
-
-  try{
-
-    const perfil=
-      await buscarPerfilJogador(
-        liga,
-        jogador.id
-      );
-
-    /*
-      O utilizador pode ter carregado
-      entretanto noutro jogador.
-      Não fazemos nada se o overlay
-      já tiver mudado.
-    */
-
-    const historyBox=
-      document.getElementById(
-        "playerHistory"
-      );
-
-    if(!historyBox){
-      return;
-    }
-
-    if(!perfil){
-
-      historyBox.innerHTML=
-        `<div class="empty"
-              style="margin:0">
-
-          Histórico não disponível
-          para este jogador na fonte
-          de dados.
-
-        </div>`;
+      equipas.push({
+        id:extrairIDRef(t),
+        nome:"",
+        logo:""
+      });
 
       return;
 
     }
 
-    const historico=
-      extrairHistoricoJogador(
-        perfil
-      );
+    if(typeof t!=="object") return;
 
-    /*
-      Alguns perfis trazem estes dados
-      diretamente.
-    */
+    const id=
+      t.id ||
+      extrairIDRef(t.$ref) ||
+      extrairIDRef(t.href);
 
-    const nacionalidade=
-      obterValorPerfil(
-        perfil,
-        [
-          "nationality",
-          "citizenship"
-        ]
-      );
+    const nome=
+      t.displayName ||
+      t.name ||
+      t.shortDisplayName ||
+      t.abbreviation ||
+      "";
 
-    const nascimento=
-      obterValorPerfil(
-        perfil,
-        [
-          "dateOfBirth",
-          "birthDate"
-        ]
-      );
+    const logo=
+      t.logo ||
+      t.logos?.[0]?.href ||
+      "";
 
-    let html="";
+    if(id || nome){
 
-    if(
-      nacionalidade ||
-      nascimento
-    ){
-
-      html+=
-        `<div class="eventRow">`;
-
-      if(nacionalidade){
-
-        html+=
-          `🌍 ${escapeHtml(
-            typeof nacionalidade==="object"
-              ? (
-                  nacionalidade.displayName ||
-                  nacionalidade.name ||
-                  ""
-                )
-              : nacionalidade
-          )}`;
-
-      }
-
-      if(
-        nascimento
-      ){
-
-        html+=
-          `${
-            nacionalidade
-              ? " · "
-              : ""
-          }🎂 ${escapeHtml(
-            nascimento
-          )}`;
-
-      }
-
-      html+=
-        `</div>`;
-
-    }
-
-    if(historico.length){
-
-      html+=
-        historico
-          .map(
-            item=>
-              `<div class="historyItem">
-
-                <strong>
-                  ${escapeHtml(
-                    item.clube
-                  )}
-                </strong>
-
-                ${
-                  item.inicio ||
-                  item.fim
-                    ? `<small>
-                         ${escapeHtml(
-                           item.inicio || ""
-                         )}
-                         ${
-                           item.inicio &&
-                           item.fim
-                             ? " — "
-                             : ""
-                         }
-                         ${escapeHtml(
-                           item.fim || ""
-                         )}
-                       </small>`
-                    : ""
-                }
-
-                ${
-                  item.liga
-                    ? `<small>
-                         ${escapeHtml(
-                           item.liga
-                         )}
-                       </small>`
-                    : ""
-                }
-
-              </div>`
-          )
-          .join("");
-
-    }else{
-
-      html+=
-        `<div class="empty"
-              style="margin:0">
-
-          <strong>
-            Histórico não disponível
-          </strong>
-
-          <div style="margin-top:7px">
-            A fonte disponibiliza o perfil
-            deste jogador, mas não forneceu
-            o histórico dos clubes.
-          </div>
-
-        </div>`;
-
-    }
-
-    historyBox.innerHTML=html;
-
-  }catch(error){
-
-    console.warn(
-      "FUTZONE jogador:",
-      error
-    );
-
-    const historyBox=
-      document.getElementById(
-        "playerHistory"
-      );
-
-    if(historyBox){
-
-      historyBox.innerHTML=
-        `<div class="empty"
-              style="margin:0">
-
-          Histórico temporariamente
-          indisponível.
-
-        </div>`;
+      equipas.push({
+        id:id ? String(id) : "",
+        nome,
+        logo
+      });
 
     }
 
   }
 
+
+  /*
+    Eventlog pode trazer equipas diretamente
+  */
+
+  if(Array.isArray(data.teams)){
+
+    data.teams.forEach(adicionarEquipa);
+
+  }else if(data.teams && typeof data.teams==="object"){
+
+    Object.values(data.teams).forEach(adicionarEquipa);
+
+  }
+
+
+  /*
+    Algumas respostas trazem os jogos dentro de events/items
+  */
+
+  const eventos=[];
+
+  if(Array.isArray(data.events)){
+
+    eventos.push(...data.events);
+
+  }
+
+  if(Array.isArray(data.items)){
+
+    eventos.push(...data.items);
+
+  }
+
+  if(Array.isArray(data.events?.items)){
+
+    eventos.push(...data.events.items);
+
+  }
+
+
+  for(const evento of eventos){
+
+    if(!evento || typeof evento!=="object") continue;
+
+    const competicoes=
+      Array.isArray(evento.competitions)
+        ? evento.competitions
+        : [];
+
+    for(const comp of competicoes){
+
+      const comps=
+        Array.isArray(comp?.competitors)
+          ? comp.competitors
+          : [];
+
+      for(const c of comps){
+
+        adicionarEquipa(
+          c?.team ||
+          c
+        );
+
+      }
+
+    }
+
+  }
+
+
+  /*
+    Remover duplicados
+  */
+
+  const mapa=new Map();
+
+  equipas.forEach(e=>{
+
+    const chave=
+      e.id ||
+      e.nome.toLowerCase();
+
+    if(!chave) return;
+
+    const anterior=mapa.get(chave);
+
+    if(!anterior){
+
+      mapa.set(chave,e);
+
+    }else{
+
+      mapa.set(chave,{
+        id:anterior.id || e.id,
+        nome:anterior.nome || e.nome,
+        logo:anterior.logo || e.logo
+      });
+
+    }
+
+  });
+
+
+  return [...mapa.values()];
+
 }
+
+
+async function buscarEventlogJogador(
+  liga,
+  id,
+  ano
+){
+
+  if(!id || !ano) return null;
+
+
+  const url=
+    CORE_API+
+    encodeURIComponent(liga)+
+    "/seasons/"+
+    encodeURIComponent(ano)+
+    "/athletes/"+
+    encodeURIComponent(id)+
+    "/eventlog";
+
+
+  try{
+
+    return await fetchAPI(
+      url,
+      8000,
+      300000
+    );
+
+  }catch(e){
+
+    console.warn(
+      "FUTZONE eventlog:",
+      liga,
+      id,
+      ano,
+      e
+    );
+
+    return null;
+
+  }
+
+}
+
+
+async function buscarHistoricoEventlog(
+  liga,
+  id
+){
+
+  if(!id) return [];
+
+  const anoAtual=obterAnoAtual();
+
+  const anos=[];
+
+  /*
+    Procuramos a época atual e as
+    cinco anteriores.
+  */
+
+  for(let i=0;i<6;i++){
+
+    anos.push(anoAtual-i);
+
+  }
+
+
+  const historico=[];
+
+
+  /*
+    Apenas 2 épocas de cada vez para
+    não bloquear a aplicação.
+  */
+
+  for(let i=0;i<anos.length;i+=2){
+
+    const grupo=anos.slice(i,i+2);
+
+    const respostas=await Promise.all(
+
+      grupo.map(
+        ano=>buscarEventlogJogador(
+          liga,
+          id,
+          ano
+        )
+      )
+
+    );
+
+
+    respostas.forEach((data,indice)=>{
+
+      if(!data) return;
+
+      const ano=grupo[indice];
+
+      const equipas=
+        extrairEquipasEventlog(data);
+
+      equipas.forEach(e=>{
+
+        historico.push({
+
+          id:e.id,
+
+          nome:e.nome,
+
+          logo:e.logo,
+
+          ano:ano
+
+        });
+
+      });
+
+    });
+
+
+    /*
+      Pequena pausa para evitar
+      demasiados pedidos seguidos.
+    */
+
+    if(i+2<anos.length){
+
+      await new Promise(
+        resolve=>setTimeout(resolve,80)
+      );
+
+    }
+
+  }
+
+
+  /*
+    Agrupar por clube
+  */
+
+  const mapa=new Map();
+
+  historico.forEach(item=>{
+
+    const chave=
+      item.id ||
+      item.nome.toLowerCase();
+
+    if(!chave) return;
+
+    if(!mapa.has(chave)){
+
+      mapa.set(chave,{
+        id:item.id,
+        nome:item.nome,
+        logo:item.logo,
+        anos:[item.ano]
+      });
+
+    }else{
+
+      const atual=mapa.get(chave);
+
+      if(!atual.anos.includes(item.ano)){
+
+        atual.anos.push(item.ano);
+
+      }
+
+      if(!atual.logo && item.logo){
+
+        atual.logo=item.logo;
+
+      }
+
+    }
+
+  });
+
+
+  return [...mapa.values()]
+    .sort(
+      (a,b)=>
+        Math.max(...b.anos)-
+        Math.max(...a.anos)
+    );
+
+  }
 
 /* =========================================================
    EQUIPA
