@@ -2960,7 +2960,198 @@ document.addEventListener("click", function(event) {
     }
   }
 });
+/* =========================================================
+   BOTÕES PRINCIPAIS E NAVEGAÇÃO
+   ========================================================= */
 
+function FZ_ativarBotao(id, ativo=true){
+
+  const el = document.getElementById(id);
+
+  if(el){
+    el.classList.toggle("active", ativo);
+  }
+}
+
+function FZ_atualizarNavegacao(modo){
+
+  FZ_ativarBotao(
+    "btnJogos",
+    modo === "jogos"
+  );
+
+  FZ_ativarBotao(
+    "btnJornadas",
+    modo === "jornadas"
+  );
+
+  FZ_ativarBotao(
+    "btnTabelas",
+    modo === "tabelas"
+  );
+
+  FZ_ativarBotao(
+    "btnLive",
+    modo === "ao-vivo"
+  );
+
+  FZ_ativarBotao(
+    "navJogos",
+    modo === "jogos" ||
+    modo === "jornadas" ||
+    modo === "ao-vivo"
+  );
+
+  FZ_ativarBotao(
+    "navTabelas",
+    modo === "tabelas"
+  );
+}
+
+
+/* BOTÃO JOGOS */
+
+document.getElementById("btnJogos")
+?.addEventListener("click", () => {
+
+  FZ_mudarModo("jogos");
+
+});
+
+
+/* BOTÃO JORNADAS */
+
+document.getElementById("btnJornadas")
+?.addEventListener("click", () => {
+
+  FZ_mudarModo("jornadas");
+
+});
+
+
+/* BOTÃO TABELAS */
+
+document.getElementById("btnTabelas")
+?.addEventListener("click", () => {
+
+  FZ_mudarModo("tabelas");
+
+});
+
+
+/* BOTÃO AO VIVO */
+
+document.getElementById("btnLive")
+?.addEventListener("click", () => {
+
+  FZ_mudarModo("ao-vivo");
+
+});
+
+
+/* MENU INFERIOR — JOGOS */
+
+document.getElementById("navJogos")
+?.addEventListener("click", () => {
+
+  FZ_mudarModo("jogos");
+
+});
+
+
+/* MENU INFERIOR — TABELAS */
+
+document.getElementById("navTabelas")
+?.addEventListener("click", () => {
+
+  FZ_mudarModo("tabelas");
+
+});
+
+
+/* MENU INFERIOR — FAVORITOS */
+
+document.getElementById("navFavoritos")
+?.addEventListener("click", () => {
+
+  FZ_mostrarFavoritos();
+
+});
+  /* =========================================================
+   FAVORITOS
+   ========================================================= */
+
+function FZ_mostrarFavoritos(){
+
+  const conteudo =
+    document.getElementById("conteudo");
+
+  if(!conteudo) return;
+
+  FZ_modo = "favoritos";
+
+  FZ_atualizarNavegacao("favoritos");
+
+  const favoritos =
+    JSON.parse(
+      localStorage.getItem(
+        "futzone_jogos_favoritos"
+      ) || "[]"
+    );
+
+  if(!favoritos.length){
+
+    conteudo.innerHTML = `
+      <div style="
+        background:#09111C;
+        border:1px solid #252B35;
+        border-radius:15px;
+        padding:30px 15px;
+        text-align:center;
+        color:#AAB2BE;
+      ">
+
+        <div style="font-size:45px;">⭐</div>
+
+        <h3 style="color:white;">
+          Sem favoritos
+        </h3>
+
+        <p>
+          Os teus jogos favoritos vão aparecer aqui.
+        </p>
+
+      </div>
+    `;
+
+    FZ_estado("Não tens jogos favoritos.");
+
+    return;
+  }
+
+  conteudo.innerHTML = `
+    <div style="
+      background:#09111C;
+      border:1px solid #252B35;
+      border-radius:15px;
+      padding:15px;
+    ">
+
+      <h2 style="margin-top:0;">
+        ⭐ Favoritos
+      </h2>
+
+      <p style="color:#AAB2BE;">
+        Tens ${favoritos.length} favorito(s).
+      </p>
+
+    </div>
+  `;
+
+  FZ_estado(
+    `${favoritos.length} favorito(s)`
+  );
+}
 /* =========================================================
    AUTO REFRESH
    ========================================================= */
