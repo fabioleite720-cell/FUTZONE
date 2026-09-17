@@ -994,23 +994,45 @@ function FZ_cardJogo(evento, ligaId) {
 
   const comp = evento.competitions?.[0];
 
-  const competitors = comp?.competitors || [];
+  const competitors =
+    comp?.competitors || [];
 
   const casa =
-    competitors.find(x => x.homeAway === "home") ||
-    competitors[0];
+    competitors.find(
+      x => x.homeAway === "home"
+    ) || competitors[0];
 
   const fora =
-    competitors.find(x => x.homeAway === "away") ||
-    competitors[1];
+    competitors.find(
+      x => x.homeAway === "away"
+    ) || competitors[1];
 
-  const casaNome = FZ_nomeEquipa(casa?.team);
-  const foraNome = FZ_nomeEquipa(fora?.team);
+  const casaTeam =
+    casa?.team || {};
 
-  const casaLogo = FZ_logoEquipa(casa?.team);
-  const foraLogo = FZ_logoEquipa(fora?.team);
+  const foraTeam =
+    fora?.team || {};
 
-  const status = evento.status?.type;
+  const casaId =
+    casaTeam.id || "";
+
+  const foraId =
+    foraTeam.id || "";
+
+  const casaNome =
+    FZ_nomeEquipa(casaTeam);
+
+  const foraNome =
+    FZ_nomeEquipa(foraTeam);
+
+  const casaLogo =
+    FZ_logoEquipa(casaTeam);
+
+  const foraLogo =
+    FZ_logoEquipa(foraTeam);
+
+  const status =
+    evento.status?.type;
 
   const concluido =
     status?.completed === true ||
@@ -1020,38 +1042,93 @@ function FZ_cardJogo(evento, ligaId) {
     status?.state === "in" ||
     status?.name === "STATUS_IN_PROGRESS";
 
-  let hora = FZ_horaEvento(evento);
+  let hora =
+    FZ_horaEvento(evento);
 
-  if (aoVivo) {
+  if(aoVivo)
     hora = "🔴 AO VIVO";
-  }
 
-  if (concluido) {
+  if(concluido)
     hora = "FINAL";
-  }
 
   const scoreCasa =
-    casa?.score ??
-    "-";
+    casa?.score ?? "-";
 
   const scoreFora =
-    fora?.score ??
-    "-";
+    fora?.score ?? "-";
 
-  const ligaNome = FZ_nomeLiga(ligaId);
+  const ligaNome =
+    FZ_nomeLiga(ligaId);
+
+
+  /*
+    GUARDA A LIGA REAL DA EQUIPA
+  */
+
+  const ligaEquipa =
+    ligaId ||
+    FZ_ligaSelecionada;
+
+
+  /*
+    CLIQUE NA EQUIPA
+  */
+
+  const abrirCasa = `
+    onclick="event.stopPropagation();
+    window.FZ_abrirEquipaSeguro
+      ? FZ_abrirEquipaSeguro(
+          '${FZ_escape(casaId)}',
+          '${FZ_escape(casaNome)}',
+          '${FZ_escape(ligaEquipa)}'
+        )
+      : FZ_abrirEquipa(
+          '${FZ_escape(casaId)}',
+          '${FZ_escape(casaNome)}'
+        )"
+  `;
+
+
+  const abrirFora = `
+    onclick="event.stopPropagation();
+    window.FZ_abrirEquipaSeguro
+      ? FZ_abrirEquipaSeguro(
+          '${FZ_escape(foraId)}',
+          '${FZ_escape(foraNome)}',
+          '${FZ_escape(ligaEquipa)}'
+        )
+      : FZ_abrirEquipa(
+          '${FZ_escape(foraId)}',
+          '${FZ_escape(foraNome)}'
+        )"
+  `;
+
 
   return `
+
     <div
       class="fz-game-card"
       style="
         background:#09111C;
-        border:1px solid ${aoVivo ? "#722F37" : "#1B2635"};
+        border:1px solid ${
+          aoVivo
+          ? "#722F37"
+          : "#1B2635"
+        };
         border-radius:15px;
         padding:12px;
         margin:8px 0;
-        box-shadow:0 3px 12px rgba(0,0,0,.25);
+        box-shadow:
+          0 3px 12px
+          rgba(0,0,0,.25);
+        cursor:pointer;
       "
-      onclick="FZ_abrirJogoSeguro('${FZ_escape(evento.id)}','${FZ_escape(ligaId)}')"
+      onclick="
+        FZ_abrirJogoSeguro(
+          '${FZ_escape(evento.id)}',
+          '${FZ_escape(ligaId)}'
+        )
+      "
     >
 
       <div style="
@@ -1062,36 +1139,92 @@ function FZ_cardJogo(evento, ligaId) {
         font-size:11px;
         margin-bottom:10px;
       ">
-        <span>${FZ_escape(ligaNome)}</span>
+
+        <span>
+          ${FZ_escape(ligaNome)}
+        </span>
+
         <strong style="
-          color:${aoVivo ? "#FF4054" : concluido ? "#9DAABB" : "#1683FF"};
+          color:${
+            aoVivo
+            ? "#FF4054"
+            : concluido
+            ? "#9DAABB"
+            : "#1683FF"
+          };
         ">
-          ${hora}
+          ${FZ_escape(hora)}
         </strong>
+
       </div>
+
 
       <div style="
         display:grid;
-        grid-template-columns:1fr 55px 1fr;
+        grid-template-columns:
+          1fr 55px 1fr;
         align-items:center;
         gap:6px;
       ">
 
-        <div style="
-          text-align:center;
-          color:white;
-          font-weight:700;
-        ">
+
+        <!-- EQUIPA CASA -->
+
+        <div
+          ${abrirCasa}
+          style="
+            text-align:center;
+            color:white;
+            font-weight:700;
+            cursor:pointer;
+            border-radius:10px;
+            padding:5px;
+          "
+          onmouseover="
+            this.style.background=
+            'rgba(114,47,55,.25)'
+          "
+          onmouseout="
+            this.style.background='transparent'
+          "
+        >
 
           ${
             casaLogo
-            ? `<img src="${FZ_escape(casaLogo)}"
-                    style="width:38px;height:38px;object-fit:contain;display:block;margin:auto auto 5px;">`
-            : `<div style="height:43px;"></div>`
+            ? `
+              <img
+                src="${FZ_escape(casaLogo)}"
+                alt=""
+                style="
+                  width:38px;
+                  height:38px;
+                  object-fit:contain;
+                  display:block;
+                  margin:auto auto 5px;
+                "
+              >
+            `
+            : `
+              <div style="
+                height:43px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                font-size:22px;
+              ">
+                ⚽
+              </div>
+            `
           }
 
-          <div>${FZ_escape(casaNome)}</div>
+          <div>
+            ${FZ_escape(casaNome)}
+          </div>
+
         </div>
+
+
+        <!-- RESULTADO -->
 
         <div style="
           text-align:center;
@@ -1099,30 +1232,82 @@ function FZ_cardJogo(evento, ligaId) {
           font-weight:900;
           color:white;
         ">
-          ${scoreCasa}
+
+          ${FZ_escape(scoreCasa)}
+
           <br>
-          <span style="font-size:12px;color:#9DAABB;">-</span>
+
+          <span style="
+            font-size:12px;
+            color:#9DAABB;
+          ">
+            -
+          </span>
+
           <br>
-          ${scoreFora}
+
+          ${FZ_escape(scoreFora)}
+
         </div>
 
-        <div style="
-          text-align:center;
-          color:white;
-          font-weight:700;
-        ">
+
+        <!-- EQUIPA FORA -->
+
+        <div
+          ${abrirFora}
+          style="
+            text-align:center;
+            color:white;
+            font-weight:700;
+            cursor:pointer;
+            border-radius:10px;
+            padding:5px;
+          "
+          onmouseover="
+            this.style.background=
+            'rgba(114,47,55,.25)'
+          "
+          onmouseout="
+            this.style.background='transparent'
+          "
+        >
 
           ${
             foraLogo
-            ? `<img src="${FZ_escape(foraLogo)}"
-                    style="width:38px;height:38px;object-fit:contain;display:block;margin:auto auto 5px;">`
-            : `<div style="height:43px;"></div>`
+            ? `
+              <img
+                src="${FZ_escape(foraLogo)}"
+                alt=""
+                style="
+                  width:38px;
+                  height:38px;
+                  object-fit:contain;
+                  display:block;
+                  margin:auto auto 5px;
+                "
+              >
+            `
+            : `
+              <div style="
+                height:43px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                font-size:22px;
+              ">
+                ⚽
+              </div>
+            `
           }
 
-          <div>${FZ_escape(foraNome)}</div>
+          <div>
+            ${FZ_escape(foraNome)}
+          </div>
+
         </div>
 
       </div>
+
 
       ${
         aoVivo
@@ -1144,9 +1329,9 @@ function FZ_cardJogo(evento, ligaId) {
       }
 
     </div>
-  `;
-}
 
+  `;
+  }
 /* =========================================================
    ABRIR JOGO
    ========================================================= */
@@ -5221,6 +5406,29 @@ window.FZ_abrirJogo =
   }
 
 })();
+    window.FZ_abrirEquipaSeguro =
+  async function(id, nome, liga){
+
+    if(!id)
+      return;
+
+    if(liga && liga !== "ALL"){
+
+      window.FZ_ultimaLigaEquipa =
+        liga;
+
+    }
+
+    if(typeof FZ_abrirEquipa === "function"){
+
+      await FZ_abrirEquipa(
+        id,
+        nome || "Equipa"
+      );
+
+    }
+
+  };
 </script>
 
 </body>
