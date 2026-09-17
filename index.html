@@ -1151,34 +1151,597 @@ function FZ_cardJogo(evento, ligaId) {
    ABRIR JOGO
    ========================================================= */
 
+
 async function FZ_abrirJogoSeguro(id, liga) {
 
   try {
 
-    if (typeof FZ_abrirJogo === "function") {
-      return FZ_abrirJogo(id, liga);
-    }
+    const conteudo = document.getElementById("conteudo");
+    if (!conteudo) return;
+
+    conteudo.innerHTML = `
+      <div style="
+        text-align:center;
+        padding:40px 10px;
+        color:#9DAABB;
+      ">
+        ⚽ A carregar detalhes do jogo...
+      </div>
+    `;
 
     const url =
       `${FZ_API}${liga}/summary?event=${encodeURIComponent(id)}`;
 
-    const dados = await FZ_fetch(url);
+    const data = await FZ_fetch(url);
 
-    FZ_renderDetalheBasico(dados);
+    FZ_renderDetalheBasico(data, id, liga);
 
   } catch(e) {
 
-    console.error(e);
+    console.error("FUTZONE detalhe:", e);
 
-    FZ_estado(
-      "Não foi possível abrir os detalhes deste jogo.",
-      true
-    );
+    const conteudo = document.getElementById("conteudo");
+
+    if (conteudo) {
+      conteudo.innerHTML = `
+        <div style="
+          background:#09111C;
+          border:1px solid #722F37;
+          border-radius:16px;
+          padding:22px;
+          color:white;
+          text-align:center;
+        ">
+
+          <div style="font-size:40px;">⚠️</div>
+
+          <h3>Não foi possível carregar o jogo</h3>
+
+          <p style="color:#9DAABB;">
+            Tenta novamente dentro de alguns segundos.
+          </p>
+
+          <button
+            onclick="FZ_carregarModo()"
+            style="
+              border:0;
+              border-radius:10px;
+              padding:11px 18px;
+              background:#0057B8;
+              color:white;
+              font-weight:800;
+            ">
+            ← Voltar aos jogos
+          </button>
+
+        </div>
+      `;
+    }
   }
 }
 
-function FZ_renderDetalheBasico(data) {
 
+function FZ_renderDetalheBasico(data, id, liga) {
+
+  const conteudo =
+    document.getElementById("conteudo");
+
+  if (!conteudo) return;
+
+  try {
+
+    const evento =
+      data.header?.competitions?.[0] ||
+      data.header ||
+      data.competitions?.[0] ||
+      {};
+
+    const teams =
+      evento.competitors ||
+      data.header?.competitions?.[0]?.competitors ||
+      data.competitions?.[0]?.competitors ||
+      [];
+
+    const casa =
+      teams.find(t => t.homeAway === "home") ||
+      teams[0] ||
+      {};
+
+    const fora =
+      teams.find(t => t.homeAway === "away") ||
+      teams[1] ||
+      {};
+
+    const casaTeam = casa.team || {};
+    const foraTeam = fora.team || {};
+
+    const casaNome =
+      FZ_nomeEquipa(casaTeam);
+
+    const foraNome =
+      FZ_nomeEquipa(foraTeam);
+
+    const casaLogo =
+      FZ_logoEquipa(casaTeam);
+
+    const foraLogo =
+      FZ_logoEquipa(foraTeam);
+
+    const casaScore =
+      casa.score ??
+      casa.displayValue ??
+      "-";
+
+    const foraScore =
+      fora.score ??
+      fora.displayValue ??
+      "-";
+
+    const status =
+      data.header?.competitions?.[0]?.status ||
+      evento.status ||
+      {};
+
+    const statusTipo =
+      status.type || {};
+
+    const aoVivo =
+      statusTipo.state === "in" ||
+      statusTipo.name === "STATUS_IN_PROGRESS";
+
+    const terminado =
+      statusTipo.completed === true ||
+      statusTipo.state === "post";
+
+    let estadoJogo =
+      aoVivo
+        ? "🔴 AO VIVO"
+        : terminado
+          ? "FINAL"
+          : FZ_horaEvento({
+              date:
+                data.header?.competitions?.[0]?.date ||
+                data.date
+            });
+
+    const venue =
+      data.gameInfo?.venue?.fullName ||
+      data.gameInfo?.venue?.address?.city ||
+      "";
+
+    const competicao =
+      data.header?.competitions?.[0]?.displayName ||
+      data.header?.competitions?.[0]?.name ||
+      FZ_nomeLiga(liga);
+
+    /* =====================================================
+       ESTATÍSTICAS
+       ===================================================== */
+
+    const boxscore =
+      data.boxscore ||
+      {};
+
+    const boxTeams =
+      boxscore.teams ||
+      [];
+
+    let estatisticasHTML = "";
+
+    if (boxTeams.length >= 2) {
+
+      const statsCasa =
+        boxTeams.find(x =>
+          x.homeAway === "home"
+        ) || boxTeams[0];
+
+      const statsFora =
+        boxTeams.find(x =>
+          x.homeAway === "away"
+        ) || boxTeams[1];
+
+      const listaCasa =
+        statsCasa?.statistics || [];
+
+      const listaFora =
+        statsFora?.statistics || [];
+
+      const mapaFora = {};
+
+      listaFora.forEach(stat => {
+        if (stat.name) {
+          mapaFora[stat.name] = stat;
+        }
+      });
+
+      const linhas = [];
+
+      listaCasa.forEach(stat => {
+
+        if (!stat.name) return;
+
+        const outro =
+          mapaFora[stat.name];
+
+        linhas.push(`
+          <div style="
+            display:grid;
+            grid-template-columns:70px 1fr 70px;
+            align-items:center;
+            gap:8px;
+            padding:9px 0;
+            border-bottom:1px solid #252B35;
+          ">
+
+            <strong style="text-align:right;">
+              ${FZ_escape(
+                stat.displayValue ??
+                stat.value ??
+                "-"
+              )}
+            </strong>
+
+            <span style="
+              text-align:center;
+              color:#AAB2BE;
+              font-size:12px;
+            ">
+              ${FZ_escape(
+                stat.label ||
+                stat.name ||
+                ""
+              )}
+            </span>
+
+            <strong>
+              ${FZ_escape(
+                outro?.displayValue ??
+                outro?.value ??
+                "-"
+              )}
+            </strong>
+
+          </div>
+        `);
+      });
+
+      if (linhas.length) {
+
+        estatisticasHTML = `
+          <section style="
+            margin-top:15px;
+            background:#09111C;
+            border:1px solid #252B35;
+            border-radius:15px;
+            padding:14px;
+          ">
+
+            <h3 style="
+              margin:0 0 12px;
+              font-size:16px;
+            ">
+              📊 Estatísticas
+            </h3>
+
+            <div style="
+              display:grid;
+              grid-template-columns:1fr 1fr;
+              margin-bottom:8px;
+              font-size:11px;
+              color:#AAB2BE;
+            ">
+              <span style="text-align:right;padding-right:15px;">
+                ${FZ_escape(casaNome)}
+              </span>
+
+              <span style="padding-left:15px;">
+                ${FZ_escape(foraNome)}
+              </span>
+            </div>
+
+            ${linhas.join("")}
+
+          </section>
+        `;
+      }
+    }
+
+    /* =====================================================
+       EVENTOS
+       ===================================================== */
+
+    const plays =
+      Array.isArray(data.plays)
+        ? data.plays
+        : [];
+
+    let eventosHTML = "";
+
+    if (plays.length) {
+
+      eventosHTML = `
+        <section style="
+          margin-top:15px;
+          background:#09111C;
+          border:1px solid #252B35;
+          border-radius:15px;
+          padding:14px;
+        ">
+
+          <h3 style="
+            margin:0 0 12px;
+            font-size:16px;
+          ">
+            ⚡ Eventos
+          </h3>
+
+          ${plays.slice(-80).reverse().map(play => {
+
+            const texto =
+              play.text ||
+              play.shortText ||
+              play.type?.text ||
+              "";
+
+            if (!texto) return "";
+
+            return `
+              <div style="
+                display:flex;
+                gap:10px;
+                padding:9px 0;
+                border-bottom:1px solid #252B35;
+              ">
+
+                <strong style="
+                  width:45px;
+                  color:#FFD43B;
+                ">
+                  ${FZ_escape(
+                    play.clock?.displayValue ||
+                    play.clock?.value ||
+                    ""
+                  )}
+                </strong>
+
+                <span style="color:#E7EBF1;">
+                  ${FZ_escape(texto)}
+                </span>
+
+              </div>
+            `;
+
+          }).join("")}
+
+        </section>
+      `;
+    }
+
+    /* =====================================================
+       DETALHE
+       ===================================================== */
+
+    conteudo.innerHTML = `
+
+      <div style="
+        background:#09111C;
+        border:1px solid #252B35;
+        border-radius:17px;
+        overflow:hidden;
+      ">
+
+        <div style="
+          padding:12px;
+          border-bottom:1px solid #252B35;
+        ">
+
+          <button
+            onclick="FZ_carregarModo()"
+            style="
+              border:0;
+              border-radius:10px;
+              padding:9px 14px;
+              background:#722F37;
+              color:white;
+              font-weight:800;
+            ">
+            ← Voltar
+          </button>
+
+        </div>
+
+        <div style="
+          padding:18px 12px;
+          text-align:center;
+          background:
+            linear-gradient(
+              135deg,
+              #09111C,
+              #111923
+            );
+        ">
+
+          <div style="
+            color:#9DAABB;
+            font-size:11px;
+            font-weight:800;
+            text-transform:uppercase;
+            margin-bottom:5px;
+          ">
+            ${FZ_escape(competicao)}
+          </div>
+
+          <div style="
+            color:${aoVivo ? "#FF4054" : "#FFD43B"};
+            font-size:12px;
+            font-weight:900;
+            margin-bottom:16px;
+          ">
+            ${FZ_escape(estadoJogo)}
+          </div>
+
+          <div style="
+            display:grid;
+            grid-template-columns:1fr 90px 1fr;
+            align-items:center;
+            gap:8px;
+          ">
+
+            <div>
+
+              ${
+                casaLogo
+                  ? `
+                    <img
+                      src="${FZ_escape(casaLogo)}"
+                      style="
+                        width:65px;
+                        height:65px;
+                        object-fit:contain;
+                        display:block;
+                        margin:0 auto 8px;
+                      "
+                    >
+                  `
+                  : ""
+              }
+
+              <strong style="
+                display:block;
+                font-size:14px;
+              ">
+                ${FZ_escape(casaNome)}
+              </strong>
+
+            </div>
+
+            <div>
+
+              <div style="
+                font-size:29px;
+                font-weight:900;
+              ">
+                ${FZ_escape(casaScore)}
+                -
+                ${FZ_escape(foraScore)}
+              </div>
+
+            </div>
+
+            <div>
+
+              ${
+                foraLogo
+                  ? `
+                    <img
+                      src="${FZ_escape(foraLogo)}"
+                      style="
+                        width:65px;
+                        height:65px;
+                        object-fit:contain;
+                        display:block;
+                        margin:0 auto 8px;
+                      "
+                    >
+                  `
+                  : ""
+              }
+
+              <strong style="
+                display:block;
+                font-size:14px;
+              ">
+                ${FZ_escape(foraNome)}
+              </strong>
+
+            </div>
+
+          </div>
+
+          ${
+            venue
+              ? `
+                <div style="
+                  margin-top:15px;
+                  color:#9DAABB;
+                  font-size:11px;
+                ">
+                  📍 ${FZ_escape(venue)}
+                </div>
+              `
+              : ""
+          }
+
+        </div>
+
+      </div>
+
+      ${estatisticasHTML}
+
+      ${eventosHTML}
+
+      ${
+        !estatisticasHTML && !eventosHTML
+          ? `
+            <div style="
+              margin-top:15px;
+              background:#09111C;
+              border:1px solid #252B35;
+              border-radius:15px;
+              padding:18px;
+              text-align:center;
+              color:#AAB2BE;
+            ">
+              Os detalhes estatísticos deste jogo
+              ainda não estão disponíveis.
+            </div>
+          `
+          : ""
+      }
+
+    `;
+
+  } catch(e) {
+
+    console.error(
+      "Erro ao formatar detalhe:",
+      e
+    );
+
+    conteudo.innerHTML = `
+      <div style="
+        background:#09111C;
+        border:1px solid #722F37;
+        border-radius:15px;
+        padding:22px;
+        color:white;
+      ">
+
+        <button
+          onclick="FZ_carregarModo()"
+          style="
+            border:0;
+            border-radius:9px;
+            padding:9px 14px;
+            background:#722F37;
+            color:white;
+          ">
+          ← Voltar
+        </button>
+
+        <h3>
+          Detalhes do jogo
+        </h3>
+
+        <p style="color:#AAB2BE;">
+          O jogo foi encontrado, mas alguns
+          dados não estão disponíveis neste momento.
+        </p>
+
+      </div>
+    `;
+  }
+}
   const conteudo = document.getElementById("conteudo");
 
   if (!conteudo) return;
