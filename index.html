@@ -634,35 +634,19 @@ function FZ_hora(data) {
 
 async function FZ_fetch(url) {
 
-  const separador = url.includes("?") ? "&" : "?";
-
-  const urlFinal =
-    url +
-    separador +
-    "_fz=" +
-    Date.now() +
-    Math.random().toString(36).slice(2);
-
-  const resposta = await fetch(urlFinal, {
-    method:"GET",
-    cache:"no-store",
-    headers:{
-      "Accept":"application/json"
-    }
+  const resposta = await fetch(url, {
+    method: "GET",
+    cache: "no-store"
   });
 
   if (!resposta.ok) {
     throw new Error(
-      "Erro HTTP " +
-      resposta.status +
-      " em " +
-      url
+      "ESPN HTTP " + resposta.status
     );
   }
 
   return await resposta.json();
 }
-
 
 /* =========================================================
    NOME DA LIGA
