@@ -4448,5 +4448,519 @@ window.FZ_abrirJogo =
    ========================================================= */
   </script>
  
-  </body>
-  </html>
+  <script>
+/* =========================================================
+   FUTZONE — BLOCO 4
+   BOTÕES + NAVEGAÇÃO + FUTSAL
+   ========================================================= */
+
+(function(){
+
+  /* =======================================================
+     ESTILO DOS BOTÕES
+     ======================================================= */
+
+  const style = document.createElement("style");
+
+  style.textContent = `
+    #navTabelas,
+    #navFav,
+    #navJogos,
+    button {
+      cursor:pointer !important;
+      -webkit-tap-highlight-color:transparent;
+    }
+
+    #competicoes button,
+    #leagueList button,
+    .leagues button {
+      border:1px solid rgba(255,255,255,.10) !important;
+      outline:none !important;
+      box-shadow:none !important;
+    }
+
+    #competicoes button.active,
+    #leagueList button.active,
+    .leagues button.active {
+      background:linear-gradient(135deg,#722F37,#0057B8) !important;
+      border-color:#722F37 !important;
+      color:#fff !important;
+    }
+  `;
+
+  document.head.appendChild(style);
+
+
+  /* =======================================================
+     TEXTO DO BOTÃO
+     ======================================================= */
+
+  function texto(el){
+    return (el.innerText || el.textContent || "")
+      .replace(/\s+/g," ")
+      .trim()
+      .toUpperCase();
+  }
+
+
+  /* =======================================================
+     CLIQUES PRINCIPAIS
+     ======================================================= */
+
+  document.addEventListener("click", function(e){
+
+    const botao =
+      e.target.closest("button,a,[role='button']");
+
+    if(!botao) return;
+
+    const t = texto(botao);
+
+
+    /* ⭐ FAVORITOS */
+
+    if(
+      botao.id === "navFav" ||
+      t === "FAVORITOS" ||
+      t === "⭐ FAVORITOS"
+    ){
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      if(typeof window.FZ_mostrarFavoritos === "function"){
+        window.FZ_mostrarFavoritos();
+      }
+
+      return;
+    }
+
+
+    /* 🏆 TABELAS */
+
+    if(
+      botao.id === "navTabelas" ||
+      t === "TABELAS" ||
+      t === "🏆 TABELAS"
+    ){
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      if(typeof window.FZ_mudarModo === "function"){
+        window.FZ_mudarModo("tabelas");
+      }
+      else if(typeof window.FZ_carregarTabelas === "function"){
+        window.FZ_carregarTabelas();
+      }
+
+      return;
+    }
+
+
+    /* 📅 JORNADAS */
+
+    if(
+      t === "JORNADAS" ||
+      t === "📅 JORNADAS"
+    ){
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      if(typeof window.FZ_mudarModo === "function"){
+        window.FZ_mudarModo("jornadas");
+      }
+
+      return;
+    }
+
+
+    /* 🔴 AO VIVO */
+
+    if(
+      t === "AO VIVO" ||
+      t === "🔴 AO VIVO"
+    ){
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      if(typeof window.FZ_abrirAoVivoGlobal === "function"){
+        window.FZ_abrirAoVivoGlobal();
+      }
+      else if(typeof window.FZ_mudarModo === "function"){
+        window.FZ_mudarModo("ao-vivo");
+      }
+
+      return;
+    }
+
+
+    /* ⚽ FUTEBOL */
+
+    if(
+      t === "FUTEBOL" ||
+      t === "⚽ FUTEBOL"
+    ){
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      if(typeof window.FZ_mudarModo === "function"){
+        window.FZ_mudarModo("jogos");
+      }
+
+      return;
+    }
+
+
+    /* 🥅 FUTSAL */
+
+    if(
+      t === "FUTSAL" ||
+      t === "🥅 FUTSAL"
+    ){
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      FZ_abrirFutsal();
+
+      return;
+    }
+
+  }, true);
+
+
+  /* =======================================================
+     FUTSAL
+     ======================================================= */
+
+  window.FZ_abrirFutsal = function(){
+
+    const c =
+      document.getElementById("conteudo") ||
+      document.getElementById("content");
+
+    if(!c) return;
+
+    c.innerHTML = `
+      <div style="padding:15px">
+
+        <button
+          onclick="FZ_voltarFutebol()"
+          style="
+            border:0;
+            border-radius:10px;
+            padding:10px 14px;
+            background:#722F37;
+            color:#fff;
+            margin-bottom:15px;
+          ">
+          ← Futebol
+        </button>
+
+        <h2>🥅 FUTSAL</h2>
+
+        <div id="fzFutsalEstado"
+             style="
+               padding:20px;
+               text-align:center;
+               color:#bfc7d4;
+             ">
+          A carregar jogos de futsal...
+        </div>
+
+      </div>
+    `;
+
+    FZ_carregarFutsal();
+  };
+
+
+  /* =======================================================
+     FUTSAL — DADOS REAIS
+     ======================================================= */
+
+  async function FZ_carregarFutsal(){
+
+    const box =
+      document.getElementById("fzFutsalEstado");
+
+    if(!box) return;
+
+    try{
+
+      const hoje = new Date();
+
+      const y =
+        hoje.getFullYear();
+
+      const m =
+        String(hoje.getMonth()+1).padStart(2,"0");
+
+      const d =
+        String(hoje.getDate()).padStart(2,"0");
+
+      /*
+        SofaScore — calendário de futsal.
+        Se o serviço não responder, mostramos claramente
+        que não existem dados disponíveis, sem inventar jogos.
+      */
+
+      const url =
+        "https://www.sofascore.com/api/v1/sport/futsal/scheduled-events/"
+        + y + "-" + m + "-" + d;
+
+      const resposta =
+        await fetch(url,{
+          cache:"no-store"
+        });
+
+      if(!resposta.ok){
+        throw new Error("Futsal indisponível");
+      }
+
+      const dados =
+        await resposta.json();
+
+      const eventos =
+        Array.isArray(dados.events)
+        ? dados.events
+        : [];
+
+      if(!eventos.length){
+
+        box.innerHTML = `
+          <div style="
+            background:#111722;
+            padding:15px;
+            border-radius:14px;
+          ">
+            Não existem jogos de futsal disponíveis hoje.
+          </div>
+        `;
+
+        return;
+      }
+
+      box.innerHTML = eventos.map(ev => {
+
+        const home =
+          ev.homeTeam?.name ||
+          "Casa";
+
+        const away =
+          ev.awayTeam?.name ||
+          "Fora";
+
+        const hs =
+          ev.homeScore?.current ??
+          "-";
+
+        const as =
+          ev.awayScore?.current ??
+          "-";
+
+        const estado =
+          ev.status?.description ||
+          "";
+
+        const hora =
+          ev.startTimestamp
+          ? new Date(
+              ev.startTimestamp * 1000
+            ).toLocaleTimeString(
+              "pt-PT",
+              {
+                hour:"2-digit",
+                minute:"2-digit"
+              }
+            )
+          : "";
+
+        return `
+          <div style="
+            background:#0d1420;
+            border:1px solid rgba(255,255,255,.08);
+            border-radius:15px;
+            padding:14px;
+            margin-bottom:10px;
+          ">
+
+            <div style="
+              text-align:center;
+              color:#aeb7c5;
+              font-size:12px;
+            ">
+              ${hora} ${estado}
+            </div>
+
+            <div style="
+              display:flex;
+              justify-content:space-between;
+              align-items:center;
+              gap:10px;
+              margin-top:10px;
+            ">
+
+              <div style="
+                flex:1;
+                text-align:center;
+              ">
+                <strong>${home}</strong>
+                <div style="
+                  font-size:25px;
+                  font-weight:800;
+                  margin-top:5px;
+                ">
+                  ${hs}
+                </div>
+              </div>
+
+              <div>-</div>
+
+              <div style="
+                flex:1;
+                text-align:center;
+              ">
+                <strong>${away}</strong>
+                <div style="
+                  font-size:25px;
+                  font-weight:800;
+                  margin-top:5px;
+                ">
+                  ${as}
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        `;
+
+      }).join("");
+
+    }
+    catch(error){
+
+      box.innerHTML = `
+        <div style="
+          background:#28151a;
+          border-radius:14px;
+          padding:15px;
+        ">
+          <strong>🥅 Futsal</strong>
+
+          <p>
+            Neste momento a fonte de dados de futsal
+            não está disponível.
+          </p>
+
+          <small>
+            Não foram inventados resultados.
+          </small>
+        </div>
+      `;
+
+    }
+
+  }
+
+
+  /* =======================================================
+     VOLTAR PARA FUTEBOL
+     ======================================================= */
+
+  window.FZ_voltarFutebol = function(){
+
+    if(typeof window.FZ_mudarModo === "function"){
+      window.FZ_mudarModo("jogos");
+      return;
+    }
+
+    location.reload();
+
+  };
+
+
+  /* =======================================================
+     FAVORITOS — SE O BLOCO 3 JÁ TIVER A FUNÇÃO,
+     NÃO SUBSTITUIR.
+     ======================================================= */
+
+  if(typeof window.FZ_mostrarFavoritos !== "function"){
+
+    window.FZ_mostrarFavoritos = function(){
+
+      const c =
+        document.getElementById("conteudo") ||
+        document.getElementById("content");
+
+      if(!c) return;
+
+      const jogos =
+        JSON.parse(
+          localStorage.getItem(
+            "futzone_jogos_favoritos"
+          ) || "[]"
+        );
+
+      const equipas =
+        JSON.parse(
+          localStorage.getItem(
+            "futzone_equipas_favoritas"
+          ) || "[]"
+        );
+
+      const jogadores =
+        JSON.parse(
+          localStorage.getItem(
+            "futzone_jogadores_favoritos"
+          ) || "[]"
+        );
+
+      c.innerHTML = `
+        <div style="padding:15px">
+
+          <h2>⭐ Favoritos</h2>
+
+          <div style="
+            background:#0d1420;
+            border-radius:14px;
+            padding:15px;
+            margin-bottom:10px;
+          ">
+            ⚽ Jogos: ${jogos.length}
+          </div>
+
+          <div style="
+            background:#0d1420;
+            border-radius:14px;
+            padding:15px;
+            margin-bottom:10px;
+          ">
+            🏟️ Equipas: ${equipas.length}
+          </div>
+
+          <div style="
+            background:#0d1420;
+            border-radius:14px;
+            padding:15px;
+          ">
+            👤 Jogadores: ${jogadores.length}
+          </div>
+
+        </div>
+      `;
+
+    };
+
+  }
+
+})();
+</script>
+
+</body>
+</html>
