@@ -2466,1988 +2466,3032 @@ if (
 }
 
 </script>
+
 <script>
 /* =========================================================
    FUTZONE — BLOCO 3
-   EQUIPAS • JOGADORES • DETALHE • HISTÓRICO
+   FUTEBOL
+   DETALHES • CLUBES • JOGADORES • HISTÓRICO • FAVORITOS
+   NÃO ALTERAR O BLOCO 2
    ========================================================= */
 
-const FZ_EXTRA = {
-
-  equipaAtual:null,
-  jogadorAtual:null,
-  eventoAtual:null
-
-};
-
-
-/* ---------------------------------------------------------
-   ESTILOS EXTRA
---------------------------------------------------------- */
-
-const FZ_extraStyle = document.createElement("style");
-
-FZ_extraStyle.textContent = `
-
-.fz-extra{
-  margin-top:12px;
-}
-
-.fz-voltar{
-  display:flex;
-  align-items:center;
-  gap:8px;
-
-  border:1px solid var(--linha);
-  background:var(--card2);
-  color:white;
-
-  border-radius:12px;
-
-  padding:10px 13px;
-
-  font-weight:800;
-
-  margin-bottom:12px;
-}
-
-.fz-equipa-topo{
-  background:
-    linear-gradient(
-      135deg,
-      #170B0E,
-      #071527
-    );
-
-  border:1px solid var(--linha);
-
-  border-radius:18px;
-
-  padding:18px;
-
-  text-align:center;
-
-  margin-bottom:12px;
-}
-
-.fz-equipa-logo{
-  width:75px;
-  height:75px;
-
-  margin:auto auto 10px;
-
-  border-radius:50%;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-
-  background:#0A1019;
-
-  border:2px solid var(--azul);
-
-  overflow:hidden;
-
-  font-size:30px;
-}
-
-.fz-equipa-logo img{
-  width:100%;
-  height:100%;
-
-  object-fit:contain;
-}
-
-.fz-equipa-nome{
-  font-size:21px;
-  font-weight:900;
-}
-
-.fz-equipa-liga{
-  margin-top:4px;
-
-  color:var(--cinza);
-
-  font-size:12px;
-}
-
-.fz-extra-grid{
-  display:grid;
-
-  grid-template-columns:
-    repeat(2,minmax(0,1fr));
-
-  gap:8px;
-
-  margin-bottom:12px;
-}
-
-.fz-extra-btn{
-  border:1px solid var(--linha);
-
-  background:
-    linear-gradient(
-      135deg,
-      var(--card),
-      var(--card2)
-    );
-
-  color:white;
-
-  border-radius:13px;
-
-  padding:12px 8px;
-
-  font-weight:800;
-
-  font-size:12px;
-}
-
-.fz-extra-btn.active{
-  border-color:var(--vinho2);
-
-  background:
-    linear-gradient(
-      135deg,
-      var(--vinho),
-      #451C22
-    );
-}
-
-.fz-section{
-  margin:15px 0;
-}
-
-.fz-section-title{
-  font-size:17px;
-  font-weight:900;
-
-  margin:
-    0 2px
-    9px;
-}
-
-.fz-player{
-  display:flex;
-  align-items:center;
-
-  gap:10px;
-
-  padding:11px;
-
-  margin-bottom:7px;
-
-  background:var(--card);
-
-  border:1px solid var(--linha);
-
-  border-radius:13px;
-}
-
-.fz-player-avatar{
-  width:44px;
-  height:44px;
-
-  flex:none;
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-
-  border-radius:50%;
-
-  background:#101722;
-
-  border:1px solid var(--azul);
-
-  overflow:hidden;
-
-  font-size:18px;
-}
-
-.fz-player-avatar img{
-  width:100%;
-  height:100%;
-
-  object-fit:cover;
-}
-
-.fz-player-info{
-  min-width:0;
-}
-
-.fz-player-name{
-  font-weight:900;
-  font-size:13px;
-}
-
-.fz-player-meta{
-  color:var(--cinza);
-  font-size:11px;
-  margin-top:3px;
-}
-
-.fz-clickable{
-  cursor:pointer;
-}
-
-.fz-clickable:active{
-  transform:scale(.99);
-}
-
-.fz-evento{
-  background:var(--card);
-
-  border:1px solid var(--linha);
-
-  border-radius:14px;
-
-  padding:12px;
-
-  margin-bottom:8px;
-}
-
-.fz-evento-top{
-  display:flex;
-  justify-content:space-between;
-
-  color:var(--cinza);
-
-  font-size:10px;
-}
-
-.fz-evento-equipas{
-  display:grid;
-
-  grid-template-columns:
-    1fr 55px 1fr;
-
-  gap:7px;
-
-  align-items:center;
-
-  margin-top:10px;
-}
-
-.fz-evento-equipa{
-  text-align:center;
-
-  font-size:12px;
-  font-weight:900;
-}
-
-.fz-evento-score{
-  text-align:center;
-
-  font-size:18px;
-  font-weight:900;
-}
-
-.fz-historico{
-  border-left:
-    2px solid
-    var(--azul);
-
-  padding-left:10px;
-
-  margin-bottom:9px;
-}
-
-.fz-historico-data{
-  color:var(--cinza);
-
-  font-size:10px;
-}
-
-.fz-historico-nome{
-  font-size:13px;
-
-  font-weight:800;
-
-  margin-top:3px;
-}
-
-.fz-detalhe-jogo{
-  background:
-    linear-gradient(
-      145deg,
-      #140A0D,
-      #071321
-    );
-
-  border:1px solid var(--linha);
-
-  border-radius:18px;
-
-  padding:16px;
-
-  text-align:center;
-
-  margin-bottom:12px;
-}
-
-.fz-detalhe-equipas{
-  display:grid;
-
-  grid-template-columns:
-    1fr 75px 1fr;
-
-  align-items:center;
-
-  gap:8px;
-}
-
-.fz-detalhe-equipa{
-  font-size:14px;
-  font-weight:900;
-}
-
-.fz-detalhe-score{
-  font-size:25px;
-  font-weight:900;
-}
-
-.fz-detalhe-status{
-  color:var(--cinza);
-
-  font-size:11px;
-
-  margin-top:8px;
-}
-
-.fz-campo{
-  position:relative;
-
-  width:100%;
-
-  aspect-ratio:1.45;
-
-  border:
-    2px solid
-    rgba(255,255,255,.5);
-
-  border-radius:10px;
-
-  background:
-    linear-gradient(
-      90deg,
-      rgba(114,47,55,.45),
-      rgba(0,87,184,.25)
-    );
-
-  overflow:hidden;
-
-  margin-top:10px;
-}
-
-.fz-campo::before{
-  content:"";
-
-  position:absolute;
-
-  left:50%;
-  top:0;
-  bottom:0;
-
-  width:2px;
-
-  background:rgba(255,255,255,.45);
-
-  transform:translateX(-50%);
-}
-
-.fz-campo::after{
-  content:"";
-
-  position:absolute;
-
-  left:50%;
-  top:50%;
-
-  width:45px;
-  height:45px;
-
-  border:
-    2px solid
-    rgba(255,255,255,.45);
-
-  border-radius:50%;
-
-  transform:translate(-50%,-50%);
-}
-
-.fz-jogador-campo{
-  position:absolute;
-
-  transform:
-    translate(-50%,-50%);
-
-  width:28px;
-  height:28px;
-
-  border-radius:50%;
-
-  background:var(--azul);
-
-  border:2px solid white;
-
-  display:flex;
-
-  align-items:center;
-  justify-content:center;
-
-  font-size:9px;
-
-  font-weight:900;
-
-  z-index:2;
-}
-
-.fz-jogador-campo.vinho{
-  background:var(--vinho);
-}
-
-`;
-
-
-document.head.appendChild(
-  FZ_extraStyle
-);
-
-
-/* ---------------------------------------------------------
-   FETCH DE EQUIPA
---------------------------------------------------------- */
-
-async function FZ_abrirEquipa(
-  id,
-  nome = "Equipa"
-){
-
-  FZ_EXTRA.equipaAtual = {
-    id,
-    nome
-  };
-
-
-  FZ_conteudo.innerHTML = `
-
-    <div class="carregar">
-      A carregar informações da equipa...
-    </div>
-
-  `;
-
-
-  try{
-
-    /*
-      Primeiro tentamos obter os dados
-      gerais da equipa.
-    */
-
-    const equipa =
-      await FZ_fetch(
-
-        FZ_API +
-        FZ_ligaSelecionada +
-        "/teams/" +
-        encodeURIComponent(id)
-
-      );
-
-
-    const dados =
-      equipa.team ||
-      equipa;
-
-
-    FZ_renderizarEquipa(
-      dados
-    );
-
+(function () {
+
+  const FZ3_API =
+    "https://site.api.espn.com/apis/site/v2/sports/soccer/";
+
+  const FZ3_FAV_JOGOS =
+    "futzone_jogos_favoritos";
+
+  const FZ3_FAV_EQUIPAS =
+    "futzone_equipas_favoritas";
+
+  const FZ3_FAV_JOGADORES =
+    "futzone_jogadores_favoritos";
+
+  /* -------------------------------------------------------
+     UTILITÁRIOS
+     ------------------------------------------------------- */
+
+  function FZ3_esc(v) {
+    return String(v ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
-  catch(erro){
+  async function FZ3_get(url) {
 
-    console.error(erro);
-
-    /*
-      Mesmo que o endpoint da equipa
-      não esteja disponível, mostramos
-      o calendário da equipa.
-    */
-
-    FZ_renderizarEquipa({
-      id,
-      displayName:nome
+    const r = await fetch(url, {
+      method: "GET",
+      cache: "no-store"
     });
 
+    if (!r.ok)
+      throw new Error("HTTP " + r.status);
+
+    return await r.json();
   }
 
-}
-
-
-/* ---------------------------------------------------------
-   PÁGINA DA EQUIPA
---------------------------------------------------------- */
-
-async function FZ_renderizarEquipa(
-  equipa
-){
-
-  const id =
-    equipa.id ||
-    FZ_EXTRA.equipaAtual.id;
-
-  const nome =
-    equipa.displayName ||
-    equipa.name ||
-    FZ_EXTRA.equipaAtual.nome ||
-    "Equipa";
-
-
-  const logo =
-    equipa.logos?.[0]?.href ||
-    equipa.logo ||
-    "";
-
-
-  FZ_conteudo.innerHTML = `
-
-    <div class="fz-extra">
-
-      <button
-        class="fz-voltar"
-        onclick="FZ_carregar()">
-
-        ← Voltar
-
-      </button>
-
-
-      <div class="fz-equipa-topo">
-
-        <div class="fz-equipa-logo">
-
-          ${
-            logo
-            ? `<img src="${logo}" alt="">`
-            : "⚽"
-          }
-
-        </div>
-
-        <div class="fz-equipa-nome">
-
-          ${nome}
-
-        </div>
-
-        <div class="fz-equipa-liga">
-
-          ${FZ_nomeLiga(
-            FZ_ligaSelecionada
-          )}
-
-        </div>
-
-      </div>
-
-
-      <div class="fz-extra-grid">
-
-        <button
-          class="fz-extra-btn active"
-          onclick="FZ_equipaJogos('${id}','${nome.replace(/'/g,"")}')">
-
-          📅 Jogos
-
-        </button>
-
-        <button
-          class="fz-extra-btn"
-          onclick="FZ_equipaJogadores('${id}')">
-
-          👤 Jogadores
-
-        </button>
-
-        <button
-          class="fz-extra-btn"
-          onclick="FZ_equipaTabela('${id}')">
-
-          🏆 Classificação
-
-        </button>
-
-        <button
-          class="fz-extra-btn"
-          onclick="FZ_equipaInfo('${id}')">
-
-          ℹ️ Informação
-
-        </button>
-
-      </div>
-
-
-      <div id="fz-equipa-conteudo">
-
-        <div class="carregar">
-
-          A carregar jogos...
-
-        </div>
-
-      </div>
-
-    </div>
-
-  `;
-
-
-  FZ_equipaJogos(
-    id,
-    nome
-  );
-
-}
-
-
-/* ---------------------------------------------------------
-   JOGOS DA EQUIPA
---------------------------------------------------------- */
-
-async function FZ_equipaJogos(
-  id,
-  nome
-){
-
-  const area =
-    FZ("fz-equipa-conteudo");
-
-
-  if(!area)
-    return;
-
-
-  area.innerHTML = `
-
-    <div class="carregar">
-      A carregar calendário...
-    </div>
-
-  `;
-
-
-  try{
-
-    /*
-      Endpoint específico da equipa.
-    */
-
-    const data =
-      await FZ_fetch(
-
-        FZ_API +
-        FZ_ligaSelecionada +
-        "/teams/" +
-        encodeURIComponent(id) +
-        "/schedule?limit=100"
-
+  function FZ3_getFav(key) {
+
+    try {
+      return JSON.parse(
+        localStorage.getItem(key) || "[]"
       );
-
-
-    const jogos =
-      data.events ||
-      data.schedule ||
-      [];
-
-
-    if(!jogos.length){
-
-      area.innerHTML = `
-
-        <div class="vazio">
-
-          Não existem jogos fornecidos
-          para esta equipa.
-
-        </div>
-
-      `;
-
-      return;
-
+    } catch (e) {
+      return [];
     }
-
-
-    const ordenados =
-      [...jogos].sort(
-        (a,b) =>
-          new Date(a.date) -
-          new Date(b.date)
-      );
-
-
-    area.innerHTML = `
-
-      <div class="fz-section">
-
-        <div class="fz-section-title">
-
-          📅 Calendário
-
-        </div>
-
-        ${
-          ordenados
-            .map(
-              jogo =>
-                FZ_cartaoJogo(
-                  jogo,
-                  FZ_nomeLiga(
-                    FZ_ligaSelecionada
-                  )
-                )
-            )
-            .join("")
-        }
-
-      </div>
-
-    `;
-
   }
 
-  catch(erro){
-
-    console.error(erro);
-
-    area.innerHTML = `
-
-      <div class="vazio erro">
-
-        Não foi possível obter
-        o calendário desta equipa.
-
-      </div>
-
-    `;
-
+  function FZ3_setFav(key, data) {
+    localStorage.setItem(
+      key,
+      JSON.stringify(data)
+    );
   }
 
-}
+  function FZ3_isFav(key, id) {
 
-
-/* ---------------------------------------------------------
-   JOGADORES
---------------------------------------------------------- */
-
-async function FZ_equipaJogadores(
-  id
-){
-
-  const area =
-    FZ("fz-equipa-conteudo");
-
-
-  if(!area)
-    return;
-
-
-  area.innerHTML = `
-
-    <div class="carregar">
-      A procurar jogadores reais...
-    </div>
-
-  `;
-
-
-  try{
-
-    const data =
-      await FZ_fetch(
-
-        FZ_API +
-        FZ_ligaSelecionada +
-        "/teams/" +
-        encodeURIComponent(id) +
-        "/roster"
-
-      );
-
-
-    const atletas =
-      data.athletes ||
-      data.roster ||
-      [];
-
-
-    if(!atletas.length){
-
-      area.innerHTML = `
-
-        <div class="vazio">
-
-          A fonte não disponibilizou
-          o plantel desta equipa.
-
-        </div>
-
-      `;
-
-      return;
-
-    }
-
-
-    area.innerHTML = `
-
-      <div class="fz-section">
-
-        <div class="fz-section-title">
-
-          👤 Plantel
-
-        </div>
-
-        ${
-          atletas
-            .map(
-              atleta =>
-                FZ_cartaoJogador(
-                  atleta,
-                  id
-                )
-            )
-            .join("")
-        }
-
-      </div>
-
-    `;
-
+    return FZ3_getFav(key).some(
+      x => String(x.id) === String(id)
+    );
   }
 
-  catch(erro){
+  function FZ3_toggleFav(key, obj) {
 
-    console.error(erro);
+    const arr = FZ3_getFav(key);
 
-    area.innerHTML = `
-
-      <div class="vazio erro">
-
-        O plantel desta equipa
-        não está disponível pela fonte.
-
-      </div>
-
-    `;
-
-  }
-
-}
-
-
-/* ---------------------------------------------------------
-   CARTÃO DE JOGADOR
---------------------------------------------------------- */
-
-function FZ_cartaoJogador(
-  atleta,
-  equipaId
-){
-
-  const id =
-    atleta.id ||
-    atleta.athlete?.id ||
-    "";
-
-
-  const dados =
-    atleta.athlete ||
-    atleta;
-
-
-  const nome =
-    dados.displayName ||
-    dados.fullName ||
-    dados.shortName ||
-    "Jogador";
-
-
-  const foto =
-    dados.headshot?.href ||
-    dados.photo ||
-    "";
-
-
-  const posicao =
-    dados.position?.displayName ||
-    dados.position?.abbreviation ||
-    "";
-
-
-  return `
-
-    <div
-      class="fz-player fz-clickable"
-      onclick="FZ_abrirJogador('${id}','${nome.replace(/'/g,"")}','${equipaId}')">
-
-      <div class="fz-player-avatar">
-
-        ${
-          foto
-          ? `<img src="${foto}" alt="">`
-          : "👤"
-        }
-
-      </div>
-
-      <div class="fz-player-info">
-
-        <div class="fz-player-name">
-
-          ${nome}
-
-        </div>
-
-        <div class="fz-player-meta">
-
-          ${
-            posicao ||
-            "Jogador"
-          }
-
-        </div>
-
-      </div>
-
-    </div>
-
-  `;
-
-}
-
-
-/* ---------------------------------------------------------
-   PÁGINA DO JOGADOR
---------------------------------------------------------- */
-
-async function FZ_abrirJogador(
-  id,
-  nome,
-  equipaId
-){
-
-  FZ_EXTRA.jogadorAtual = {
-    id,
-    nome,
-    equipaId
-  };
-
-
-  FZ_conteudo.innerHTML = `
-
-    <div class="carregar">
-
-      A carregar carreira do jogador...
-
-    </div>
-
-  `;
-
-
-  /*
-    Tentativa de obter informação
-    individual real.
-  */
-
-  try{
-
-    const data =
-      await FZ_fetch(
-
-        "https://sports.core.api.espn.com/v2/sports/soccer/athletes/" +
-        encodeURIComponent(id) +
-        "?lang=en&region=us"
-
-      );
-
-
-    const jogador =
-      data;
-
-    FZ_renderizarJogador(
-      jogador
+    const index = arr.findIndex(
+      x => String(x.id) === String(obj.id)
     );
 
+    if (index >= 0)
+      arr.splice(index, 1);
+    else
+      arr.unshift(obj);
+
+    FZ3_setFav(key, arr);
+
+    return index < 0;
   }
 
-  catch(erro){
-
-    console.error(erro);
-
-    FZ_renderizarJogador({
-
-      id,
-      displayName:nome
-
-    });
-
+  function FZ3_content() {
+    return document.getElementById("conteudo");
   }
 
-}
-
-
-/* ---------------------------------------------------------
-   RENDER JOGADOR
---------------------------------------------------------- */
-
-function FZ_renderizarJogador(
-  jogador
-){
-
-  const nome =
-    jogador.displayName ||
-    jogador.fullName ||
-    FZ_EXTRA.jogadorAtual?.nome ||
-    "Jogador";
-
-
-  const foto =
-    jogador.headshot?.href ||
-    jogador.photo ||
-    "";
-
-
-  FZ_conteudo.innerHTML = `
-
-    <div class="fz-extra">
-
-      <button
-        class="fz-voltar"
-        onclick="FZ_carregar()">
-
-        ← Voltar
-
-      </button>
-
-
-      <div class="fz-equipa-topo">
-
-        <div class="fz-equipa-logo">
-
-          ${
-            foto
-            ? `<img src="${foto}" alt="">`
-            : "👤"
-          }
-
-        </div>
-
-        <div class="fz-equipa-nome">
-
-          ${nome}
-
-        </div>
-
-        <div class="fz-equipa-liga">
-
-          Perfil do jogador
-
-        </div>
-
-      </div>
-
-
-      <div class="fz-section">
-
-        <div class="fz-section-title">
-
-          👤 Informação
-
-        </div>
-
-
-        <div class="fz-player">
-
-          <div class="fz-player-info">
-
-            <div class="fz-player-name">
-
-              ${nome}
-
-            </div>
-
-            <div class="fz-player-meta">
-
-              ${
-                jogador.position?.displayName
-                ||
-                jogador.position?.abbreviation
-                ||
-                "Posição não disponibilizada"
-              }
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <div class="fz-section">
-
-        <div class="fz-section-title">
-
-          📚 Carreira
-
-        </div>
-
-        <div class="vazio">
-
-          A carreira histórica depende
-          dos dados disponibilizados
-          pela fonte para este jogador.
-
-        </div>
-
-      </div>
-
-    </div>
-
-  `;
-
-}
-
-
-/* ---------------------------------------------------------
-   CLASSIFICAÇÃO DA EQUIPA
---------------------------------------------------------- */
-
-async function FZ_equipaTabela(){
-
-  const area =
-    FZ("fz-equipa-conteudo");
-
-
-  if(!area)
-    return;
-
-
-  area.innerHTML = `
-
-    <div class="carregar">
-      A carregar classificação...
-    </div>
-
-  `;
-
-
-  try{
-
-    const data =
-      await FZ_fetch(
-
-        FZ_STANDINGS +
-        FZ_ligaSelecionada +
-        "/standings?region=us&lang=en"
-
-      );
-
-
-    let entradas=[];
-
-
-    (
-      data.children ||
-      []
-    ).forEach(
-      grupo => {
-
-        if(
-          grupo.standings?.entries
-        ){
-
-          entradas.push(
-            ...grupo.standings.entries
-          );
-
-        }
-
-      }
-    );
-
-
-    if(
-      !entradas.length &&
-      data.standings?.entries
-    ){
-
-      entradas =
-        data.standings.entries;
-
-    }
-
-
-    if(!entradas.length){
-
-      area.innerHTML = `
-
-        <div class="vazio">
-
-          Classificação não disponível.
-
-        </div>
-
+  function FZ3_loading(text) {
+
+    if (!FZ3_content()) return;
+
+    FZ3_content().innerHTML =
+      `<div class="fz3-loading">${FZ3_esc(
+        text || "A carregar..."
+      )}</div>`;
+  }
+
+  function FZ3_error(text) {
+
+    if (!FZ3_content()) return;
+
+    FZ3_content().innerHTML =
+      `<div class="fz3-error">${FZ3_esc(
+        text || "Não foi possível carregar os dados."
+      )}</div>`;
+  }
+
+  function FZ3_logo(url, name) {
+
+    if (url) {
+      return `
+        <img
+          class="fz3-logo"
+          src="${FZ3_esc(url)}"
+          alt=""
+          onerror="this.style.display='none'"
+        >
       `;
-
-      return;
-
     }
-
-
-    const linhas =
-      entradas.map(
-        (entrada,index) => {
-
-          const nome =
-            entrada.team?.displayName ||
-            entrada.team?.name ||
-            "Equipa";
-
-
-          const pts =
-            (
-              entrada.stats || []
-            ).find(
-              s =>
-                s.name === "points" ||
-                s.abbreviation === "PTS"
-            );
-
-
-          return `
-
-            <div class="fz-historico">
-
-              <div class="fz-historico-data">
-
-                ${index + 1}º
-
-              </div>
-
-              <div class="fz-historico-nome">
-
-                ${nome}
-
-                ${
-                  pts
-                  ? " · " +
-                    (
-                      pts.displayValue ??
-                      pts.value
-                    ) +
-                    " pts"
-                  : ""
-                }
-
-              </div>
-
-            </div>
-
-          `;
-
-        }
-      ).join("");
-
-
-    area.innerHTML = `
-
-      <div class="fz-section">
-
-        <div class="fz-section-title">
-
-          🏆 Classificação
-
-        </div>
-
-        ${linhas}
-
-      </div>
-
-    `;
-
-  }
-
-  catch(erro){
-
-    console.error(erro);
-
-    area.innerHTML = `
-
-      <div class="vazio erro">
-
-        Não foi possível carregar
-        a classificação.
-
-      </div>
-
-    `;
-
-  }
-
-}
-
-
-/* ---------------------------------------------------------
-   INFORMAÇÃO DA EQUIPA
---------------------------------------------------------- */
-
-async function FZ_equipaInfo(id){
-
-  const area =
-    FZ("fz-equipa-conteudo");
-
-
-  if(!area)
-    return;
-
-
-  area.innerHTML = `
-
-    <div class="carregar">
-      A carregar informação...
-    </div>
-
-  `;
-
-
-  try{
-
-    const data =
-      await FZ_fetch(
-
-        FZ_API +
-        FZ_ligaSelecionada +
-        "/teams/" +
-        encodeURIComponent(id)
-
-      );
-
-
-    const equipa =
-      data.team ||
-      data;
-
-
-    area.innerHTML = `
-
-      <div class="fz-section">
-
-        <div class="fz-section-title">
-
-          ℹ️ Informação
-
-        </div>
-
-        <div class="fz-player">
-
-          <div class="fz-player-info">
-
-            <div class="fz-player-name">
-
-              ${
-                equipa.displayName ||
-                equipa.name ||
-                "Equipa"
-              }
-
-            </div>
-
-            <div class="fz-player-meta">
-
-              ${
-                equipa.location ||
-                ""
-              }
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    `;
-
-  }
-
-  catch(erro){
-
-    area.innerHTML = `
-
-      <div class="vazio">
-
-        Informação adicional
-        não disponibilizada pela fonte.
-
-      </div>
-
-    `;
-
-  }
-
-}
-
-
-/* ---------------------------------------------------------
-   DETALHE DO JOGO
---------------------------------------------------------- */
-
-async function FZ_abrirJogo(
-  evento
-){
-
-  FZ_EXTRA.eventoAtual =
-    evento;
-
-
-  const info =
-    FZ_infoJogo(evento);
-
-
-  const casa =
-    info.casa?.team?.displayName
-    || "Casa";
-
-
-  const fora =
-    info.fora?.team?.displayName
-    || "Fora";
-
-
-  const estado =
-    info.estado?.state
-    || "pre";
-
-
-  let resultado =
-    "-";
-
-
-  if(
-    estado === "in" ||
-    estado === "post"
-  ){
-
-    resultado =
-      (info.casa?.score ?? "-") +
-      " - " +
-      (info.fora?.score ?? "-");
-
-  }
-
-
-  FZ_conteudo.innerHTML = `
-
-    <div class="fz-extra">
-
-      <button
-        class="fz-voltar"
-        onclick="FZ_carregar()">
-
-        ← Voltar
-
-      </button>
-
-
-      <div class="fz-detalhe-jogo">
-
-        <div class="fz-evento-top">
-
-          <span>
-
-            ${FZ_nomeLiga(
-              FZ_ligaSelecionada
-            )}
-
-          </span>
-
-          <span>
-
-            ${FZ_dataTexto(
-              info.data
-            )}
-
-          </span>
-
-        </div>
-
-
-        <div class="fz-detalhe-equipas">
-
-          <div class="fz-detalhe-equipa">
-
-            ${casa}
-
-          </div>
-
-          <div class="fz-detalhe-score">
-
-            ${resultado}
-
-          </div>
-
-          <div class="fz-detalhe-equipa">
-
-            ${fora}
-
-          </div>
-
-        </div>
-
-
-        <div class="fz-detalhe-status">
-
-          ${
-            estado === "in"
-            ? "🔴 AO VIVO"
-            : estado === "post"
-            ? "FINAL"
-            : FZ_hora(info.data)
-          }
-
-        </div>
-
-      </div>
-
-
-      <div class="fz-section">
-
-        <div class="fz-section-title">
-
-          📊 Estatísticas
-
-        </div>
-
-        <div class="vazio">
-
-          As estatísticas individuais
-          e do jogo aparecem aqui quando
-          forem disponibilizadas pela fonte.
-
-        </div>
-
-      </div>
-
-
-      <div class="fz-section">
-
-        <div class="fz-section-title">
-
-          👥 Titulares
-
-        </div>
-
-        <div class="fz-campo">
-
-          <div
-            class="fz-jogador-campo"
-            style="left:20%;top:50%">
-            GR
-          </div>
-
-          <div
-            class="fz-jogador-campo"
-            style="left:40%;top:25%">
-            DEF
-          </div>
-
-          <div
-            class="fz-jogador-campo"
-            style="left:40%;top:75%">
-            DEF
-          </div>
-
-          <div
-            class="fz-jogador-campo"
-            style="left:62%;top:35%">
-            MED
-          </div>
-
-          <div
-            class="fz-jogador-campo"
-            style="left:62%;top:65%">
-            MED
-          </div>
-
-          <div
-            class="fz-jogador-campo"
-            style="left:82%;top:50%">
-            AV
-          </div>
-
-        </div>
-
-        <div class="estado">
-
-          Quando a fonte disponibilizar
-          as equipas iniciais, os nomes
-          dos jogadores substituem estas
-          posições automaticamente.
-
-        </div>
-
-      </div>
-
-    </div>
-
-  `;
-
-}
-
-
-/* ---------------------------------------------------------
-   TORNAR OS CARTÕES DE JOGO CLICÁVEIS
---------------------------------------------------------- */
-
-const FZ_cartaoJogoOriginal =
-  FZ_cartaoJogo;
-
-
-FZ_cartaoJogo =
-  function(
-    evento,
-    ligaOverride = null
-  ){
-
-    const html =
-      FZ_cartaoJogoOriginal(
-        evento,
-        ligaOverride
-      );
-
-
-    /*
-      Envolvemos o cartão para abrir
-      o detalhe do jogo.
-    */
 
     return `
+      <div class="fz3-logo fz3-logo-empty">
+        ${FZ3_esc((name || "?").charAt(0))}
+      </div>
+    `;
+  }
 
-      <div
-        class="fz-clickable"
-        onclick='FZ_abrirJogo(${JSON.stringify(evento).replace(/'/g,"&#39;")})'>
+  function FZ3_header(title, sub) {
 
-        ${html}
+    return `
+      <div class="fz3-header">
+
+        <button
+          class="fz3-back"
+          onclick="FZ3_voltar()"
+        >←</button>
+
+        <div>
+          <div class="fz3-title">
+            ${FZ3_esc(title)}
+          </div>
+
+          <div class="fz3-sub">
+            ${FZ3_esc(sub || "")}
+          </div>
+        </div>
+
+      </div>
+    `;
+  }
+
+  window.FZ3_voltar = function () {
+
+    if (typeof window.FZ_mudarModo === "function") {
+
+      try {
+        window.FZ_mudarModo("jogos");
+        return;
+      } catch (e) {}
+    }
+
+    if (typeof window.FZ_jogosDoDia === "function") {
+
+      try {
+        window.FZ_jogosDoDia();
+        return;
+      } catch (e) {}
+    }
+
+    location.reload();
+  };
+
+  /* ========================================================
+     DETALHE DO JOGO
+     ======================================================== */
+
+  window.FZ_abrirJogo = async function (
+    eventId,
+    leagueId
+  ) {
+
+    if (!eventId) return;
+
+    leagueId =
+      leagueId ||
+      window.FZ_ligaSelecionada ||
+      "por.1";
+
+    FZ3_loading(
+      "A carregar detalhes do jogo..."
+    );
+
+    try {
+
+      const data = await FZ3_get(
+        FZ3_API +
+        leagueId +
+        "/summary?event=" +
+        encodeURIComponent(eventId)
+      );
+
+      FZ3_renderJogo(
+        data,
+        eventId,
+        leagueId
+      );
+
+    } catch (e) {
+
+      console.error(e);
+
+      FZ3_error(
+        "Não foi possível carregar os detalhes deste jogo."
+      );
+    }
+  };
+
+  window.FZ_abrirJogoSeguro =
+    window.FZ_abrirJogo;
+
+  function FZ3_renderJogo(
+    data,
+    eventId,
+    leagueId
+  ) {
+
+    const header = data.header || {};
+
+    const competition =
+      header.competitions?.[0] || {};
+
+    const teams =
+      competition.competitors || [];
+
+    const home =
+      teams.find(
+        x => x.homeAway === "home"
+      ) || teams[0] || {};
+
+    const away =
+      teams.find(
+        x => x.homeAway === "away"
+      ) || teams[1] || {};
+
+    const homeTeam =
+      home.team || {};
+
+    const awayTeam =
+      away.team || {};
+
+    const fav =
+      FZ3_isFav(
+        FZ3_FAV_JOGOS,
+        eventId
+      );
+
+    const homeScore =
+      home.score ?? "-";
+
+    const awayScore =
+      away.score ?? "-";
+
+    const status =
+      competition.status?.type?.shortDetail ||
+      competition.status?.type?.detail ||
+      header.status?.type?.detail ||
+      "";
+
+    FZ3_content().innerHTML = `
+
+      ${FZ3_header(
+        "Detalhes do jogo",
+        header.season?.displayName || ""
+      )}
+
+      <div class="fz3-match">
+
+        <button
+          class="fz3-team"
+          onclick="FZ_abrirEquipa(
+            '${FZ3_esc(homeTeam.id || "")}',
+            '${FZ3_esc(leagueId)}'
+          )"
+        >
+
+          ${FZ3_logo(
+            homeTeam.logo,
+            homeTeam.displayName ||
+            homeTeam.name
+          )}
+
+          <strong>
+            ${FZ3_esc(
+              homeTeam.displayName ||
+              homeTeam.name ||
+              "Casa"
+            )}
+          </strong>
+
+        </button>
+
+        <div class="fz3-score">
+
+          <div class="fz3-score-number">
+            ${FZ3_esc(homeScore)}
+            -
+            ${FZ3_esc(awayScore)}
+          </div>
+
+          <small>
+            ${FZ3_esc(status)}
+          </small>
+
+          <button
+            class="fz3-fav"
+            onclick="
+              event.stopPropagation();
+              FZ3_favoritarJogo(
+                '${FZ3_esc(eventId)}',
+                '${FZ3_esc(leagueId)}',
+                '${FZ3_esc(
+                  homeTeam.displayName ||
+                  homeTeam.name ||
+                  ""
+                )}',
+                '${FZ3_esc(
+                  awayTeam.displayName ||
+                  awayTeam.name ||
+                  ""
+                )}'
+              )
+            "
+          >
+            ${fav ? "★" : "☆"} Favorito
+          </button>
+
+        </div>
+
+        <button
+          class="fz3-team"
+          onclick="FZ_abrirEquipa(
+            '${FZ3_esc(awayTeam.id || "")}',
+            '${FZ3_esc(leagueId)}'
+          )"
+        >
+
+          ${FZ3_logo(
+            awayTeam.logo,
+            awayTeam.displayName ||
+            awayTeam.name
+          )}
+
+          <strong>
+            ${FZ3_esc(
+              awayTeam.displayName ||
+              awayTeam.name ||
+              "Fora"
+            )}
+          </strong>
+
+        </button>
 
       </div>
 
+      <section class="fz3-section">
+        <h3>⚽ Eventos</h3>
+        <div id="fz3-eventos"></div>
+      </section>
+
+      <section class="fz3-section">
+        <h3>📊 Estatísticas</h3>
+        <div id="fz3-stats"></div>
+      </section>
+
+      <section class="fz3-section">
+        <h3>👥 Titulares</h3>
+        <div id="fz3-lineups"></div>
+      </section>
     `;
 
-  };
+    FZ3_renderEventos(data);
+    FZ3_renderStats(data);
+    FZ3_renderLineups(
+      data,
+      leagueId
+    );
+  }
 
+  function FZ3_renderEventos(data) {
 
-/* ---------------------------------------------------------
-   TORNAR AS EQUIPAS CLICÁVEIS NA CLASSIFICAÇÃO
---------------------------------------------------------- */
-
-const FZ_tabelasOriginal =
-  FZ_tabelas;
-
-
-/*
-  Mantemos a função principal e acrescentamos
-  identificação dos clubes quando o ESPN fornece ID.
-*/
-
-FZ_tabelas = async function(){
-
-  FZ_estado.textContent =
-    "A carregar classificação real...";
-
-
-  FZ_conteudo.innerHTML =
-    `<div class="carregar">
-      A carregar classificação...
-    </div>`;
-
-
-  try{
-
-    const data =
-      await FZ_fetch(
-
-        FZ_STANDINGS +
-        FZ_ligaSelecionada +
-        "/standings?region=us&lang=en"
-
+    const box =
+      document.getElementById(
+        "fz3-eventos"
       );
 
+    if (!box) return;
 
-    let entradas=[];
+    const plays =
+      data.plays || [];
 
+    if (!plays.length) {
 
-    (
-      data.children ||
-      []
-    ).forEach(
-      grupo => {
-
-        if(
-          grupo.standings?.entries
-        ){
-
-          entradas.push(
-            ...grupo.standings.entries
-          );
-
-        }
-
-      }
-    );
-
-
-    if(
-      !entradas.length &&
-      data.standings?.entries
-    ){
-
-      entradas =
-        data.standings.entries;
-
-    }
-
-
-    if(!entradas.length){
-
-      FZ_conteudo.innerHTML =
-        `<div class="vazio">
-          Classificação não disponível.
+      box.innerHTML =
+        `<div class="fz3-empty">
+          Não existem eventos disponíveis.
         </div>`;
 
       return;
-
     }
 
+    box.innerHTML =
+      plays.map(play => {
 
-    function stat(
-      entrada,
-      nomes
-    ){
+        const time =
+          play.clock?.displayValue ||
+          play.clock?.value ||
+          "";
 
-      const encontrado =
-        (
-          entrada.stats ||
-          []
-        ).find(
-          s =>
-            nomes.includes(s.name) ||
-            nomes.includes(s.abbreviation)
-        );
+        const text =
+          play.text ||
+          play.shortText ||
+          "";
 
+        return `
+          <div class="fz3-event">
+            <span>
+              ${FZ3_esc(time)}
+            </span>
+            <div>
+              ${FZ3_esc(text)}
+            </div>
+          </div>
+        `;
 
-      return encontrado
-        ? (
-            encontrado.displayValue ??
-            encontrado.value ??
-            "-"
-          )
-        : "-";
+      }).join("");
+  }
 
+  function FZ3_renderStats(data) {
+
+    const box =
+      document.getElementById(
+        "fz3-stats"
+      );
+
+    if (!box) return;
+
+    const teams =
+      data.boxscore?.teams || [];
+
+    if (!teams.length) {
+
+      box.innerHTML =
+        `<div class="fz3-empty">
+          Estatísticas não disponíveis.
+        </div>`;
+
+      return;
     }
 
+    box.innerHTML =
+      teams.map(teamData => {
 
-    const linhas =
-      entradas.map(
-        (entrada,index) => {
+        const team =
+          teamData.team || {};
 
-          const equipa =
-            entrada.team ||
-            {};
+        const stats =
+          teamData.statistics || [];
 
+        return `
+
+          <div class="fz3-stat-team">
+
+            <strong>
+              ${FZ3_esc(
+                team.displayName ||
+                team.name ||
+                "Equipa"
+              )}
+            </strong>
+
+            ${stats.map(stat => `
+
+              <div class="fz3-stat-row">
+
+                <span>
+                  ${FZ3_esc(
+                    stat.label ||
+                    stat.name ||
+                    ""
+                  )}
+                </span>
+
+                <b>
+                  ${FZ3_esc(
+                    stat.displayValue ??
+                    stat.value ??
+                    ""
+                  )}
+                </b>
+
+              </div>
+
+            `).join("")}
+
+          </div>
+        `;
+
+      }).join("");
+  }
+
+  function FZ3_renderLineups(
+    data,
+    leagueId
+  ) {
+
+    const box =
+      document.getElementById(
+        "fz3-lineups"
+      );
+
+    if (!box) return;
+
+    const rosters =
+      data.rosters ||
+      data.roster ||
+      [];
+
+    if (!rosters.length) {
+
+      box.innerHTML =
+        `<div class="fz3-empty">
+          Os titulares não estão disponíveis
+          para este jogo.
+        </div>`;
+
+      return;
+    }
+
+    let players = [];
+
+    rosters.forEach(roster => {
+
+      const team =
+        roster.team || {};
+
+      const list =
+        roster.roster ||
+        roster.players ||
+        [];
+
+      list.forEach(player => {
+
+        const athlete =
+          player.athlete ||
+          player.player ||
+          {};
+
+        if (
+          player.starter === true ||
+          player.starter?.value === true
+        ) {
+
+          players.push({
+            athlete,
+            player,
+            team
+          });
+        }
+      });
+    });
+
+    if (!players.length) {
+
+      box.innerHTML =
+        `<div class="fz3-empty">
+          Os titulares não estão disponíveis
+          para este jogo.
+        </div>`;
+
+      return;
+    }
+
+    box.innerHTML = `
+
+      <div class="fz3-pitch">
+
+        ${players.map((p, index) => {
+
+          const athlete =
+            p.athlete || {};
+
+          const player =
+            p.player || {};
 
           const id =
-            equipa.id ||
+            athlete.id ||
+            player.id ||
             "";
-
-
-          const nome =
-            equipa.displayName ||
-            equipa.name ||
-            "Equipa";
-
 
           return `
 
-            <tr>
+            <button
+              class="fz3-pitch-player"
+              style="--fz-index:${index}"
+              onclick="
+                FZ_abrirJogador(
+                  '${FZ3_esc(id)}',
+                  '${FZ3_esc(leagueId)}'
+                )
+              "
+            >
 
-              <td class="posicao">
-
-                ${index + 1}
-
-              </td>
-
-              <td
-                class="fz-clickable"
-                onclick="FZ_abrirEquipa('${id}','${nome.replace(/'/g,"")}')">
-
-                <strong>
-
-                  ${nome}
-
-                </strong>
-
-              </td>
-
-              <td>
-                ${stat(
-                  entrada,
-                  ["gamesPlayed","GP"]
+              <span>
+                ${FZ3_esc(
+                  player.jersey ||
+                  athlete.jersey ||
+                  ""
                 )}
-              </td>
+              </span>
 
-              <td>
-                ${stat(
-                  entrada,
-                  ["wins","W"]
+              <small>
+                ${FZ3_esc(
+                  athlete.displayName ||
+                  athlete.fullName ||
+                  player.name ||
+                  "Jogador"
                 )}
-              </td>
+              </small>
 
-              <td>
-                ${stat(
-                  entrada,
-                  ["ties","draws","D"]
-                )}
-              </td>
-
-              <td>
-                ${stat(
-                  entrada,
-                  ["losses","L"]
-                )}
-              </td>
-
-              <td>
-                <strong>
-                  ${stat(
-                    entrada,
-                    ["points","PTS"]
-                  )}
-                </strong>
-              </td>
-
-            </tr>
-
+            </button>
           `;
 
-        }
-      ).join("");
+        }).join("")}
 
+      </div>
+    `;
+  }
 
-    FZ_conteudo.innerHTML = `
+  /* ========================================================
+     EQUIPA
+     ======================================================== */
 
-      <div class="seccao-titulo">
+  window.FZ_abrirEquipa =
+    async function (
+      teamId,
+      leagueId
+    ) {
 
-        🏆 ${FZ_nomeLiga(
-          FZ_ligaSelecionada
+      if (!teamId) return;
+
+      leagueId =
+        leagueId ||
+        window.FZ_ligaSelecionada ||
+        "por.1";
+
+      FZ3_loading(
+        "A carregar equipa..."
+      );
+
+      try {
+
+        const data =
+          await FZ3_get(
+            FZ3_API +
+            leagueId +
+            "/teams/" +
+            encodeURIComponent(teamId)
+          );
+
+        FZ3_renderEquipa(
+          data,
+          teamId,
+          leagueId
+        );
+
+        FZ3_carregarPlantel(
+          teamId,
+          leagueId
+        );
+
+      } catch (e) {
+
+        console.error(e);
+
+        FZ3_error(
+          "Não foi possível carregar esta equipa."
+        );
+      }
+    };
+
+  window.FZ_abrirEquipaSeguro =
+    window.FZ_abrirEquipa;
+
+  function FZ3_renderEquipa(
+    data,
+    teamId,
+    leagueId
+  ) {
+
+    const team =
+      data.team || data;
+
+    const fav =
+      FZ3_isFav(
+        FZ3_FAV_EQUIPAS,
+        teamId
+      );
+
+    FZ3_content().innerHTML = `
+
+      ${FZ3_header(
+        team.displayName ||
+        team.name ||
+        "Equipa",
+        team.abbreviation || ""
+      )}
+
+      <div class="fz3-club">
+
+        ${FZ3_logo(
+          team.logo,
+          team.displayName ||
+          team.name
         )}
 
+        <div class="fz3-club-info">
+
+          <h2>
+            ${FZ3_esc(
+              team.displayName ||
+              team.name ||
+              "Equipa"
+            )}
+          </h2>
+
+          <small>
+            ${FZ3_esc(
+              team.location || ""
+            )}
+          </small>
+
+        </div>
+
+        <button
+          class="fz3-fav"
+          onclick="
+            FZ3_favoritarEquipa(
+              '${FZ3_esc(teamId)}',
+              '${FZ3_esc(leagueId)}',
+              '${FZ3_esc(
+                team.displayName ||
+                team.name ||
+                ""
+              )}',
+              '${FZ3_esc(
+                team.logo || ""
+              )}'
+            )
+          "
+        >
+          ${fav ? "★" : "☆"}
+        </button>
+
       </div>
 
-      <div class="tabela-wrap">
+      <section class="fz3-section">
 
-        <table class="tabela">
+        <h3>👥 Plantel</h3>
 
-          <thead>
+        <div id="fz3-plantel">
+          <div class="fz3-loading-small">
+            A carregar jogadores...
+          </div>
+        </div>
 
-            <tr>
-
-              <th>#</th>
-              <th>Equipa</th>
-              <th>J</th>
-              <th>V</th>
-              <th>E</th>
-              <th>D</th>
-              <th>Pts</th>
-
-            </tr>
-
-          </thead>
-
-          <tbody>
-
-            ${linhas}
-
-          </tbody>
-
-        </table>
-
-      </div>
-
+      </section>
     `;
-
   }
 
-  catch(erro){
+  async function FZ3_carregarPlantel(
+    teamId,
+    leagueId
+  ) {
 
-    console.error(erro);
+    const box =
+      document.getElementById(
+        "fz3-plantel"
+      );
 
-    FZ_conteudo.innerHTML = `
+    if (!box) return;
 
-      <div class="vazio erro">
+    try {
 
-        Não foi possível obter
-        a classificação.
+      const data =
+        await FZ3_get(
+          FZ3_API +
+          leagueId +
+          "/teams/" +
+          encodeURIComponent(teamId) +
+          "/roster"
+        );
+
+      const players =
+        data.athletes ||
+        data.roster ||
+        data.players ||
+        [];
+
+      if (!players.length) {
+
+        box.innerHTML =
+          `<div class="fz3-empty">
+            O plantel não está disponível.
+          </div>`;
+
+        return;
+      }
+
+      box.innerHTML =
+        players.map(item => {
+
+          const p =
+            item.athlete ||
+            item.player ||
+            item;
+
+          return `
+
+            <button
+              class="fz3-player-row"
+              onclick="
+                FZ_abrirJogador(
+                  '${FZ3_esc(p.id || "")}',
+                  '${FZ3_esc(leagueId)}'
+                )
+              "
+            >
+
+              ${
+                p.headshot?.href
+                ?
+                `<img
+                  src="${FZ3_esc(
+                    p.headshot.href
+                  )}"
+                  alt=""
+                >`
+                :
+                `<span class="fz3-avatar">
+                  👤
+                </span>`
+              }
+
+              <span>
+
+                <strong>
+                  ${FZ3_esc(
+                    p.displayName ||
+                    p.fullName ||
+                    p.name ||
+                    "Jogador"
+                  )}
+                </strong>
+
+                <small>
+                  ${FZ3_esc(
+                    item.position?.displayName ||
+                    item.position?.name ||
+                    ""
+                  )}
+                </small>
+
+              </span>
+
+            </button>
+          `;
+
+        }).join("");
+
+    } catch (e) {
+
+      box.innerHTML =
+        `<div class="fz3-empty">
+          O plantel não está disponível
+          para esta equipa.
+        </div>`;
+    }
+  }
+
+  /* ========================================================
+     JOGADOR
+     ======================================================== */
+
+  window.FZ_abrirJogador =
+    async function (
+      playerId,
+      leagueId
+    ) {
+
+      if (!playerId) return;
+
+      leagueId =
+        leagueId ||
+        window.FZ_ligaSelecionada ||
+        "por.1";
+
+      FZ3_loading(
+        "A carregar jogador..."
+      );
+
+      try {
+
+        let data;
+
+        try {
+
+          data =
+            await FZ3_get(
+              FZ3_API +
+              leagueId +
+              "/athletes/" +
+              encodeURIComponent(
+                playerId
+              )
+            );
+
+        } catch (e) {
+
+          data =
+            await FZ3_get(
+              "https://sports.core.api.espn.com/v2/sports/soccer/leagues/" +
+              encodeURIComponent(
+                leagueId
+              ) +
+              "/athletes/" +
+              encodeURIComponent(
+                playerId
+              )
+            );
+        }
+
+        FZ3_renderJogador(
+          data,
+          playerId,
+          leagueId
+        );
+
+      } catch (e) {
+
+        console.error(e);
+
+        FZ3_error(
+          "Não foi possível carregar este jogador."
+        );
+      }
+    };
+
+  function FZ3_renderJogador(
+    data,
+    playerId,
+    leagueId
+  ) {
+
+    const athlete =
+      data.athlete ||
+      data;
+
+    const name =
+      athlete.displayName ||
+      athlete.fullName ||
+      athlete.name ||
+      "Jogador";
+
+    const photo =
+      athlete.headshot?.href ||
+      athlete.photo ||
+      athlete.image?.href ||
+      "";
+
+    const fav =
+      FZ3_isFav(
+        FZ3_FAV_JOGADORES,
+        playerId
+      );
+
+    FZ3_content().innerHTML = `
+
+      ${FZ3_header(
+        name,
+        athlete.position?.displayName ||
+        athlete.position?.name ||
+        ""
+      )}
+
+      <div class="fz3-player">
+
+        ${
+          photo
+          ?
+          `<img
+            src="${FZ3_esc(photo)}"
+            alt=""
+          >`
+          :
+          `<div class="fz3-player-empty">
+            👤
+          </div>`
+        }
+
+        <div>
+
+          <h2>
+            ${FZ3_esc(name)}
+          </h2>
+
+          <small>
+            ${FZ3_esc(
+              athlete.position?.displayName ||
+              athlete.position?.name ||
+              ""
+            )}
+          </small>
+
+          <br>
+
+          <button
+            class="fz3-fav"
+            onclick="
+              FZ3_favoritarJogador(
+                '${FZ3_esc(playerId)}',
+                '${FZ3_esc(leagueId)}',
+                '${FZ3_esc(name)}',
+                '${FZ3_esc(photo)}'
+              )
+            "
+          >
+            ${fav ? "★ Favorito" : "☆ Favorito"}
+          </button>
+
+        </div>
 
       </div>
 
+      <section class="fz3-section">
+
+        <h3>📋 Informações</h3>
+
+        <div class="fz3-info">
+
+          ${
+            athlete.age
+            ?
+            `<div>
+              <small>Idade</small>
+              <b>${FZ3_esc(
+                athlete.age
+              )}</b>
+            </div>`
+            : ""
+          }
+
+          ${
+            athlete.height
+            ?
+            `<div>
+              <small>Altura</small>
+              <b>${FZ3_esc(
+                athlete.height
+              )}</b>
+            </div>`
+            : ""
+          }
+
+          ${
+            athlete.weight
+            ?
+            `<div>
+              <small>Peso</small>
+              <b>${FZ3_esc(
+                athlete.weight
+              )}</b>
+            </div>`
+            : ""
+          }
+
+          ${
+            athlete.dateOfBirth
+            ?
+            `<div>
+              <small>Nascimento</small>
+              <b>${FZ3_esc(
+                athlete.dateOfBirth
+              )}</b>
+            </div>`
+            : ""
+          }
+
+          ${
+            athlete.nationality
+            ?
+            `<div>
+              <small>Nacionalidade</small>
+              <b>${FZ3_esc(
+                athlete.nationality
+              )}</b>
+            </div>`
+            : ""
+          }
+
+        </div>
+
+      </section>
+
+      <section
+        class="fz3-section"
+        id="fz3-career"
+      >
+
+        <h3>📚 Histórico / carreira</h3>
+
+        <div class="fz3-loading-small">
+          A procurar histórico...
+        </div>
+
+      </section>
     `;
 
+    FZ3_carreira(
+      athlete,
+      leagueId
+    );
   }
 
-};
+  function FZ3_carreira(
+    athlete,
+    leagueId
+  ) {
 
+    const box =
+      document.getElementById(
+        "fz3-career"
+      );
 
-/* ---------------------------------------------------------
-   FUNÇÃO DE PESQUISA DE EQUIPAS
---------------------------------------------------------- */
+    if (!box) return;
 
-window.FZ_abrirEquipa =
-  FZ_abrirEquipa;
+    const entries = [];
 
-window.FZ_abrirJogador =
-  FZ_abrirJogador;
+    function scan(obj) {
 
-window.FZ_equipaJogos =
-  FZ_equipaJogos;
+      if (!obj || typeof obj !== "object")
+        return;
 
-window.FZ_equipaJogadores =
-  FZ_equipaJogadores;
+      if (Array.isArray(obj)) {
 
-window.FZ_equipaTabela =
-  FZ_equipaTabela;
+        obj.forEach(scan);
+        return;
+      }
 
-window.FZ_equipaInfo =
-  FZ_equipaInfo;
+      if (
+        obj.team &&
+        typeof obj.team === "object"
+      ) {
 
-window.FZ_abrirJogo =
-  FZ_abrirJogo;
-  
+        entries.push({
+          team: obj.team,
+          season:
+            obj.season ||
+            obj.year ||
+            obj.seasonName ||
+            ""
+        });
+      }
 
+      Object.keys(obj).forEach(key => {
 
-/* =========================================================
-   FIM DO BLOCO 3
-   ========================================================= */
+        if (
+          key === "headshot" ||
+          key === "image"
+        )
+          return;
+
+        scan(obj[key]);
+      });
+    }
+
+    scan(athlete);
+
+    const unique=[];
+    const seen=new Set();
+
+    entries.forEach(item => {
+
+      const id =
+        item.team.id ||
+        item.team.displayName ||
+        item.team.name;
+
+      if (!id) return;
+
+      if (seen.has(String(id)))
+        return;
+
+      seen.add(String(id));
+      unique.push(item);
+    });
+
+    if (!unique.length) {
+
+      box.innerHTML = `
+
+        <h3>📚 Histórico / carreira</h3>
+
+        <div class="fz3-empty">
+          O histórico completo deste jogador
+          não está disponível na fonte de dados.
+        </div>
+      `;
+
+      return;
+    }
+
+    box.innerHTML = `
+
+      <h3>📚 Histórico / carreira</h3>
+
+      <div class="fz3-career">
+
+        ${unique.map(item => `
+
+          <button
+            class="fz3-career-row"
+            onclick="
+              FZ_abrirEquipa(
+                '${FZ3_esc(
+                  item.team.id || ""
+                )}',
+                '${FZ3_esc(
+                  leagueId
+                )}'
+              )
+            "
+          >
+
+            ${FZ3_logo(
+              item.team.logo,
+              item.team.displayName ||
+              item.team.name
+            )}
+
+            <span>
+
+              <strong>
+                ${FZ3_esc(
+                  item.team.displayName ||
+                  item.team.name ||
+                  "Equipa"
+                )}
+              </strong>
+
+              <small>
+                ${FZ3_esc(
+                  typeof item.season === "object"
+                  ?
+                  (
+                    item.season.displayName ||
+                    item.season.year ||
+                    ""
+                  )
+                  :
+                  item.season || ""
+                )}
+              </small>
+
+            </span>
+
+          </button>
+
+        `).join("")}
+
+      </div>
+    `;
+  }
+
+  /* ========================================================
+     FAVORITOS
+     ======================================================== */
+
+  window.FZ3_favoritarJogo =
+    function (
+      id,
+      league,
+      home,
+      away
+    ) {
+
+      FZ3_toggleFav(
+        FZ3_FAV_JOGOS,
+        {
+          id: String(id),
+          league,
+          home,
+          away
+        }
+      );
+
+      FZ_abrirJogo(
+        id,
+        league
+      );
+    };
+
+  window.FZ3_favoritarEquipa =
+    function (
+      id,
+      league,
+      nome,
+      logo
+    ) {
+
+      FZ3_toggleFav(
+        FZ3_FAV_EQUIPAS,
+        {
+          id: String(id),
+          league,
+          nome,
+          logo
+        }
+      );
+
+      FZ_abrirEquipa(
+        id,
+        league
+      );
+    };
+
+  window.FZ3_favoritarJogador =
+    function (
+      id,
+      league,
+      nome,
+      foto
+    ) {
+
+      FZ3_toggleFav(
+        FZ3_FAV_JOGADORES,
+        {
+          id: String(id),
+          league,
+          nome,
+          foto
+        }
+      );
+
+      FZ_abrirJogador(
+        id,
+        league
+      );
+    };
+
+  /* nomes usados pelos botões */
+  window.FZ_favoritarJogo =
+    window.FZ3_favoritarJogo;
+
+  window.FZ_favoritarEquipa =
+    window.FZ3_favoritarEquipa;
+
+  window.FZ_favoritarJogador =
+    window.FZ3_favoritarJogador;
+
+  /* ========================================================
+     PÁGINA FAVORITOS
+     ======================================================== */
+
+  window.FZ_mostrarFavoritos =
+    function () {
+
+      const jogos =
+        FZ3_getFav(
+          FZ3_FAV_JOGOS
+        );
+
+      const equipas =
+        FZ3_getFav(
+          FZ3_FAV_EQUIPAS
+        );
+
+      const jogadores =
+        FZ3_getFav(
+          FZ3_FAV_JOGADORES
+        );
+
+      FZ3_content().innerHTML = `
+
+        ${FZ3_header(
+          "Favoritos",
+          "Os teus favoritos"
+        )}
+
+        <section class="fz3-section">
+
+          <h3>⚽ Jogos</h3>
+
+          ${
+            jogos.length
+            ?
+            jogos.map(j => `
+
+              <button
+                class="fz3-fav-row"
+                onclick="
+                  FZ_abrirJogo(
+                    '${FZ3_esc(j.id)}',
+                    '${FZ3_esc(j.league)}'
+                  )
+                "
+              >
+
+                <span>⚽</span>
+
+                <span>
+                  <strong>
+                    ${FZ3_esc(
+                      j.home
+                    )}
+                    —
+                    ${FZ3_esc(
+                      j.away
+                    )}
+                  </strong>
+
+                  <small>
+                    Ver detalhes
+                  </small>
+                </span>
+
+              </button>
+
+            `).join("")
+            :
+            `<div class="fz3-empty">
+              Não tens jogos favoritos.
+            </div>`
+          }
+
+        </section>
+
+        <section class="fz3-section">
+
+          <h3>🏟️ Equipas</h3>
+
+          ${
+            equipas.length
+            ?
+            equipas.map(t => `
+
+              <button
+                class="fz3-fav-row"
+                onclick="
+                  FZ_abrirEquipa(
+                    '${FZ3_esc(t.id)}',
+                    '${FZ3_esc(t.league)}'
+                  )
+                "
+              >
+
+                ${FZ3_logo(
+                  t.logo,
+                  t.nome
+                )}
+
+                <span>
+                  <strong>
+                    ${FZ3_esc(t.nome)}
+                  </strong>
+
+                  <small>
+                    Ver equipa
+                  </small>
+                </span>
+
+              </button>
+
+            `).join("")
+            :
+            `<div class="fz3-empty">
+              Não tens equipas favoritas.
+            </div>`
+          }
+
+        </section>
+
+        <section class="fz3-section">
+
+          <h3>👤 Jogadores</h3>
+
+          ${
+            jogadores.length
+            ?
+            jogadores.map(p => `
+
+              <button
+                class="fz3-fav-row"
+                onclick="
+                  FZ_abrirJogador(
+                    '${FZ3_esc(p.id)}',
+                    '${FZ3_esc(p.league)}'
+                  )
+                "
+              >
+
+                ${
+                  p.foto
+                  ?
+                  `<img
+                    src="${FZ3_esc(p.foto)}"
+                    alt=""
+                  >`
+                  :
+                  `<span>👤</span>`
+                }
+
+                <span>
+
+                  <strong>
+                    ${FZ3_esc(p.nome)}
+                  </strong>
+
+                  <small>
+                    Ver jogador
+                  </small>
+
+                </span>
+
+              </button>
+
+            `).join("")
+            :
+            `<div class="fz3-empty">
+              Não tens jogadores favoritos.
+            </div>`
+          }
+
+        </section>
+      `;
+    };
+
+  /* ========================================================
+     NAVEGAÇÃO INFERIOR
+     ======================================================== */
+
+  document.addEventListener(
+    "click",
+    function (event) {
+
+      const fav =
+        event.target.closest(
+          "#navFav"
+        );
+
+      if (fav) {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        FZ_mostrarFavoritos();
+
+        return;
+      }
+
+    },
+    true
+  );
+
+  /* ========================================================
+     CSS
+     ======================================================== */
+
+  const style =
+    document.createElement("style");
+
+  style.textContent = `
+
+    .fz3-loading,
+    .fz3-error,
+    .fz3-empty{
+      padding:18px;
+      margin:12px 0;
+      border-radius:16px;
+      background:#0d1724;
+      color:#dce5ef;
+      text-align:center;
+    }
+
+    .fz3-error{
+      border:1px solid #722f37;
+    }
+
+    .fz3-header{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:14px;
+    }
+
+    .fz3-back{
+      width:42px;
+      height:42px;
+      border:0;
+      border-radius:12px;
+      background:#722f37;
+      color:#fff;
+      font-size:24px;
+    }
+
+    .fz3-title{
+      font-size:20px;
+      font-weight:900;
+    }
+
+    .fz3-sub{
+      color:#9daabb;
+      font-size:12px;
+    }
+
+    .fz3-match{
+      display:grid;
+      grid-template-columns:1fr auto 1fr;
+      align-items:center;
+      gap:8px;
+      padding:18px 8px;
+      border-radius:20px;
+      background:#09111c;
+      border:1px solid #253140;
+    }
+
+    .fz3-team{
+      border:0;
+      background:transparent;
+      color:#fff;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:8px;
+    }
+
+    .fz3-team strong{
+      text-align:center;
+      font-size:12px;
+    }
+
+    .fz3-logo{
+      width:52px;
+      height:52px;
+      object-fit:contain;
+    }
+
+    .fz3-logo-empty{
+      border-radius:50%;
+      background:#0057b8;
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+    }
+
+    .fz3-score{
+      text-align:center;
+    }
+
+    .fz3-score-number{
+      font-size:28px;
+      font-weight:900;
+      white-space:nowrap;
+    }
+
+    .fz3-score small{
+      display:block;
+      color:#9daabb;
+      margin:4px 0 8px;
+    }
+
+    .fz3-fav{
+      border:0;
+      border-radius:10px;
+      padding:7px 9px;
+      background:#722f37;
+      color:#fff;
+      font-weight:800;
+    }
+
+    .fz3-section{
+      margin-top:14px;
+      padding:15px;
+      border-radius:18px;
+      background:#09111c;
+      border:1px solid #202d3b;
+    }
+
+    .fz3-section h3{
+      margin:0 0 12px;
+      font-size:16px;
+    }
+
+    .fz3-event{
+      display:grid;
+      grid-template-columns:55px 1fr;
+      gap:8px;
+      padding:9px 0;
+      border-bottom:1px solid #1d2733;
+      font-size:13px;
+    }
+
+    .fz3-event span{
+      color:#1683ff;
+      font-weight:800;
+    }
+
+    .fz3-stat-team{
+      margin-bottom:15px;
+    }
+
+    .fz3-stat-row{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      padding:8px 0;
+      border-bottom:1px solid #1d2733;
+      font-size:13px;
+    }
+
+    .fz3-pitch{
+      min-height:430px;
+      padding:15px;
+      border:3px solid rgba(255,255,255,.75);
+      border-radius:18px;
+      background:
+        repeating-linear-gradient(
+          90deg,
+          #075d37 0,
+          #075d37 10%,
+          #08653b 10%,
+          #08653b 20%
+        );
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      align-content:space-around;
+      gap:8px;
+    }
+
+    .fz3-pitch-player{
+      background:transparent;
+      border:0;
+      color:#fff;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      text-shadow:0 1px 2px #000;
+    }
+
+    .fz3-pitch-player span{
+      width:34px;
+      height:34px;
+      border-radius:50%;
+      border:2px solid #fff;
+      background:#0057b8;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+    }
+
+    .fz3-pitch-player small{
+      max-width:90px;
+      text-align:center;
+    }
+
+    .fz3-club{
+      display:flex;
+      align-items:center;
+      gap:13px;
+      padding:16px;
+      border-radius:18px;
+      background:#09111c;
+      border:1px solid #202d3b;
+    }
+
+    .fz3-club-info{
+      flex:1;
+    }
+
+    .fz3-club-info h2{
+      margin:0 0 5px;
+      font-size:20px;
+    }
+
+    .fz3-player-row,
+    .fz3-career-row,
+    .fz3-fav-row{
+      width:100%;
+      border:0;
+      background:#0d1724;
+      color:#fff;
+      padding:10px;
+      margin-bottom:7px;
+      border-radius:13px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      text-align:left;
+    }
+
+    .fz3-player-row img,
+    .fz3-player-row .fz3-avatar,
+    .fz3-fav-row img{
+      width:43px;
+      height:43px;
+      object-fit:contain;
+      border-radius:50%;
+    }
+
+    .fz3-avatar{
+      background:#0057b8;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .fz3-player-row span:last-child,
+    .fz3-career-row span,
+    .fz3-fav-row span:last-child{
+      display:flex;
+      flex-direction:column;
+      flex:1;
+    }
+
+    .fz3-player-row small,
+    .fz3-career-row small,
+    .fz3-fav-row small{
+      color:#9daabb;
+      margin-top:3px;
+    }
+
+    .fz3-player{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      padding:16px;
+      border-radius:18px;
+      background:#09111c;
+      border:1px solid #202d3b;
+    }
+
+    .fz3-player img,
+    .fz3-player-empty{
+      width:80px;
+      height:80px;
+      border-radius:50%;
+      object-fit:contain;
+    }
+
+    .fz3-player-empty{
+      background:#0057b8;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:34px;
+    }
+
+    .fz3-player h2{
+      margin:0 0 5px;
+    }
+
+    .fz3-info{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:8px;
+    }
+
+    .fz3-info div{
+      background:#0d1724;
+      padding:10px;
+      border-radius:12px;
+    }
+
+    .fz3-info small,
+    .fz3-info b{
+      display:block;
+    }
+
+    .fz3-info small{
+      color:#9daabb;
+      margin-bottom:3px;
+    }
+
+    .fz3-career{
+      display:flex;
+      flex-direction:column;
+      gap:7px;
+    }
+
+    .fz3-career-row .fz3-logo{
+      width:42px;
+      height:42px;
+    }
+
+    .fz3-loading-small{
+      color:#9daabb;
+      font-size:13px;
+    }
+
+    @media(max-width:420px){
+      .fz3-score-number{
+        font-size:24px;
+      }
+
+      .fz3-team strong{
+        font-size:11px;
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
+
+})();
 </script>
+<script>
+/* =========================================================
+   FUTZONE — BLOCO 4
+   FUTSAL
+   JOGOS • DATAS • AO VIVO • COMPETIÇÕES • CLASSIFICAÇÕES
+   ========================================================= */
 
+(function(){
+
+  const FZ4_API =
+    "https://www.sofascore.com/api/v1";
+
+  let FZ4_data = new Date();
+
+  function esc(v){
+    return String(v ?? "")
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;")
+      .replace(/'/g,"&#039;");
+  }
+
+  function dateISO(d){
+
+    return [
+      d.getFullYear(),
+      String(d.getMonth()+1).padStart(2,"0"),
+      String(d.getDate()).padStart(2,"0")
+    ].join("-");
+  }
+
+  async function get(url){
+
+    const r=await fetch(
+      url,
+      {
+        cache:"no-store"
+      }
+    );
+
+    if(!r.ok)
+      throw new Error("HTTP "+r.status);
+
+    return await r.json();
+  }
+
+  function area(){
+
+    return document.getElementById(
+      "conteudo"
+    );
+  }
+
+  /* =====================================================
+     ENTRADA FUTSAL
+     ===================================================== */
+
+  window.FZ_abrirFutsal =
+    function(){
+
+      if(!area()) return;
+
+      area().innerHTML=`
+
+        <div class="fz4-header">
+
+          <button
+            class="fz4-back"
+            onclick="FZ3_voltar()"
+          >←</button>
+
+          <div>
+
+            <strong>🥅 FUTSAL</strong>
+
+            <small>
+              Futebol de salão
+            </small>
+
+          </div>
+
+        </div>
+
+        <div class="fz4-menu">
+
+          <button
+            onclick="FZ4_jogos()"
+          >
+            ⚽ Jogos
+          </button>
+
+          <button
+            onclick="FZ4_live()"
+          >
+            🔴 AO VIVO
+          </button>
+
+          <button
+            onclick="FZ4_competicoes()"
+          >
+            🏆 Competições
+          </button>
+
+        </div>
+
+        <div id="fz4-area"></div>
+      `;
+
+      FZ4_jogos();
+    };
+
+  /* =====================================================
+     JOGOS
+     ===================================================== */
+
+  window.FZ4_jogos =
+    async function(){
+
+      const box =
+        document.getElementById(
+          "fz4-area"
+        );
+
+      if(!box) return;
+
+      box.innerHTML=`
+
+        <div class="fz4-dates">
+
+          <button
+            onclick="FZ4_dia(-1)"
+          >‹</button>
+
+          <button
+            onclick="FZ4_hoje()"
+          >HOJE</button>
+
+          <input
+            type="date"
+            value="${dateISO(FZ4_data)}"
+            onchange="FZ4_data(this.value)"
+          >
+
+          <button
+            onclick="FZ4_dia(1)"
+          >›</button>
+
+        </div>
+
+        <div class="fz4-loading">
+          A carregar jogos de futsal...
+        </div>
+      `;
+
+      try{
+
+        const data =
+          await get(
+            FZ4_API +
+            "/sport/futsal/scheduled-events/" +
+            dateISO(FZ4_data)
+          );
+
+        const events =
+          data.events || [];
+
+        if(!events.length){
+
+          box.innerHTML += `
+            <div class="fz4-empty">
+              Não existem jogos de futsal
+              registados para este dia.
+            </div>
+          `;
+
+          return;
+        }
+
+        box.innerHTML =
+          box.innerHTML.split(
+            '<div class="fz4-loading">'
+          )[0] +
+          events.map(card).join("");
+
+      }catch(e){
+
+        box.innerHTML += `
+          <div class="fz4-empty">
+            Não foi possível carregar
+            os jogos de futsal.
+          </div>
+        `;
+      }
+    };
+
+  function card(ev){
+
+    const home =
+      ev.homeTeam || {};
+
+    const away =
+      ev.awayTeam || {};
+
+    const hs =
+      ev.homeScore?.current;
+
+    const as =
+      ev.awayScore?.current;
+
+    const time =
+      ev.startTimestamp
+      ?
+      new Date(
+        ev.startTimestamp*1000
+      ).toLocaleTimeString(
+        "pt-PT",
+        {
+          hour:"2-digit",
+          minute:"2-digit"
+        }
+      )
+      :
+      "--:--";
+
+    return `
+
+      <button
+        class="fz4-game"
+        onclick="
+          FZ4_detalhe(
+            '${esc(ev.id)}'
+          )
+        "
+      >
+
+        <small class="fz4-league">
+          ${esc(
+            ev.tournament?.name ||
+            "Futsal"
+          )}
+        </small>
+
+        <div class="fz4-teams">
+
+          <span>
+            ${esc(
+              home.name ||
+              "Casa"
+            )}
+          </span>
+
+          <strong>
+
+            ${
+              hs !== undefined &&
+              as !== undefined
+              ?
+              `${esc(hs)} - ${esc(as)}`
+              :
+              time
+            }
+
+          </strong>
+
+          <span>
+            ${esc(
+              away.name ||
+              "Fora"
+            )}
+          </span>
+
+        </div>
+
+      </button>
+    `;
+  }
+
+  /* =====================================================
+     DATAS
+     ===================================================== */
+
+  window.FZ4_dia =
+    function(delta){
+
+      FZ4_data.setDate(
+        FZ4_data.getDate()+delta
+      );
+
+      FZ4_jogos();
+    };
+
+  window.FZ4_hoje =
+    function(){
+
+      FZ4_data =
+        new Date();
+
+      FZ4_jogos();
+    };
+
+  window.FZ4_data =
+    function(value){
+
+      if(!value) return;
+
+      const p =
+        value.split("-");
+
+      FZ4_data =
+        new Date(
+          Number(p[0]),
+          Number(p[1])-1,
+          Number(p[2])
+        );
+
+      FZ4_jogos();
+    };
+
+  /* =====================================================
+     AO VIVO
+     ===================================================== */
+
+  window.FZ4_live =
+    async function(){
+
+      const box =
+        document.getElementById(
+          "fz4-area"
+        );
+
+      if(!box) return;
+
+      box.innerHTML =
+        `<div class="fz4-loading">
+          A procurar jogos ao vivo...
+        </div>`;
+
+      try{
+
+        const data =
+          await get(
+            FZ4_API +
+            "/sport/futsal/events/live"
+          );
+
+        const events =
+          data.events || [];
+
+        if(!events.length){
+
+          box.innerHTML =
+            `<div class="fz4-empty">
+              Não existem jogos de futsal
+              ao vivo neste momento.
+            </div>`;
+
+          return;
+        }
+
+        box.innerHTML =
+          events.map(card).join("");
+
+      }catch(e){
+
+        box.innerHTML =
+          `<div class="fz4-empty">
+            Não foi possível obter
+            os jogos ao vivo.
+          </div>`;
+      }
+    };
+
+  /* =====================================================
+     DETALHE
+     ===================================================== */
+
+  window.FZ4_detalhe =
+    async function(id){
+
+      if(!area()) return;
+
+      area().innerHTML =
+        `<div class="fz4-loading">
+          A carregar jogo...
+        </div>`;
+
+      try{
+
+        const data =
+          await get(
+            FZ4_API +
+            "/event/" +
+            encodeURIComponent(id)
+          );
+
+        const ev =
+          data.event || {};
+
+        const home =
+          ev.homeTeam || {};
+
+        const away =
+          ev.awayTeam || {};
+
+        area().innerHTML=`
+
+          <div class="fz4-header">
+
+            <button
+              class="fz4-back"
+              onclick="FZ_abrirFutsal()"
+            >←</button>
+
+            <div>
+              <strong>🥅 FUTSAL</strong>
+              <small>
+                ${esc(
+                  ev.tournament?.name ||
+                  ""
+                )}
+              </small>
+            </div>
+
+          </div>
+
+          <div class="fz4-detail">
+
+            <div>
+              ${esc(
+                home.name ||
+                "Casa"
+              )}
+            </div>
+
+            <strong>
+              ${
+                ev.homeScore?.current !== undefined
+                ?
+                `${esc(
+                  ev.homeScore.current
+                )}
+                -
+                ${esc(
+                  ev.awayScore?.current
+                )}`
+                :
+                "vs"
+              }
+            </strong>
+
+            <div>
+              ${esc(
+                away.name ||
+                "Fora"
+              )}
+            </div>
+
+          </div>
+
+          <div id="fz4-stats"></div>
+
+          <div id="fz4-players"></div>
+        `;
+
+        FZ4_stats(id);
+        FZ4_players(id);
+
+      }catch(e){
+
+        area().innerHTML =
+          `<div class="fz4-empty">
+            Não foi possível carregar
+            este jogo.
+          </div>`;
+      }
+    };
+
+  async function FZ4_stats(id){
+
+    const box =
+      document.getElementById(
+        "fz4-stats"
+      );
+
+    if(!box) return;
+
+    try{
+
+      const data =
+        await get(
+          FZ4_API +
+          "/event/" +
+          encodeURIComponent(id) +
+          "/statistics"
+        );
+
+      const groups =
+        data.statistics || [];
+
+      if(!groups.length) return;
+
+      let html=`
+        <section class="fz4-section">
+          <h3>📊 Estatísticas</h3>
+      `;
+
+      groups.forEach(period => {
+
+        (period.groups || [])
+          .forEach(group => {
+
+            (group.statisticsItems || [])
+              .forEach(stat => {
+
+                html += `
+
+                  <div class="fz4-stat">
+
+                    <span>
+                      ${esc(
+                        stat.name || ""
+                      )}
+                    </span>
+
+                    <b>
+                      ${esc(
+                        stat.home ?? ""
+                      )}
+                      -
+                      ${esc(
+                        stat.away ?? ""
+                      )}
+                    </b>
+
+                  </div>
+                `;
+              });
+          });
+      });
+
+      html += "</section>";
+
+      box.innerHTML=html;
+
+    }catch(e){}
+  }
+
+  async function FZ4_players(id){
+
+    const box =
+      document.getElementById(
+        "fz4-players"
+      );
+
+    if(!box) return;
+
+    try{
+
+      const data =
+        await get(
+          FZ4_API +
+          "/event/" +
+          encodeURIComponent(id) +
+          "/lineups"
+        );
+
+      const teams=[
+        data.home,
+        data.away
+      ].filter(Boolean);
+
+      if(!teams.length) return;
+
+      box.innerHTML=`
+
+        <section class="fz4-section">
+
+          <h3>👥 Jogadores</h3>
+
+          ${teams.map(team => `
+
+            <h4>
+              ${esc(
+                team.team?.name ||
+                "Equipa"
+              )}
+            </h4>
+
+            ${(team.players || [])
+              .map(p => {
+
+                const player =
+                  p.player || {};
+
+                return `
+
+                  <div class="fz4-stat">
+
+                    <span>
+                      ${esc(
+                        player.name ||
+                        "Jogador"
+                      )}
+                    </span>
+
+                    <b>
+                      ${esc(
+                        p.position ||
+                        ""
+                      )}
+                    </b>
+
+                  </div>
+                `;
+              }).join("")}
+
+          `).join("")}
+
+        </section>
+      `;
+
+    }catch(e){}
+  }
+
+  /* =====================================================
+     COMPETIÇÕES
+     ===================================================== */
+
+  window.FZ4_competicoes =
+    async function(){
+
+      const box =
+        document.getElementById(
+          "fz4-area"
+        );
+
+      if(!box) return;
+
+      box.innerHTML =
+        `<div class="fz4-loading">
+          A carregar competições...
+        </div>`;
+
+      try{
+
+        const data =
+          await get(
+            FZ4_API +
+            "/sport/futsal/unique-tournaments"
+          );
+
+        let list =
+          data.uniqueTournaments ||
+          [];
+
+        if(!list.length){
+
+          const groups =
+            data.groups || [];
+
+          list =
+            groups.flatMap(
+              g =>
+                g.uniqueTournaments || []
+            );
+        }
+
+        if(!list.length){
+
+          box.innerHTML =
+            `<div class="fz4-empty">
+              Não foi possível obter
+              as competições.
+            </div>`;
+
+          return;
+        }
+
+        box.innerHTML = `
+
+          <section class="fz4-section">
+
+            <h3>
+              🏆 Competições de Futsal
+            </h3>
+
+            ${list.map(t => `
+
+              <button
+                class="fz4-competition"
+                onclick="
+                  FZ4_classificacao(
+                    '${esc(t.id)}',
+                    '${esc(
+                      t.name || ""
+                    )}'
+                  )
+                "
+              >
+
+                <span>🏆</span>
+
+                <span>
+                  <strong>
+                    ${esc(
+                      t.name ||
+                      "Competição"
+                    )}
+                  </strong>
+
+                  <small>
+                    ${esc(
+                      t.category?.name ||
+                      ""
+                    )}
+                  </small>
+                </span>
+
+              </button>
+
+            `).join("")}
+
+          </section>
+        `;
+
+      }catch(e){
+
+        box.innerHTML =
+          `<div class="fz4-empty">
+            Não foi possível carregar
+            as competições.
+          </div>`;
+      }
+    };
+
+  /* =====================================================
+     CLASSIFICAÇÃO
+     ===================================================== */
+
+  window.FZ4_classificacao =
+    async function(
+      tournamentId,
+      tournamentName
+    ){
+
+      const box =
+        document.getElementById(
+          "fz4-area"
+        );
+
+      if(!box) return;
+
+      box.innerHTML =
+        `<div class="fz4-loading">
+          A carregar classificação...
+        </div>`;
+
+      try{
+
+        const seasons =
+          await get(
+            FZ4_API +
+            "/unique-tournament/" +
+            encodeURIComponent(
+              tournamentId
+            ) +
+            "/seasons"
+          );
+
+        const season =
+          seasons.seasons?.[0];
+
+        if(!season){
+
+          box.innerHTML =
+            `<div class="fz4-empty">
+              Não existe classificação
+              disponível.
+            </div>`;
+
+          return;
+        }
+
+        const data =
+          await get(
+            FZ4_API +
+            "/unique-tournament/" +
+            encodeURIComponent(
+              tournamentId
+            ) +
+            "/season/" +
+            encodeURIComponent(
+              season.id
+            ) +
+            "/standings/total"
+          );
+
+        const rows =
+          data.standings?.[0]?.rows ||
+          [];
+
+        if(!rows.length){
+
+          box.innerHTML =
+            `<div class="fz4-empty">
+              Classificação não disponível.
+            </div>`;
+
+          return;
+        }
+
+        box.innerHTML=`
+
+          <section class="fz4-section">
+
+            <h3>
+              🏆 ${esc(
+                tournamentName
+              )}
+            </h3>
+
+            <div class="fz4-table">
+
+              <div class="fz4-tr fz4-head">
+                <span>#</span>
+                <span>Equipa</span>
+                <span>J</span>
+                <span>Pts</span>
+              </div>
+
+              ${rows.map(row => `
+
+                <div class="fz4-tr">
+
+                  <span>
+                    ${esc(
+                      row.position
+                    )}
+                  </span>
+
+                  <span>
+                    ${esc(
+                      row.team?.name ||
+                      ""
+                    )}
+                  </span>
+
+                  <span>
+                    ${esc(
+                      row.matches ??
+                      ""
+                    )}
+                  </span>
+
+                  <strong>
+                    ${esc(
+                      row.points ??
+                      ""
+                    )}
+                  </strong>
+
+                </div>
+
+              `).join("")}
+
+            </div>
+
+          </section>
+        `;
+
+      }catch(e){
+
+        box.innerHTML =
+          `<div class="fz4-empty">
+            Não foi possível carregar
+            a classificação.
+          </div>`;
+      }
+    };
+
+  /* =====================================================
+     CSS
+     ===================================================== */
+
+  const style =
+    document.createElement("style");
+
+  style.textContent = `
+
+    .fz4-header{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:14px;
+    }
+
+    .fz4-header strong{
+      display:block;
+      font-size:20px;
+    }
+
+    .fz4-header small{
+      display:block;
+      color:#9daabb;
+      margin-top:2px;
+    }
+
+    .fz4-back{
+      width:42px;
+      height:42px;
+      border:0;
+      border-radius:12px;
+      background:#722f37;
+      color:#fff;
+      font-size:24px;
+    }
+
+    .fz4-menu{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:7px;
+      margin-bottom:12px;
+    }
+
+    .fz4-menu button{
+      border:0;
+      border-radius:12px;
+      padding:11px 4px;
+      background:#722f37;
+      color:#fff;
+      font-weight:800;
+    }
+
+    .fz4-dates{
+      display:grid;
+      grid-template-columns:42px 1fr 1.5fr 42px;
+      gap:6px;
+      margin-bottom:12px;
+    }
+
+    .fz4-dates button,
+    .fz4-dates input{
+      min-height:42px;
+      border:1px solid #263140;
+      border-radius:11px;
+      background:#09111c;
+      color:#fff;
+      text-align:center;
+    }
+
+    .fz4-game{
+      display:block;
+      width:100%;
+      border:1px solid #202d3b;
+      border-radius:17px;
+      background:#09111c;
+      color:#fff;
+      padding:13px;
+      margin-bottom:8px;
+      text-align:left;
+    }
+
+    .fz4-league{
+      display:block;
+      color:#9daabb;
+      font-size:11px;
+      margin-bottom:10px;
+    }
+
+    .fz4-teams{
+      display:grid;
+      grid-template-columns:1fr 70px 1fr;
+      align-items:center;
+      gap:7px;
+    }
+
+    .fz4-teams span:first-child{
+      text-align:right;
+    }
+
+    .fz4-teams span:last-child{
+      text-align:left;
+    }
+
+    .fz4-teams strong{
+      text-align:center;
+      font-size:17px;
+    }
+
+    .fz4-loading,
+    .fz4-empty{
+      padding:18px;
+      border-radius:16px;
+      background:#0d1724;
+      color:#dce5ef;
+      text-align:center;
+      margin:10px 0;
+    }
+
+    .fz4-detail{
+      display:grid;
+      grid-template-columns:1fr auto 1fr;
+      gap:8px;
+      align-items:center;
+      padding:20px 10px;
+      border-radius:18px;
+      background:#09111c;
+      border:1px solid #202d3b;
+      text-align:center;
+    }
+
+    .fz4-detail strong{
+      font-size:27px;
+    }
+
+    .fz4-section{
+      margin-top:14px;
+      padding:15px;
+      border-radius:18px;
+      background:#09111c;
+      border:1px solid #202d3b;
+    }
+
+    .fz4-section h3{
+      margin:0 0 12px;
+    }
+
+    .fz4-section h4{
+      margin:12px 0 6px;
+    }
+
+    .fz4-stat{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      padding:8px 0;
+      border-bottom:1px solid #1d2733;
+      font-size:13px;
+    }
+
+    .fz4-competition{
+      width:100%;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:11px;
+      margin-bottom:7px;
+      border:0;
+      border-radius:13px;
+      background:#0d1724;
+      color:#fff;
+      text-align:left;
+    }
+
+    .fz4-competition span:last-child{
+      display:flex;
+      flex-direction:column;
+    }
+
+    .fz4-competition small{
+      color:#9daabb;
+      margin-top:3px;
+    }
+
+    .fz4-table{
+      overflow:hidden;
+      border-radius:12px;
+    }
+
+    .fz4-tr{
+      display:grid;
+      grid-template-columns:32px 1fr 32px 45px;
+      gap:5px;
+      align-items:center;
+      padding:10px 6px;
+      border-bottom:1px solid #1d2733;
+      font-size:12px;
+    }
+
+    .fz4-head{
+      color:#9daabb;
+      font-weight:800;
+      background:#0d1724;
+    }
+
+  `;
+
+  document.head.appendChild(style);
+
+})();
+</script>
   </body>
 </html>
