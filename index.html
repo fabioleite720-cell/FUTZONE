@@ -6354,68 +6354,250 @@ window.FZ_cartaoJogo = FZ_cartaoJogo;
   },true);
 
 
+  <script>
+/* =========================================================
+   FUTZONE — LIGAÇÃO FINAL DOS BOTÕES
+   USA OS IDs REAIS DO INDEX
+   NÃO ALTERA JOGOS/DATAS
+   ========================================================= */
+
+(function(){
+
+  function FZ_clickFuncao(nome){
+
+    try{
+      if(typeof window[nome] === "function"){
+        window[nome]();
+        return true;
+      }
+    }catch(e){
+      console.error("FUTZONE:",nome,e);
+    }
+
+    return false;
+  }
+
+
+  function FZ_ligarBotoes(){
+
+    /* =====================================================
+       JOGOS
+       ===================================================== */
+
+    const jogos =
+      document.getElementById("btnJogos");
+
+    if(jogos && jogos.dataset.fzClick !== "1"){
+
+      jogos.dataset.fzClick = "1";
+
+      jogos.addEventListener("click",function(e){
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        if(FZ_clickFuncao("FZ_carregarJogos"))
+          return;
+
+        if(FZ_clickFuncao("FZ_renderizar"))
+          return;
+
+        window.FZ_modo = "jogos";
+
+      },true);
+    }
+
+
+    const navJogos =
+      document.getElementById("navJogos");
+
+    if(navJogos && navJogos.dataset.fzClick !== "1"){
+
+      navJogos.dataset.fzClick = "1";
+
+      navJogos.addEventListener("click",function(e){
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        FZ_clickFuncao("FZ_carregarJogos") ||
+        FZ_clickFuncao("FZ_renderizar");
+
+      },true);
+    }
+
+
+    /* =====================================================
+       JORNADAS
+       ===================================================== */
+
+    const jornadas =
+      document.getElementById("btnJornadas");
+
+    if(jornadas && jornadas.dataset.fzClick !== "1"){
+
+      jornadas.dataset.fzClick = "1";
+
+      jornadas.addEventListener("click",function(e){
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        if(FZ_clickFuncao("FZ_mostrarJornadas"))
+          return;
+
+        if(FZ_clickFuncao("FZ_carregarJornadas"))
+          return;
+
+        if(FZ_clickFuncao("FZ_renderizarJornadas"))
+          return;
+
+        console.warn(
+          "FUTZONE: função das jornadas não encontrada."
+        );
+
+      },true);
+    }
+
+
+    /* =====================================================
+       TABELAS
+       ===================================================== */
+
+    const tabelas =
+      document.getElementById("btnTabelas");
+
+    if(tabelas && tabelas.dataset.fzClick !== "1"){
+
+      tabelas.dataset.fzClick = "1";
+
+      tabelas.addEventListener("click",function(e){
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        if(FZ_clickFuncao("FZ_mostrarTabelas"))
+          return;
+
+        if(FZ_clickFuncao("FZ_carregarTabelas"))
+          return;
+
+        if(FZ_clickFuncao("FZ_renderizarTabelas"))
+          return;
+
+        console.warn(
+          "FUTZONE: função das tabelas não encontrada."
+        );
+
+      },true);
+    }
+
+
+    const navTabelas =
+      document.getElementById("navTabelas");
+
+    if(navTabelas && navTabelas.dataset.fzClick !== "1"){
+
+      navTabelas.dataset.fzClick = "1";
+
+      navTabelas.addEventListener("click",function(e){
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        if(FZ_clickFuncao("FZ_mostrarTabelas"))
+          return;
+
+        if(FZ_clickFuncao("FZ_carregarTabelas"))
+          return;
+
+        FZ_clickFuncao("FZ_renderizarTabelas");
+
+      },true);
+    }
+
+
+    /* =====================================================
+       AO VIVO
+       ===================================================== */
+
+    const live =
+      document.getElementById("btnLive");
+
+    if(live && live.dataset.fzClick !== "1"){
+
+      live.dataset.fzClick = "1";
+
+      live.addEventListener("click",function(e){
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        if(FZ_clickFuncao("FZ_abrirAoVivo"))
+          return;
+
+        if(FZ_clickFuncao("FZ_carregarAoVivo"))
+          return;
+
+        if(FZ_clickFuncao("FZ_mostrarAoVivo"))
+          return;
+
+        console.warn(
+          "FUTZONE: função AO VIVO não encontrada."
+        );
+
+      },true);
+    }
+
+
+    /* =====================================================
+       FAVORITOS
+       ===================================================== */
+
+    const favoritos =
+      document.getElementById("navFavoritos");
+
+    if(favoritos && favoritos.dataset.fzClick !== "1"){
+
+      favoritos.dataset.fzClick = "1";
+
+      favoritos.addEventListener("click",function(e){
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        if(FZ_clickFuncao("FZ_mostrarFavoritos"))
+          return;
+
+        if(FZ_clickFuncao("FZ_carregarFavoritos"))
+          return;
+
+        if(FZ_clickFuncao("FZ_renderizarFavoritos"))
+          return;
+
+        if(FZ_clickFuncao("FZ_abrirFavoritos"))
+          return;
+
+        console.warn(
+          "FUTZONE: função FAVORITOS não encontrada."
+        );
+
+      },true);
+    }
+
+  }
+
+
   /* =======================================================
-     CLIQUE DE JOGADORES
-     ======================================================= */
-
-  document.addEventListener("click",function(e){
-
-    let el =
-      e.target.closest(
-        "[data-jogador-id],[data-player-id],[data-athlete-id]"
-      );
-
-    if(!el)
-      return;
-
-    const id =
-      el.dataset.jogadorId ||
-      el.dataset.playerId ||
-      el.dataset.athleteId;
-
-    if(!id)
-      return;
-
-    const nome =
-      el.dataset.jogadorNome ||
-      el.dataset.playerName ||
-      el.textContent.trim();
-
-    const equipa =
-      el.dataset.equipaId ||
-      el.dataset.teamId ||
-      "";
-
-    const liga =
-      el.dataset.liga ||
-      el.dataset.league ||
-      window.FZ_ultimaLigaEquipa ||
-      "por.1";
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    if(fzExiste("FZ_abrirJogadorSeguro"))
-      fzChamar(
-        "FZ_abrirJogadorSeguro",
-        [id,liga,equipa,nome]
-      );
-    else
-      fzChamar(
-        "FZ_abrirJogador",
-        [id,nome,equipa,liga]
-      );
-
-  },true);
-
-
-  /* =======================================================
-     REFORÇAR
+     EXECUTAR
      ======================================================= */
 
   function FZ_reforcar(){
+
     FZ_ligarBotoes();
+
   }
+
 
   FZ_reforcar();
 
@@ -6423,22 +6605,25 @@ window.FZ_cartaoJogo = FZ_cartaoJogo;
   setTimeout(FZ_reforcar,1000);
   setTimeout(FZ_reforcar,2000);
 
+
   const observer =
     new MutationObserver(function(){
+
       FZ_reforcar();
+
     });
 
-  observer.observe(document.body,{
-    childList:true,
-    subtree:true
-  });
+  observer.observe(
+    document.body,
+    {
+      childList:true,
+      subtree:true
+    }
+  );
 
 
   window.FZ_ligarBotoes =
     FZ_ligarBotoes;
-
-  window.FZ_reforcar =
-    FZ_reforcar;
 
 })();
 </script>
