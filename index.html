@@ -5794,7 +5794,409 @@ window.FZ_cartaoJogo = FZ_cartaoJogo;
 /* =========================================================
    FIM DO BLOCO 4
    ========================================================= */
-          </script>
+      <script>
+/* =========================================================
+   FUTZONE — BLOCO 5
+   LIGAÇÕES / CLIQUES / NAVEGAÇÃO
+   ========================================================= */
 
-          </body>
-         </html>
+(function(){
+
+  function FZ_txt(el){
+    return (el?.textContent || "")
+      .replace(/\s+/g," ")
+      .trim()
+      .toLowerCase();
+  }
+
+
+  /* =======================================================
+     BOTÕES PRINCIPAIS
+     ======================================================= */
+
+  function FZ_ligarBotoes(){
+
+    const botoes =
+      document.querySelectorAll("button");
+
+    botoes.forEach(btn=>{
+
+      if(btn.dataset.fzLigado==="1")
+        return;
+
+      const texto = FZ_txt(btn);
+
+      /* FUTSAL */
+
+      if(
+        texto.includes("futsal") &&
+        typeof FZ_abrirFutsal==="function"
+      ){
+
+        btn.addEventListener(
+          "click",
+          function(e){
+            e.stopPropagation();
+            FZ_abrirFutsal();
+          }
+        );
+
+        btn.dataset.fzLigado="1";
+        return;
+      }
+
+
+      /* TABELAS */
+
+      if(
+        texto.includes("tabelas") ||
+        texto.includes("classificação")
+      ){
+
+        if(typeof FZ_tabelas==="function"){
+
+          btn.addEventListener(
+            "click",
+            function(e){
+              e.preventDefault();
+              e.stopPropagation();
+              FZ_tabelas();
+            }
+          );
+
+          btn.dataset.fzLigado="1";
+          return;
+        }
+
+        if(typeof FZ_mostrarTabelas==="function"){
+
+          btn.addEventListener(
+            "click",
+            function(e){
+              e.preventDefault();
+              e.stopPropagation();
+              FZ_mostrarTabelas();
+            }
+          );
+
+          btn.dataset.fzLigado="1";
+          return;
+        }
+      }
+
+
+      /* JORNADAS */
+
+      if(texto.includes("jornadas")){
+
+        if(typeof FZ_jornadas==="function"){
+
+          btn.addEventListener(
+            "click",
+            function(e){
+              e.preventDefault();
+              e.stopPropagation();
+              FZ_jornadas();
+            }
+          );
+
+          btn.dataset.fzLigado="1";
+          return;
+        }
+
+        if(typeof FZ_mostrarJornadas==="function"){
+
+          btn.addEventListener(
+            "click",
+            function(e){
+              e.preventDefault();
+              e.stopPropagation();
+              FZ_mostrarJornadas();
+            }
+          );
+
+          btn.dataset.fzLigado="1";
+          return;
+        }
+      }
+
+
+      /* AO VIVO */
+
+      if(
+        texto.includes("ao vivo") ||
+        texto.includes("ao vivo")
+      ){
+
+        if(typeof FZ_aoVivo==="function"){
+
+          btn.addEventListener(
+            "click",
+            function(e){
+              e.preventDefault();
+              e.stopPropagation();
+              FZ_aoVivo();
+            }
+          );
+
+          btn.dataset.fzLigado="1";
+          return;
+        }
+
+        if(typeof FZ_mostrarAoVivo==="function"){
+
+          btn.addEventListener(
+            "click",
+            function(e){
+              e.preventDefault();
+              e.stopPropagation();
+              FZ_mostrarAoVivo();
+            }
+          );
+
+          btn.dataset.fzLigado="1";
+          return;
+        }
+
+        if(typeof FZ_carregarAoVivo==="function"){
+
+          btn.addEventListener(
+            "click",
+            function(e){
+              e.preventDefault();
+              e.stopPropagation();
+              FZ_carregarAoVivo();
+            }
+          );
+
+          btn.dataset.fzLigado="1";
+          return;
+        }
+      }
+
+
+      /* FAVORITOS */
+
+      if(
+        texto.includes("favoritos") ||
+        texto.includes("favorito")
+      ){
+
+        if(typeof FZ_favoritos==="function"){
+
+          btn.addEventListener(
+            "click",
+            function(e){
+              e.preventDefault();
+              e.stopPropagation();
+              FZ_favoritos();
+            }
+          );
+
+          btn.dataset.fzLigado="1";
+          return;
+        }
+
+        if(typeof FZ_mostrarFavoritos==="function"){
+
+          btn.addEventListener(
+            "click",
+            function(e){
+              e.preventDefault();
+              e.stopPropagation();
+              FZ_mostrarFavoritos();
+            }
+          );
+
+          btn.dataset.fzLigado="1";
+          return;
+        }
+      }
+
+    });
+
+  }
+
+
+  /* =======================================================
+     GARANTIR QUE CARTÕES DE JOGO ABREM
+     ======================================================= */
+
+  document.addEventListener(
+    "click",
+    function(e){
+
+      let card =
+        e.target.closest(
+          ".fz-game,.game-card,.match-card,.card-jogo"
+        );
+
+      if(!card)
+        return;
+
+      /* Se clicou num botão/equipa,
+         não abrir novamente o jogo */
+
+      if(
+        e.target.closest("button") ||
+        e.target.closest(".fz-game-team")
+      ){
+        return;
+      }
+
+      const onclick =
+        card.getAttribute("onclick");
+
+      if(onclick)
+        return;
+
+      const id =
+        card.dataset.eventId ||
+        card.dataset.id;
+
+      const liga =
+        card.dataset.liga ||
+        card.dataset.league;
+
+      if(
+        id &&
+        typeof FZ_abrirJogoSeguro==="function"
+      ){
+
+        FZ_abrirJogoSeguro(
+          id,
+          liga
+        );
+      }
+
+    },
+    true
+  );
+
+
+  /* =======================================================
+     CLUBES — GARANTIR CLIQUE
+     ======================================================= */
+
+  document.addEventListener(
+    "click",
+    function(e){
+
+      const equipa =
+        e.target.closest(
+          "[data-team-id],[data-equipa-id]"
+        );
+
+      if(!equipa)
+        return;
+
+      const id =
+        equipa.dataset.teamId ||
+        equipa.dataset.equipaId;
+
+      const nome =
+        equipa.dataset.teamName ||
+        equipa.dataset.equipaNome ||
+        equipa.textContent.trim();
+
+      const liga =
+        equipa.dataset.league ||
+        equipa.dataset.liga ||
+        window.FZ_ultimaLigaEquipa ||
+        (
+          typeof FZ_ligaSelecionada!=="undefined"
+          ? FZ_ligaSelecionada
+          : "por.1"
+        );
+
+      if(
+        id &&
+        typeof FZ_abrirEquipaSeguro==="function"
+      ){
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        FZ_abrirEquipaSeguro(
+          id,
+          nome,
+          liga
+        );
+      }
+
+    },
+    true
+  );
+
+
+  /* =======================================================
+     TABELAS / JORNADAS / AO VIVO
+     TAMBÉM FUNCIONAM POR TEXTO
+     ======================================================= */
+
+  function FZ_reforcar(){
+
+    FZ_ligarBotoes();
+
+  }
+
+
+  /* primeira passagem */
+
+  FZ_reforcar();
+
+
+  /* algumas interfaces criam os botões depois */
+
+  setTimeout(
+    FZ_reforcar,
+    300
+  );
+
+  setTimeout(
+    FZ_reforcar,
+    1000
+  );
+
+  setTimeout(
+    FZ_reforcar,
+    2000
+  );
+
+
+  /* observar alterações da interface */
+
+  const observer =
+    new MutationObserver(
+      function(){
+
+        FZ_reforcar();
+
+      }
+    );
+
+  observer.observe(
+    document.body,
+    {
+      childList:true,
+      subtree:true
+    }
+  );
+
+
+  /* =======================================================
+     EXPORTAÇÃO
+     ======================================================= */
+
+  window.FZ_ligarBotoes =
+    FZ_ligarBotoes;
+
+})();
+
+/* =========================================================
+   FIM DO BLOCO 5
+   ========================================================= */
+</script> 
+          
+   </body>
+   </html>
