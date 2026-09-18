@@ -6133,70 +6133,318 @@ window.FZ_cartaoJogo = FZ_cartaoJogo;
      TABELAS / JORNADAS / AO VIVO
      TAMBÉM FUNCIONAM POR TEXTO
      ======================================================= */
+<script>
+/* =========================================================
+   FUTZONE — CORREÇÃO FINAL DE CLIQUES
+   NÃO ALTERA A LÓGICA DOS JOGOS/DATAS
+   ========================================================= */
 
-  function FZ_reforcar(){
+(function(){
 
-    FZ_ligarBotoes();
+  "use strict";
+
+  function fzExiste(nome){
+    return typeof window[nome] === "function";
+  }
+
+  function fzChamar(nome, args){
+    try{
+      if(fzExiste(nome)){
+        return window[nome].apply(window, args || []);
+      }
+    }catch(e){
+      console.error("FUTZONE:", nome, e);
+    }
+  }
+
+  /* =======================================================
+     BOTÕES PRINCIPAIS
+     ======================================================= */
+
+  function FZ_ligarBotoes(){
+
+    /* TABELAS */
+
+    const tabelas = [
+      document.getElementById("navTabelas"),
+      document.getElementById("btnTabelas"),
+      document.querySelector('[data-modo="tabelas"]'),
+      document.querySelector('[data-action="tabelas"]')
+    ].filter(Boolean);
+
+    tabelas.forEach(function(btn){
+
+      if(btn.dataset.fzLigado === "1")
+        return;
+
+      btn.dataset.fzLigado = "1";
+
+      btn.addEventListener("click",function(e){
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        if(fzExiste("FZ_mostrarTabelas"))
+          return fzChamar("FZ_mostrarTabelas");
+
+        if(fzExiste("FZ_carregarTabelas"))
+          return fzChamar("FZ_carregarTabelas");
+
+        if(fzExiste("FZ_renderizarTabelas"))
+          return fzChamar("FZ_renderizarTabelas");
+
+        if(fzExiste("FZ_modoTabelas"))
+          return fzChamar("FZ_modoTabelas");
+
+        console.warn("FUTZONE: função das tabelas não encontrada.");
+      },true);
+    });
+
+
+    /* FAVORITOS */
+
+    const favoritos = [
+      document.getElementById("navFav"),
+      document.getElementById("btnFavoritos"),
+      document.getElementById("btnFav"),
+      document.querySelector('[data-modo="favoritos"]'),
+      document.querySelector('[data-action="favoritos"]')
+    ].filter(Boolean);
+
+    favoritos.forEach(function(btn){
+
+      if(btn.dataset.fzLigado === "1")
+        return;
+
+      btn.dataset.fzLigado = "1";
+
+      btn.addEventListener("click",function(e){
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        if(fzExiste("FZ_mostrarFavoritos"))
+          return fzChamar("FZ_mostrarFavoritos");
+
+        if(fzExiste("FZ_carregarFavoritos"))
+          return fzChamar("FZ_carregarFavoritos");
+
+        if(fzExiste("FZ_renderizarFavoritos"))
+          return fzChamar("FZ_renderizarFavoritos");
+
+        if(fzExiste("FZ_abrirFavoritos"))
+          return fzChamar("FZ_abrirFavoritos");
+
+        console.warn("FUTZONE: função dos favoritos não encontrada.");
+      },true);
+    });
+
+
+    /* AO VIVO */
+
+    const live = [
+      document.getElementById("btnAoVivo"),
+      document.getElementById("btnLive"),
+      document.getElementById("aoVivo"),
+      document.querySelector('[data-modo="live"]'),
+      document.querySelector('[data-action="live"]')
+    ].filter(Boolean);
+
+    live.forEach(function(btn){
+
+      if(btn.dataset.fzLigado === "1")
+        return;
+
+      btn.dataset.fzLigado = "1";
+
+      btn.addEventListener("click",function(e){
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        if(fzExiste("FZ_abrirAoVivo"))
+          return fzChamar("FZ_abrirAoVivo");
+
+        if(fzExiste("FZ_carregarAoVivo"))
+          return fzChamar("FZ_carregarAoVivo");
+
+        if(fzExiste("FZ_mostrarAoVivo"))
+          return fzChamar("FZ_mostrarAoVivo");
+
+        if(fzExiste("FZ_aoVivo"))
+          return fzChamar("FZ_aoVivo");
+
+        console.warn("FUTZONE: função AO VIVO não encontrada.");
+      },true);
+    });
+
+
+    /* =====================================================
+       FUTSAL
+       ===================================================== */
+
+    const futsal = document.getElementById("fzBtnFutsal");
+
+    if(futsal && futsal.dataset.fzLigado !== "1"){
+
+      futsal.dataset.fzLigado = "1";
+
+      futsal.addEventListener("click",function(e){
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        fzChamar("FZ_abrirFutsal");
+
+      },true);
+    }
 
   }
 
 
-  /* primeira passagem */
+  /* =======================================================
+     CLIQUE DE EQUIPAS
+     Evita que o onclick antigo fique bloqueado
+     ======================================================= */
 
-  FZ_reforcar();
+  document.addEventListener("click",function(e){
 
+    let el =
+      e.target.closest(
+        "[data-equipa-id],[data-team-id],[data-teamid]"
+      );
 
-  /* algumas interfaces criam os botões depois */
+    if(!el)
+      return;
 
-  setTimeout(
-    FZ_reforcar,
-    300
-  );
+    const id =
+      el.dataset.equipaId ||
+      el.dataset.teamId ||
+      el.dataset.teamid;
 
-  setTimeout(
-    FZ_reforcar,
-    1000
-  );
+    if(!id)
+      return;
 
-  setTimeout(
-    FZ_reforcar,
-    2000
-  );
+    const nome =
+      el.dataset.equipaNome ||
+      el.dataset.teamName ||
+      el.textContent.trim();
 
+    const liga =
+      el.dataset.liga ||
+      el.dataset.league ||
+      window.FZ_ultimaLigaEquipa ||
+      window.FZ_ligaSelecionada ||
+      "por.1";
 
-  /* observar alterações da interface */
+    e.preventDefault();
+    e.stopPropagation();
 
-  const observer =
-    new MutationObserver(
-      function(){
+    if(fzExiste("FZ_abrirEquipaSeguro"))
+      fzChamar(
+        "FZ_abrirEquipaSeguro",
+        [id,nome,liga]
+      );
+    else
+      fzChamar(
+        "FZ_abrirEquipa",
+        [id,nome,liga]
+      );
 
-        FZ_reforcar();
-
-      }
-    );
-
-  observer.observe(
-    document.body,
-    {
-      childList:true,
-      subtree:true
-    }
-  );
+  },true);
 
 
   /* =======================================================
-     EXPORTAÇÃO
+     CLIQUE DE JOGADORES
      ======================================================= */
+
+  document.addEventListener("click",function(e){
+
+    let el =
+      e.target.closest(
+        "[data-jogador-id],[data-player-id],[data-athlete-id]"
+      );
+
+    if(!el)
+      return;
+
+    const id =
+      el.dataset.jogadorId ||
+      el.dataset.playerId ||
+      el.dataset.athleteId;
+
+    if(!id)
+      return;
+
+    const nome =
+      el.dataset.jogadorNome ||
+      el.dataset.playerName ||
+      el.textContent.trim();
+
+    const equipa =
+      el.dataset.equipaId ||
+      el.dataset.teamId ||
+      "";
+
+    const liga =
+      el.dataset.liga ||
+      el.dataset.league ||
+      window.FZ_ultimaLigaEquipa ||
+      "por.1";
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    if(fzExiste("FZ_abrirJogadorSeguro"))
+      fzChamar(
+        "FZ_abrirJogadorSeguro",
+        [id,liga,equipa,nome]
+      );
+    else
+      fzChamar(
+        "FZ_abrirJogador",
+        [id,nome,equipa,liga]
+      );
+
+  },true);
+
+
+  /* =======================================================
+     REFORÇAR
+     ======================================================= */
+
+  function FZ_reforcar(){
+    FZ_ligarBotoes();
+  }
+
+  FZ_reforcar();
+
+  setTimeout(FZ_reforcar,300);
+  setTimeout(FZ_reforcar,1000);
+  setTimeout(FZ_reforcar,2000);
+
+  const observer =
+    new MutationObserver(function(){
+      FZ_reforcar();
+    });
+
+  observer.observe(document.body,{
+    childList:true,
+    subtree:true
+  });
+
 
   window.FZ_ligarBotoes =
     FZ_ligarBotoes;
 
-})();
+  window.FZ_reforcar =
+    FZ_reforcar;
 
-/* =========================================================
-   FIM DO BLOCO 5
-   ========================================================= */
-</script> 
+})();
+</script>
+
+</body>
+</html> 
           
-   </body>
-   </html>
+   
+   
