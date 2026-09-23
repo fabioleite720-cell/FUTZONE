@@ -177,6 +177,7 @@ button{background:linear-gradient(135deg,#126bd8,#0b4ea7);border-color:#2d82e8}
    if(pool.length<5)try{add(await scoreboardChunks(league,a,until,1825))}catch(_){ }
    return pool.map(e=>{const cs=compOf(e).competitors||[];const x=resultFor(e,a);return x?{...x,opponent:cs.find(c=>String(c.team?.id)===String(b))?.team?.displayName||'Adversário'}:null}).filter(Boolean).sort((x,y)=>time(y.date)-time(x.date)).slice(0,5);
  }
+ function americanToProb(v){const n=Number(String(v).replace(',','.'));if(!Number.isFinite(n)||n===0)return null;return n>0?100/(n+100):(-n)/((-n)+100)}
  function rates(a){if(!a.length)return null;const w=a.filter(x=>x.r==='V').length,d=a.filter(x=>x.r==='E').length,l=a.filter(x=>x.r==='D').length,gf=a.reduce((s,x)=>s+x.gf,0)/a.length,ga=a.reduce((s,x)=>s+x.ga,0)/a.length;return {w,d,l,gf,ga,p:[w/a.length,d/a.length,l/a.length]}}
  function blend(mp,hf,af,hh){let p=[.5,.28,.22],parts=[];const hr=rates(hf),ar=rates(af),hhR=rates(hh);if(mp){p=mp.map(x=>x*.45);parts.push('odds')}if(hr&&ar){const fp=[(hr.p[0]+1-ar.p[2])/2,(hr.p[1]+ar.p[1])/2,(hr.p[2]+1-ar.p[0])/2];const w=mp?.map(x=>x*.45)||[0,0,0];if(mp)for(let i=0;i<3;i++)p[i]+=fp[i]*.35;else p=fp.map(x=>x*.75);parts.push('forma')}if(hhR){const hp=hhR.p;if(mp||hr&&ar)for(let i=0;i<3;i++)p[i]+=hp[i]*.20;else p=hp.map(x=>x*.25);parts.push('H2H')}const sum=p.reduce((a,b)=>a+b,0);return {p:p.map(x=>Math.max(0,Math.min(1,x/sum))),parts,hr,ar,hh:hhR}}
  function suggestions(p,od,hr,ar,home,away){
@@ -192,32 +193,63 @@ button{background:linear-gradient(135deg,#126bd8,#0b4ea7);border-color:#2d82e8}
     {m:`${match} — ${od.home||od.draw||od.away?'1X2':'Análise adicional'}`,d:'Selecionada a partir dos dados e indicadores disponíveis'}
    ]; return a;
  }
- function getDailySuggestionGames(home,away){
-   const out=[],seen=new Set();
-   const add=(h,a,market,detail)=>{
+ async function getDailySuggestionGames(home,away){
+   const out=[],seen=new Set(), buttons=[...document.querySelectorAll('#games .gamePick')];
+   const candidates=[];
+   const pushCandidate=(id,league,h,a)=>{
      h=(h||'').trim(); a=(a||'').trim();
      if(!h||!a)return;
      const key=(h+'|'+a).toLowerCase();
      if(seen.has(key))return; seen.add(key);
-     out.push({m:`${h} vs ${a} — ${market}`,d:detail});
+     candidates.push({id:String(id||''),league:league||document.getElementById('league')?.value||'',home:h,away:a});
    };
-   add(home,away,'1X2','Mercado do resultado do jogo');
-   document.querySelectorAll('#games .gamePick').forEach(btn=>{
-     if(out.length>=5)return;
+   // O jogo atualmente analisado entra primeiro; os restantes vêm da lista do dia.
+   const current=buttons.find(btn=>{const t=[...btn.querySelectorAll('.gameTeam b')].map(x=>x.textContent.trim());return t.length>=2&&t[0]===home&&t[1]===away});
+   if(current)pushCandidate(current.dataset.fzGame||current.getAttribute('onclick')?.match(/openGame\('([^']+)/)?.[1]||'',current.dataset.fzLeague||'',home,away);
+   buttons.forEach(btn=>{
+     if(candidates.length>=8)return;
      const teams=[...btn.querySelectorAll('.gameTeam b')].map(x=>x.textContent.trim()).filter(Boolean);
-     if(teams.length>=2)add(teams[0],teams[1],'1X2','Mercado do resultado do jogo');
+     if(teams.length>=2)pushCandidate(btn.dataset.fzGame||btn.getAttribute('onclick')?.match(/openGame\('([^']+)/)?.[1]||'',btn.dataset.fzLeague||'',teams[0],teams[1]);
    });
+   if(!candidates.length)pushCandidate('',document.getElementById('league')?.value||'',home,away);
+   const quick=async c=>{
+     try{
+       if(!c.id)return null;
+       const d=await getJSON('https://site.api.espn.com/apis/site/v2/sports/soccer/'+encodeURIComponent(c.league)+'/summary?event='+encodeURIComponent(c.id));
+       const comp=d?.header?.competitions?.[0], cs=comp?.competitors||[];
+       if(cs.length<2)return null;
+       const hp=cs[0]?.team?.displayName||c.home, ap=cs[1]?.team?.displayName||c.away;
+       const od=extractOdds(d);
+       const until=d?.header?.competitions?.[0]?.date||d?.date||new Date().toISOString();
+       let hf=[],af=[],hh=[];
+       try{[hf,af]=await Promise.all([getForm(c.league,cs[0]?.team?.id,until),getForm(c.league,cs[1]?.team?.id,until)])}catch(_){}
+       try{hh=await getH2H(c.league,cs[0]?.team?.id,cs[1]?.team?.id,until)}catch(_){}
+       let mp=null;
+       if(od.home||od.draw||od.away){
+         const raw=[americanToProb(od.home),americanToProb(od.draw),americanToProb(od.away)].map(v=>v||0);
+         const sum=raw.reduce((a,b)=>a+b,0); if(sum>0)mp=raw.map(v=>v/sum);
+       }
+       const model=blend(mp,hf,af,hh), idx=model.p.indexOf(Math.max(...model.p));
+       const labels=[`Vitória ${hp}`,`Empate`,`Vitória ${ap}`];
+       const odds=[od.home,od.draw,od.away];
+       if(idx<0||!Number.isFinite(model.p[idx]))return {m:`${hp} vs ${ap}`,d:'Escolha: dados insuficientes',odd:null};
+       const base=`Escolha do motor: ${labels[idx]} · ${Math.round(model.p[idx]*100)}%`;
+       return {m:`${hp} vs ${ap}`,d:`${base}${odds[idx]?` · odd ${odds[idx]}`:''}`,odd:odds[idx]||null};
+     }catch(_){return null}
+   };
+   const rs=await Promise.all(candidates.slice(0,8).map(quick));
+   rs.forEach(x=>{if(x&&out.length<5)out.push(x)});
    return out.slice(0,5);
  }
- function setTopSuggestions(items,home,away){
+ async function setTopSuggestions(items,home,away){
    const root=document.getElementById('fzBetToday');if(!root)return;
    const lists=root.querySelectorAll('.fz-bet-list'); if(lists.length<2)return;
-   const daily=getDailySuggestionGames(home,away);
-   const pool=daily.length>=5?daily:items.map(x=>({m:x.m,d:x.d}));
-   const make=(arr)=>arr.map((x,i)=>`<div class="fz-bet-row"><span class="fz-rank">${i+1}</span><div class="fz-match"><b>${clean(x.m)}</b><small>${clean(x.d)}</small></div><strong class="fz-odd">—</strong></div>`).join('');
+   const daily=await getDailySuggestionGames(home,away);
+   const pool=daily.length?daily:items.map(x=>({m:x.m,d:'Escolha do motor: sem dados suficientes para selecionar um resultado',odd:null}));
+   const make=(arr)=>arr.map((x,i)=>`<div class="fz-bet-row"><span class="fz-rank">${i+1}</span><div class="fz-match"><b>${clean(x.m)}</b><small>${clean(x.d)}</small></div><strong class="fz-odd">${clean(x.odd||'—')}</strong></div>`).join('');
    lists[0].innerHTML=make(pool.slice(0,5));
    lists[1].innerHTML=make(pool.slice(0,5).reverse());
-   const sub=root.querySelector('.sub');if(sub)sub.textContent='5 jogos diferentes disponíveis para análise e aposta';
+   const sub=root.querySelector('.sub');if(sub)sub.textContent='5 jogos diferentes · escolha do motor com base nos dados disponíveis';
  }
  async function run(league,d,cs){
    const game=document.getElementById('game');if(!game)return;
@@ -226,7 +258,7 @@ button{background:linear-gradient(135deg,#126bd8,#0b4ea7);border-color:#2d82e8}
     const home=cs.find(x=>x.homeAway==='home')||cs[0],away=cs.find(x=>x.homeAway==='away')||cs[1],until=d.date||new Date().toISOString(),hp=home?.team?.displayName||'Casa',ap=away?.team?.displayName||'Fora';
     const [hf,af,hh]=await Promise.all([getForm(league,home?.team?.id,until),getForm(league,away?.team?.id,until),getH2H(league,home?.team?.id,away?.team?.id,until)]);
     const od=extractOdds(d),mp=marketProb(od),model=blend(mp,hf,af,hh),pct=x=>Math.round(x*100)+'%',fmt=a=>a.length?a.map(x=>`<span class="fz-res ${x.r.toLowerCase()}">${x.r}</span>`).join(''):'<span class="fz-mini">Dados não disponíveis</span>',sg=suggestions(model.p,od,model.hr,model.ar,hp,ap);
-    setTopSuggestions(sg,hp,ap);
+    await setTopSuggestions(sg,hp,ap);
     const factors=[];if(model.hr)factors.push(`${hp}: ${model.hr.w} vitórias, ${model.hr.d} empates e ${model.hr.l} derrotas nos últimos ${hf.length} jogos.`);if(model.ar)factors.push(`${ap}: ${model.ar.w} vitórias, ${model.ar.d} empates e ${model.ar.l} derrotas nos últimos ${af.length} jogos.`);if(model.hr&&model.ar)factors.push(`Golos por jogo: ${hp} ${model.hr.gf.toFixed(1)} marcados / ${model.hr.ga.toFixed(1)} sofridos; ${ap} ${model.ar.gf.toFixed(1)} / ${model.ar.ga.toFixed(1)}.`);if(model.hh)factors.push(`H2H: ${model.hh.w} vitórias da casa, ${model.hh.d} empates e ${model.hh.l} vitórias da equipa visitante nos últimos ${hh.length}.`);
     card.innerHTML=`<div class="sectionTitle">📊 Análise Premium — ${clean(hp)} vs ${clean(ap)}</div><div class="fz-analysis-grid"><div class="fz-analysis-box"><h4>${clean(hp)} — últimos 5 jogos</h4><div class="fz-results">${fmt(hf)}</div><div class="fz-mini">${hf.length?`${model.hr.w} vitórias / ${hf.length} jogos disponíveis`:'Não foi possível obter os últimos jogos através das fontes disponíveis.'}</div></div><div class="fz-analysis-box"><h4>${clean(ap)} — últimos 5 jogos</h4><div class="fz-results">${fmt(af)}</div><div class="fz-mini">${af.length?`${model.ar.w} vitórias / ${af.length} jogos disponíveis`:'Não foi possível obter os últimos jogos através das fontes disponíveis.'}</div></div></div><div class="sectionTitle">⚔️ Últimos confrontos diretos</div><div class="fz-analysis-box">${hh.length?hh.map(x=>`<div class="fz-h2h-row"><span>${new Date(x.date).toLocaleDateString('pt-PT')} · ${x.homeAway==='home'?clean(hp):clean(ap)}</span><b>${x.gf}-${x.ga}</b></div>`).join(''):'<div class="fz-mini">Histórico direto não disponibilizado para estas equipas.</div>'}</div><div class="sectionTitle">💰 Odds disponíveis</div>${(od.home||od.draw||od.away)?`<div class="fz-odds-clean"><div class="fz-odd-box"><span>CASA</span><b>${clean(od.home||'—')}</b></div><div class="fz-odd-box"><span>EMPATE</span><b>${clean(od.draw||'—')}</b></div><div class="fz-odd-box"><span>FORA</span><b>${clean(od.away||'—')}</b></div></div>`:'<div class="fz-mini">Odds não disponibilizadas para este jogo.</div>'}<div class="sectionTitle">🤖 Estudo do motor inteligente</div><div class="fz-analysis-box fz-ai"><div class="fz-probs"><div class="fz-prob"><span>CASA</span><b>${pct(model.p[0])}</b></div><div class="fz-prob"><span>EMPATE</span><b>${pct(model.p[1])}</b></div><div class="fz-prob"><span>FORA</span><b>${pct(model.p[2])}</b></div></div><div class="fz-mini" style="margin-top:8px">Estimativa estatística baseada apenas nos dados realmente obtidos. ${clean(model.parts.length?'Componentes usados: '+model.parts.join(' + '):'Sem dados suficientes para componentes adicionais')}.</div>${factors.map(x=>`<div class="fz-factor">• ${clean(x)}</div>`).join('')}</div><div class="sectionTitle">🟣 5 sugestões — risco médio/alto</div><div class="fz-suggest-grid">${sg.map((x,i)=>`<div class="fz-suggest"><span class="num">${i+1}</span><b>${clean(x.m)}</b><span>${clean(x.d)}</span></div>`).join('')}</div><div class="sectionTitle">🔵 5 sugestões — risco médio/baixo</div><div class="fz-suggest-grid">${sg.slice().reverse().map((x,i)=>`<div class="fz-suggest"><span class="num">${i+1}</span><b>${clean(x.m)}</b><span>${clean(x.d)}</span></div>`).join('')}</div><div class="fz-bet-warning">⚠️ Estas são apenas sugestões e simulações estatísticas. Não são garantias de vitória, resultado ou lucro. As odds podem mudar e podem não estar disponíveis em todos os mercados.</div>`;
    }catch(e){card.innerHTML='<div class="sectionTitle">📊 Análise Premium</div><div class="err">A análise não conseguiu obter todos os dados neste momento.</div><div class="fz-mini">O jogo, calendário e restantes funções continuam disponíveis normalmente.</div>'}
@@ -244,8 +276,7 @@ button{background:linear-gradient(135deg,#126bd8,#0b4ea7);border-color:#2d82e8}
   <div class="card" style="margin-top:9px">
     <div class="sectionTitle">🟣 5 sugestões — risco médio/alto</div>
     <div class="fz-bet-list">
-      <div class="fz-bet-row"><span class="fz-rank">1</span><div class="fz-match"><b>Análise de jogo</b><small>Forma recente + desempenho casa/fora</small></div><strong class="fz-odd">—</strong></div>
-      <div class="fz-bet-row"><span class="fz-rank">2</span><div class="fz-match"><b>Análise de jogo</b><small>Histórico + contexto da competição</small></div><strong class="fz-odd">—</strong></div>
+      <div class="fz-bet-row"><span class="fz-rank">1</span><div class="fz-match"><b>Análise de jogo</b><small>Forma recente + desempenho casa/fora</small></div><strong class="fz-odd">—</strong></div>      <div class="fz-bet-row"><span class="fz-rank">2</span><div class="fz-match"><b>Análise de jogo</b><small>Histórico + contexto da competição</small></div><strong class="fz-odd">—</strong></div>
       <div class="fz-bet-row"><span class="fz-rank">3</span><div class="fz-match"><b>Análise de jogo</b><small>Golos marcados/sofridos + sequência</small></div><strong class="fz-odd">—</strong></div>
       <div class="fz-bet-row"><span class="fz-rank">4</span><div class="fz-match"><b>Análise de jogo</b><small>Ausências e impacto quando disponível</small></div><strong class="fz-odd">—</strong></div>
       <div class="fz-bet-row"><span class="fz-rank">5</span><div class="fz-match"><b>Análise de jogo</b><small>Síntese estatística + contexto</small></div><strong class="fz-odd">—</strong></div>
