@@ -1,184 +1,3911 @@
-<!doctype html><html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0057B8"><title>FUTZONE PREMIUM — TESTE</title><style>html,body{margin:0;padding:0;background:#03060b;color:#fff;font-family:system-ui,sans-serif}#fzLoader{position:fixed;inset:0;display:grid;place-items:center;background:#03060b;z-index:99999;font-weight:700}#fzLoader span{opacity:.9}</style></head><body><div id="fzLoader"><span>A abrir o FUTZONE Premium…</span></div><script>
-(async()=>{
- const RAW='https://raw.githubusercontent.com/fabioleite720-cell/FUTZONE/refs/heads/main/index.html';
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0057B8">
+<title>FUTZONE PREMIUM</title>
+
+<style>
+:root{--blue:#0057b8;--blue2:#1683ff;--bg:#03060b;--card:#0a111b;--line:#223047;--text:#fff;--muted:#9daabb;--green:#20d68a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
+header{padding:16px;background:#06101c;position:sticky;top:0;z-index:5;border-bottom:1px solid var(--line)}
+h1{margin:0;font-size:25px}
+h1 span{color:#1683ff}
+.sub{color:var(--muted);font-size:12px;margin-top:3px}
+.wrap{max-width:900px;margin:auto;padding:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin:10px 0}
+select,button{background:#101b2a;color:#fff;border:1px solid #30415b;border-radius:11px;padding:11px 12px;font-size:14px}
+button{cursor:pointer;background:var(--blue)}
+button.secondary{background:#101b2a}
+.status{color:var(--muted);font-size:13px}
+.teams{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;text-align:center}
+.teamBtn{border:0;background:transparent;padding:4px;color:#fff;width:100%}
+.teamBtn img{width:58px;height:58px;object-fit:contain;display:block;margin:auto}
+.teamBtn b{display:block;margin-top:5px}
+.score{font-size:24px;font-weight:800}
+.pitchWrap{overflow:hidden;border-radius:20px;border:1px solid #31435a;background:#0c1622;padding:10px}
+.pitch{position:relative;width:100%;aspect-ratio:105/68;max-height:520px;margin:auto;overflow:hidden;border-radius:14px;background:linear-gradient(90deg,#126b3b,#168247 48%,#126b3b);box-shadow:inset 0 0 55px #001b0b,0 15px 40px #000;transform:perspective(900px) rotateX(2deg)}
+.pitch:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 9.09%,rgba(255,255,255,.045) 9.09% 18.18%);pointer-events:none}
+.line{position:absolute;border:2px solid rgba(255,255,255,.8);pointer-events:none}
+.outer{inset:4%}
+.half{left:4%;right:4%;top:50%;border-top-width:2px}
+.circle{width:23%;aspect-ratio:1;left:38.5%;top:38.5%;border-radius:50%}
+.box{left:25%;right:25%;top:4%;height:18%;border-bottom:0}
+.box2{left:25%;right:25%;bottom:4%;height:18%;border-top:0}
+.goal{left:39%;right:39%;top:4%;height:4%;border-top:0}
+.goal2{left:39%;right:39%;bottom:4%;height:4%;border-bottom:0}
+.player{position:absolute;transform:translate(-50%,-50%);width:64px;text-align:center;z-index:2}
+.player button{display:block;background:transparent;border:0;padding:0;margin:auto;width:100%;font-size:10px}
+.dot{width:34px;height:34px;margin:auto;border-radius:50%;background:#fff;color:#0057b8;border:3px solid #0057b8;box-shadow:0 5px 12px #0009;font-weight:900;display:flex;align-items:center;justify-content:center}
+.player.away .dot{background:#0057b8;color:#fff;border-color:#fff}
+.pn{font-size:10px;font-weight:700;text-shadow:0 1px 3px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profile{display:grid;grid-template-columns:76px 1fr;gap:12px;align-items:center}
+.profile img{width:76px;height:76px;object-fit:cover;border-radius:50%;background:#111}
+.kv{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}
+.kv div{padding:10px;border:1px solid var(--line);border-radius:10px}
+.kv b{display:block;margin-top:3px}
+.squad{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.squad button{background:#0d1724;width:100%;text-align:left}
+.avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;background:#111;vertical-align:middle;margin-right:8px}
+.hidden{display:none}
+.err{color:#ff8793}
+.hint{font-size:12px;color:var(--muted);line-height:1.45}
+.sectionTitle{font-size:20px;font-weight:900;margin:14px 0 8px}
+.pill{display:inline-block;padding:5px 8px;border-radius:999px;background:#101b2a;color:#cdd7e4;font-size:11px;margin:3px}
+
+@media(max-width:500px){
+.player{width:52px}
+.dot{width:29px;height:29px;font-size:11px}
+.pn{font-size:8px}
+.teams{font-size:12px}
+.kv{grid-template-columns:1fr 1fr}
+.squad{grid-template-columns:1fr}
+}
+
+.controlCard{padding:10px!important}
+.leagueScroller{display:flex;gap:7px;overflow-x:auto;padding:2px 0 10px;scrollbar-width:none}
+.leagueScroller::-webkit-scrollbar{display:none}
+.leagueChip{flex:0 0 auto;border:1px solid #30415b;background:#0d1724;color:#dbe7f5;border-radius:999px;padding:8px 12px;font-weight:700;font-size:12px}
+.leagueChip.active{background:#0057b8;border-color:#1683ff;color:#fff;box-shadow:0 0 0 2px #1683ff33}
+.controls input{background:#101b2a;color:#fff;border:1px solid #30415b;border-radius:11px;padding:11px}
+.liveBtn{background:#b51f35!important;border-color:#e04a60!important}
+.hidden{display:none!important}
+
+.pitch{aspect-ratio:105/68!important;max-height:310px!important;border-radius:12px!important}
+.starting-grid{grid-template-columns:1fr 1fr!important}
+.startcol{background:#07101a;border:1px solid #223047;border-radius:12px;padding:8px}
+.starthead{position:sticky;top:0;display:flex;align-items:center;gap:7px;padding:4px 2px 8px;background:#07101a;z-index:1}
+.starthead img{width:30px;height:30px;object-fit:contain}
+.starter-row{min-height:38px!important}
+.statCompare{overflow:hidden;border:1px solid #26384f;border-radius:12px}
+.statCompare .statTitle{display:grid;grid-template-columns:1fr 1.5fr 1fr;padding:9px;background:#0d1724;font-weight:800;text-align:center}
+.statCompare .statLine{display:grid;grid-template-columns:1fr 1.5fr 1fr;padding:9px;border-top:1px solid #223047;text-align:center;align-items:center}
+.statCompare .statLine b:first-child{text-align:right}
+.statCompare .statLine b:last-child{text-align:left}
+.statCompare .statName{color:#9daabb;font-size:11px}
+.event-row{padding:8px 0;border-bottom:1px solid #223047}
+
+@media(max-width:520px){
+.pitch{max-height:280px!important}
+.startcol{padding:6px}
+.starter-row{font-size:10px!important;padding:5px!important}
+.leagueChip{font-size:11px;padding:7px 10px}
+}
+</style>
+
+<style>
+.pitch{
+position:relative!important;
+overflow:hidden!important;
+display:block!important;
+min-height:230px!important;
+background:linear-gradient(180deg,#146b35,#0b4f28)!important;
+border:4px solid #fff!important;
+border-radius:18px!important;
+box-shadow:inset 0 0 0 2px #ffffff55,inset 0 0 40px #0008!important;
+}
+.pitch:before{
+content:"";
+position:absolute;
+left:0;
+right:0;
+top:50%;
+height:2px;
+background:#fff;
+opacity:.9
+}
+.pitch:after{
+content:"";
+position:absolute;
+width:145px;
+height:145px;
+border:2px solid #fff;
+border-radius:50%;
+left:50%;
+top:50%;
+transform:translate(-50%,-50%)
+}
+.player-marker.home{top:var(--y)!important;left:var(--x)!important}
+.player-marker.away{top:calc(100% - var(--y))!important;left:var(--x)!important}
+.starting-grid{
+display:grid!important;
+grid-template-columns:1fr 1fr!important;
+gap:10px!important
+}
+.starting-grid .card{margin:0!important}
+.livebar{display:flex;gap:8px;overflow:auto;margin:8px 0}
+.livebar button{white-space:nowrap}
+.event-row{
+display:flex;
+align-items:center;
+gap:8px;
+padding:8px 0;
+border-bottom:1px solid #223047
+}
+.event-icon{width:28px;text-align:center}
+.pitchWrap{max-width:680px;margin:auto}
+.pitch{aspect-ratio:105/68!important;max-height:430px!important}
+.starthead{
+display:flex;
+align-items:center;
+gap:8px;
+padding:8px 0;
+border-bottom:1px solid #30415b;
+margin-bottom:5px
+}
+.starthead img{width:32px;height:32px;object-fit:contain}
+.starter-row{
+width:100%;
+text-align:left;
+background:#101b2a!important;
+border:1px solid #26384f!important;
+margin:3px 0!important;
+padding:7px 8px!important;
+border-radius:8px!important;
+display:flex!important;
+align-items:center;
+gap:7px!important
+}
+.jersey{width:24px;text-align:center;font-weight:800}
+.statline{
+display:flex;
+justify-content:space-between;
+padding:7px 0;
+border-bottom:1px solid #223047
+}
+.event-row{
+display:grid;
+grid-template-columns:28px 45px 1fr;
+align-items:center
+}
+.startcol{min-width:0}
+.starting-grid{
+grid-template-columns:1fr 1fr!important;
+align-items:start
+}
+
+@media(max-width:520px){
+.pitchWrap{padding:5px}
+.pitch{max-height:300px!important}
+.player{width:50px}
+.dot{width:28px;height:28px}
+.pn{font-size:8px}
+.starting-grid{gap:6px!important}
+.starter-row{font-size:11px!important;padding:6px!important}
+}
+</style>
+
+<!-- MUITO IMPORTANTE:
+     A partir daqui começa JAVASCRIPT.
+     O erro que aparecia no teu ecrã era precisamente porque este
+     <script> estava em falta. -->
+<script>
+(function(){
+
+const AP='https://site.api.espn.com/apis/site/v2/sports/soccer/';
+const cache=new Map();
+
+const timeoutGet=async(u,ms=8000)=>{
+ const c=new AbortController();
+ const t=setTimeout(()=>c.abort(),ms);
  try{
-  const r=await fetch(RAW,{cache:'no-store'}); if(!r.ok) throw new Error('HTTP '+r.status);
-  let html=await r.text();
-  const patch=`<script id="fzTestPatch">(${function(){
-   const AP='https://site.api.espn.com/apis/site/v2/sports/soccer/';
-   const clean=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-   const j=async u=>{try{const r=await fetch(u,{cache:'no-store'});return r.ok?await r.json():null}catch(_){return null}};
-   const num=x=>{if(x==null)return NaN;if(typeof x==='object')return num(x.value??x.displayValue);const n=parseFloat(String(x).replace(',','.'));return Number.isFinite(n)?n:NaN};
-   const final=e=>{const t=e?.status?.type||e?.competitions?.[0]?.status?.type||{};return t.state==='post'||t.completed===true||['STATUS_FINAL','STATUS_FULL_TIME','STATUS_FINAL_OT','STATUS_FINAL_PSO'].includes(t.name)||/final|full time/i.test(t.description||'')};
-   const scoreFor=(e,id)=>{const cs=e?.competitions?.[0]?.competitors||e?.competitors||[];if(cs.length<2||!final(e))return null;const me=cs.find(c=>String(c.team?.id)===String(id));const op=cs.find(c=>String(c.team?.id)!==String(id));if(!me||!op)return null;const a=num(me.score),b=num(op.score);if(!Number.isFinite(a)||!Number.isFinite(b))return null;return {r:a>b?'V':a<b?'D':'E',gf:a,ga:b,date:e.date||e.startDate,opponent:op.team?.displayName||'Adversário',opponentId:op.team?.id,homeAway:me.homeAway};};
-   async function last5(league,id,until){
-    if(!id)return[]; const urls=[AP+'all/teams/'+encodeURIComponent(id)+'/schedule?limit=200',AP+encodeURIComponent(league)+'/teams/'+encodeURIComponent(id)+'/schedule?limit=200','https://site.api.espn.com/apis/site/v2/sports/soccer/teams/'+encodeURIComponent(id)+'/schedule?limit=200'];
-    let ev=[]; for(const u of urls){const d=await j(u); const a=d?.events||d?.schedule?.events||[]; if(a.length){ev=a;break;}}
-    let out=ev.map(e=>scoreFor(e,id)).filter(Boolean).filter(x=>!until||new Date(x.date)<=new Date(until));
-    out.sort((a,b)=>new Date(b.date)-new Date(a.date)); return out.slice(0,5);
-   }   const styles=`<style id="fzTestStyles">.fzT{margin:12px 0;padding:14px;border-radius:12px;background:#0a111b;border:1px solid rgba(255,255,255,.08)}.fzT h3{margin:0 0 10px}.fzRows{display:grid;gap:7px}.fzRow{display:flex;justify-content:space-between;gap:8px;padding:9px;border-radius:8px;background:#101a28}.fzRow small{opacity:.75}.fzV{font-weight:800}.fzSug{display:grid;gap:8px}.fzSugRow{padding:11px;border-radius:10px;background:#101a28}.fzSugRow b{display:block}.fzSugRow small{display:block;margin-top:4px;opacity:.8}.fzWatch{margin-top:10px}.fzWatch a{display:inline-block;padding:9px 12px;border-radius:8px;background:#0057b8;color:#fff;text-decoration:none;font-weight:700}.fzEmpty{opacity:.75}.fzTop{margin:12px}.fzTop h3{margin:0 0 5px}</style>`;
-   const extraStyles=`<style id="fzCompactStyles">#fzBetToday .fz-bet-list{display:grid!important;grid-template-columns:1fr!important;gap:6px!important;overflow:visible!important}#fzBetToday .fz-bet-row{display:grid!important;grid-template-columns:24px minmax(0,1fr) auto!important;align-items:center!important;gap:7px!important;padding:7px 8px!important;margin:0!important;min-width:0!important;border-radius:9px!important}#fzBetToday .fz-rank{font-size:12px!important;line-height:1!important}#fzBetToday .fz-match{min-width:0!important;overflow:hidden!important}#fzBetToday .fz-match b{display:block!important;white-space:normal!important;overflow-wrap:anywhere!important;font-size:12px!important;line-height:1.2!important}#fzBetToday .fz-match small{display:block!important;margin-top:2px!important;font-size:10px!important;line-height:1.15!important;white-space:normal!important;overflow-wrap:anywhere!important}#fzBetToday .fz-odd{font-size:11px!important}#fzBetToday{overflow-x:hidden!important}.fzEvent{padding:6px 0!important}.fzEvent small{display:none!important}</style><style id="fzExtraStyles">.fzEvents{margin:12px 0;padding:14px;border-radius:12px;background:#0a111b;border:1px solid rgba(255,255,255,.08)}.fzEvents h3,.fzFav h3{margin:0 0 10px}.fzEvent{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)}.fzEvent:last-child{border-bottom:0}.fzIcon{width:24px;text-align:center}.fzEvent b{font-weight:800}.fzFav{margin:12px 0;padding:14px;border-radius:12px;background:#101a28;border:1px solid rgba(0,87,184,.45)}.fzFav strong{font-size:18px}.fzFav small{display:block;margin-top:5px;opacity:.8}</style>`;   const statusOf=e=>e?.competitions?.[0]?.status?.type||e?.status?.type||{};
-   const eventIdFrom=el=>el?.dataset?.fzGame||el?.getAttribute('data-game-id')||el?.getAttribute('data-id')||el?.getAttribute('onclick')?.match(/openGame\(['"]([^'"]+)/)?.[1]||el?.getAttribute('onclick')?.match(/openGame\((\d+)/)?.[1]||'';
-   const leagueFrom=el=>el?.dataset?.fzLeague||el?.getAttribute('data-league')||document.getElementById('league')?.value||'';
-   async function summary(id,league){return await j(AP+encodeURIComponent(league)+'/summary?event='+encodeURIComponent(id));}
-   function gameCards(){return [...document.querySelectorAll('#games .gamePick')];}
-   const SUGGEST_LEAGUES=['por.1','eng.1','eng.2','esp.1','esp.2','ita.1','ita.2','ger.1','ger.2','fra.1','fra.2','ned.1','tur.1','sau.1','usa.1','sco.1','uefa.champions','uefa.europa','uefa.europa.conf','uefa.nations','fifa.world','fifa.friendly','bra.1','bra.2','arg.1','conmebol.libertadores','conmebol.sudamericana'];
-   const dayISO=d=>new Date(d).toISOString().slice(0,10).replaceAll('-','');
-   const candidateKey=c=>String(c.id)+'|'+String(c.league);
-   async function candidates(){
-    const out=[],seen=new Set();
-    const add=(x)=>{if(!x||!x.id||!x.league||!x.home||!x.away)return;const k=candidateKey(x);if(seen.has(k))return;seen.add(k);out.push(x)};
-    // 1) Usa primeiro os jogos que a app já carregou. Não toca no carregamento original.
-    for(const el of gameCards()){
-      const id=eventIdFrom(el),league=leagueFrom(el),teams=[...el.querySelectorAll('.gameTeam b')].map(x=>x.textContent.trim()).filter(Boolean);
-      if(id&&league&&teams.length>=2)add({id,league,home:teams[0],away:teams[1]});
-    }
-    if(out.length>=10)return out;
-    // 2) Fallback independente: procura jogos futuros próximos sem alterar a lista da app.
-    const dates=[];for(let i=0;i<5;i++){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+i);dates.push(dayISO(d));}
-    const lg=[...new Set(SUGGEST_LEAGUES.concat(document.getElementById('league')?.value||''))].filter(Boolean);
-    const jobs=[];
-    for(const league of lg)for(const ds of dates)jobs.push(j(AP+encodeURIComponent(league)+'/scoreboard?dates='+ds+'&limit=100').then(d=>({league,d})).catch(()=>({league,d:null})));
-    const rs=await Promise.all(jobs);
-    for(const r of rs){for(const e of (r.d?.events||[])){if(final(e))continue;const c=e.competitions?.[0]?.competitors||[];if(c.length<2)continue;const h=c.find(x=>x.homeAway==='home')||c[0],a=c.find(x=>x.homeAway==='away')||c[1];add({id:e.id,league:r.league,home:h.team?.displayName,away:a.team?.displayName});if(out.length>=30)break;}if(out.length>=30)break;}
-    return out;
-   }   async function makeSuggestion(c){
-    const d=await summary(c.id,c.league);if(!d)return null;
-    const comp=d.header?.competitions?.[0]||d.competitions?.[0],cs=comp?.competitors||[];if(cs.length<2||final({competitions:[comp]}))return null;
-    const h=cs.find(x=>x.homeAway==='home')||cs[0],a=cs.find(x=>x.homeAway==='away')||cs[1];
-    const until=comp.date||d.date;const [hf,af]=await Promise.all([last5(c.league,h.team?.id,until),last5(c.league,a.team?.id,until)]);
-    if(hf.length<3&&af.length<3)return null;
-    const calc=x=>{const n=x.length||1;const pts=x.reduce((s,r)=>s+(r.r==='V'?3:r.r==='E'?1:0),0);const gd=x.reduce((s,r)=>s+(r.gf-r.ga),0)/n;return {pp:pts/n,gd};};
-    const H=calc(hf),A=calc(af),diff=H.pp-A.pp;
-    let pick,reason,score;
-    if(Math.abs(diff)>=0.65){if(diff>0){pick='Vitória '+(h.team?.displayName||c.home);reason='melhor forma recente e melhor média de pontos';}else{pick='Vitória '+(a.team?.displayName||c.away);reason='melhor forma recente e melhor média de pontos';}score=Math.abs(diff)+Math.abs(H.gd-A.gd)*0.25;}
-    else if(Math.abs(diff)>=0.30){if(diff>0){pick='Dupla hipótese 1X — '+(h.team?.displayName||c.home);reason='vantagem estatística recente da equipa da casa';}else{pick='Dupla hipótese X2 — '+(a.team?.displayName||c.away);reason='vantagem estatística recente da equipa visitante';}score=Math.abs(diff)+0.2;}
-    else {pick='Mais de 1,5 golos';reason='diferença de forma reduzida; mercado mais conservador';score=0.2+Math.abs(H.gd-A.gd)*0.1;}
-    return {match:(h.team?.displayName||c.home)+' vs '+(a.team?.displayName||c.away),pick,reason,score,home:h.team?.displayName||c.home,away:a.team?.displayName||c.away};
-   }
+   const r=await fetch(u,{cache:'no-store',signal:c.signal});
+   if(!r.ok)throw Error('HTTP '+r.status);
+   return await r.json();
+ }finally{
+   clearTimeout(t);
+ }
+};
 
-   let suggestionBusy=false;
-   async function showSuggestions(){
-    if(suggestionBusy)return;const lists=[...document.querySelectorAll('#fzBetToday .fz-bet-list')];if(lists.length<2)return;
-    suggestionBusy=true;
-    try{
-      const cs=await candidates();if(!cs.length)return;
-      const rs=[];const seenMatches=new Set();
-      const batch=[];for(const c of cs.slice(0,24))batch.push(makeSuggestion(c));
-      const vals=await Promise.all(batch);for(const x of vals){if(x&&!seenMatches.has(x.match)){seenMatches.add(x.match);rs.push(x);}}
-      rs.sort((a,b)=>b.score-a.score);if(rs.length<10)return;
-      const high=rs.slice(0,5),low=rs.slice(5,10);
-      const make=(x,i)=>`<div class="fz-bet-row"><span class="fz-rank">${i+1}</span><div class="fz-match"><b>${clean(x.match)}</b><small>👉 Aposta: ${clean(x.pick)}</small><small>${clean(x.reason)}</small></div><strong class="fz-odd">—</strong></div>`;
-      lists[0].innerHTML=high.map(make).join('');lists[1].innerHTML=low.map(make).join('');
-      const root=document.getElementById('fzBetToday');if(root){const subs=root.querySelectorAll('.sub');if(subs[0])subs[0].textContent='5 jogos escolhidos pelo estudo estatístico';if(subs[1])subs[1].textContent='5 jogos escolhidos pelo estudo estatístico';}
-    }finally{suggestionBusy=false;}
-   }
+const clean=window.esc||((v)=>String(v??''));
 
-   function conciseEvents(d){
-    const comp=d?.header?.competitions?.[0]||d?.competitions?.[0]||{};
-    const plays=d?.plays||d?.keyEvents||comp?.plays||[];
-    const out=[];
-    for(const p of plays){
-      const text=String(p?.text||p?.shortText||p?.type?.text||'');
-      const low=(text+' '+String(p?.type?.name||'')+' '+String(p?.type?.id||'')).toLowerCase();
-      const isGoal=low.includes('goal')||low.includes('golo')||low.includes('penalty scored')||low.includes('penalty goal');
-      const isYellow=low.includes('yellow')||low.includes('amarelo')||low.includes('yellow_card');
-      const isRed=low.includes('red card')||low.includes('vermelho')||low.includes('red_card');
-      const isSub=low.includes('substitution')||low.includes('substituição')||low.includes('substitute')||low.includes('entered')||low.includes('replaced');
-      if(!(isGoal||isYellow||isRed||isSub))continue;
-      let icon=isGoal?'⚽':isRed?'🟥':isYellow?'🟨':'🔄';
-      let label=isGoal?'Golo':isRed?'Vermelho':isYellow?'Amarelo':'Substituição';
-      let name=''; let assist=''; let inName=''; let outName='';
-      const parts=Array.isArray(p?.participants)?p.participants:[];
-      for(const q of parts){
-        const nm=q?.athlete?.displayName||q?.athlete?.fullName||q?.name||'';
-        const role=String(q?.role||q?.type||'').toLowerCase();
-        if(!nm)continue;
-        if(role.includes('assist')) assist=nm;
-        else if(isSub && (role.includes('enter')||role.includes('in')||role.includes('substitute'))) inName=nm;
-        else if(isSub && (role.includes('out')||role.includes('replace')||role.includes('off'))) outName=nm;
-        else if(!name&&(role.includes('scorer')||role.includes('goal')||q?.athlete)) name=nm;
-      }
-      if(!name&&!isSub){const m=text.match(/(?:Goal!?|Golo!?)[^:]*:\s*([^,(]+?)(?:\s*\(|,|$)/i);if(m)name=m[1].trim();}
-      if(isSub){
-        const m=text.match(/(?:substitution|substituição)[^:]*:?\s*(.+)/i);
-        if(m&&!inName&&!outName){const z=m[1].split(/\s+(?:for|por|entra|sai|↔|->|→)\s+/i);if(z.length>=2){inName=z[0].trim();outName=z[1].trim();}}
-      }
-      let line=label;
-      if(isSub){if(inName||outName)line+=' — '+(outName?'sai: '+outName:'')+(inName?(outName?' · ':'')+'entra: '+inName:'');else if(text)line+=' — '+text.replace(/\s*\(?\d{1,3}(?:\+\d+)?[\'’].*$/,'').trim();}
-      else {if(name)line+=' — '+name;if(isGoal&&assist)line+=' · assistência: '+assist;}
-      out.push({icon,line});
-    }
-    return out;
-   }   function removeMinuteByMinute(){
-    const root=document.getElementById('game');if(!root)return;
-    const bad=/\b(remate|remates|shot|shots|passe|passes|ataque|attacking|canto|corner|posse|possession|falta|free kick|fora de jogo|offside|defesa|deflection|bloqueio|block|cruzamento|cross|lançamento|throw-in|interce[cç][aã]o|interception)\b/i;
-    const keep=/(golo|goal|assist|assistência|amarelo|yellow|vermelho|red card|substitui|substitution|entrou|enters|saiu|replaced)/i;
-    root.querySelectorAll('*').forEach(el=>{
-      if(el.closest('.fzEvents,.fz-analysis,.fzFav,.fzT'))return;
-      if(el.children.length>1)return;
-      const t=(el.textContent||'').trim();
-      if(!t||t.length>220||!bad.test(t)||keep.test(t))return;
-      if(/\b\d{1,3}(?:\+\d+)?[\'’]\b/.test(t)||bad.test(t)){
-        el.style.display='none';
-        const par=el.parentElement;if(par&&par.children.length<=1&&/event|play|timeline|incidente/i.test((par.className||'')+' '+(par.id||'')))par.style.display='none';
-      }
-    });
-   }
+function oddsVal(v){
+ if(v==null)return null;
+ if(typeof v==='number')return String(v);
+ if(typeof v==='string'){
+   const m=v.match(/[+-]?\d+(?:\.\d+)?/);
+   return m?m[0]:null;
+ }
+ if(typeof v==='object')
+   return oddsVal(v.odds)||oddsVal(v.close)||oddsVal(v.open);
+ return null;
+}
 
-   function renderConciseEvents(d){
-    const game=document.getElementById('game');if(!game)return;
-    const old=game.querySelector('.fzEvents');if(old)old.remove();
-    const ev=conciseEvents(d);if(!ev.length)return;
-    const div=document.createElement('div');div.className='fzEvents';
-    div.innerHTML='<h3>📋 Eventos do jogo</h3>'+ev.map(x=>'<div class="fzEvent"><span class="fzIcon">'+x.icon+'</span><span><b>'+clean(x.line)+'</b></span></div>').join('');
-    game.appendChild(div);
-    setTimeout(removeMinuteByMinute,50);
-    setTimeout(removeMinuteByMinute,500);
-   }
+function extractOdds(d){
+ const roots=[
+   d?.odds,
+   d?.header?.competitions?.[0]?.odds,
+   d?.competitions?.[0]?.odds
+ ].filter(Boolean);
 
-   function renderFavorite(h,a,hf,af){
-    const game=document.getElementById('game');if(!game)return;const old=game.querySelector('.fzFav');if(old)old.remove();
-    const score=x=>x.reduce((n,r)=>n+(r.r==='V'?3:r.r==='E'?1:0),0), hs=score(hf),as=score(af), hn=hf.length?hs/hf.length:0,an=af.length?as/af.length:0;
-    let fav='Dados insuficientes';let why='Não há resultados suficientes para indicar um favorito estatístico.';
-    if(hf.length>=3||af.length>=3){if(hn>an+0.15){fav=h.team.displayName;why='Tem melhor desempenho médio nos últimos jogos disponíveis.'}else if(an>hn+0.15){fav=a.team.displayName;why='Tem melhor desempenho médio nos últimos jogos disponíveis.'}else{fav='Equilibrado';why='Os resultados recentes estão muito próximos entre as duas equipas.'}}
-    const div=document.createElement('div');div.className='fzFav';div.innerHTML='<h3>⭐ Favorito pelos números</h3><strong>'+clean(fav)+'</strong><small>'+clean(why)+'</small>';game.appendChild(div);
-   }
+ const findSide=(o,side)=>{
+   if(!o||typeof o!=='object')return null;
+   const direct=o?.[side];
+   return oddsVal(direct?.close)||oddsVal(direct?.open)||oddsVal(direct);
+ };
 
-   async function renderAnalysis(league,d,cs){
-    const game=document.getElementById('game');if(!game)return; const h=cs.find(x=>x.homeAway==='home')||cs[0],a=cs.find(x=>x.homeAway==='away')||cs[1];if(!h?.team?.id||!a?.team?.id)return;
-    const hf=await last5(league,h.team.id,d.date),af=await last5(league,a.team.id,d.date); let old=game.querySelector('.fz-analysis'); if(old)old.remove();
-    const row=(x)=>`<div class="fzRow"><span><b>${clean(new Date(x.date).toLocaleDateString('pt-PT'))}</b> · ${clean(x.r)} · vs ${clean(x.opponent)}</span><b>${x.gf}-${x.ga}</b></div>`;
-    const card=document.createElement('div');card.className='card fz-analysis';card.innerHTML='<div class="sectionTitle">📊 Análise Premium — '+clean(h.team.displayName)+' vs '+clean(a.team.displayName)+'</div>'+
-      '<div class="fzT"><h3>'+clean(h.team.displayName)+' — últimos 5 jogos</h3><div class="fzRows">'+(hf.length?hf.map(row).join(''):'<div class="fzEmpty">Dados não disponíveis.</div>')+'</div></div>'+
-      '<div class="fzT"><h3>'+clean(a.team.displayName)+' — últimos 5 jogos</h3><div class="fzRows">'+(af.length?af.map(row).join(''):'<div class="fzEmpty">Dados não disponíveis.</div>')+'</div></div>';
-    game.appendChild(card);
-    renderConciseEvents(d);
-    renderFavorite(h,a,hf,af);
-    addWatch(d,league,d.header?.competitions?.[0]?.id||d.header?.id||d.id);
-   }
+ let home=null,draw=null,away=null;
 
-   function addWatch(d,league,id){
-    const game=document.getElementById('game');if(!game||game.querySelector('.fzWatch'))return; const comp=d?.header?.competitions?.[0]||d?.competitions?.[0];const bs=comp?.broadcasts||d?.broadcasts||[];const links=[];for(const b of bs){for(const l of (b.links||[])){if(l.href)links.push(l.href)}}
-    const div=document.createElement('div');div.className='fzT fzWatch';let body='';if(links.length)body='<a target="_blank" rel="noopener" href="'+clean(links[0])+'">📺 Ver transmissão</a>';else{const teams=(comp?.competitors||[]).map(x=>x.team?.displayName).filter(Boolean);const q=encodeURIComponent(teams.join(' vs ')+' transmissão oficial');body='<a target="_blank" rel="noopener" href="https://www.google.com/search?q='+q+'">📺 Procurar transmissão oficial</a>';}div.innerHTML='<h3>📺 Transmissão</h3>'+body;game.appendChild(div);
-   }
+ for(const o of roots){
+   home=home||findSide(o,'home');
+   draw=draw||findSide(o,'draw');
+   away=away||findSide(o,'away');
+ }
 
-   function hook(){
-    if(typeof window.openGame==='function'&&!window.__fzHook){window.__fzHook=true;const old=window.openGame;window.openGame=async function(id,l){await old.apply(this,arguments);try{const league=l||document.getElementById('league')?.value;const d=await summary(id,league);const cs=d?.header?.competitions?.[0]?.competitors||[];if(cs.length>=2)await renderAnalysis(league,d,cs);}catch(_){} };}
-   }
+ if(!home||!draw||!away){
+   const z=JSON.stringify(roots);
+   const nums=[
+     ...z.matchAll(/\"odds\"\s*:\s*\"([+-]?\d+(?:\.\d+)?)\"/g)
+   ].map(x=>x[1]);
 
-   function boot(){
-    if(!document.getElementById('fzTestStyles'))document.head.insertAdjacentHTML('beforeend',styles);if(!document.getElementById('fzExtraStyles'))document.head.insertAdjacentHTML('beforeend',extraStyles);
-    let n=0;const timer=setInterval(async()=>{hook();n++;if(n%2===0)await showSuggestions();if(n>45)clearInterval(timer)},1000);
-    setTimeout(()=>showSuggestions(),4000);setInterval(()=>showSuggestions(),300000);
-    const mo=new MutationObserver(()=>{removeMinuteByMinute();});
-    mo.observe(document.getElementById('game')||document.body,{childList:true,subtree:true});
-   }
+   home=home||nums[0]||null;
+   draw=draw||nums[2]||nums[1]||null;
+   away=away||nums[1]||nums[2]||null;
+ }
 
-   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
-  }.toString()})();<\/script>`;
-  html=html.replace(/<\/body>/i,patch+'</body>');
-  document.open();document.write(html);document.close();
- }catch(e){document.getElementById('fzLoader').innerHTML='<span>Não foi possível abrir o FUTZONE Premium de teste. Tenta novamente.</span>'}
+ return {home,draw,away};
+}
+
+function time(x){
+ const n=Date.parse(x||'');
+ return Number.isFinite(n)?n:0;
+}
+
+function compOf(e){
+ return e?.competitions?.[0]||{};
+}
+
+function resultFor(e,id){
+ const c=compOf(e);
+ const cs=c.competitors||[];
+
+ if(cs.length<2)return null;
+
+ const st=c.status?.type;
+
+ if(!(
+   st?.state==='post'||
+   st?.completed===true||
+   st?.name==='STATUS_FINAL'
+ ))return null;
+
+ const me=cs.find(
+   x=>String(x.team?.id)===String(id)
+ );
+
+ const op=cs.find(
+   x=>String(x.team?.id)!==String(id)
+ );
+
+ if(!me||!op)return null;
+
+ const a=Number(me.score);
+ const b=Number(op.score);
+
+ if(!Number.isFinite(a)||!Number.isFinite(b))
+   return null;
+
+ return {
+   r:a>b?'V':a<b?'D':'E',
+   gf:a,
+   ga:b,
+   date:e.date,
+   homeAway:me.homeAway,
+   opponent:op.team?.displayName||'Adversário',
+   opponentId:op.team?.id
+ };
+}
+
+async function getJSON(u){
+ if(cache.has(u))
+   return cache.get(u);
+
+ const pr=timeoutGet(u).catch(()=>null);
+ cache.set(u,pr);
+
+ return pr;
+}
+
+async function teamSchedule(league,id,until){
+
+ const direct=[
+   AP+
+   encodeURIComponent(league)+
+   '/teams/'+
+   encodeURIComponent(id)+
+   '/schedule?limit=100',
+
+   AP+
+   encodeURIComponent(league)+
+   '/teams/'+
+   encodeURIComponent(id)+
+   '/schedule?limit=50',
+
+   'https://site.api.espn.com/apis/site/v2/sports/soccer/teams/'+
+   encodeURIComponent(id)+
+   '/schedule?limit=100'
+ ];
+
+ for(const u of direct){
+
+   const d=await getJSON(u);
+
+   const ev=
+     d?.events||
+     d?.schedule?.events||
+     d?.data?.events||
+     [];
+
+   if(ev.length)
+     return ev
+       .filter(e=>time(e.date)<=time(until))
+       .sort((a,b)=>time(b.date)-time(a.date));
+ }
+
+ return [];
+}
+
+const NATIONAL_FORM_LEAGUES=[
+ 'fifa.friendly',
+ 'uefa.nations',
+ 'fifa.worldq.uefa',
+ 'fifa.world',
+ 'uefa.euro',
+ 'uefa.euroq',
+ 'conmebol.america',
+ 'conmebol.america_qual',
+ 'fifa.worldq.conmebol',
+ 'caf.nations',
+ 'caf.nations_qual',
+ 'fifa.worldq.caf'
+];
+
+async function getForm(league,id,until){
+
+ if(!id)return[];
+
+ const pool=[];
+ const seen=new Set();
+
+ const add=ev=>{
+   for(const e of(ev||[])){
+
+     const k=String(
+       e.id||
+       e.uid||
+       e.date+'|'+
+       JSON.stringify(
+         compOf(e).competitors||[]
+       )
+     );
+
+     if(seen.has(k))continue;
+
+     seen.add(k);
+
+     if(time(e.date)<=time(until))
+       pool.push(e);
+   }
+ };
+
+ const global=[
+   'https://site.api.espn.com/apis/site/v2/sports/soccer/teams/'+
+   encodeURIComponent(id)+
+   '/schedule?limit=200',
+
+   'https://site.api.espn.com/apis/site/v2/sports/soccer/teams/'+
+   encodeURIComponent(id)+
+   '/schedule?limit=100'
+ ];
+
+ for(const u of global){
+   try{
+     const d=await getJSON(u);
+
+     add(
+       d?.events||
+       d?.schedule?.events||
+       []
+     );
+
+     if(
+       pool
+       .map(e=>resultFor(e,id))
+       .filter(Boolean)
+       .length>=5
+     )break;
+
+   }catch(_){}
+ }
+
+ if(
+   pool
+   .map(e=>resultFor(e,id))
+   .filter(Boolean)
+   .length<5
+ ){
+   try{
+     add(
+       await teamSchedule(
+         league,
+         id,
+         until
+       )
+     );
+   }catch(_){}
+ }
+
+ if(
+   pool
+   .map(e=>resultFor(e,id))
+   .filter(Boolean)
+   .length<5 &&
+   NATIONAL_FORM_LEAGUES.includes(league)
+ ){
+   for(const lg of NATIONAL_FORM_LEAGUES){
+
+     if(lg===league)continue;
+
+     try{
+       add(
+         await teamSchedule(
+           lg,
+           id,
+           until
+         )
+       );
+     }catch(_){}
+
+     if(
+       pool
+       .map(e=>resultFor(e,id))
+       .filter(Boolean)
+       .length>=5
+     )break;
+   }
+ }
+
+ if(
+   pool
+   .map(e=>resultFor(e,id))
+   .filter(Boolean)
+   .length<5
+ ){
+   try{
+     add(
+       await scoreboardChunks(
+         league,
+         id,
+         until,
+         730
+       )
+     );
+   }catch(_){}
+ }
+
+ return pool
+   .map(e=>resultFor(e,id))
+   .filter(Boolean)
+   .sort((a,b)=>time(b.date)-time(a.date))
+   .slice(0,5);
+}
+
+async function scoreboardChunks(league,id,until,days){
+
+ const end=new Date(until);
+ const out=[];
+ const chunk=45;
+ const total=Math.min(days,730);
+ const jobs=[];
+
+ for(let n=0;n<total;n+=chunk){
+
+   const b=new Date(
+     end.getTime()-
+     Math.min(n+chunk,total)*86400000
+   );
+
+   const e=new Date(
+     end.getTime()-
+     n*86400000
+   );
+
+   const ds=
+     b.toISOString().slice(0,10).replaceAll('-','')+
+     '-'+
+     e.toISOString().slice(0,10).replaceAll('-','');
+
+   jobs.push(
+     getJSON(
+       AP+
+       encodeURIComponent(league)+
+       '/scoreboard?dates='+
+       ds+
+       '&limit=500'
+     )
+   );
+ }
+
+ const rs=await Promise.all(jobs);
+
+ rs.forEach(d=>{
+   (d?.events||[]).forEach(e=>{
+     if(
+       (compOf(e).competitors||[])
+       .some(
+         c=>String(c.team?.id)===String(id)
+       )
+     ){
+       out.push(e);
+     }
+   });
+ });
+
+ const seen=new Set();
+
+ return out
+   .filter(e=>{
+     if(seen.has(e.id))return false;
+     seen.add(e.id);
+     return true;
+   })
+   .sort(
+     (a,b)=>time(b.date)-time(a.date)
+   );
+}
+ const formCache=new Map();
+
+async function getLastFive(league,id,until){
+  const key=String(league||'')+'|'+String(id||'')+'|'+String(until||'');
+  if(formCache.has(key))return formCache.get(key);
+
+  const p=getForm(league,id,until)
+    .then(v=>Array.isArray(v)?v.slice(0,5):[])
+    .catch(()=>[]);
+
+  formCache.set(key,p);
+  return p;
+}
+
+function formBadge(r){
+  if(r==='V')return '<span class="pill" style="background:#123c2d;color:#20d68a">V</span>';
+  if(r==='E')return '<span class="pill" style="background:#3b3212;color:#ffd43b">E</span>';
+  if(r==='D')return '<span class="pill" style="background:#3b1820;color:#ff4054">D</span>';
+  return '<span class="pill">-</span>';
+}
+
+function formatDate(v){
+  const d=new Date(v);
+  if(!Number.isFinite(d.getTime()))return '-';
+  return d.toLocaleDateString('pt-PT',{
+    day:'2-digit',
+    month:'2-digit'
+  });
+}
+
+function renderLastFive(items){
+  if(!items||!items.length){
+    return `
+      <div class="card">
+        <div class="sectionTitle">Últimos 5 jogos</div>
+        <div class="status">
+          Dados dos últimos cinco jogos não disponíveis.
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="card">
+      <div class="sectionTitle">Últimos 5 jogos</div>
+
+      <div style="display:flex;flex-direction:column;gap:5px">
+        ${items.map(x=>`
+          <div style="
+            display:grid;
+            grid-template-columns:42px 1fr auto;
+            gap:7px;
+            align-items:center;
+            padding:7px 0;
+            border-bottom:1px solid #223047
+          ">
+            <div>${formBadge(x.r)}</div>
+
+            <div style="min-width:0">
+              <div style="
+                font-weight:700;
+                white-space:nowrap;
+                overflow:hidden;
+                text-overflow:ellipsis
+              ">
+                ${clean(x.homeAway==='home'
+                  ? 'Casa'
+                  : 'Fora'
+                )} · ${clean(x.opponent)}
+              </div>
+
+              <div class="status">
+                ${formatDate(x.date)}
+              </div>
+            </div>
+
+            <div style="font-weight:900">
+              ${Number.isFinite(Number(x.gf))
+                ? `${x.gf}-${x.ga}`
+                : '-'}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function formSummary(items){
+  const a=(items||[]).map(x=>x.r);
+
+  return {
+    v:a.filter(x=>x==='V').length,
+    e:a.filter(x=>x==='E').length,
+    d:a.filter(x=>x==='D').length
+  };
+}
+
+function formText(items){
+  const f=formSummary(items);
+
+  if(!(items||[]).length)
+    return 'Sem dados';
+
+  return `${f.v}V · ${f.e}E · ${f.d}D`;
+}
+
+function avgGoals(items){
+  if(!items||!items.length)
+    return null;
+
+  const gf=items.reduce(
+    (s,x)=>s+(Number(x.gf)||0),
+    0
+  );
+
+  const ga=items.reduce(
+    (s,x)=>s+(Number(x.ga)||0),
+    0
+  );
+
+  return {
+    gf:gf/items.length,
+    ga:ga/items.length
+  };
+}
+
+function makeSuggestion(home,away,homeForm,awayForm){
+
+  const hf=formSummary(homeForm);
+  const af=formSummary(awayForm);
+
+  const hs=(hf.v*3)+hf.e;
+  const as=(af.v*3)+af.e;
+
+  let side='';
+
+  if(hs>as)side='Casa';
+  else if(as>hs)side='Fora';
+  else side='Equilibrado';
+
+  const ha=avgGoals(homeForm);
+  const aa=avgGoals(awayForm);
+
+  let goals='Sem indicação';
+
+  if(ha&&aa){
+    const total=(ha.gf+ha.ga+aa.gf+aa.ga)/2;
+
+    if(total>=2.5)
+      goals='Mais de 2.5';
+    else
+      goals='Menos de 2.5';
+  }
+
+  return {
+    side,
+    goals,
+    home,
+    away,
+    homeForm,
+    awayForm
+  };
+}
+
+function suggestionHTML(s){
+
+  if(!s)return '';
+
+  const homeName=s.home||'Casa';
+  const awayName=s.away||'Fora';
+
+  let main='Análise equilibrada';
+
+  if(s.side==='Casa')
+    main=`Possível aposta: ${clean(homeName)}`;
+
+  if(s.side==='Fora')
+    main=`Possível aposta: ${clean(awayName)}`;
+
+  return `
+    <div class="card">
+      <div class="sectionTitle">
+        Sugestão de aposta
+      </div>
+
+      <div style="
+        font-size:15px;
+        font-weight:900;
+        margin-bottom:8px
+      ">
+        ${clean(homeName)}
+        <span style="color:#9daabb"> vs </span>
+        ${clean(awayName)}
+      </div>
+
+      <div class="row">
+        <span class="pill">${clean(main)}</span>
+        <span class="pill">${clean(s.goals)}</span>
+      </div>
+
+      <div class="hint" style="margin-top:8px">
+        Forma recente:
+        ${clean(formText(s.homeForm))}
+        — ${clean(homeName)}
+        ·
+        ${clean(formText(s.awayForm))}
+        — ${clean(awayName)}
+      </div>
+    </div>
+  `;
+}
+
+function renderAnalysisBox(home,away,homeForm,awayForm){
+
+  const h=avgGoals(homeForm);
+  const a=avgGoals(awayForm);
+
+  return `
+    <div class="card">
+      <div class="sectionTitle">
+        Análise Premium
+      </div>
+
+      <div style="
+        display:grid;
+        grid-template-columns:1fr 1fr;
+        gap:8px
+      ">
+
+        <div style="
+          border:1px solid #223047;
+          border-radius:12px;
+          padding:10px
+        ">
+          <b>${clean(home)}</b>
+          <div class="status">
+            ${clean(formText(homeForm))}
+          </div>
+          ${
+            h
+            ? `<div class="hint" style="margin-top:5px">
+                 Média golos:
+                 ${h.gf.toFixed(1)} marcados /
+                 ${h.ga.toFixed(1)} sofridos
+               </div>`
+            : ''
+          }
+        </div>
+
+        <div style="
+          border:1px solid #223047;
+          border-radius:12px;
+          padding:10px
+        ">
+          <b>${clean(away)}</b>
+          <div class="status">
+            ${clean(formText(awayForm))}
+          </div>
+          ${
+            a
+            ? `<div class="hint" style="margin-top:5px">
+                 Média golos:
+                 ${a.gf.toFixed(1)} marcados /
+                 ${a.ga.toFixed(1)} sofridos
+               </div>`
+            : ''
+          }
+        </div>
+
+      </div>
+    </div>
+  `;
+}
+
+async function buildPremiumAnalysis(game){
+
+  if(!game)return null;
+
+  const c=compOf(game);
+  const competitors=c.competitors||[];
+
+  if(competitors.length<2)
+    return null;
+
+  const homeC=competitors.find(
+    x=>x.homeAway==='home'
+  )||competitors[0];
+
+  const awayC=competitors.find(
+    x=>x.homeAway==='away'
+  )||competitors[1];
+
+  const homeId=homeC?.team?.id;
+  const awayId=awayC?.team?.id;
+
+  const homeName=
+    homeC?.team?.displayName||
+    homeC?.team?.name||
+    'Casa';
+
+  const awayName=
+    awayC?.team?.displayName||
+    awayC?.team?.name||
+    'Fora';
+
+  const league=
+    game?.league?.slug||
+    game?.competitions?.[0]?.league?.slug||
+    '';
+
+  const until=game.date||new Date().toISOString();
+
+  const [homeForm,awayForm]=await Promise.all([
+    getLastFive(league,homeId,until),
+    getLastFive(league,awayId,until)
+  ]);
+
+  const suggestion=makeSuggestion(
+    homeName,
+    awayName,
+    homeForm,
+    awayForm
+  );
+
+  return {
+    homeName,
+    awayName,
+    homeForm,
+    awayForm,
+    suggestion
+  };
+}
+
+async function renderPremiumAnalysis(game,target){
+
+  if(!target||!game)return;
+
+  target.innerHTML=`
+    <div class="card">
+      <div class="sectionTitle">
+        Análise Premium
+      </div>
+      <div class="status">
+        A carregar últimos 5 jogos...
+      </div>
+    </div>
+  `;
+
+  const a=await buildPremiumAnalysis(game);
+
+  if(!a){
+    target.innerHTML=`
+      <div class="card">
+        <div class="sectionTitle">
+          Análise Premium
+        </div>
+        <div class="status">
+          Não foi possível obter os dados deste jogo.
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  target.innerHTML=
+    renderLastFive(a.homeForm)+
+    renderLastFive(a.awayForm)+
+    renderAnalysisBox(
+      a.homeName,
+      a.awayName,
+      a.homeForm,
+      a.awayForm
+    )+
+    suggestionHTML(a.suggestion);
+}
+
+window.FZPremium={
+  getForm,
+  getLastFive,
+  buildPremiumAnalysis,
+  renderPremiumAnalysis,
+  renderLastFive,
+  makeSuggestion
+};
+
 })();
-</script></body></html>
+</script>
+<script>
+function americanToProb(v){
+  const n=Number(String(v).replace(',','.'));
+  if(!Number.isFinite(n)||n===0)return null;
+  return n>0?100/(n+100):(-n)/((-n)+100);
+}
+
+function rates(a){
+  if(!a.length)return null;
+  const w=a.filter(x=>x.r==='V').length,
+        d=a.filter(x=>x.r==='E').length,
+        l=a.filter(x=>x.r==='D').length,
+        gf=a.reduce((s,x)=>s+x.gf,0)/a.length,
+        ga=a.reduce((s,x)=>s+x.ga,0)/a.length;
+  return {
+    w,d,l,gf,ga,
+    p:[w/a.length,d/a.length,l/a.length]
+  };
+}
+
+function blend(mp,hf,af,hh){
+  let p=[.5,.28,.22],parts=[];
+  const hr=rates(hf),ar=rates(af),hhR=rates(hh);
+
+  if(mp){
+    p=mp.map(x=>x*.45);
+    parts.push('odds');
+  }
+
+  if(hr&&ar){
+    const fp=[
+      (hr.p[0]+1-ar.p[2])/2,
+      (hr.p[1]+ar.p[1])/2,
+      (hr.p[2]+1-ar.p[0])/2
+    ];
+    const w=mp?.map(x=>x*.45)||[0,0,0];
+
+    if(mp){
+      for(let i=0;i<3;i++)p[i]+=fp[i]*.35;
+    }else{
+      p=fp.map(x=>x*.75);
+    }
+    parts.push('forma');
+  }
+
+  if(hhR){
+    const hp=hhR.p;
+    if(mp||hr&&ar){
+      for(let i=0;i<3;i++)p[i]+=hp[i]*.20;
+    }else{
+      p=hp.map(x=>x*.25);
+    }
+    parts.push('H2H');
+  }
+
+  const sum=p.reduce((a,b)=>a+b,0);
+
+  return {
+    p:p.map(x=>Math.max(0,Math.min(1,x/sum))),
+    parts,
+    hr,
+    ar,
+    hh:hhR
+  };
+}
+
+async function getDailySuggestionGames(home,away){
+  const buttons=[...document.querySelectorAll('[onclick*="openGame"],.gameCard,.game')];
+  const candidates=[],seen=new Set();
+
+  const pushCandidate=(id,league,h,a)=>{
+    if(!h||!a)return;
+    const key=(h+'|'+a).toLowerCase();
+    if(seen.has(key))return;
+    seen.add(key);
+    candidates.push({
+      id:String(id||''),
+      league:league||document.getElementById('league')?.value||'',
+      home:h,
+      away:a
+    });
+  };
+
+  const current=buttons.find(btn=>{
+    const t=[...btn.querySelectorAll('.gameTeam b')]
+      .map(x=>x.textContent.trim());
+    return t.length>=2&&t[0]===home&&t[1]===away;
+  });
+
+  if(current){
+    pushCandidate(
+      current.dataset.fzGame||
+      current.getAttribute('onclick')?.match(/openGame\('([^']+)/)?.[1]||'',
+      current.dataset.fzLeague||'',
+      home,
+      away
+    );
+  }
+
+  buttons.forEach(btn=>{
+    if(candidates.length>=8)return;
+
+    const teams=[...btn.querySelectorAll('.gameTeam b')]
+      .map(x=>x.textContent.trim())
+      .filter(Boolean);
+
+    if(teams.length>=2){
+      pushCandidate(
+        btn.dataset.fzGame||
+        btn.getAttribute('onclick')?.match(/openGame\('([^']+)/)?.[1]||'',
+        btn.dataset.fzLeague||'',
+        teams[0],
+        teams[1]
+      );
+    }
+  });
+
+  if(!candidates.length){
+    pushCandidate(
+      '',
+      document.getElementById('league')?.value||'',
+      home,
+      away
+    );
+  }
+
+  const quick=async c=>{
+    try{
+      if(!c.id)return null;
+
+      const d=await getJSON(
+        'https://site.api.espn.com/apis/site/v2/sports/soccer/'+
+        encodeURIComponent(c.league)+
+        '/summary?event='+encodeURIComponent(c.id)
+      );
+
+      const comp=d?.header?.competitions?.[0],
+            cs=comp?.competitors||[];
+
+      if(cs.length<2)return null;
+
+      const hp=cs[0]?.team?.displayName||c.home,
+            ap=cs[1]?.team?.displayName||c.away,
+            od=extractOdds(d),
+            until=comp?.date||d?.date||new Date().toISOString();
+
+      let hf=[],af=[],hh=[];
+
+      try{
+        [hf,af]=await Promise.all([
+          getForm(c.league,cs[0]?.team?.id,until),
+          getForm(c.league,cs[1]?.team?.id,until)
+        ]);
+      }catch(_){}
+
+      try{
+        hh=await getH2H(
+          c.league,
+          cs[0]?.team?.id,
+          cs[1]?.team?.id,
+          until
+        );
+      }catch(_){}
+
+      let mp=null;
+
+      if(od.home||od.draw||od.away){
+        const raw=[
+          americanToProb(od.home),
+          americanToProb(od.draw),
+          americanToProb(od.away)
+        ].map(v=>v||0);
+
+        const sum=raw.reduce((a,b)=>a+b,0);
+
+        if(sum>0)mp=raw.map(v=>v/sum);
+      }
+
+      const model=blend(mp,hf,af,hh),
+            idx=model.p.indexOf(Math.max(...model.p)),
+            labels=[
+              `Vitória ${hp}`,
+              `Empate`,
+              `Vitória ${ap}`
+            ],
+            odds=[od.home,od.draw,od.away];
+
+      if(idx<0||!Number.isFinite(model.p[idx])){
+        return {
+          m:`${hp} vs ${ap}`,
+          d:'Escolha: dados insuficientes',
+          odd:null
+        };
+      }
+
+      const base=
+        `Escolha do motor: ${labels[idx]} · `+
+        `${Math.round(model.p[idx]*100)}%`;
+
+      return {
+        m:`${hp} vs ${ap}`,
+        d:`${base}${odds[idx]?` · odd ${odds[idx]}`:''}`,
+        odd:odds[idx]||null
+      };
+
+    }catch(_){
+      return null;
+    }
+  };
+
+  const rs=await Promise.all(
+    candidates.slice(0,8).map(quick)
+  );
+
+  const out=[];
+  rs.forEach(x=>{
+    if(x&&out.length<5)out.push(x);
+  });
+
+  return out.slice(0,5);
+}
+
+async function setTopSuggestions(items,home,away){
+  const root=document.getElementById('fzBetToday');
+  if(!root)return;
+
+  const lists=root.querySelectorAll('.fz-bet-list');
+  if(lists.length<2)return;
+
+  const daily=await getDailySuggestionGames(home,away);
+
+  const pool=daily.length
+    ?daily
+    :items.map(x=>({
+      m:x.m,
+      d:'Escolha do motor: sem dados suficientes para selecionar um resultado',
+      odd:null
+    }));
+
+  const make=arr=>arr.map((x,i)=>`
+    <div class="fz-bet-row">
+      <span class="fz-rank">${i+1}</span>
+      <div class="fz-match">
+        <b>${clean(x.m)}</b>
+        <small>${clean(x.d)}</small>
+      </div>
+      <strong class="fz-odd">${clean(x.odd||'—')}</strong>
+    </div>
+  `).join('');
+
+  lists[0].innerHTML=make(pool.slice(0,5));
+  lists[1].innerHTML=make(pool.slice(0,5).reverse());
+
+  const sub=root.querySelector('.sub');
+  if(sub){
+    sub.textContent=
+      '5 jogos diferentes · escolha do motor com base nos dados disponíveis';
+  }
+}
+ <script>
+async function runPremiumAnalysis(league,d,cs){
+  const game=document.getElementById('game');
+  if(!game)return;
+
+  const card=document.createElement('div');
+  card.className='card fz-analysis';
+
+  card.innerHTML=
+    '<div class="sectionTitle">📊 Análise Premium</div>'+
+    '<div class="status">A recolher os últimos jogos, histórico e odds…</div>';
+
+  game.appendChild(card);
+
+  try{
+    const home=
+      cs.find(x=>x.homeAway==='home')||cs[0];
+
+    const away=
+      cs.find(x=>x.homeAway==='away')||cs[1];
+
+    const until=
+      d.date||new Date().toISOString();
+
+    const hp=
+      home?.team?.displayName||'Casa';
+
+    const ap=
+      away?.team?.displayName||'Fora';
+
+    const [hf,af,hh]=await Promise.all([
+      getForm(league,home?.team?.id,until),
+      getForm(league,away?.team?.id,until),
+      getH2H(
+        league,
+        home?.team?.id,
+        away?.team?.id,
+        until
+      )
+    ]);
+
+    const od=extractOdds(d);
+    const mp=marketProb(od);
+    const model=blend(mp,hf,af,hh);
+
+    const pct=x=>
+      Math.round(x*100)+'%';
+
+    const fmt=a=>
+      a.length
+      ?a.map(x=>
+        `<span class="fz-res ${x.r.toLowerCase()}">${x.r}</span>`
+      ).join('')
+      :'<span class="fz-mini">Dados não disponíveis</span>';
+
+    const sg=suggestions(
+      model.p,
+      od,
+      model.hr,
+      model.ar
+    );
+
+    await setTopSuggestions(
+      sg,
+      hp,
+      ap
+    );
+
+    const factors=[];
+
+    if(model.hr){
+      factors.push(
+        `${hp}: ${model.hr.w} vitórias, `+
+        `${model.hr.d} empates e `+
+        `${model.hr.l} derrotas nos últimos ${hf.length} jogos.`
+      );
+    }
+
+    if(model.ar){
+      factors.push(
+        `${ap}: ${model.ar.w} vitórias, `+
+        `${model.ar.d} empates e `+
+        `${model.ar.l} derrotas nos últimos ${af.length} jogos.`
+      );
+    }
+
+    if(model.hr&&model.ar){
+      factors.push(
+        `Golos por jogo: ${hp} `+
+        `${model.hr.gf.toFixed(1)} marcados / `+
+        `${model.hr.ga.toFixed(1)} sofridos; `+
+        `${ap} ${model.ar.gf.toFixed(1)} / `+
+        `${model.ar.ga.toFixed(1)}.`
+      );
+    }
+
+    if(model.hh){
+      factors.push(
+        `H2H: ${model.hh.w} vitórias da casa, `+
+        `${model.hh.d} empates e `+
+        `${model.hh.l} vitórias da equipa visitante `+
+        `nos últimos ${hh.length}.`
+      );
+    }
+
+    card.innerHTML=`
+      <div class="sectionTitle">
+        📊 Análise Premium — ${clean(hp)} vs ${clean(ap)}
+      </div>
+
+      <div class="fz-analysis-grid">
+
+        <div class="fz-analysis-box">
+          <h4>${clean(hp)} — últimos 5 jogos</h4>
+
+          <div class="fz-results">
+            ${fmt(hf)}
+          </div>
+
+          <div class="fz-mini">
+            ${
+              hf.length
+              ?`${model.hr.w} vitórias / ${hf.length} jogos disponíveis`
+              :'Não foi possível obter os últimos jogos através das fontes disponíveis.'
+            }
+          </div>
+        </div>
+
+        <div class="fz-analysis-box">
+          <h4>${clean(ap)} — últimos 5 jogos</h4>
+
+          <div class="fz-results">
+            ${fmt(af)}
+          </div>
+
+          <div class="fz-mini">
+            ${
+              af.length
+              ?`${model.ar.w} vitórias / ${af.length} jogos disponíveis`
+              :'Não foi possível obter os últimos jogos através das fontes disponíveis.'
+            }
+          </div>
+        </div>
+
+      </div>
+
+      <div class="sectionTitle">
+        ⚔️ Últimos confrontos diretos
+      </div>
+
+      <div class="fz-analysis-box">
+        ${
+          hh.length
+          ?hh.map(x=>`
+            <div class="fz-h2h-row">
+              <span>
+                ${new Date(x.date).toLocaleDateString('pt-PT')}
+                ·
+                ${x.homeAway==='home'
+                  ?clean(hp)
+                  :clean(ap)}
+              </span>
+              <b>${x.gf}-${x.ga}</b>
+            </div>
+          `).join('')
+          :'<div class="fz-mini">Histórico direto não disponibilizado para estas equipas.</div>'
+        }
+      </div>
+
+      <div class="sectionTitle">
+        💰 Odds disponíveis
+      </div>
+
+      ${
+        (od.home||od.draw||od.away)
+        ?`
+          <div class="fz-odds-clean">
+
+            <div class="fz-odd-box">
+              <span>CASA</span>
+              <b>${clean(od.home||'—')}</b>
+            </div>
+
+            <div class="fz-odd-box">
+              <span>EMPATE</span>
+              <b>${clean(od.draw||'—')}</b>
+            </div>
+
+            <div class="fz-odd-box">
+              <span>FORA</span>
+              <b>${clean(od.away||'—')}</b>
+            </div>
+
+          </div>
+        `
+        :'<div class="fz-mini">Odds não disponibilizadas para este jogo.</div>'
+      }
+
+      <div class="sectionTitle">
+        🤖 Estudo do motor inteligente
+      </div>
+
+      <div class="fz-analysis-box fz-ai">
+
+        <div class="fz-probs">
+
+          <div class="fz-prob">
+            <span>CASA</span>
+            <b>${pct(model.p[0])}</b>
+          </div>
+
+          <div class="fz-prob">
+            <span>EMPATE</span>
+            <b>${pct(model.p[1])}</b>
+          </div>
+
+          <div class="fz-prob">
+            <span>FORA</span>
+            <b>${pct(model.p[2])}</b>
+          </div>
+
+        </div>
+
+        <div
+          class="fz-mini"
+          style="margin-top:8px"
+        >
+          Estimativa estatística baseada apenas nos
+          dados realmente obtidos.
+          ${
+            clean(
+              model.parts.length
+              ?'Componentes usados: '+model.parts.join(' + ')
+              :'Sem dados suficientes para componentes adicionais'
+            )
+          }.
+        </div>
+
+        ${
+          factors.map(x=>
+            `<div class="fz-factor">• ${clean(x)}</div>`
+          ).join('')
+        }
+
+      </div>
+
+      <div class="sectionTitle">
+        🟣 5 sugestões — risco médio/alto
+      </div>
+
+      <div class="fz-suggest-grid">
+
+        ${
+          sg.map((x,i)=>`
+            <div class="fz-suggest">
+              <span class="num">${i+1}</span>
+              <b>${clean(x.m)}</b>
+              <span>${clean(x.d)}</span>
+            </div>
+          `).join('')
+        }
+
+      </div>
+
+      <div class="sectionTitle">
+        🔵 5 sugestões — risco médio/baixo
+      </div>
+
+      <div class="fz-suggest-grid">
+
+        ${
+          sg.slice().reverse().map((x,i)=>`
+            <div class="fz-suggest">
+              <span class="num">${i+1}</span>
+              <b>${clean(x.m)}</b>
+              <span>${clean(x.d)}</span>
+            </div>
+          `).join('')
+        }
+
+      </div>
+
+      <div class="fz-bet-warning">
+        ⚠️ Estas são apenas sugestões e simulações estatísticas.
+        Não são garantias de vitória, resultado ou lucro.
+        As odds podem mudar e podem não estar disponíveis
+        em todos os mercados.
+      </div>
+    `;
+
+  }catch(e){
+
+    card.innerHTML=`
+      <div class="sectionTitle">
+        📊 Análise Premium
+      </div>
+
+      <div class="err">
+        A análise não conseguiu obter todos os dados
+        neste momento.
+      </div>
+
+      <div class="fz-mini">
+        O jogo, calendário e restantes funções
+        continuam disponíveis normalmente.
+      </div>
+    `;
+  }
+}
+
+window.fzPremiumRun=runPremiumAnalysis;
+</script>
+<script>
+/* ===== FUTZONE — LIGAÇÕES FINAIS PREMIUM ===== */
+
+(function(){
+
+  function findGameButtons(){
+    return [
+      ...document.querySelectorAll(
+        '.gameCard,.game,.matchCard,[data-fz-game]'
+      )
+    ];
+  }
+
+  function getGameId(btn){
+    return (
+      btn?.dataset?.fzGame ||
+      btn?.getAttribute('data-fz-game') ||
+      btn?.getAttribute('onclick')
+        ?.match(/openGame\(['"]([^'"]+)/)?.[1] ||
+      ''
+    );
+  }
+
+  function getLeagueId(btn){
+    return (
+      btn?.dataset?.fzLeague ||
+      btn?.getAttribute('data-fz-league') ||
+      document.getElementById('league')?.value ||
+      ''
+    );
+  }
+
+  function getTeams(btn){
+    const t=[
+      ...btn.querySelectorAll('.gameTeam b')
+    ]
+    .map(x=>x.textContent.trim())
+    .filter(Boolean);
+
+    return {
+      home:t[0]||'Casa',
+      away:t[1]||'Fora'
+    };
+  }
+
+  /*
+   * Quando o utilizador abre um jogo,
+   * mantém a função original do FUTZONE
+   * e acrescenta a análise Premium depois
+   * de o resumo do jogo estar disponível.
+   */
+  const originalOpenGame=window.openGame;
+
+  if(typeof originalOpenGame==='function'){
+
+    window.openGame=async function(){
+
+      const args=[...arguments];
+
+      const result=
+        await originalOpenGame.apply(this,args);
+
+      try{
+
+        /*
+         * Pequeno atraso para permitir que
+         * o detalhe original termine de montar.
+         */
+        await new Promise(resolve=>
+          setTimeout(resolve,350)
+        );
+
+        const game=
+          document.getElementById('game');
+
+        if(!game)return result;
+
+        /*
+         * Evita criar duas análises para
+         * o mesmo jogo.
+         */
+        const old=
+          game.querySelector('.fz-analysis');
+
+        if(old)old.remove();
+
+        /*
+         * Procura o evento atualmente aberto.
+         */
+        const id=
+          args[0] ||
+          game.dataset?.event ||
+          game.dataset?.gameId ||
+          '';
+
+        const league=
+          game.dataset?.league ||
+          document.getElementById('league')?.value ||
+          '';
+
+        if(!id||!league)return result;
+
+        const d=
+          await getJSON(
+            'https://site.api.espn.com/apis/site/v2/sports/soccer/'+
+            encodeURIComponent(league)+
+            '/summary?event='+encodeURIComponent(id)
+          );
+
+        const cs=
+          d?.header?.competitions?.[0]?.competitors||[];
+
+        if(cs.length<2)return result;
+
+        /*
+         * A análise só entra depois do jogo
+         * original estar carregado.
+         */
+        await runPremiumAnalysis(
+          league,
+          d,
+          cs
+        );
+
+      }catch(err){
+        console.warn(
+          'FUTZONE Premium:',
+          err
+        );
+      }
+
+      return result;
+    };
+  }
+
+  /*
+   * Fallback: se a função original for
+   * recriada pelo FUTZONE depois do carregamento,
+   * tenta ligar novamente sem alterar o resto.
+   */
+  let attempts=0;
+
+  const reconnect=setInterval(()=>{
+
+    attempts++;
+
+    if(
+      typeof window.openGame==='function' &&
+      !window.openGame.__fzPremium
+    ){
+
+      const base=window.openGame;
+
+      const wrapped=async function(){
+
+        const args=[...arguments];
+
+        const result=
+          await base.apply(this,args);
+
+        try{
+
+          await new Promise(resolve=>
+            setTimeout(resolve,350)
+          );
+
+          const game=
+            document.getElementById('game');
+
+          if(!game)return result;
+
+          const id=
+            args[0]||
+            game.dataset?.event||
+            game.dataset?.gameId||
+            '';
+
+          const league=
+            game.dataset?.league||
+            document.getElementById('league')?.value||
+            '';
+
+          if(!id||!league)return result;
+
+          const d=
+            await getJSON(
+              'https://site.api.espn.com/apis/site/v2/sports/soccer/'+
+              encodeURIComponent(league)+
+              '/summary?event='+encodeURIComponent(id)
+            );
+
+          const cs=
+            d?.header?.competitions?.[0]?.competitors||[];
+
+          if(cs.length>=2){
+            const old=
+              game.querySelector('.fz-analysis');
+
+            if(old)old.remove();
+
+            await runPremiumAnalysis(
+              league,
+              d,
+              cs
+            );
+          }
+
+        }catch(err){
+          console.warn(
+            'FUTZONE Premium:',
+            err
+          );
+        }
+
+        return result;
+      };
+
+      wrapped.__fzPremium=true;
+      window.openGame=wrapped;
+    }
+
+    if(attempts>30){
+      clearInterval(reconnect);
+    }
+
+  },500);
+
+})();
+
+/* ===== FIM DA CORREÇÃO PREMIUM ===== */
+</script>
+<script>
+const API='https://site.api.espn.com/apis/site/v2/sports/soccer/';
+const CORE='https://sports.core.api.espn.com/v2/sports/soccer/leagues/';
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({
+  '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+}[c]));
+
+function localDate(d=new Date()){
+  const x=new Date(d.getTime()-d.getTimezoneOffset()*60000);
+  return x.toISOString().slice(0,10)
+}
+
+if($('date')) $('date').value=localDate();
+
+async function get(u){
+  const r=await fetch(u,{cache:'no-store'});
+  if(!r.ok)throw Error('HTTP '+r.status);
+  return r.json()
+}
+
+function posHome(i){
+  return [
+    [10,50],[18,28],[18,72],[28,15],[28,38],[28,62],
+    [28,85],[38,25],[38,50],[38,75],[46,50]
+  ][i]
+}
+
+function posAway(i){
+  return [
+    [90,50],[82,28],[82,72],[72,15],[72,38],[72,62],
+    [72,85],[62,25],[62,50],[62,75],[54,50]
+  ][i]
+}
+
+function playerName(p){
+  return p?.athlete?.displayName||
+         p?.displayName||
+         p?.fullName||
+         p?.name||
+         'Jogador'
+}
+
+function athleteObj(p){
+  return p?.athlete||p
+}
+
+function isStarter(p){
+  return p?.starter===true||
+         p?.starter==='true'||
+         p?.status?.type?.name==='starter'||
+         p?.status?.type?.id==='starter'
+}
+
+function normalizeRoster(r){
+  let out=[];
+
+  if(Array.isArray(r?.roster))
+    out.push(...r.roster);
+
+  if(Array.isArray(r?.athletes))
+    out.push(...r.athletes);
+
+  for(const g of (r?.athletes||[])){
+    if(Array.isArray(g?.items))
+      out.push(...g.items);
+
+    if(Array.isArray(g?.athletes))
+      out.push(...g.athletes);
+  }
+
+  return out.filter((p,i,a)=>
+    (p?.athlete?.id||p?.id) &&
+    i===a.findIndex(q=>
+      (q?.athlete?.id||q?.id)===(p?.athlete?.id||p?.id)
+    )
+  )
+}
+
+function teamHtml(c,league){
+  const id=c?.team?.id;
+
+  return `<button class="teamBtn"
+    onclick="openTeam('${esc(id||'')}','${esc(league)}')">
+    <img src="${esc(
+      c?.team?.logo||
+      c?.team?.logos?.[0]?.href||
+      ''
+    )}"
+    onerror="this.style.visibility='hidden'">
+    <b>${esc(c?.team?.displayName||'')}</b>
+    <span class="sub">Ver equipa e plantel</span>
+  </button>`
+}
+
+function teamLogo(c){
+  return c?.team?.logo||
+         c?.team?.logos?.[0]?.href||
+         c?.team?.logos?.[1]?.href||
+         ''
+}
+
+function gameTime(iso){
+  if(!iso)return '';
+
+  try{
+    return new Intl.DateTimeFormat('pt-PT',{
+      hour:'2-digit',
+      minute:'2-digit',
+      hour12:false,
+      timeZone:'Europe/Lisbon'
+    }).format(new Date(iso))
+  }catch(e){
+    return ''
+  }
+}
+
+function gameStatus(e){
+  return e?.competitions?.[0]?.status?.type?.shortDetail||
+         e?.competitions?.[0]?.status?.type?.detail||
+         ''
+}
+
+async function loadGames(){
+
+  if(!$('league')||!$('date'))return;
+
+  const opt=$('league').selectedOptions[0];
+
+  if($('msg'))
+    $('msg').textContent='A carregar…';
+
+  if($('games'))
+    $('games').classList.add('hidden');
+
+  try{
+
+    const d=await get(
+      API+
+      $('league').value+
+      '/scoreboard?dates='+
+      $('date').value.replaceAll('-','')+
+      '&limit=200'
+    );
+
+    const ev=d.events||[];
+
+    if($('games')){
+      $('games').innerHTML=ev.map(e=>{
+
+        const c=
+          e.competitions?.[0]?.competitors||[];
+
+        const st=gameStatus(e);
+        const tm=gameTime(e.date);
+
+        return `<button
+          class="gamePick"
+          onclick="openGame('${esc(e.id)}')">
+
+          <span class="gameTime">
+            ${esc(tm||'--:--')}
+          </span>
+
+          <div class="gameTeam">
+            <img src="${esc(teamLogo(c[0]))}"
+              onerror="this.style.visibility='hidden'">
+
+            <b>${esc(
+              c[0]?.team?.displayName||''
+            )}</b>
+
+            <strong>${esc(
+              c[0]?.score||'-'
+            )}</strong>
+          </div>
+
+          <div class="gameTeam">
+            <img src="${esc(teamLogo(c[1]))}"
+              onerror="this.style.visibility='hidden'">
+
+            <b>${esc(
+              c[1]?.team?.displayName||''
+            )}</b>
+
+            <strong>${esc(
+              c[1]?.score||'-'
+            )}</strong>
+          </div>
+
+          <span class="gameStatus">
+            ${esc(st)}
+          </span>
+
+          <i>›</i>
+
+        </button>`
+
+      }).join('');
+    }
+
+    if(ev.length){
+
+      if($('games'))
+        $('games').classList.remove('hidden');
+
+      if($('msg'))
+        $('msg').textContent=
+          ev.length+' jogo(s).';
+
+    }else{
+
+      if($('msg'))
+        $('msg').textContent=
+          'Não foram encontrados jogos nesta data.';
+
+    }
+
+  }catch(e){
+
+    if($('msg'))
+      $('msg').innerHTML=
+        '<span class="err">'+
+        'Não foi possível carregar esta competição nesta fonte. '+
+        esc(e.message)+
+        '</span>';
+
+  }
+}
+
+if($('load'))
+  $('load').onclick=loadGames;
+
+async function fetchRosterForTeam(l,id){
+  try{
+    return await get(
+      API+
+      l+
+      '/teams/'+
+      id+
+      '/roster'
+    )
+  }catch(e){
+    return {}
+  }
+}
+
+function eventText(p){
+  return p?.text||
+         p?.type?.text||
+         p?.type?.description||
+         ''
+}
+
+function eventIcon(p){
+
+  const t=(
+    eventText(p)+' '+
+    (p?.type?.name||'')
+  ).toLowerCase();
+
+  if(t.includes('goal')||t.includes('golo'))
+    return '⚽';
+
+  if(t.includes('yellow')||t.includes('amarelo'))
+    return '🟨';
+
+  if(t.includes('red')||t.includes('vermelho'))
+    return '🟥';
+
+  if(t.includes('substitut')||t.includes('sub'))
+    return '🔄';
+
+  return '•'
+}
+
+function eventRows(plays){
+
+  return (plays||[])
+    .filter(p=>{
+
+      const t=(
+        eventText(p)+' '+
+        (p?.type?.name||'')
+      ).toLowerCase();
+
+      return /goal|golo|yellow|amarelo|red|vermelho|substitut|substitui|penalty|penálti/.test(t)
+
+    })
+    .map(p=>{
+
+      const parts=(p?.participants||[])
+        .map(x=>
+          x?.athlete?.displayName||
+          x?.athlete?.fullName||
+          x?.displayName||
+          x?.fullName
+        )
+        .filter(Boolean);
+
+      const txt=
+        eventText(p)||
+        parts.join(' · ');
+
+      const tm=
+        p?.clock?.displayValue||
+        p?.time?.displayValue||
+        p?.period?.displayValue||
+        '';
+
+      return `<div class="event-row">
+        <span class="event-icon">
+          ${eventIcon(p)}
+        </span>
+        <b>${esc(tm)}</b>
+        <span>${esc(txt)}</span>
+      </div>`
+
+    }).join('')
+}
+
+function statBlock(d){
+
+  const groups=
+    d?.boxscore?.teams||
+    d?.stats||
+    d?.statistics||
+    [];
+
+  const arr=
+    Array.isArray(groups)?
+    groups:
+    Object.values(groups||{});
+
+  if(arr.length<2)return '';
+
+  const a=
+    Array.isArray(arr[0]?.statistics)?
+    arr[0].statistics:
+    (Array.isArray(arr[0]?.stats)?
+      arr[0].stats:[]);
+
+  const b=
+    Array.isArray(arr[1]?.statistics)?
+    arr[1].statistics:
+    (Array.isArray(arr[1]?.stats)?
+      arr[1].stats:[]);
+
+  if(!a.length&&!b.length)return '';
+
+  const nameA=
+    arr[0]?.team?.displayName||
+    arr[0]?.team?.name||
+    'Casa';
+
+  const nameB=
+    arr[1]?.team?.displayName||
+    arr[1]?.team?.name||
+    'Fora';
+
+  const map=new Map();
+
+  for(const x of a){
+
+    const k=
+      x?.label||
+      x?.name||
+      x?.displayName;
+
+    if(k)
+      map.set(k,{
+        a:x?.displayValue??x?.value??'-',
+        b:'-'
+      })
+  }
+
+  for(const x of b){
+
+    const k=
+      x?.label||
+      x?.name||
+      x?.displayName;
+
+    if(k){
+
+      const z=
+        map.get(k)||
+        {a:'-',b:'-'};
+
+      z.b=
+        x?.displayValue??
+        x?.value??
+        '-';
+
+      map.set(k,z)
+    }
+  }
+
+  const rows=
+    [...map.entries()]
+      .slice(0,15)
+      .map(([k,v])=>
+        `<div class="statLine">
+          <b>${esc(v.a)}</b>
+          <span class="statName">${esc(k)}</span>
+          <b>${esc(v.b)}</b>
+        </div>`
+      )
+      .join('');
+
+  return `<div class="statCompare">
+    <div class="statTitle">
+      <span>${esc(nameA)}</span>
+      <span>ESTATÍSTICA DO JOGO</span>
+      <span>${esc(nameB)}</span>
+    </div>
+    ${rows}
+  </div>`
+}
+ <script>
+function posForFormation(i,side='home'){
+  const home=[
+    [12,50],
+    [25,18],[25,39],[25,61],[25,82],
+    [43,28],[43,50],[43,72],
+    [65,22],[72,50],[65,78]
+  ];
+
+  return side==='home'
+    ? home
+    : home.map(([x,y])=>[100-x,100-y]);
+}
+
+function formationPlayers(players){
+
+  const arr=[...players];
+
+  const pos=p=>
+    String(
+      p?.athlete?.position?.displayName||
+      p?.position?.displayName||
+      p?.position?.name||
+      ''
+    ).toLowerCase();
+
+  const g=arr.filter(p=>
+    /goal|keeper|guarda/.test(pos)
+  );
+
+  const d=arr.filter(p=>
+    /back|defen|center back|lateral|zagueiro/.test(pos)&&
+    !g.includes(p)
+  );
+
+  const m=arr.filter(p=>
+    /mid|meio|wing|volante/.test(pos)&&
+    !g.includes(p)&&
+    !d.includes(p)
+  );
+
+  const a=arr.filter(p=>
+    !g.includes(p)&&
+    !d.includes(p)&&
+    !m.includes(p)
+  );
+
+  const take=(x,n)=>x.splice(0,n);
+
+  let out=[
+    ...take(g,1),
+    ...take(d,4),
+    ...take(m,3),
+    ...take(a,3),
+    ...arr
+  ];
+
+  return out.filter(
+    (p,i)=>out.indexOf(p)===i
+  ).slice(0,11);
+}
+
+function fzPlayAthleteName(x){
+
+  const a=
+    x?.athlete||
+    x?.player||
+    x?.person||
+    x;
+
+  return a?.displayName||
+         a?.fullName||
+         a?.name||
+         x?.displayName||
+         x?.name||
+         ''
+}
+
+function fzMinutePlay(p){
+
+  const clock=
+    p?.clock?.displayValue||
+    p?.clock?.value||
+    p?.displayClock||
+    p?.clock?.display||
+    '';
+
+  const minute=
+    clock?
+    String(clock).replace(/^0:/,''):
+    '';
+
+  const type=String(
+    p?.type?.text||
+    p?.type?.description||
+    p?.type?.name||
+    p?.type?.abbreviation||
+    p?.type?.type||
+    ''
+  ).toLowerCase();
+
+  const text=String(
+    p?.text||
+    p?.shortText||
+    p?.description||
+    ''
+  ).replace(/\s+/g,' ').trim();
+
+  const all=
+    (type+' '+text).toLowerCase();
+
+  const participants=
+    Array.isArray(p?.participants)?
+    p.participants:[];
+
+  const names=
+    participants
+      .map(fzPlayAthleteName)
+      .filter(Boolean);
+
+  let icon='•';
+
+  const isGoal=
+    !!p?.scoringPlay||
+    /\b(goal|golo|penalty goal|own goal)\b/i.test(all);
+
+  const isYellow=
+    /yellow|amarelo|booking|caution/i.test(all);
+
+  const isRed=
+    /red card|vermelho|sent off|dismissed/i.test(all);
+
+  const isSub=
+    /substitut|substitution|replaced by|enters the match|comes on|comes off/i.test(all);
+
+  if(isGoal)
+    icon='⚽';
+  else if(isYellow)
+    icon='🟨';
+  else if(isRed)
+    icon='🟥';
+  else if(isSub)
+    icon='🔄';
+  else if(/var|video review/i.test(all))
+    icon='📺';
+
+  let clean=text;
+
+  const primary=
+    fzPlayAthleteName(
+      p?.athlete||
+      p?.player||
+      {}
+    );
+
+  const assistObj=
+    p?.assist||
+    p?.assistant||
+    p?.assistBy||
+    p?.assistedBy;
+
+  let assist=
+    fzPlayAthleteName(
+      assistObj||{}
+    );
+
+  if(!assist){
+
+    const m=text.match(
+      /(?:assisted by|assist[eê]ncia(?: de)?|assist por)\s+(.+?)(?:\.|$)/i
+    );
+
+    if(m)
+      assist=m[1].trim();
+  }
+
+  if(isGoal){
+
+    if(
+      primary &&
+      !clean.toLowerCase()
+        .includes(primary.toLowerCase())
+    ){
+      clean=
+        primary+
+        (clean?' — '+clean:'');
+    }
+
+    if(
+      !primary &&
+      names[0] &&
+      !clean.toLowerCase()
+        .includes(names[0].toLowerCase())
+    ){
+      clean=
+        names[0]+
+        (clean?' — '+clean:'');
+    }
+
+    if(
+      assist &&
+      !clean.toLowerCase()
+        .includes(assist.toLowerCase())
+    ){
+      clean+=
+        (clean?' — ':'')+
+        'Assistência: '+
+        assist;
+    }
+
+  }else if(isYellow){
+
+    const who=
+      primary||
+      names[0]||
+      '';
+
+    if(
+      who &&
+      !clean.toLowerCase()
+        .includes(who.toLowerCase())
+    ){
+      clean=
+        who+
+        (clean?' — ':'')+
+        clean;
+    }
+
+  }else if(isRed){
+
+    const who=
+      primary||
+      names[0]||
+      '';
+
+    if(
+      who &&
+      !clean.toLowerCase()
+        .includes(who.toLowerCase())
+    ){
+      clean=
+        who+
+        (clean?' — ':'')+
+        clean;
+    }
+
+  }else if(isSub){
+
+    const inName=
+      fzPlayAthleteName(
+        p?.playerIn||
+        p?.substitute||
+        p?.entered||
+        {}
+      );
+
+    const outName=
+      fzPlayAthleteName(
+        p?.playerOut||
+        p?.replaced||
+        p?.exited||
+        {}
+      );
+
+    if(inName||outName){
+
+      clean=
+        (outName?
+          'Sai: '+outName:
+          '')+
+        (inName?
+          (outName?' · ':'')+
+          'Entra: '+inName:
+          '');
+    }
+  }
+
+  if(!clean && names.length)
+    clean=names.join(' · ');
+
+  if(!clean)
+    return '';
+
+  return `
+    <div class="fz-play">
+      <span class="fz-play-min">
+        ${esc(minute||'--')}
+      </span>
+
+      <span class="fz-play-icon">
+        ${icon}
+      </span>
+
+      <span class="fz-play-text">
+        ${esc(clean)}
+      </span>
+    </div>
+  `;
+}
+
+function fzMinuteRows(plays){
+
+  const arr=
+    Array.isArray(plays)?
+    plays:
+    (plays?.items||
+     plays?.plays||
+     []);
+
+  return arr
+    .map(fzMinutePlay)
+    .filter(Boolean)
+    .join('');
+}
+
+async function fzRefreshMinuteEvents(){
+
+  try{
+
+    const g=
+      window.fzCurrentGame;
+
+    if(
+      !g||
+      !g.id||
+      !g.league||
+      !g.compId
+    )
+      return;
+
+    const d=
+      await get(
+        API+
+        g.league+
+        '/summary?event='+
+        encodeURIComponent(g.id)
+      );
+
+    const plays=
+      d?.plays||
+      d?.gameInfo?.plays||
+      [];
+
+    const html=
+      fzMinuteRows(plays);
+
+    const box=
+      document.getElementById(
+        'fzEvents'
+      );
+
+    if(box)
+      box.innerHTML=
+        html||
+        '<div class="status">Sem eventos disponíveis.</div>';
+
+  }catch(e){
+
+    console.warn(
+      'Eventos FUTZONE:',
+      e
+    );
+  }
+ }
+ <script>
+/* ===== FUTZONE — DETALHE DO JOGO ===== */
+
+async function openGame(id){
+
+  try{
+
+    const league=
+      document.getElementById('league')?.value||
+      '';
+
+    const gameBox=
+      document.getElementById('game');
+
+    if(!gameBox)return;
+
+    gameBox.classList.remove('hidden');
+
+    gameBox.innerHTML=
+      '<div class="card status">A carregar jogo…</div>';
+
+    const d=
+      await get(
+        API+
+        league+
+        '/summary?event='+
+        encodeURIComponent(id)
+      );
+
+    const header=d?.header||{};
+    const comp=
+      header?.competitions?.[0]||
+      d?.competitions?.[0]||
+      {};
+
+    const cs=
+      comp?.competitors||
+      [];
+
+    if(cs.length<2){
+
+      gameBox.innerHTML=
+        '<div class="card status">Dados do jogo indisponíveis.</div>';
+
+      return;
+    }
+
+    const home=
+      cs.find(x=>x.homeAway==='home')||
+      cs[0];
+
+    const away=
+      cs.find(x=>x.homeAway==='away')||
+      cs[1];
+
+    const homeName=
+      home?.team?.displayName||
+      home?.team?.name||
+      'Casa';
+
+    const awayName=
+      away?.team?.displayName||
+      away?.team?.name||
+      'Fora';
+
+    const homeLogo=
+      teamLogo(home);
+
+    const awayLogo=
+      teamLogo(away);
+
+    const status=
+      comp?.status?.type?.shortDetail||
+      comp?.status?.type?.detail||
+      header?.status?.type?.shortDetail||
+      '';
+
+    const homeScore=
+      home?.score||
+      '-';
+
+    const awayScore=
+      away?.score||
+      '-';
+
+    window.fzCurrentGame={
+      id:id,
+      league:league,
+      compId:
+        comp?.id||
+        id
+    };
+
+    gameBox.innerHTML=`
+
+      <div class="card fz-match-head">
+
+        <button
+          class="backBtn"
+          onclick="closeGame()">
+          ‹ Voltar aos jogos
+        </button>
+
+        <div class="matchStatus">
+          ${esc(status)}
+        </div>
+
+        <div class="matchTeams">
+
+          <button
+            class="matchTeam"
+            onclick="openTeam(
+              '${esc(home?.team?.id||'')}',
+              '${esc(league)}'
+            )">
+
+            <img
+              src="${esc(homeLogo)}"
+              onerror="this.style.visibility='hidden'">
+
+            <b>${esc(homeName)}</b>
+
+          </button>
+
+          <div class="matchScore">
+
+            <strong>
+              ${esc(homeScore)}
+              -
+              ${esc(awayScore)}
+            </strong>
+
+            <span>VS</span>
+
+          </div>
+
+          <button
+            class="matchTeam"
+            onclick="openTeam(
+              '${esc(away?.team?.id||'')}',
+              '${esc(league)}'
+            )">
+
+            <img
+              src="${esc(awayLogo)}"
+              onerror="this.style.visibility='hidden'">
+
+            <b>${esc(awayName)}</b>
+
+          </button>
+
+        </div>
+
+      </div>
+
+      <div class="card">
+
+        <div class="sectionTitle">
+          📋 Eventos
+        </div>
+
+        <div id="fzEvents">
+
+          ${fzMinuteRows(
+            d?.plays||
+            d?.gameInfo?.plays||
+            []
+          )||
+          '<div class="status">Sem eventos disponíveis.</div>'}
+
+        </div>
+
+      </div>
+
+      ${statBlock(d)}
+
+      <div class="card">
+
+        <div class="sectionTitle">
+          📊 Estatísticas
+        </div>
+
+        <div id="fzPitchStats">
+          <div class="status">
+            A preparar estatísticas dos jogadores…
+          </div>
+        </div>
+
+      </div>
+
+      <div class="card">
+
+        <div class="sectionTitle">
+          🏟️ Campo
+        </div>
+
+        <div id="fzPitch">
+          <div class="status">
+            A carregar titulares…
+          </div>
+        </div>
+
+      </div>
+
+      <div id="fzPremiumGameBox"></div>
+    `;
+
+    /*
+     * Carrega a informação do campo
+     * sem bloquear o resto do detalhe.
+     */
+    await renderGamePitch(
+      league,
+      home,
+      away,
+      d
+    );
+
+    /*
+     * Atualiza a área Premium.
+     */
+    try{
+
+      if(
+        typeof window.fzPremiumRun==='function'
+      ){
+
+        await window.fzPremiumRun(
+          league,
+          d,
+          cs
+        );
+
+      }
+
+    }catch(e){
+
+      console.warn(
+        'Premium:',
+        e
+      );
+    }
+
+    /*
+     * Garante que os eventos ficam
+     * no formato simplificado.
+     */
+    await fzRefreshMinuteEvents();
+
+    gameBox.scrollIntoView({
+      behavior:'smooth',
+      block:'start'
+    });
+
+  }catch(e){
+
+    const gameBox=
+      document.getElementById('game');
+
+    if(gameBox){
+
+      gameBox.classList.remove('hidden');
+
+      gameBox.innerHTML=`
+        <div class="card">
+
+          <div class="status err">
+            Não foi possível abrir este jogo.
+          </div>
+
+          <div class="sub">
+            ${esc(e.message||'Erro desconhecido')}
+          </div>
+
+          <button
+            class="backBtn"
+            onclick="closeGame()">
+            ‹ Voltar
+          </button>
+
+        </div>
+      `;
+    }
+  }
+}
+
+function closeGame(){
+
+  const game=
+    document.getElementById('game');
+
+  if(game){
+
+    game.classList.add('hidden');
+    game.innerHTML='';
+  }
+
+  window.fzCurrentGame=null;
+
+  const games=
+    document.getElementById('games');
+
+  if(games)
+    games.scrollIntoView({
+      behavior:'smooth',
+      block:'start'
+    });
+}
+
+
+/* ===== CAMPO ===== */
+
+async function renderGamePitch(
+  league,
+  home,
+  away,
+  d
+){
+
+  const box=
+    document.getElementById('fzPitch');
+
+  if(!box)return;
+
+  try{
+
+    const homeId=
+      home?.team?.id;
+
+    const awayId=
+      away?.team?.id;
+
+    const [hr,ar]=
+      await Promise.all([
+        fetchRosterForTeam(
+          league,
+          homeId
+        ),
+        fetchRosterForTeam(
+          league,
+          awayId
+        )
+      ]);
+
+    let hp=
+      normalizeRoster(hr)
+        .filter(isStarter);
+
+    let ap=
+      normalizeRoster(ar)
+        .filter(isStarter);
+
+    if(hp.length<11)
+      hp=normalizeRoster(hr).slice(0,11);
+
+    if(ap.length<11)
+      ap=normalizeRoster(ar).slice(0,11);
+
+    hp=formationPlayers(hp);
+    ap=formationPlayers(ap);
+
+    const homePositions=
+      posForFormation(
+        hp.length,
+        'home'
+      );
+
+    const awayPositions=
+      posForFormation(
+        ap.length,
+        'away'
+      );
+
+    const playerHtml=(
+      players,
+      positions,
+      side
+    )=>{
+
+      return players.map((p,i)=>{
+
+        const a=athleteObj(p);
+
+        const name=
+          playerName(p);
+
+        const num=
+          p?.jersey||
+          p?.jerseyNumber||
+          a?.jersey||
+          a?.jerseyNumber||
+          '';
+
+        const pos=
+          positions[i]||
+          (side==='home'
+            ? [20+i*3,50]
+            : [80-i*3,50]);
+
+        return `
+          <button
+            class="pitchPlayer ${side}"
+            style="
+              left:${pos[0]}%;
+              top:${pos[1]}%;
+            "
+            onclick="openPlayer(
+              '${esc(a?.id||p?.id||'')}',
+              '${esc(league)}'
+            )">
+
+            <span class="playerCircle">
+              ${esc(num||'')}
+            </span>
+
+            <small>
+              ${esc(name)}
+            </small>
+
+          </button>
+        `;
+
+      }).join('');
+    };
+
+    box.innerHTML=`
+
+      <div class="pitchWrap">
+
+        <div class="pitch">
+
+          <div class="pitchHalf homeHalf"></div>
+
+          <div class="pitchHalf awayHalf"></div>
+
+          <div class="pitchMidLine"></div>
+
+          <div class="pitchCenter"></div>
+
+          <div class="pitchGoal homeGoal"></div>
+
+          <div class="pitchGoal awayGoal"></div>
+
+          ${playerHtml(
+            hp,
+            homePositions,
+            'home'
+          )}
+
+          ${playerHtml(
+            ap,
+            awayPositions,
+            'away'
+          )}
+
+        </div>
+
+        <div class="pitchLegend">
+
+          <span>
+            ${esc(home?.team?.displayName||'Casa')}
+          </span>
+
+          <span>11 × 11</span>
+
+          <span>
+            ${esc(away?.team?.displayName||'Fora')}
+          </span>
+
+        </div>
+
+      </div>
+    `;
+
+  }catch(e){
+
+    box.innerHTML=
+      `<div class="status">
+        Não foi possível carregar o campo.
+      </div>`;
+  }
+}
+</script>
+<script>
+async function loadTables(){
+  $('games').classList.remove('hidden');
+  $('game').classList.add('hidden');
+  $('profile').classList.add('hidden');
+  $('teamProfile').classList.add('hidden');
+
+  const league=$('league').value;
+  const opt=$('league').selectedOptions[0];
+
+  $('games').innerHTML=
+    '<div class="card"><div class="sectionTitle">🏆 Tabelas</div><div class="status">A carregar classificação de '+
+    esc(opt?.textContent||league)+'…</div></div>';
+
+  try{
+    const d=await get(
+      'https://site.api.espn.com/apis/v2/sports/soccer/'+
+      encodeURIComponent(league)+'/standings'
+    );
+
+    let entries=[];
+
+    if(Array.isArray(d?.children))
+      for(const c of d.children)
+        entries.push(...(c?.standings?.entries||[]));
+
+    if(!entries.length)
+      entries=d?.standings?.entries||[];
+
+    if(!entries.length)
+      throw Error(
+        'A classificação não está disponível para esta competição.'
+      );
+
+    const stat=(e,aliases)=>{
+      const a=(e.stats||[]);
+      const x=a.find(x=>
+        aliases.includes(
+          String(
+            x.name||
+            x.abbreviation||
+            x.displayName||
+            ''
+          ).toLowerCase().replace(/\s/g,'')
+        )
+      );
+
+      return x?.displayValue??x?.value??'-';
+    };
+
+    const rows=entries.map((e,i)=>{
+      const t=e.team||{};
+      const id=t.id;
+      const logo=
+        t.logos?.[0]?.href||
+        t.logo||
+        '';
+
+      return '<tr onclick="openTeam(\''+
+        esc(id||'')+
+        '\',\''+
+        esc(league)+
+        '\')">'+
+
+        '<td><b>'+
+        esc(stat(e,['rank'])||i+1)+
+        '</b></td>'+
+
+        '<td><div class="clubCell">'+
+        '<img src="'+esc(logo)+
+        '" onerror="this.style.visibility=\'hidden\'">'+
+        '<span>'+
+        esc(t.displayName||t.name||'Clube')+
+        '</span></div></td>'+
+
+        '<td>'+
+        esc(stat(e,['gamesplayed','gp','games']))+
+        '</td>'+
+
+        '<td>'+
+        esc(stat(e,['wins','w']))+
+        '</td>'+
+
+        '<td>'+
+        esc(stat(e,['ties','draws','d']))+
+        '</td>'+
+
+        '<td>'+
+        esc(stat(e,['losses','l']))+
+        '</td>'+
+
+        '<td><b>'+
+        esc(stat(e,['points','pts']))+
+        '</b></td>'+
+
+        '</tr>';
+    }).join('');
+
+    $('games').innerHTML=
+      '<div class="card">'+
+      '<div class="fz-pageTitle">'+
+      '<div class="sectionTitle">🏆 Tabelas</div>'+
+      '<span class="pill">'+
+      esc(opt?.textContent||league)+
+      '</span></div>'+
+
+      '<div class="tablesBox">'+
+      '<table class="tables">'+
+      '<thead><tr>'+
+      '<th>#</th>'+
+      '<th>Clube</th>'+
+      '<th>J</th>'+
+      '<th>V</th>'+
+      '<th>E</th>'+
+      '<th>D</th>'+
+      '<th>Pts</th>'+
+      '</tr></thead>'+
+
+      '<tbody>'+
+      rows+
+      '</tbody></table></div>'+
+
+      '<div class="hint" style="margin-top:8px">'+
+      'Toca numa equipa para abrir o plantel.'+
+      '</div></div>';
+
+  }catch(e){
+
+    $('games').innerHTML=
+      '<div class="card">'+
+      '<div class="sectionTitle">🏆 Tabelas</div>'+
+      '<div class="err">Não foi possível carregar a classificação.</div>'+
+      '<div class="hint">'+
+      esc(e.message)+
+      '</div></div>';
+  }
+
+  window.scrollTo({
+    top:0,
+    behavior:'smooth'
+  });
+}
+</script>
+
+<nav id="fzNav"
+style="position:fixed;left:0;right:0;bottom:0;z-index:50;background:#090b10;border-top:1px solid #29364a;display:grid;grid-template-columns:1fr 1fr 1fr;padding:6px max(8px,env(safe-area-inset-left)) max(6px,env(safe-area-inset-bottom));gap:6px">
+
+<button class="secondary" id="navNoticias">
+📰 Notícias
+</button>
+
+<button id="navTabelas">
+🏆 Tabelas
+</button>
+
+<button class="secondary" id="navFav">
+⭐ Favoritos
+</button>
+
+</nav>
+
+<style>
+body{padding-bottom:72px}
+#fzNav button{min-height:42px}
+
+.newsCard{
+display:block;
+width:100%;
+text-align:left;
+background:#0d1520!important;
+border:1px solid #27364d!important;
+border-radius:10px!important;
+padding:11px!important;
+margin:7px 0!important;
+color:#fff!important
+}
+
+.newsMeta{
+font-size:9px;
+color:#4da3ff;
+font-weight:800;
+text-transform:uppercase;
+margin-bottom:5px
+}
+
+.newsTitle{
+font-size:13px;
+font-weight:800;
+line-height:1.3
+}
+
+.newsDate{
+font-size:10px;
+color:#8d98aa;
+margin-top:6px
+}
+
+.newsSource{
+color:#d14a6a
+}
+
+.favRow{
+display:grid;
+grid-template-columns:1fr auto;
+gap:7px;
+align-items:center;
+background:#0d1520;
+border:1px solid #27364d;
+border-radius:9px;
+padding:9px;
+margin:6px 0
+}
+
+.favMain{
+display:flex;
+align-items:center;
+gap:8px;
+text-align:left;
+background:transparent!important;
+border:0!important;
+padding:0!important;
+width:100%
+}
+
+.favMain img{
+width:28px;
+height:28px;
+object-fit:contain
+}
+
+.favTeams{
+font-size:11px;
+font-weight:800
+}
+
+.favScore{
+font-size:11px;
+color:#9daabb;
+margin-top:2px
+}
+
+.favRemove{
+background:#171c24!important;
+border-color:#303846!important;
+color:#ff8da5!important;
+padding:7px!important
+}
+</style>
+
+<script>
+const FZ_FAV_KEY='futzone_favorite_games_v2';
+
+function getFavs(){
+  try{
+    return JSON.parse(
+      localStorage.getItem(FZ_FAV_KEY)||'[]'
+    );
+  }catch(e){
+    return[];
+  }
+}
+
+function saveFavs(a){
+  localStorage.setItem(
+    FZ_FAV_KEY,
+    JSON.stringify(a)
+  );
+}
+
+function isFavoriteGame(id){
+  return getFavs().some(
+    x=>String(x.id)===String(id)
+  );
+}
+
+function toggleFavoriteCurrentGame(){
+
+  if(!window.fzCurrentGame)return;
+
+  let a=getFavs();
+
+  const id=
+    String(window.fzCurrentGame.id);
+
+  if(a.some(x=>String(x.id)===id)){
+
+    a=a.filter(
+      x=>String(x.id)!==id
+    );
+
+  }else{
+
+    a.unshift(
+      window.fzCurrentGame
+    );
+
+    a=a.slice(0,50);
+  }
+
+  saveFavs(a);
+  updateFavButton();
+}
+
+function updateFavButton(){
+
+  const b=
+    document.getElementById(
+      'favGameBtn'
+    );
+
+  if(
+    b&&
+    window.fzCurrentGame
+  ){
+
+    b.textContent=
+      isFavoriteGame(
+        window.fzCurrentGame.id
+      )
+      ?'⭐ Remover dos favoritos'
+      :'⭐ Adicionar aos favoritos';
+  }
+}
+
+function showFavorites(){
+
+  const game=
+    document.getElementById('game');
+
+  const profile=
+    document.getElementById('profile');
+
+  const team=
+    document.getElementById('teamProfile');
+
+  const box=
+    document.getElementById('games');
+
+  game.classList.add('hidden');
+  profile.classList.add('hidden');
+  team.classList.add('hidden');
+  box.classList.remove('hidden');
+
+  const a=getFavs();
+
+  box.innerHTML=`
+
+    <div class="card">
+
+      <div class="sectionTitle">
+        ⭐ Favoritos
+      </div>
+
+      <div class="status">
+        Jogos guardados no teu dispositivo.
+      </div>
+
+      ${
+        a.length
+        ?
+        a.map(x=>`
+
+          <div class="favRow">
+
+            <button
+              class="favMain"
+              data-fz-game="${esc(x.id)}"
+              data-fz-league="${esc(x.league||'')}">
+
+              <img
+                src="${esc(x.homeLogo||'')}"
+                onerror="this.style.visibility='hidden'">
+
+              <div>
+
+                <div class="favTeams">
+                  ${esc(x.home||'')}
+                  —
+                  ${esc(x.away||'')}
+                </div>
+
+                <div class="favScore">
+                  ${esc(x.scoreHome??'-')}
+                  —
+                  ${esc(x.scoreAway??'-')}
+                </div>
+
+              </div>
+
+            </button>
+
+            <button
+              class="favRemove"
+              onclick="removeFavorite('${esc(x.id)}')">
+
+              ✕
+
+            </button>
+
+          </div>
+
+        `).join('')
+
+        :
+
+        `<div
+          class="empty"
+          style="margin-top:10px">
+
+          Ainda não tens jogos favoritos.
+          Abre um jogo e toca em
+          ⭐ Adicionar aos favoritos.
+
+        </div>`
+      }
+
+    </div>
+  `;
+
+  window.scrollTo({
+    top:0,
+    behavior:'smooth'
+  });
+}
+
+function removeFavorite(id){
+
+  saveFavs(
+    getFavs().filter(
+      x=>String(x.id)!==String(id)
+    )
+  );
+
+  showFavorites();
+}
+
+const FZ_NEWS_FEEDS=[
+
+ 'https://news.google.com/rss/search?q=site%3Aabola.pt+desporto&hl=pt-PT&gl=PT&ceid=PT%3Apt-150',
+
+ 'https://news.google.com/rss/search?q=site%3Arecord.pt+desporto&hl=pt-PT&gl=PT&ceid=PT%3Apt-150',
+
+ 'https://news.google.com/rss/search?q=site%3Aojogo.pt+desporto&hl=pt-PT&gl=PT&ceid=PT%3Apt-150',
+
+ 'https://news.google.com/rss/search?q=site%3Artp.pt+desporto&hl=pt-PT&gl=PT&ceid=PT%3Apt-150'
+
+];
+
+async function fetchNewsFeed(feed){
+
+  const proxy=
+    'https://api.rss2json.com/v1/api.json?rss_url='+
+    encodeURIComponent(feed);
+
+  const r=
+    await fetch(proxy,{
+      cache:'no-store'
+    });
+
+  if(!r.ok)
+    throw Error('feed');
+
+  return r.json();
+}
+
+function newsSource(link,title){
+
+  const s=(
+    String(link)+' '+
+    String(title)
+  ).toLowerCase();
+
+  if(s.includes('abola.pt'))
+    return 'A BOLA';
+
+  if(s.includes('record.pt'))
+    return 'RECORD';
+
+  if(s.includes('ojogo.pt'))
+    return 'O JOGO';
+
+  if(s.includes('rtp.pt'))
+    return 'RTP Desporto';
+
+  return 'Desporto Portugal';
+}
+
+async function loadNews(){
+
+  const box=
+    document.getElementById('games');
+
+  document.getElementById('game')
+    .classList.add('hidden');
+
+  document.getElementById('profile')
+    .classList.add('hidden');
+
+  document.getElementById('teamProfile')
+    .classList.add('hidden');
+
+  box.classList.remove('hidden');
+
+  box.innerHTML=
+    '<div class="card">'+
+    '<div class="sectionTitle">📰 Notícias desportivas portuguesas</div>'+
+    '<div class="status">A carregar notícias…</div>'+
+    '</div>';
+
+  try{
+
+    const results=
+      await Promise.allSettled(
+        FZ_NEWS_FEEDS.map(
+          fetchNewsFeed
+        )
+      );
+
+    let items=[];
+
+    results.forEach(r=>{
+
+      if(r.status==='fulfilled')
+
+        (r.value.items||[])
+          .forEach(x=>
+            items.push({
+              title:x.title,
+              link:x.link,
+              date:x.pubDate,
+              source:
+                newsSource(
+                  x.link,
+                  x.title
+                )
+            })
+          );
+    });
+
+    const seen=new Set();
+
+    items=items
+      .filter(x=>{
+
+        const k=
+          (x.title||'').trim();
+
+        if(!k||seen.has(k))
+          return false;
+
+        seen.add(k);
+        return true;
+
+      })
+      .sort(
+        (a,b)=>
+          new Date(b.date||0)-
+          new Date(a.date||0)
+      )
+      .slice(0,30);
+
+    box.innerHTML=`
+
+      <div class="card">
+
+        <div class="sectionTitle">
+          📰 Notícias desportivas portuguesas
+        </div>
+
+        <div
+          class="status"
+          style="margin-bottom:7px">
+
+          Últimas notícias de fontes
+          desportivas portuguesas.
+
+        </div>
+
+        ${
+          items.length
+          ?
+          items.map(x=>`
+
+            <button
+              class="newsCard"
+              onclick="window.open(
+                '${esc(x.link||'')}',
+                '_blank'
+              )">
+
+              <div class="newsMeta">
+
+                <span class="newsSource">
+                  ${esc(x.source)}
+                </span>
+
+                · DESPORTO
+
+              </div>
+
+              <div class="newsTitle">
+                ${esc(x.title)}
+              </div>
+
+              <div class="newsDate">
+                ${
+                  esc(
+                    x.date
+                    ?
+                    new Date(
+                      x.date
+                    ).toLocaleString(
+                      'pt-PT',
+                      {
+                        day:'2-digit',
+                        month:'2-digit',
+                        hour:'2-digit',
+                        minute:'2-digit'
+                      }
+                    )
+                    :
+                    ''
+                  )
+                }
+              </div>
+
+            </button>
+
+          `).join('')
+
+          :
+
+          '<div class="empty">Não foi possível carregar as notícias neste momento.</div>'
+        }
+
+      </div>
+    `;
+
+    window.scrollTo({
+      top:0,
+      behavior:'smooth'
+    });
+
+  }catch(e){
+
+    box.innerHTML=
+      '<div class="card err">'+
+      '<div class="sectionTitle">📰 Notícias</div>'+
+      'Não foi possível carregar as notícias agora. Tenta novamente.'+
+      '</div>';
+  }
+}
+
+document.addEventListener(
+  'DOMContentLoaded',
+  function(){
+
+    const n=
+      document.getElementById(
+        'navNoticias'
+      );
+
+    const t=
+      document.getElementById(
+        'navTabelas'
+      );
+
+    const f=
+      document.getElementById(
+        'navFav'
+      );
+
+    if(n)
+      n.addEventListener(
+        'click',
+        loadNews
+      );
+
+    if(t)
+      t.addEventListener(
+        'click',
+        loadTables
+      );
+
+    if(f)
+      f.addEventListener(
+        'click',
+        showFavorites
+      );
+  }
+);
+
+// Segurança extra:
+// todos os cartões de jogos abrem
+// sempre o detalhe correto.
+document.addEventListener(
+  'click',
+  function(ev){
+
+    const b=
+      ev.target.closest &&
+      ev.target.closest(
+        '[data-fz-game]'
+      );
+
+    if(!b)return;
+
+    ev.preventDefault();
+
+    openGame(
+      b.getAttribute(
+        'data-fz-game'
+      ),
+      b.getAttribute(
+        'data-fz-league'
+      )||''
+    );
+  }
+);
+</script>
+<script id="fz-more-competitions-js">
+(function(){
+
+  function initMore(){
+
+    const more=
+      document.getElementById('fzMoreLeague');
+
+    const sel=
+      document.getElementById('league');
+
+    if(!more||!sel||more.dataset.ready)
+      return;
+
+    more.dataset.ready='1';
+
+    more.addEventListener(
+      'change',
+      function(){
+
+        if(!this.value)
+          return;
+
+        sel.value=this.value;
+
+        if(typeof buildLeagueChips==='function')
+          buildLeagueChips();
+
+        if(typeof loadGames==='function')
+          loadGames();
+
+        this.value='';
+      }
+    );
+  }
+
+  if(document.readyState==='loading')
+    document.addEventListener(
+      'DOMContentLoaded',
+      initMore
+    );
+  else
+    initMore();
+
+})();
+</script>
+
+<script id="fz-premium-hook-final">
+(function(){
+
+  const previous=
+    window.openGame;
+
+  if(typeof previous!=='function')
+    return;
+
+  window.openGame=
+    async function(id,l){
+
+      await previous.apply(
+        this,
+        arguments
+      );
+
+      try{
+
+        const current=
+          window.fzCurrentGame;
+
+        if(
+          !current||
+          String(current.id)!==
+          String(id)
+        )
+          return;
+
+        const league=
+          l||
+          current.league||
+          document.getElementById(
+            'league'
+          )?.value;
+
+        const summary=
+          await fetch(
+            'https://site.api.espn.com/apis/site/v2/sports/soccer/'+
+            encodeURIComponent(league)+
+            '/summary?event='+
+            encodeURIComponent(id),
+            {
+              cache:'no-store'
+            }
+          )
+          .then(r=>
+            r.ok?r.json():null
+          );
+
+        if(!summary)
+          return;
+
+        const comp=
+          summary.header?.competitions?.[0];
+
+        const cs=
+          comp?.competitors||[];
+
+        if(
+          cs.length>=2&&
+          typeof window.fzPremiumRun==='function'
+        ){
+
+          window.fzPremiumRun(
+            league,
+            summary,
+            cs
+          );
+        }
+
+      }catch(e){
+
+        const g=
+          document.getElementById(
+            'game'
+          );
+
+        if(
+          g&&
+          !g.querySelector(
+            '.fz-analysis'
+          )
+        ){
+
+          const x=
+            document.createElement(
+              'div'
+            );
+
+          x.className=
+            'card fz-analysis';
+
+          x.innerHTML=
+            '<div class="sectionTitle">📊 Análise Premium</div>'+
+            '<div class="fz-mini">'+
+            'A análise estatística não ficou disponível neste momento. '+
+            'O jogo continua disponível normalmente.'+
+            '</div>';
+
+          g.appendChild(x);
+        }
+      }
+    };
+
+})();
+</script>
+
+ </body>
+</html>
