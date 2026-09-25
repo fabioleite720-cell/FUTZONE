@@ -266,52 +266,6 @@ button{background:linear-gradient(135deg,#126bd8,#0b4ea7);border-color:#2d82e8}
  window.fzPremiumRun=run;
 })();
 </script>
- <style>
-.fz-last5-fix{
-  margin-top:10px;
-  border:1px solid #293b54;
-  border-radius:10px;
-  background:#080f18;
-  padding:10px
-}
-.fz-last5-fix h3{
-  margin:0 0 8px;
-  font-size:13px
-}
-.fz-last5-team{
-  margin-top:9px
-}
-.fz-last5-team-title{
-  font-size:11px;
-  font-weight:800;
-  color:#fff;
-  margin-bottom:5px
-}
-.fz-last5-row{
-  display:flex;
-  justify-content:space-between;
-  gap:7px;
-  padding:6px 4px;
-  border-top:1px solid #1d2a3b;
-  font-size:10px
-}
-.fz-last5-row b{
-  font-size:11px
-}
-.fz-l5-v{
-  color:#68e0ae
-}
-.fz-l5-e{
-  color:#f1d66a
-}
-.fz-l5-d{
-  color:#ff9ab1
-}
-.fz-l5-muted{
-  color:#9daabb;
-  font-size:10px
-}
- </style>
 </head>
 <body>
 <header><h1>FUT<span>ZONE</span></h1><div class="sub">TESTE — CAMPO E PLANTÉIS</div></header>
@@ -808,791 +762,446 @@ document.addEventListener('click',function(ev){
  };
 })();
 </script>
- <script>
-(function(){
-'use strict';
-
-const ESPN='https://site.api.espn.com/apis/site/v2/sports/soccer/';
-
-function fzToday(){
-  const d=new Date(),p=n=>String(n).padStart(2,'0');
-  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
-}
-
-function fzTeamName(c){
-  return c?.team?.displayName ||
-         c?.team?.shortDisplayName ||
-         'Equipa';
-}
-
-async function fzStableLoad(){
-  const date=document.getElementById('date');
-  const league=document.getElementById('league');
-  const games=document.getElementById('games');
-  const msg=document.getElementById('msg');
-
-  if(!date||!league||!games||!msg)return;
-
-  if(!date.value)date.value=fzToday();
-
-  const selectedDate=date.value;
-  const visibleDate=document.getElementById('fzDate');
-
-  if(visibleDate)visibleDate.value=selectedDate;
-
-  games.classList.add('hidden');
-
-  msg.textContent=
-    'A carregar jogos de '+
-    new Date(selectedDate+'T12:00:00')
-      .toLocaleDateString('pt-PT')+
-    '…';
-
-  try{
-    const url=
-      ESPN+
-      encodeURIComponent(league.value)+
-      '/scoreboard?dates='+
-      selectedDate.replace(/-/g,'')+
-      '&limit=200';
-
-    const response=await fetch(url,{cache:'no-store'});
-
-    if(!response.ok)
-      throw new Error('HTTP '+response.status);
-
-    const data=await response.json();
-    const events=data.events||[];
-
-    games.innerHTML=events.length
-      ?events.map(event=>{
-          const comp=event.competitions?.[0];
-          const teams=comp?.competitors||[];
-
-          const home=
-            teams.find(x=>x.homeAway==='home')||
-            teams[0];
-
-          const away=
-            teams.find(x=>x.homeAway==='away')||
-            teams[1];
-
-          const id=String(event.id||'')
-            .replace(/[^A-Za-z0-9_-]/g,'');
-
-          return `
-          <button
-            type="button"
-            class="fzStableGame"
-            data-game-id="${id}"
-            style="width:100%;margin-bottom:8px">
-
-            <div style="
-              display:flex;
-              align-items:center;
-              justify-content:space-between;
-              gap:8px;
-              padding:12px">
-
-              <span>${fzTeamName(home)}</span>
-
-              <strong>
-                ${
-                  home?.score!=null &&
-                  away?.score!=null
-                  ?home.score+' - '+away.score
-                  :'- v -'
-                }
-              </strong>
-
-              <span>${fzTeamName(away)}</span>
-
-            </div>
-          </button>`;
-        }).join('')
-      :'<div style="padding:18px;text-align:center">'+
-       'Não foram encontrados jogos nesta data.'+
-       '</div>';
-
-    games.classList.remove('hidden');
-
-    msg.textContent=events.length
-      ?events.length+' jogo(s) encontrado(s).'
-      :'Não foram encontrados jogos nesta data.';
-
-    games.querySelectorAll('.fzStableGame')
-      .forEach(button=>{
-        button.onclick=function(){
-
-          const id=this.dataset.gameId;
-
-          if(typeof window.openGame==='function'){
-            try{
-              window.openGame(id);
-            }catch(_){}
-          }
-        };
-      });
-
-  }catch(error){
-
-    games.innerHTML='';
-
-    games.classList.remove('hidden');
-
-    msg.textContent=
-      'Não foi possível carregar os jogos. '+
-      (error.message||error);
-  }
-}
-
-
-function fzInstallCalendar(){
-
-  const date=document.getElementById('date');
-  const load=document.getElementById('load');
-
-  if(!date||!load)return false;
-
-  if(!date.value)
-    date.value=fzToday();
-
-  if(!document.getElementById('fzCalendar')){
-
-    const bar=document.createElement('div');
-
-    bar.id='fzCalendar';
-
-    bar.style.cssText=
-      'display:flex;gap:6px;align-items:center;'+
-      'margin:8px 0;flex-wrap:wrap';
-
-    bar.innerHTML=`
-      <button type="button" id="fzPrev">◀</button>
-
-      <input
-        id="fzDate"
-        type="date"
-        style="flex:1;min-width:145px">
-
-      <button type="button" id="fzNext">▶</button>
-
-      <button type="button" id="fzNow">
-        Hoje
-      </button>
-    `;
-
-    load.parentElement.insertBefore(
-      bar,
-      load.parentElement.firstChild
-    );
-
-    const visibleDate=
-      bar.querySelector('#fzDate');
-
-    visibleDate.value=date.value;
-
-
-    const run=()=>{
-      date.value=visibleDate.value;
-      fzStableLoad();
-    };
-
-
-    bar.querySelector('#fzPrev').onclick=()=>{
-
-      const d=
-        new Date(
-          visibleDate.value+'T12:00:00'
-        );
-
-      d.setDate(d.getDate()-1);
-
-      visibleDate.value=
-        d.toISOString().slice(0,10);
-
-      run();
-    };
-
-
-    bar.querySelector('#fzNext').onclick=()=>{
-
-      const d=
-        new Date(
-          visibleDate.value+'T12:00:00'
-        );
-
-      d.setDate(d.getDate()+1);
-
-      visibleDate.value=
-        d.toISOString().slice(0,10);
-
-      run();
-    };
-
-
-    bar.querySelector('#fzNow').onclick=()=>{
-
-      visibleDate.value=fzToday();
-
-      run();
-    };
-
-
-    visibleDate.onchange=run;
-  }
-
-
-  load.type='button';
-
-  load.onclick=function(e){
-    e.preventDefault();
-    fzStableLoad();
-  };
-
-
-  window.fzStableLoad=fzStableLoad;
-
-  fzStableLoad();
-
-  return true;
-}
-
-
-function fzStartCalendar(){
-
-  if(!fzInstallCalendar())
-    setTimeout(fzStartCalendar,150);
-}
-
-
-if(document.readyState==='loading')
-  document.addEventListener(
-    'DOMContentLoaded',
-    fzStartCalendar
-  );
-else
-  fzStartCalendar();
-
-})();
- </script>
- <script>
+ <script id="fz-last5-final">
 (function(){
 
-'use strict';
+  const API='https://site.api.espn.com/apis/site/v2/sports/soccer/';
 
-const FZ_TABLE_API=
-  'https://site.api.espn.com/apis/v2/sports/soccer/';
-
-
-async function fzLoadTables(){
-
-  const league=
-    document.getElementById('league');
-
-  const games=
-    document.getElementById('games');
-
-  const msg=
-    document.getElementById('msg');
-
-  if(!league||!games)return;
-
-  games.classList.remove('hidden');
-
-  games.innerHTML=
-    '<div style="padding:16px;text-align:center">'+
-    'A carregar classificação…'+
-    '</div>';
-
-  try{
-
-    const url=
-      FZ_TABLE_API+
-      encodeURIComponent(league.value)+
-      '/standings';
-
-    const response=
-      await fetch(url,{cache:'no-store'});
-
-    if(!response.ok)
-      throw new Error('HTTP '+response.status);
-
-    const data=
-      await response.json();
-
-    let entries=
-      data?.standings?.entries||
-      data?.entries||
-      [];
-
-    if(!entries.length){
-
-      for(const child of(data?.children||[])){
-
-        entries.push(
-          ...(child?.standings?.entries||[])
-        );
-      }
-    }
-
-    if(!entries.length)
-      throw new Error(
-        'Classificação indisponível'
-      );
-
-
-    const rows=entries.map((entry,index)=>{
-
-      const team=entry.team||{};
-
-      const stats=
-        Object.fromEntries(
-          (entry.stats||[])
-            .map(x=>[x.name,x.value])
-        );
-
-      const points=
-        stats.points ??
-        stats.pts ??
-        '—';
-
-      const wins=
-        stats.wins ??
-        stats.w ??
-        '—';
-
-      const losses=
-        stats.losses ??
-        stats.l ??
-        '—';
-
-
-      return `
-      <div style="
-        display:grid;
-        grid-template-columns:
-          32px 1fr 42px 42px 42px;
-        gap:5px;
-        align-items:center;
-        padding:9px;
-        border-bottom:
-          1px solid rgba(255,255,255,.08)">
-
-        <b>${index+1}</b>
-
-        <span>
-          ${
-            team.logo
-            ?`<img
-                src="${team.logo}"
-                style="
-                  width:24px;
-                  height:24px;
-                  vertical-align:middle;
-                  object-fit:contain">
-              `
-            :''
-          }
-
-          ${team.displayName||
-            team.name||
-            'Equipa'}
-        </span>
-
-        <b>${points}</b>
-
-        <span>${wins}</span>
-
-        <span>${losses}</span>
-
-      </div>`;
-    }).join('');
-
-
-    games.innerHTML=`
-
-      <div style="
-        overflow:hidden;
-        border-radius:12px;
-        background:#0a111b">
-
-        <div style="
-          display:grid;
-          grid-template-columns:
-            32px 1fr 42px 42px 42px;
-          gap:5px;
-          padding:9px;
-          font-weight:800">
-
-          <span>#</span>
-          <span>Equipa</span>
-          <span>Pts</span>
-          <span>V</span>
-          <span>D</span>
-
-        </div>
-
-        ${rows}
-
-      </div>
-    `;
-
-
-    if(msg)
-      msg.textContent=
-        'Classificação atualizada.';
-
-
-  }catch(error){
-
-    games.innerHTML=
-      '<div style="padding:16px;text-align:center">'+
-      'Não foi possível carregar a classificação.'+
-      '</div>';
-
-    if(msg)
-      msg.textContent='';
-  }
-}
-
-
-function fzInstallTables(){
-
-  const old=
-    document.getElementById('navTabelas');
-
-  if(!old)return false;
-
-
-  /*
-   * Clonamos o botão para retirar
-   * listeners antigos que possam estar
-   * a interferir com a tabela.
-   */
-
-  const nav=
-    old.cloneNode(true);
-
-  old.replaceWith(nav);
-
-
-  nav.addEventListener(
-    'click',
-    function(event){
-
-      event.preventDefault();
-      event.stopPropagation();
-
-      fzLoadTables();
-    }
-  );
-
-
-  window.loadTables=fzLoadTables;
-
-  return true;
-}
-
-
-function fzStartTables(){
-
-  if(!fzInstallTables())
-    setTimeout(fzStartTables,200);
-}
-
-
-fzStartTables();
-
-})();
- </script>
- <script>
-(function(){
-
-const API='https://site.api.espn.com/apis/site/v2/sports/soccer/';
-
-const q=id=>document.getElementById(id);
-
-const num=v=>{
-  if(v&&typeof v==='object'){
-    v=v.value??v.displayValue??v.score;
-  }
-  const n=Number(v);
-  return Number.isFinite(n)?n:NaN;
-};
-
-const finished=e=>{
-  const t=e?.competitions?.[0]?.status?.type ||
-          e?.status?.type || {};
-
-  const s=[
-    t.state,
-    t.name,
-    t.description,
-    t.detail
-  ].filter(Boolean).join(' ').toLowerCase();
-
-  return t.completed===true ||
-         t.state==='post' ||
-         /final|finished|terminad|ft/.test(s);
-};
-
-async function getj(url){
-  try{
-    const r=await fetch(url,{cache:'no-store'});
-    return r.ok ? await r.json() : null;
-  }catch(e){
-    return null;
-  }
-}
-
-async function teamEvents(id){
-
-  const d=await getj(
-    API+
-    'all/teams/+
-    encodeURIComponent(id)+
-    '/schedule?limit=300'
-  );
-
-  return d?.events ||
-         d?.schedule?.events ||
-         [];
-}
-
-function extract(events,id,until){
-
-  const cutoff=new Date(until);
-  const out=[];
-  const seen=new Set();
-
-  for(const e of events){
-
-    if(!e?.id || seen.has(String(e.id)) || !e.date)
-      continue;
-
-    const dt=new Date(e.date);
-
-    // Apenas jogos realizados ANTES do jogo atual
-    if(!(dt<cutoff) || !finished(e))
-      continue;
-
-    const cs=
-      e.competitions?.[0]?.competitors ||
-      e.competitors ||
-      [];
-
-    const me=cs.find(
-      x=>String(x.team?.id)===String(id)
-    );
-
-    const op=cs.find(
-      x=>String(x.team?.id)!==String(id)
-    );
-
-    if(!me || !op)
-      continue;
-
-    const a=num(me.score);
-    const b=num(op.score);
-
-    if(!Number.isFinite(a) || !Number.isFinite(b))
-      continue;
-
-    seen.add(String(e.id));
-
-    out.push({
-      date:e.date,
-      r:a>b?'V':a<b?'D':'E',
-      gf:a,
-      ga:b,
-      op:op.team?.displayName || 'Adversário',
-      ha:me.homeAway
-    });
-  }
-
-  // Mais recente primeiro
-  return out
-    .sort((a,b)=>new Date(b.date)-new Date(a.date))
-    .slice(0,5);
-}
-
-async function last5(id,until){
-  return extract(
-    await teamEvents(id),
-    id,
-    until
-  );
-}
-
-function esc(v){
-  return String(v??'').replace(
-    /[&<>\"']/g,
-    m=>({
+  function esc(v){
+    return String(v ?? '').replace(/[&<>"']/g,m=>({
       '&':'&amp;',
       '<':'&lt;',
       '>':'&gt;',
-      '\"':'&quot;',
+      '"':'&quot;',
       "'":'&#39;'
-    }[m])
-  );
-}
-
-function card(team,rows){
-
-  return `
-    <div class="fz-last5-team">
-
-      <div class="fz-last5-team-title">
-        ${esc(team)} — últimos 5 jogos realizados
-      </div>
-
-      ${
-        rows.length
-        ?
-        rows.map(x=>`
-          <div class="fz-last5-row">
-
-            <span>
-              ${new Date(x.date).toLocaleDateString('pt-PT')}
-              · ${x.ha==='home'?'Casa':'Fora'}
-              · vs ${esc(x.op)}
-            </span>
-
-            <b class="fz-l5-${x.r.toLowerCase()}">
-              ${x.r} ${x.gf}-${x.ga}
-            </b>
-
-          </div>
-        `).join('')
-        :
-        `
-          <div class="fz-l5-muted">
-            Dados não disponíveis.
-          </div>
-        `
-      }
-
-    </div>
-  `;
-}
-
-async function getCurrentEvent(id){
-
-  const league=
-    q('league')?.value ||
-    'por.1';
-
-  const d=await getj(
-    API+
-    encodeURIComponent(league)+
-    '/summary?event='+
-    encodeURIComponent(id)
-  );
-
-  return d?.header ||
-         d?.gamepackageJSON?.header ||
-         null;
-}
-
-async function renderLast5(id){
-
-  const game=q('game');
-
-  if(!game || !id)
-    return;
-
-  const cur=await getCurrentEvent(id);
-
-  if(!cur)
-    return;
-
-  const cs=
-    cur?.competitions?.[0]?.competitors ||
-    cur?.competitors ||
-    [];
-
-  if(cs.length<2)
-    return;
-
-  const h=
-    cs.find(x=>x.homeAway==='home') ||
-    cs[0];
-
-  const a=
-    cs.find(x=>x.homeAway==='away') ||
-    cs[1];
-
-  const until=
-    cur.date ||
-    cur.competitions?.[0]?.date ||
-    new Date().toISOString();
-
-  if(!h?.team?.id || !a?.team?.id)
-    return;
-
-  const [hs,as]=await Promise.all([
-    last5(h.team.id,until),
-    last5(a.team.id,until)
-  ]);
-
-  const old=game.querySelector('.fz-last5-fix');
-
-  if(old)
-    old.remove();
-
-  const box=document.createElement('div');
-
-  box.className='card fz-last5-fix';
-
-  box.innerHTML=
-    '<h3>📊 Últimos 5 jogos realizados</h3>'+
-    card(h.team.displayName,hs)+
-    card(a.team.displayName,as);
-
-  game.appendChild(box);
-}
-
-function hook(){
-
-  const old=window.openGame;
-
-  if(typeof old!=='function'){
-    setTimeout(hook,300);
-    return;
+    }[m]));
   }
 
-  if(old.__fzLast5)
-    return;
+  function get(id){
+    return document.getElementById(id);
+  }
 
-  const wrapped=async function(){
+  async function json(url){
+    try{
+      const r=await fetch(url,{cache:'no-store'});
+      if(!r.ok) return null;
+      return await r.json();
+    }catch(e){
+      return null;
+    }
+  }
 
-    const id=arguments[0];
+  function isFinished(e){
 
-    const result=
-      await old.apply(this,arguments);
+    const c=e?.competitions?.[0];
+    const t=c?.status?.type || e?.status?.type || {};
 
-    setTimeout(
-      ()=>renderLast5(id).catch(()=>{}),
-      500
+    return (
+      t.completed===true ||
+      t.state==='post' ||
+      String(t.name||'').toLowerCase().includes('final') ||
+      String(t.description||'').toLowerCase().includes('final')
+    );
+  }
+
+  function scoreValue(v){
+
+    if(v && typeof v==='object'){
+      v=v.value ?? v.displayValue ?? v.score;
+    }
+
+    const n=Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  /*
+    HISTÓRICO REAL DA EQUIPA
+    - todas as competições
+    - apenas jogos terminados
+    - ordenados do mais recente para o mais antigo
+    - apenas os 5 últimos
+  */
+  async function getLast5(teamId,matchDate){
+
+    const data=await json(
+      API+
+      'all/teams/'+
+      encodeURIComponent(teamId)+
+      '/schedule?limit=500'
     );
 
-    return result;
-  };
+    const events=
+      data?.events ||
+      data?.schedule?.events ||
+      [];
 
-  wrapped.__fzLast5=true;
+    const limite=new Date(matchDate);
+    const resultados=[];
+    const usados=new Set();
 
-  window.openGame=wrapped;
-}
+    for(const e of events){
 
-if(document.readyState==='loading'){
-  document.addEventListener(
-    'DOMContentLoaded',
-    hook
-  );
-}else{
-  hook();
-}
+      if(!e?.id || usados.has(String(e.id)) || !e.date)
+        continue;
+
+      const dataJogo=new Date(e.date);
+
+      /*
+        O jogo tem de ser anterior ao jogo que estamos a consultar.
+      */
+      if(!(dataJogo < limite))
+        continue;
+
+      if(!isFinished(e))
+        continue;
+
+      const comp=e?.competitions?.[0];
+
+      const teams=
+        comp?.competitors ||
+        e?.competitors ||
+        [];
+
+      if(teams.length<2)
+        continue;
+
+      const minha=teams.find(
+        x=>String(x?.team?.id)===String(teamId)
+      );
+
+      const adversaria=teams.find(
+        x=>String(x?.team?.id)!==String(teamId)
+      );
+
+      if(!minha || !adversaria)
+        continue;
+
+      const meuScore=scoreValue(minha.score);
+      const advScore=scoreValue(adversaria.score);
+
+      if(meuScore===null || advScore===null)
+        continue;
+
+      let resultado='E';
+
+      if(meuScore>advScore)
+        resultado='V';
+      else if(meuScore<advScore)
+        resultado='D';
+
+      usados.add(String(e.id));
+
+      resultados.push({
+        id:String(e.id),
+        date:e.date,
+        resultado,
+        meuScore,
+        advScore,
+        adversaria:
+          adversaria.team?.displayName ||
+          adversaria.team?.name ||
+          'Adversário',
+        casaFora:minha.homeAway==='home' ? 'Casa' : 'Fora'
+      });
+    }
+
+    resultados.sort(
+      (a,b)=>new Date(b.date)-new Date(a.date)
+    );
+
+    return resultados.slice(0,5);
+  }
+
+  function resultadoHTML(r){
+
+    const classe=
+      r.resultado==='V'
+      ? 'fz-l5-v'
+      : r.resultado==='D'
+      ? 'fz-l5-d'
+      : 'fz-l5-e';
+
+    return `
+      <div class="fz-l5-row">
+
+        <div class="fz-l5-info">
+          <div>
+            ${new Date(r.date).toLocaleDateString('pt-PT')}
+            · ${r.casaFora}
+          </div>
+
+          <div class="fz-l5-op">
+            vs ${esc(r.adversaria)}
+          </div>
+        </div>
+
+        <div class="fz-l5-score ${classe}">
+          <b>${r.resultado}</b>
+          <span>${r.meuScore}-${r.advScore}</span>
+        </div>
+
+      </div>
+    `;
+  }
+
+  function equipaHTML(nome,jogos){
+
+    return `
+      <div class="fz-l5-team">
+
+        <div class="fz-l5-team-title">
+          ${esc(nome)}
+        </div>
+
+        ${
+          jogos.length
+          ? jogos.map(resultadoHTML).join('')
+          : `
+            <div class="fz-l5-empty">
+              Não foi possível obter os últimos jogos.
+            </div>
+          `
+        }
+
+      </div>
+    `;
+  }
+
+  async function mostrar(){
+
+    const game=get('game');
+
+    if(!game)
+      return;
+
+    const atual=window.fzCurrentGame;
+
+    if(!atual)
+      return;
+
+    const homeId=atual.homeId || atual.homeTeamId;
+    const awayId=atual.awayId || atual.awayTeamId;
+
+    /*
+      Se o openGame ainda não expôs os IDs,
+      vamos obtê-los pelo summary do jogo.
+    */
+    let hId=homeId;
+    let aId=awayId;
+    let dataJogo=null;
+    let hNome=atual.home || 'Casa';
+    let aNome=atual.away || 'Fora';
+
+    if(!hId || !aId){
+
+      const liga=
+        atual.league ||
+        get('league')?.value ||
+        'por.1';
+
+      const resumo=await json(
+        API+
+        encodeURIComponent(liga)+
+        '/summary?event='+
+        encodeURIComponent(atual.id)
+      );
+
+      const comp=resumo?.header?.competitions?.[0];
+
+      const cs=comp?.competitors || [];
+
+      const h=cs.find(x=>x.homeAway==='home') || cs[0];
+      const a=cs.find(x=>x.homeAway==='away') || cs[1];
+
+      hId=h?.team?.id;
+      aId=a?.team?.id;
+
+      hNome=h?.team?.displayName || hNome;
+      aNome=a?.team?.displayName || aNome;
+
+      dataJogo=
+        resumo?.header?.date ||
+        comp?.date ||
+        null;
+    }
+
+    if(!hId || !aId)
+      return;
+
+    /*
+      Para o jogo atual usamos a data real do jogo.
+      Se não estiver disponível, usamos agora.
+    */
+    if(!dataJogo)
+      dataJogo=
+        atual.date ||
+        new Date().toISOString();
+
+    const [home5,away5]=await Promise.all([
+      getLast5(hId,dataJogo),
+      getLast5(aId,dataJogo)
+    ]);
+
+    /*
+      Remove qualquer versão anterior.
+    */
+    document
+      .querySelectorAll('.fz-last5-final-box')
+      .forEach(x=>x.remove());
+
+    const box=document.createElement('div');
+
+    box.className='card fz-last5-final-box';
+
+    box.innerHTML=`
+
+      <div class="sectionTitle">
+        📊 Últimos 5 jogos realizados
+      </div>
+
+      ${equipaHTML(hNome,home5)}
+
+      ${equipaHTML(aNome,away5)}
+
+    `;
+
+    /*
+      Coloca o bloco no fim dos detalhes do jogo,
+      sem substituir nenhuma parte existente.
+    */
+    game.appendChild(box);
+  }
+
+  function instalar(){
+
+    const antigo=
+      document.getElementById('fz-last5-style-final');
+
+    if(antigo)
+      antigo.remove();
+
+    const style=document.createElement('style');
+
+    style.id='fz-last5-style-final';
+
+    style.textContent=`
+
+      .fz-last5-final-box{
+        margin-top:10px;
+      }
+
+      .fz-l5-team{
+        margin-top:12px;
+      }
+
+      .fz-l5-team-title{
+        font-size:12px;
+        font-weight:800;
+        margin-bottom:5px;
+        color:#fff;
+      }
+
+      .fz-l5-row{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:8px;
+        padding:7px 4px;
+        border-top:1px solid #1d2a3b;
+        font-size:10px;
+      }
+
+      .fz-l5-info{
+        min-width:0;
+      }
+
+      .fz-l5-op{
+        color:#aeb9c8;
+        margin-top:2px;
+      }
+
+      .fz-l5-score{
+        display:flex;
+        align-items:center;
+        gap:5px;
+        white-space:nowrap;
+        font-size:11px;
+      }
+
+      .fz-l5-score span{
+        color:#fff;
+      }
+
+      .fz-l5-v{
+        color:#20d68a;
+      }
+
+      .fz-l5-e{
+        color:#ffd43b;
+      }
+
+      .fz-l5-d{
+        color:#ff4054;
+      }
+
+      .fz-l5-empty{
+        color:#9daabb;
+        font-size:10px;
+        padding:7px 4px;
+        border-top:1px solid #1d2a3b;
+      }
+
+    `;
+
+    document.head.appendChild(style);
+
+    /*
+      Esperamos pelo openGame original.
+    */
+    const verificar=setInterval(()=>{
+
+      if(typeof window.openGame!=='function')
+        return;
+
+      clearInterval(verificar);
+
+      if(window.openGame.__fzLast5Final)
+        return;
+
+      const original=window.openGame;
+
+      async function novoOpenGame(){
+
+        const resultado=
+          await original.apply(this,arguments);
+
+        /*
+          O openGame original já criou
+          window.fzCurrentGame.
+        */
+        setTimeout(()=>{
+          mostrar().catch(()=>{});
+        },700);
+
+        return resultado;
+      }
+
+      novoOpenGame.__fzLast5Final=true;
+
+      window.openGame=novoOpenGame;
+
+    },300);
+
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener(
+      'DOMContentLoaded',
+      instalar
+    );
+  }else{
+    instalar();
+  }
 
 })();
  </script>
