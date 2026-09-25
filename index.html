@@ -762,4 +762,503 @@ document.addEventListener('click',function(ev){
  };
 })();
 </script>
+ <script>
+(function(){
+'use strict';
+
+const ESPN='https://site.api.espn.com/apis/site/v2/sports/soccer/';
+
+function fzToday(){
+  const d=new Date(),p=n=>String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
+}
+
+function fzTeamName(c){
+  return c?.team?.displayName ||
+         c?.team?.shortDisplayName ||
+         'Equipa';
+}
+
+async function fzStableLoad(){
+  const date=document.getElementById('date');
+  const league=document.getElementById('league');
+  const games=document.getElementById('games');
+  const msg=document.getElementById('msg');
+
+  if(!date||!league||!games||!msg)return;
+
+  if(!date.value)date.value=fzToday();
+
+  const selectedDate=date.value;
+  const visibleDate=document.getElementById('fzDate');
+
+  if(visibleDate)visibleDate.value=selectedDate;
+
+  games.classList.add('hidden');
+
+  msg.textContent=
+    'A carregar jogos de '+
+    new Date(selectedDate+'T12:00:00')
+      .toLocaleDateString('pt-PT')+
+    '…';
+
+  try{
+    const url=
+      ESPN+
+      encodeURIComponent(league.value)+
+      '/scoreboard?dates='+
+      selectedDate.replace(/-/g,'')+
+      '&limit=200';
+
+    const response=await fetch(url,{cache:'no-store'});
+
+    if(!response.ok)
+      throw new Error('HTTP '+response.status);
+
+    const data=await response.json();
+    const events=data.events||[];
+
+    games.innerHTML=events.length
+      ?events.map(event=>{
+          const comp=event.competitions?.[0];
+          const teams=comp?.competitors||[];
+
+          const home=
+            teams.find(x=>x.homeAway==='home')||
+            teams[0];
+
+          const away=
+            teams.find(x=>x.homeAway==='away')||
+            teams[1];
+
+          const id=String(event.id||'')
+            .replace(/[^A-Za-z0-9_-]/g,'');
+
+          return `
+          <button
+            type="button"
+            class="fzStableGame"
+            data-game-id="${id}"
+            style="width:100%;margin-bottom:8px">
+
+            <div style="
+              display:flex;
+              align-items:center;
+              justify-content:space-between;
+              gap:8px;
+              padding:12px">
+
+              <span>${fzTeamName(home)}</span>
+
+              <strong>
+                ${
+                  home?.score!=null &&
+                  away?.score!=null
+                  ?home.score+' - '+away.score
+                  :'- v -'
+                }
+              </strong>
+
+              <span>${fzTeamName(away)}</span>
+
+            </div>
+          </button>`;
+        }).join('')
+      :'<div style="padding:18px;text-align:center">'+
+       'Não foram encontrados jogos nesta data.'+
+       '</div>';
+
+    games.classList.remove('hidden');
+
+    msg.textContent=events.length
+      ?events.length+' jogo(s) encontrado(s).'
+      :'Não foram encontrados jogos nesta data.';
+
+    games.querySelectorAll('.fzStableGame')
+      .forEach(button=>{
+        button.onclick=function(){
+
+          const id=this.dataset.gameId;
+
+          if(typeof window.openGame==='function'){
+            try{
+              window.openGame(id);
+            }catch(_){}
+          }
+        };
+      });
+
+  }catch(error){
+
+    games.innerHTML='';
+
+    games.classList.remove('hidden');
+
+    msg.textContent=
+      'Não foi possível carregar os jogos. '+
+      (error.message||error);
+  }
+}
+
+
+function fzInstallCalendar(){
+
+  const date=document.getElementById('date');
+  const load=document.getElementById('load');
+
+  if(!date||!load)return false;
+
+  if(!date.value)
+    date.value=fzToday();
+
+  if(!document.getElementById('fzCalendar')){
+
+    const bar=document.createElement('div');
+
+    bar.id='fzCalendar';
+
+    bar.style.cssText=
+      'display:flex;gap:6px;align-items:center;'+
+      'margin:8px 0;flex-wrap:wrap';
+
+    bar.innerHTML=`
+      <button type="button" id="fzPrev">◀</button>
+
+      <input
+        id="fzDate"
+        type="date"
+        style="flex:1;min-width:145px">
+
+      <button type="button" id="fzNext">▶</button>
+
+      <button type="button" id="fzNow">
+        Hoje
+      </button>
+    `;
+
+    load.parentElement.insertBefore(
+      bar,
+      load.parentElement.firstChild
+    );
+
+    const visibleDate=
+      bar.querySelector('#fzDate');
+
+    visibleDate.value=date.value;
+
+
+    const run=()=>{
+      date.value=visibleDate.value;
+      fzStableLoad();
+    };
+
+
+    bar.querySelector('#fzPrev').onclick=()=>{
+
+      const d=
+        new Date(
+          visibleDate.value+'T12:00:00'
+        );
+
+      d.setDate(d.getDate()-1);
+
+      visibleDate.value=
+        d.toISOString().slice(0,10);
+
+      run();
+    };
+
+
+    bar.querySelector('#fzNext').onclick=()=>{
+
+      const d=
+        new Date(
+          visibleDate.value+'T12:00:00'
+        );
+
+      d.setDate(d.getDate()+1);
+
+      visibleDate.value=
+        d.toISOString().slice(0,10);
+
+      run();
+    };
+
+
+    bar.querySelector('#fzNow').onclick=()=>{
+
+      visibleDate.value=fzToday();
+
+      run();
+    };
+
+
+    visibleDate.onchange=run;
+  }
+
+
+  load.type='button';
+
+  load.onclick=function(e){
+    e.preventDefault();
+    fzStableLoad();
+  };
+
+
+  window.fzStableLoad=fzStableLoad;
+
+  fzStableLoad();
+
+  return true;
+}
+
+
+function fzStartCalendar(){
+
+  if(!fzInstallCalendar())
+    setTimeout(fzStartCalendar,150);
+}
+
+
+if(document.readyState==='loading')
+  document.addEventListener(
+    'DOMContentLoaded',
+    fzStartCalendar
+  );
+else
+  fzStartCalendar();
+
+})();
+ </script>
+ <script>
+(function(){
+
+'use strict';
+
+const FZ_TABLE_API=
+  'https://site.api.espn.com/apis/v2/sports/soccer/';
+
+
+async function fzLoadTables(){
+
+  const league=
+    document.getElementById('league');
+
+  const games=
+    document.getElementById('games');
+
+  const msg=
+    document.getElementById('msg');
+
+  if(!league||!games)return;
+
+  games.classList.remove('hidden');
+
+  games.innerHTML=
+    '<div style="padding:16px;text-align:center">'+
+    'A carregar classificação…'+
+    '</div>';
+
+  try{
+
+    const url=
+      FZ_TABLE_API+
+      encodeURIComponent(league.value)+
+      '/standings';
+
+    const response=
+      await fetch(url,{cache:'no-store'});
+
+    if(!response.ok)
+      throw new Error('HTTP '+response.status);
+
+    const data=
+      await response.json();
+
+    let entries=
+      data?.standings?.entries||
+      data?.entries||
+      [];
+
+    if(!entries.length){
+
+      for(const child of(data?.children||[])){
+
+        entries.push(
+          ...(child?.standings?.entries||[])
+        );
+      }
+    }
+
+    if(!entries.length)
+      throw new Error(
+        'Classificação indisponível'
+      );
+
+
+    const rows=entries.map((entry,index)=>{
+
+      const team=entry.team||{};
+
+      const stats=
+        Object.fromEntries(
+          (entry.stats||[])
+            .map(x=>[x.name,x.value])
+        );
+
+      const points=
+        stats.points ??
+        stats.pts ??
+        '—';
+
+      const wins=
+        stats.wins ??
+        stats.w ??
+        '—';
+
+      const losses=
+        stats.losses ??
+        stats.l ??
+        '—';
+
+
+      return `
+      <div style="
+        display:grid;
+        grid-template-columns:
+          32px 1fr 42px 42px 42px;
+        gap:5px;
+        align-items:center;
+        padding:9px;
+        border-bottom:
+          1px solid rgba(255,255,255,.08)">
+
+        <b>${index+1}</b>
+
+        <span>
+          ${
+            team.logo
+            ?`<img
+                src="${team.logo}"
+                style="
+                  width:24px;
+                  height:24px;
+                  vertical-align:middle;
+                  object-fit:contain">
+              `
+            :''
+          }
+
+          ${team.displayName||
+            team.name||
+            'Equipa'}
+        </span>
+
+        <b>${points}</b>
+
+        <span>${wins}</span>
+
+        <span>${losses}</span>
+
+      </div>`;
+    }).join('');
+
+
+    games.innerHTML=`
+
+      <div style="
+        overflow:hidden;
+        border-radius:12px;
+        background:#0a111b">
+
+        <div style="
+          display:grid;
+          grid-template-columns:
+            32px 1fr 42px 42px 42px;
+          gap:5px;
+          padding:9px;
+          font-weight:800">
+
+          <span>#</span>
+          <span>Equipa</span>
+          <span>Pts</span>
+          <span>V</span>
+          <span>D</span>
+
+        </div>
+
+        ${rows}
+
+      </div>
+    `;
+
+
+    if(msg)
+      msg.textContent=
+        'Classificação atualizada.';
+
+
+  }catch(error){
+
+    games.innerHTML=
+      '<div style="padding:16px;text-align:center">'+
+      'Não foi possível carregar a classificação.'+
+      '</div>';
+
+    if(msg)
+      msg.textContent='';
+  }
+}
+
+
+function fzInstallTables(){
+
+  const old=
+    document.getElementById('navTabelas');
+
+  if(!old)return false;
+
+
+  /*
+   * Clonamos o botão para retirar
+   * listeners antigos que possam estar
+   * a interferir com a tabela.
+   */
+
+  const nav=
+    old.cloneNode(true);
+
+  old.replaceWith(nav);
+
+
+  nav.addEventListener(
+    'click',
+    function(event){
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      fzLoadTables();
+    }
+  );
+
+
+  window.loadTables=fzLoadTables;
+
+  return true;
+}
+
+
+function fzStartTables(){
+
+  if(!fzInstallTables())
+    setTimeout(fzStartTables,200);
+}
+
+
+fzStartTables();
+
+})();
+ </script>
+ 
 </body></html>
