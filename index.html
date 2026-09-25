@@ -1306,5 +1306,294 @@ fzStartTables();
 
 })();
  </script>
- 
+ <script>
+(function(){
+
+const API='https://site.api.espn.com/apis/site/v2/sports/soccer/';
+
+const q=id=>document.getElementById(id);
+
+const num=v=>{
+  if(v&&typeof v==='object'){
+    v=v.value??v.displayValue??v.score;
+  }
+  const n=Number(v);
+  return Number.isFinite(n)?n:NaN;
+};
+
+const finished=e=>{
+  const t=e?.competitions?.[0]?.status?.type ||
+          e?.status?.type || {};
+
+  const s=[
+    t.state,
+    t.name,
+    t.description,
+    t.detail
+  ].filter(Boolean).join(' ').toLowerCase();
+
+  return t.completed===true ||
+         t.state==='post' ||
+         /final|finished|terminad|ft/.test(s);
+};
+
+async function getj(url){
+  try{
+    const r=await fetch(url,{cache:'no-store'});
+    return r.ok ? await r.json() : null;
+  }catch(e){
+    return null;
+  }
+}
+
+async function teamEvents(id){
+
+  const d=await getj(
+    API+
+    'all/teams/+
+    encodeURIComponent(id)+
+    '/schedule?limit=300'
+  );
+
+  return d?.events ||
+         d?.schedule?.events ||
+         [];
+}
+
+function extract(events,id,until){
+
+  const cutoff=new Date(until);
+  const out=[];
+  const seen=new Set();
+
+  for(const e of events){
+
+    if(!e?.id || seen.has(String(e.id)) || !e.date)
+      continue;
+
+    const dt=new Date(e.date);
+
+    // Apenas jogos realizados ANTES do jogo atual
+    if(!(dt<cutoff) || !finished(e))
+      continue;
+
+    const cs=
+      e.competitions?.[0]?.competitors ||
+      e.competitors ||
+      [];
+
+    const me=cs.find(
+      x=>String(x.team?.id)===String(id)
+    );
+
+    const op=cs.find(
+      x=>String(x.team?.id)!==String(id)
+    );
+
+    if(!me || !op)
+      continue;
+
+    const a=num(me.score);
+    const b=num(op.score);
+
+    if(!Number.isFinite(a) || !Number.isFinite(b))
+      continue;
+
+    seen.add(String(e.id));
+
+    out.push({
+      date:e.date,
+      r:a>b?'V':a<b?'D':'E',
+      gf:a,
+      ga:b,
+      op:op.team?.displayName || 'Adversário',
+      ha:me.homeAway
+    });
+  }
+
+  // Mais recente primeiro
+  return out
+    .sort((a,b)=>new Date(b.date)-new Date(a.date))
+    .slice(0,5);
+}
+
+async function last5(id,until){
+  return extract(
+    await teamEvents(id),
+    id,
+    until
+  );
+}
+
+function esc(v){
+  return String(v??'').replace(
+    /[&<>\"']/g,
+    m=>({
+      '&':'&amp;',
+      '<':'&lt;',
+      '>':'&gt;',
+      '\"':'&quot;',
+      "'":'&#39;'
+    }[m])
+  );
+}
+
+function card(team,rows){
+
+  return `
+    <div class="fz-last5-team">
+
+      <div class="fz-last5-team-title">
+        ${esc(team)} — últimos 5 jogos realizados
+      </div>
+
+      ${
+        rows.length
+        ?
+        rows.map(x=>`
+          <div class="fz-last5-row">
+
+            <span>
+              ${new Date(x.date).toLocaleDateString('pt-PT')}
+              · ${x.ha==='home'?'Casa':'Fora'}
+              · vs ${esc(x.op)}
+            </span>
+
+            <b class="fz-l5-${x.r.toLowerCase()}">
+              ${x.r} ${x.gf}-${x.ga}
+            </b>
+
+          </div>
+        `).join('')
+        :
+        `
+          <div class="fz-l5-muted">
+            Dados não disponíveis.
+          </div>
+        `
+      }
+
+    </div>
+  `;
+}
+
+async function getCurrentEvent(id){
+
+  const league=
+    q('league')?.value ||
+    'por.1';
+
+  const d=await getj(
+    API+
+    encodeURIComponent(league)+
+    '/summary?event='+
+    encodeURIComponent(id)
+  );
+
+  return d?.header ||
+         d?.gamepackageJSON?.header ||
+         null;
+}
+
+async function renderLast5(id){
+
+  const game=q('game');
+
+  if(!game || !id)
+    return;
+
+  const cur=await getCurrentEvent(id);
+
+  if(!cur)
+    return;
+
+  const cs=
+    cur?.competitions?.[0]?.competitors ||
+    cur?.competitors ||
+    [];
+
+  if(cs.length<2)
+    return;
+
+  const h=
+    cs.find(x=>x.homeAway==='home') ||
+    cs[0];
+
+  const a=
+    cs.find(x=>x.homeAway==='away') ||
+    cs[1];
+
+  const until=
+    cur.date ||
+    cur.competitions?.[0]?.date ||
+    new Date().toISOString();
+
+  if(!h?.team?.id || !a?.team?.id)
+    return;
+
+  const [hs,as]=await Promise.all([
+    last5(h.team.id,until),
+    last5(a.team.id,until)
+  ]);
+
+  const old=game.querySelector('.fz-last5-fix');
+
+  if(old)
+    old.remove();
+
+  const box=document.createElement('div');
+
+  box.className='card fz-last5-fix';
+
+  box.innerHTML=
+    '<h3>📊 Últimos 5 jogos realizados</h3>'+
+    card(h.team.displayName,hs)+
+    card(a.team.displayName,as);
+
+  game.appendChild(box);
+}
+
+function hook(){
+
+  const old=window.openGame;
+
+  if(typeof old!=='function'){
+    setTimeout(hook,300);
+    return;
+  }
+
+  if(old.__fzLast5)
+    return;
+
+  const wrapped=async function(){
+
+    const id=arguments[0];
+
+    const result=
+      await old.apply(this,arguments);
+
+    setTimeout(
+      ()=>renderLast5(id).catch(()=>{}),
+      500
+    );
+
+    return result;
+  };
+
+  wrapped.__fzLast5=true;
+
+  window.openGame=wrapped;
+}
+
+if(document.readyState==='loading'){
+  document.addEventListener(
+    'DOMContentLoaded',
+    hook
+  );
+}else{
+  hook();
+}
+
+})();
+ </script>
 </body></html>
