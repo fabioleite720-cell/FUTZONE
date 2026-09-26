@@ -2321,67 +2321,343 @@ async function getCurrentEvent(id){
 
       const args =
         Array.from(arguments);
+<script id="fz-last5-corrigido">
+(function(){
 
-      /*
-        O primeiro argumento normalmente
-        corresponde ao ID do jogo.
-      */
-      let id =
-        args[0] || '';
+const FZ_ESPN =
+  'https://site.api.espn.com/apis/site/v2/sports/soccer/';
 
-      /*
-        Guardamos também a liga atual.
-      */
-      ultimoJogo = {
-        id:String(id),
-        league:
-          document.getElementById(
-            'league'
-          )?.value || 'por.1'
+async function fzFetchJSON(url){
+  const r = await fetch(url,{cache:'no-store'});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return await r.json();
+}
+
+function fzTime(v){
+  const t=Date.parse(v||'');
+  return Number.isFinite(t)?t:0;
+}
+
+function fzCompleted(e){
+  const s=e?.competitions?.[0]?.status?.type;
+  return !!(
+    s?.completed === true ||
+    s?.state === 'post' ||
+    s?.name === 'STATUS_FINAL'
+  );
+}
+
+function fzTeamId(c){
+  return String(c?.team?.id||'');
+}
+
+async function fzGetTeamSchedule(teamId){
+
+  if(!teamId) return [];
+
+  const urls=[
+    FZ_ESPN+'all/teams/'+encodeURIComponent(teamId)+'/schedule?limit=500',
+    FZ_ESPN+'teams/'+encodeURIComponent(teamId)+'/schedule?limit=500',
+    FZ_ESPN+'all/teams/'+encodeURIComponent(teamId)+'/schedule?limit=300'
+  ];
+
+  for(const url of urls){
+    try{
+      const d=await fzFetchJSON(url);
+      const events=d?.events || d?.schedule?.events || [];
+      if(events.length) return events;
+    }catch(e){}
+  }
+
+  return [];
+}
+
+function fzMakeResult(e,teamId,matchDate){
+
+  if(!fzCompleted(e)) return null;
+
+  const comp=e?.competitions?.[0];
+  const cs=comp?.competitors||[];
+
+  if(cs.length<2) return null;
+
+  const me=cs.find(c=>fzTeamId(c)===String(teamId));
+  const op=cs.find(c=>fzTeamId(c)!==String(teamId));
+
+  if(!me || !op) return null;
+
+  const gf=Number(me.score);
+  const ga=Number(op.score);
+
+  if(!Number.isFinite(gf) || !Number.isFinite(ga))
+    return null;
+
+  const mt=fzTime(e.date);
+
+  if(matchDate && mt>=fzTime(matchDate))
+    return null;
+
+  let resultado='E';
+
+  if(gf>ga) resultado='V';
+  if(gf<ga) resultado='D';
+
+  return {
+    id:String(e.id||''),
+    date:e.date,
+    opponent:
+      op.team?.displayName ||
+      op.team?.shortDisplayName ||
+      'Adversário',
+    opponentId:fzTeamId(op),
+    gf,
+    ga,
+    result:resultado,
+    homeAway:me.homeAway
+  };
+}
+
+async function fzGetLast5(teamId,matchDate){
+
+  const events=await fzGetTeamSchedule(teamId);
+
+  const result=[];
+
+  for(const e of events){
+
+    const r=fzMakeResult(e,teamId,matchDate);
+
+    if(r) result.push(r);
+  }
+
+  const seen=new Set();
+
+  return result
+    .sort((a,b)=>fzTime(b.date)-fzTime(a.date))
+    .filter(x=>{
+      if(seen.has(x.id)) return false;
+      seen.add(x.id);
+      return true;
+    })
+    .slice(0,5);
+}
+
+function fzDate(date){
+
+  if(!date) return '';
+
+  try{
+    return new Date(date).toLocaleDateString(
+      'pt-PT',
+      {
+        day:'2-digit',
+        month:'2-digit',
+        year:'numeric'
+      }
+    );
+  }catch(e){
+    return '';
+  }
+}
+
+function fzRows(list){
+
+  if(!list.length)
+    return '<div class="fz-last5-error">Não foi possível obter os últimos jogos.</div>';
+
+  return list.map(x=>{
+
+    const badgeClass=
+      x.result==='V'
+        ? 'fz-last5-v'
+        : x.result==='D'
+          ? 'fz-last5-d'
+          : 'fz-last5-e';
+
+    const casaFora=
+      x.homeAway==='home'
+        ? 'Casa'
+        : 'Fora';
+
+    return `
+      <div class="fz-last5-row">
+
+        <div class="fz-last5-info">
+          <div class="fz-last5-date">
+            ${fzDate(x.date)} · ${casaFora}
+          </div>
+
+          <div class="fz-last5-opponent">
+            vs ${String(x.opponent)
+              .replace(/</g,'&lt;')
+              .replace(/>/g,'&gt;')}
+          </div>
+        </div>
+
+        <div class="fz-last5-score">
+          ${x.gf}-${x.ga}
+        </div>
+
+        <div class="fz-last5-badge ${badgeClass}">
+          ${x.result}
+        </div>
+
+      </div>
+    `;
+
+  }).join('');
+}
+
+async function fzRenderLast5(){
+
+  const game=window.fzCurrentGame;
+
+  if(!game || !game.id) return;
+
+  const old=document.querySelector('.fz-last5-final-box');
+
+  if(old) old.remove();
+
+  const target=document.querySelector('.fz-analysis');
+
+  if(!target) return;
+
+  const box=document.createElement('div');
+
+  box.className='fz-last5-final-box';
+
+  box.innerHTML=`
+    <div class="fz-last5-final-title">
+      📊 Últimos 5 jogos realizados
+    </div>
+
+    <div class="fz-last5-team">
+      <div class="fz-last5-team-name" id="fzLast5HomeName">
+        Casa
+      </div>
+
+      <div class="fz-last5-loading" id="fzLast5Home">
+        A carregar…
+      </div>
+    </div>
+
+    <div class="fz-last5-team">
+      <div class="fz-last5-team-name" id="fzLast5AwayName">
+        Fora
+      </div>
+
+      <div class="fz-last5-loading" id="fzLast5Away">
+        A carregar…
+      </div>
+    </div>
+  `;
+
+  target.appendChild(box);
+
+  try{
+
+    const league=game.league ||
+      document.getElementById('league')?.value ||
+      '';
+
+    const url=
+      FZ_ESPN+
+      encodeURIComponent(league)+
+      '/summary?event='+
+      encodeURIComponent(game.id);
+
+    const d=await fzFetchJSON(url);
+
+    const comp=d?.header?.competitions?.[0];
+    const cs=comp?.competitors||[];
+
+    if(cs.length<2) throw new Error('Equipas não encontradas');
+
+    const home=
+      cs.find(c=>c.homeAway==='home')||cs[0];
+
+    const away=
+      cs.find(c=>c.homeAway==='away')||cs[1];
+
+    const matchDate=
+      comp?.date ||
+      d?.header?.date ||
+      d?.date ||
+      '';
+
+    document.getElementById('fzLast5HomeName').textContent=
+      home?.team?.displayName||'Casa';
+
+    document.getElementById('fzLast5AwayName').textContent=
+      away?.team?.displayName||'Fora';
+
+    const [hf,af]=await Promise.all([
+      fzGetLast5(home?.team?.id,matchDate),
+      fzGetLast5(away?.team?.id,matchDate)
+    ]);
+
+    document.getElementById('fzLast5Home').innerHTML=
+      fzRows(hf);
+
+    document.getElementById('fzLast5Away').innerHTML=
+      fzRows(af);
+
+  }catch(e){
+
+    const h=document.getElementById('fzLast5Home');
+    const a=document.getElementById('fzLast5Away');
+
+    if(h) h.innerHTML=
+      '<div class="fz-last5-error">Não foi possível obter os últimos jogos.</div>';
+
+    if(a) a.innerHTML=
+      '<div class="fz-last5-error">Não foi possível obter os últimos jogos.</div>';
+  }
+}
+
+function fzInstall(){
+
+  if(window.__fzLast5Installed) return;
+
+  window.__fzLast5Installed=true;
+
+  const original=window.openGame;
+
+  if(typeof original==='function'){
+
+    window.openGame=async function(id,league){
+
+      window.fzCurrentGame={
+        id:String(id||''),
+        league:league ||
+          document.getElementById('league')?.value ||
+          ''
       };
 
-      const resultado =
-        await original.apply(
-          this,
-          args
-        );
+      const result=await original.apply(this,arguments);
 
-      /*
-        Espera que o FUTZONE termine
-        de construir os detalhes.
-      */
-      setTimeout(
-        ()=>{
-          mostrar().catch(()=>{});
-        },
-        900
-      );
+      setTimeout(()=>{
+        fzRenderLast5();
+      },1200);
 
-      return resultado;
-    }
-
-    novoOpenGame.__fzLast5Corrigido =
-      true;
-
-    window.openGame =
-      novoOpenGame;
-  }
-
-  if(
-    document.readyState ===
-    'loading'
-  ){
-
-    document.addEventListener(
-      'DOMContentLoaded',
-      instalar
-    );
-
-  }else{
-
-    instalar();
+      return result;
+    };
 
   }
+
+  setTimeout(()=>{
+
+    if(window.fzCurrentGame?.id)
+      fzRenderLast5();
+
+  },1800);
+}
+
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',fzInstall);
+}else{
+  fzInstall();
+}
 
 })();
 </script>
