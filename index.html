@@ -2734,4 +2734,111 @@ if(document.readyState==='loading'){
 
 })();
 </script>
+ <script>
+(function(){
+
+  async function getFormCorrigido(league,id,until){
+
+    if(!id) return [];
+
+    const url =
+      'https://site.api.espn.com/apis/site/v2/sports/soccer/all/teams/'
+      + encodeURIComponent(id)
+      + '/schedule';
+
+    try{
+
+      const r = await fetch(url,{cache:'no-store'});
+
+      if(!r.ok) throw new Error('HTTP '+r.status);
+
+      const data = await r.json();
+
+      const eventos =
+        data.events ||
+        data.schedule?.events ||
+        [];
+
+      const limite =
+        Date.parse(until || new Date().toISOString());
+
+      const jogos = [];
+
+      for(const e of eventos){
+
+        const dataJogo = Date.parse(e.date || '');
+
+        if(!dataJogo || dataJogo >= limite) continue;
+
+        const comp = e.competitions?.[0];
+        const cs = comp?.competitors || [];
+
+        if(cs.length < 2) continue;
+
+        const estado = comp?.status?.type;
+
+        if(!(
+          estado?.completed === true ||
+          estado?.state === 'post' ||
+          estado?.name === 'STATUS_FINAL'
+        )) continue;
+
+        const equipa = cs.find(
+          c => String(c.team?.id) === String(id)
+        );
+
+        const adversario = cs.find(
+          c => String(c.team?.id) !== String(id)
+        );
+
+        if(!equipa || !adversario) continue;
+
+        const golosA = Number(equipa.score);
+        const golosB = Number(adversario.score);
+
+        if(!Number.isFinite(golosA) ||
+           !Number.isFinite(golosB)) continue;
+
+        let resultado = 'E';
+
+        if(golosA > golosB) resultado = 'V';
+        if(golosA < golosB) resultado = 'D';
+
+        jogos.push({
+          r: resultado,
+          gf: golosA,
+          ga: golosB,
+          date: e.date,
+          homeAway: equipa.homeAway,
+          opponent:
+            adversario.team?.displayName ||
+            'Adversário',
+          opponentId:
+            adversario.team?.id || ''
+        });
+      }
+
+      jogos.sort(
+        (a,b) =>
+          Date.parse(b.date) -
+          Date.parse(a.date)
+      );
+
+      return jogos.slice(0,5);
+
+    }catch(e){
+
+      console.error(
+        'FUTZONE Premium — últimos 5:',
+        e
+      );
+
+      return [];
+    }
+  }
+
+  window.getForm = getFormCorrigido;
+
+})();
+ </script>
 </body></html>
