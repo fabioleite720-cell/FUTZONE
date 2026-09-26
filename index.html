@@ -1735,103 +1735,652 @@ async function getCurrentEvent(id){
       .fz-l5-row{
         display:flex;
         align-items:center;
-        justify-content:space-between;
-        gap:8px;
-        padding:7px 4px;
-        border-top:1px solid #1d2a3b;
-        font-size:10px;
-      }
+<style id="fz-last5-corrigido">
+.fz-last5-final-box{
+  margin-top:12px!important;
+  border:1px solid #283b55!important;
+  background:linear-gradient(145deg,#0d1520,#080e17)!important;
+}
 
-      .fz-l5-info{
-        min-width:0;
-      }
+.fz-last5-title{
+  font-size:17px;
+  font-weight:900;
+  margin-bottom:10px;
+}
 
-      .fz-l5-op{
-        color:#aeb9c8;
-        margin-top:2px;
-      }
+.fz-last5-team{
+  margin-top:12px;
+  padding:10px;
+  background:#09111b;
+  border:1px solid #24344a;
+  border-radius:9px;
+}
 
-      .fz-l5-score{
-        display:flex;
-        align-items:center;
-        gap:5px;
-        white-space:nowrap;
-        font-size:11px;
-      }
+.fz-last5-team-name{
+  font-size:13px;
+  font-weight:900;
+  margin-bottom:6px;
+  color:#fff;
+}
 
-      .fz-l5-score span{
-        color:#fff;
-      }
+.fz-last5-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:8px 3px;
+  border-top:1px solid #1e2b3c;
+  min-height:43px;
+}
 
-      .fz-l5-v{
-        color:#20d68a;
-      }
+.fz-last5-info{
+  min-width:0;
+  flex:1;
+}
 
-      .fz-l5-e{
-        color:#ffd43b;
-      }
+.fz-last5-date{
+  font-size:10px;
+  color:#8998ab;
+}
 
-      .fz-l5-d{
-        color:#ff4054;
-      }
+.fz-last5-opponent{
+  font-size:11px;
+  color:#e5eaf1;
+  margin-top:3px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
 
-      .fz-l5-empty{
-        color:#9daabb;
-        font-size:10px;
-        padding:7px 4px;
-        border-top:1px solid #1d2a3b;
-      }
+.fz-last5-location{
+  font-size:9px;
+  color:#718096;
+  margin-top:2px;
+}
+
+.fz-last5-result{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  flex-shrink:0;
+}
+
+.fz-last5-badge{
+  width:27px;
+  height:27px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  font-size:11px;
+  font-weight:900;
+}
+
+.fz-last5-score{
+  font-size:12px;
+  font-weight:900;
+  min-width:30px;
+  text-align:right;
+}
+
+.fz-last5-v{
+  color:#20d68a;
+  background:#103b2b;
+  border:1px solid #207d59;
+}
+
+.fz-last5-e{
+  color:#ffd43b;
+  background:#3a3214;
+  border:1px solid #81712b;
+}
+
+.fz-last5-d{
+  color:#ff4054;
+  background:#421b26;
+  border:1px solid #8d304b;
+}
+
+.fz-last5-empty{
+  padding:10px 3px;
+  color:#9daabb;
+  font-size:11px;
+}
+
+@media(max-width:520px){
+  .fz-last5-row{
+    padding:8px 2px;
+  }
+
+  .fz-last5-opponent{
+    max-width:190px;
+  }
+
+  .fz-last5-score{
+    font-size:11px;
+  }
+}
+</style>
+<script id="fz-last5-corrigido">
+(function(){
+
+  const API =
+    'https://site.api.espn.com/apis/site/v2/sports/soccer/';
+
+  let ultimoJogo = null;
+
+  function esc(v){
+    return String(v ?? '').replace(/[&<>"']/g,m=>({
+      '&':'&amp;',
+      '<':'&lt;',
+      '>':'&gt;',
+      '"':'&quot;',
+      "'":'&#39;'
+    }[m]));
+  }
+
+  async function json(url){
+    try{
+      const r = await fetch(url,{cache:'no-store'});
+      if(!r.ok) return null;
+      return await r.json();
+    }catch(e){
+      return null;
+    }
+  }
+
+  function numero(v){
+
+    if(v && typeof v === 'object'){
+      v =
+        v.value ??
+        v.displayValue ??
+        v.score;
+    }
+
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function terminado(evento){
+
+    const c =
+      evento?.competitions?.[0];
+
+    const t =
+      c?.status?.type ||
+      evento?.status?.type ||
+      {};
+
+    const texto = [
+      t.state,
+      t.name,
+      t.description,
+      t.detail
+    ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+    return (
+      t.completed === true ||
+      t.state === 'post' ||
+      /final|finished|terminad|ft/.test(texto)
+    );
+  }
+
+  async function obterJogosEquipa(teamId){
+
+    if(!teamId) return [];
+
+    const urls = [
+
+      API +
+      'all/teams/' +
+      encodeURIComponent(teamId) +
+      '/schedule?limit=500',
+
+      API +
+      'all/teams/' +
+      encodeURIComponent(teamId) +
+      '/schedule?limit=300'
+    ];
+
+    for(const url of urls){
+
+      const data = await json(url);
+
+      const eventos =
+        data?.events ||
+        data?.schedule?.events ||
+        [];
+
+      if(eventos.length)
+        return eventos;
+    }
+
+    return [];
+  }
+
+  async function obterUltimos5(teamId,dataJogo){
+
+    if(!teamId)
+      return [];
+
+    const eventos =
+      await obterJogosEquipa(teamId);
+
+    const limite =
+      new Date(
+        dataJogo ||
+        new Date().toISOString()
+      );
+
+    const resultados = [];
+    const ids = new Set();
+
+    for(const evento of eventos){
+
+      if(!evento?.id)
+        continue;
+
+      if(ids.has(String(evento.id)))
+        continue;
+
+      if(!evento.date)
+        continue;
+
+      const data =
+        new Date(evento.date);
+
+      /*
+        Só jogos anteriores ao jogo
+        que estamos a analisar.
+      */
+      if(!(data < limite))
+        continue;
+
+      if(!terminado(evento))
+        continue;
+
+      const comp =
+        evento?.competitions?.[0];
+
+      const equipas =
+        comp?.competitors ||
+        evento?.competitors ||
+        [];
+
+      if(equipas.length < 2)
+        continue;
+
+      const minha =
+        equipas.find(
+          x =>
+            String(x?.team?.id) ===
+            String(teamId)
+        );
+
+      const adversario =
+        equipas.find(
+          x =>
+            String(x?.team?.id) !==
+            String(teamId)
+        );
+
+      if(!minha || !adversario)
+        continue;
+
+      const meusGolos =
+        numero(minha.score);
+
+      const golosAdversario =
+        numero(adversario.score);
+
+      if(
+        meusGolos === null ||
+        golosAdversario === null
+      )
+        continue;
+
+      let resultado = 'E';
+
+      if(meusGolos > golosAdversario)
+        resultado = 'V';
+
+      if(meusGolos < golosAdversario)
+        resultado = 'D';
+
+      ids.add(String(evento.id));
+
+      resultados.push({
+
+        id:String(evento.id),
+
+        date:evento.date,
+
+        resultado,
+
+        meusGolos,
+
+        golosAdversario,
+
+        adversario:
+          adversario?.team?.displayName ||
+          adversario?.team?.name ||
+          'Adversário',
+
+        casaFora:
+          minha.homeAway === 'home'
+          ? 'Casa'
+          : 'Fora'
+      });
+    }
+
+    resultados.sort(
+      (a,b) =>
+        new Date(b.date) -
+        new Date(a.date)
+    );
+
+    return resultados.slice(0,5);
+  }
+
+  function linha(jogo){
+
+    const classe =
+      jogo.resultado === 'V'
+      ? 'fz-last5-v'
+      : jogo.resultado === 'D'
+      ? 'fz-last5-d'
+      : 'fz-last5-e';
+
+    return `
+      <div class="fz-last5-row">
+
+        <div class="fz-last5-info">
+
+          <div class="fz-last5-date">
+            ${new Date(jogo.date)
+              .toLocaleDateString('pt-PT')}
+          </div>
+
+          <div class="fz-last5-opponent">
+            vs ${esc(jogo.adversario)}
+          </div>
+
+          <div class="fz-last5-location">
+            ${jogo.casaFora}
+          </div>
+
+        </div>
+
+        <div class="fz-last5-result">
+
+          <span class="fz-last5-badge ${classe}">
+            ${jogo.resultado}
+          </span>
+
+          <span class="fz-last5-score">
+            ${jogo.meusGolos}-${jogo.golosAdversario}
+          </span>
+
+        </div>
+
+      </div>
+    `;
+  }
+
+  function equipa(nome,jogos){
+
+    return `
+      <div class="fz-last5-team">
+
+        <div class="fz-last5-team-name">
+          ${esc(nome)} — últimos 5 jogos
+        </div>
+
+        ${
+          jogos.length
+          ? jogos.map(linha).join('')
+          : `
+            <div class="fz-last5-empty">
+              Não foi possível obter os últimos jogos.
+            </div>
+          `
+        }
+
+      </div>
+    `;
+  }
+
+  async function mostrar(){
+
+    const game =
+      document.getElementById('game');
+
+    if(!game)
+      return;
+
+    /*
+      Primeiro tenta usar o jogo guardado
+      pelo FUTZONE.
+    */
+    let jogo = ultimoJogo;
+
+    /*
+      Depois tenta usar a informação existente
+      no FUTZONE Premium.
+    */
+    if(!jogo && window.fzCurrentGame)
+      jogo = window.fzCurrentGame;
+
+    if(!jogo)
+      return;
+
+    let liga =
+      jogo.league ||
+      document.getElementById('league')?.value ||
+      'por.1';
+
+    let eventId =
+      jogo.id ||
+      jogo.eventId;
+
+    if(!eventId)
+      return;
+
+    /*
+      Vai buscar SEMPRE o summary real do jogo.
+    */
+    const resumo =
+      await json(
+        API +
+        encodeURIComponent(liga) +
+        '/summary?event=' +
+        encodeURIComponent(eventId)
+      );
+
+    const comp =
+      resumo?.header?.competitions?.[0];
+
+    const cs =
+      comp?.competitors || [];
+
+    if(cs.length < 2)
+      return;
+
+    const home =
+      cs.find(x=>x.homeAway==='home') ||
+      cs[0];
+
+    const away =
+      cs.find(x=>x.homeAway==='away') ||
+      cs[1];
+
+    const homeId =
+      home?.team?.id;
+
+    const awayId =
+      away?.team?.id;
+
+    if(!homeId || !awayId)
+      return;
+
+    const homeName =
+      home?.team?.displayName ||
+      'Casa';
+
+    const awayName =
+      away?.team?.displayName ||
+      'Fora';
+
+    const dataJogo =
+      resumo?.header?.date ||
+      comp?.date ||
+      jogo.date ||
+      new Date().toISOString();
+
+    /*
+      Vai buscar os 5 jogos de cada equipa
+      separadamente.
+    */
+    const [home5,away5] =
+      await Promise.all([
+        obterUltimos5(
+          homeId,
+          dataJogo
+        ),
+        obterUltimos5(
+          awayId,
+          dataJogo
+        )
+      ]);
+
+    /*
+      Remove versões anteriores para não duplicar.
+    */
+    document
+      .querySelectorAll(
+        '.fz-last5-final-box'
+      )
+      .forEach(x=>x.remove());
+
+    const box =
+      document.createElement('div');
+
+    box.className =
+      'card fz-last5-final-box';
+
+    box.innerHTML = `
+
+      <div class="fz-last5-title">
+        📊 Últimos 5 jogos realizados
+      </div>
+
+      ${equipa(
+        homeName,
+        home5
+      )}
+
+      ${equipa(
+        awayName,
+        away5
+      )}
 
     `;
 
-    document.head.appendChild(style);
-
-    /*
-      Esperamos pelo openGame original.
-    */
-    const verificar=setInterval(()=>{
-
-      if(typeof window.openGame!=='function')
-        return;
-
-      clearInterval(verificar);
-
-      if(window.openGame.__fzLast5Final)
-        return;
-
-      const original=window.openGame;
-
-      async function novoOpenGame(){
-
-        const resultado=
-          await original.apply(this,arguments);
-
-        /*
-          O openGame original já criou
-          window.fzCurrentGame.
-        */
-        setTimeout(()=>{
-          mostrar().catch(()=>{});
-        },700);
-
-        return resultado;
-      }
-
-      novoOpenGame.__fzLast5Final=true;
-
-      window.openGame=novoOpenGame;
-
-    },300);
-
+    game.appendChild(box);
   }
 
-  if(document.readyState==='loading'){
+  /*
+    Captura o openGame original sem alterar
+    a função nem o funcionamento do FUTZONE.
+  */
+  function instalar(){
+
+    if(
+      typeof window.openGame !==
+      'function'
+    ){
+      setTimeout(
+        instalar,
+        500
+      );
+      return;
+    }
+
+    if(
+      window.openGame.__fzLast5Corrigido
+    )
+      return;
+
+    const original =
+      window.openGame;
+
+    async function novoOpenGame(){
+
+      const args =
+        Array.from(arguments);
+
+      /*
+        O primeiro argumento normalmente
+        corresponde ao ID do jogo.
+      */
+      let id =
+        args[0] || '';
+
+      /*
+        Guardamos também a liga atual.
+      */
+      ultimoJogo = {
+        id:String(id),
+        league:
+          document.getElementById(
+            'league'
+          )?.value || 'por.1'
+      };
+
+      const resultado =
+        await original.apply(
+          this,
+          args
+        );
+
+      /*
+        Espera que o FUTZONE termine
+        de construir os detalhes.
+      */
+      setTimeout(
+        ()=>{
+          mostrar().catch(()=>{});
+        },
+        900
+      );
+
+      return resultado;
+    }
+
+    novoOpenGame.__fzLast5Corrigido =
+      true;
+
+    window.openGame =
+      novoOpenGame;
+  }
+
+  if(
+    document.readyState ===
+    'loading'
+  ){
+
     document.addEventListener(
       'DOMContentLoaded',
       instalar
     );
+
   }else{
+
     instalar();
+
   }
 
 })();
