@@ -1392,6 +1392,273 @@ async function getCurrentEvent(id){
     if(!hId || !aId)
       return;
 
+
+ <script id="fz-last5-final">
+(function(){
+
+  const API='https://site.api.espn.com/apis/site/v2/sports/soccer/';
+
+  function esc(v){
+    return String(v ?? '').replace(/[&<>"']/g,m=>({
+      '&':'&amp;',
+      '<':'&lt;',
+      '>':'&gt;',
+      '"':'&quot;',
+      "'":'&#39;'
+    }[m]));
+  }
+
+  function get(id){
+    return document.getElementById(id);
+  }
+
+  async function json(url){
+    try{
+      const r=await fetch(url,{cache:'no-store'});
+      if(!r.ok) return null;
+      return await r.json();
+    }catch(e){
+      return null;
+    }
+  }
+
+  function isFinished(e){
+
+    const c=e?.competitions?.[0];
+    const t=c?.status?.type || e?.status?.type || {};
+
+    return (
+      t.completed===true ||
+      t.state==='post' ||
+      String(t.name||'').toLowerCase().includes('final') ||
+      String(t.description||'').toLowerCase().includes('final')
+    );
+  }
+
+  function scoreValue(v){
+
+    if(v && typeof v==='object'){
+      v=v.value ?? v.displayValue ?? v.score;
+    }
+
+    const n=Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  /*
+    HISTÓRICO REAL DA EQUIPA
+    - todas as competições
+    - apenas jogos terminados
+    - ordenados do mais recente para o mais antigo
+    - apenas os 5 últimos
+  */
+  async function getLast5(teamId,matchDate){
+
+    const data=await json(
+      API+
+      'all/teams/'+
+      encodeURIComponent(teamId)+
+      '/schedule?limit=500'
+    );
+
+    const events=
+      data?.events ||
+      data?.schedule?.events ||
+      [];
+
+    const limite=new Date(matchDate);
+    const resultados=[];
+    const usados=new Set();
+
+    for(const e of events){
+
+      if(!e?.id || usados.has(String(e.id)) || !e.date)
+        continue;
+
+      const dataJogo=new Date(e.date);
+
+      /*
+        O jogo tem de ser anterior ao jogo que estamos a consultar.
+      */
+      if(!(dataJogo < limite))
+        continue;
+
+      if(!isFinished(e))
+        continue;
+
+      const comp=e?.competitions?.[0];
+
+      const teams=
+        comp?.competitors ||
+        e?.competitors ||
+        [];
+
+      if(teams.length<2)
+        continue;
+
+      const minha=teams.find(
+        x=>String(x?.team?.id)===String(teamId)
+      );
+
+      const adversaria=teams.find(
+        x=>String(x?.team?.id)!==String(teamId)
+      );
+
+      if(!minha || !adversaria)
+        continue;
+
+      const meuScore=scoreValue(minha.score);
+      const advScore=scoreValue(adversaria.score);
+
+      if(meuScore===null || advScore===null)
+        continue;
+
+      let resultado='E';
+
+      if(meuScore>advScore)
+        resultado='V';
+      else if(meuScore<advScore)
+        resultado='D';
+
+      usados.add(String(e.id));
+
+      resultados.push({
+        id:String(e.id),
+        date:e.date,
+        resultado,
+        meuScore,
+        advScore,
+        adversaria:
+          adversaria.team?.displayName ||
+          adversaria.team?.name ||
+          'Adversário',
+        casaFora:minha.homeAway==='home' ? 'Casa' : 'Fora'
+      });
+    }
+
+    resultados.sort(
+      (a,b)=>new Date(b.date)-new Date(a.date)
+    );
+
+    return resultados.slice(0,5);
+  }
+
+  function resultadoHTML(r){
+
+    const classe=
+      r.resultado==='V'
+      ? 'fz-l5-v'
+      : r.resultado==='D'
+      ? 'fz-l5-d'
+      : 'fz-l5-e';
+
+    return `
+      <div class="fz-l5-row">
+
+        <div class="fz-l5-info">
+          <div>
+            ${new Date(r.date).toLocaleDateString('pt-PT')}
+            · ${r.casaFora}
+          </div>
+
+          <div class="fz-l5-op">
+            vs ${esc(r.adversaria)}
+          </div>
+        </div>
+
+        <div class="fz-l5-score ${classe}">
+          <b>${r.resultado}</b>
+          <span>${r.meuScore}-${r.advScore}</span>
+        </div>
+
+      </div>
+    `;
+  }
+
+  function equipaHTML(nome,jogos){
+
+    return `
+      <div class="fz-l5-team">
+
+        <div class="fz-l5-team-title">
+          ${esc(nome)}
+        </div>
+
+        ${
+          jogos.length
+          ? jogos.map(resultadoHTML).join('')
+          : `
+            <div class="fz-l5-empty">
+              Não foi possível obter os últimos jogos.
+            </div>
+          `
+        }
+
+      </div>
+    `;
+  }
+
+  async function mostrar(){
+
+    const game=get('game');
+
+    if(!game)
+      return;
+
+    const atual=window.fzCurrentGame;
+
+    if(!atual)
+      return;
+
+    const homeId=atual.homeId || atual.homeTeamId;
+    const awayId=atual.awayId || atual.awayTeamId;
+
+    /*
+      Se o openGame ainda não expôs os IDs,
+      vamos obtê-los pelo summary do jogo.
+    */
+    let hId=homeId;
+    let aId=awayId;
+    let dataJogo=null;
+    let hNome=atual.home || 'Casa';
+    let aNome=atual.away || 'Fora';
+
+    if(!hId || !aId){
+
+      const liga=
+        atual.league ||
+        get('league')?.value ||
+        'por.1';
+
+      const resumo=await json(
+        API+
+        encodeURIComponent(liga)+
+        '/summary?event='+
+        encodeURIComponent(atual.id)
+      );
+
+      const comp=resumo?.header?.competitions?.[0];
+
+      const cs=comp?.competitors || [];
+
+      const h=cs.find(x=>x.homeAway==='home') || cs[0];
+      const a=cs.find(x=>x.homeAway==='away') || cs[1];
+
+      hId=h?.team?.id;
+      aId=a?.team?.id;
+
+      hNome=h?.team?.displayName || hNome;
+      aNome=a?.team?.displayName || aNome;
+
+      dataJogo=
+        resumo?.header?.date ||
+        comp?.date ||
+        null;
+    }
+
+    if(!hId || !aId)
+      return;
+
     /*
       Para o jogo atual usamos a data real do jogo.
       Se não estiver disponível, usamos agora.
@@ -1569,5 +1836,4 @@ async function getCurrentEvent(id){
 
 })();
 </script>
- 
 </body></html>
