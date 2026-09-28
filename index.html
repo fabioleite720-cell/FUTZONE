@@ -2031,6 +2031,789 @@ loadGames().catch(error=>{
 
 });
 
+/* =========================================================
+FUTZONE — TABELAS / NOTÍCIAS / FAVORITOS
+Não altera Jogos, Premium, Últimos 5 ou Onde Ver.
+========================================================= */
 
+const FUTZONE_FAV_KEY = "futzone_favoritos_v1";
+
+function getFavorites(){
+
+try{
+return JSON.parse(
+localStorage.getItem(FUTZONE_FAV_KEY) || "[]"
+);
+}catch(e){
+return [];
+}
+
+}
+
+function saveFavorites(list){
+
+localStorage.setItem(
+FUTZONE_FAV_KEY,
+JSON.stringify(list)
+);
+
+}
+
+function isFavorite(id){
+
+return getFavorites()
+.some(x=>String(x.id)===String(id));
+
+}
+
+function toggleFavorite(event){
+
+if(!event || !event.id) return;
+
+const list = getFavorites();
+
+const index = list.findIndex(
+x=>String(x.id)===String(event.id)
+);
+
+if(index >= 0){
+
+list.splice(index,1);
+
+}else{
+
+const h = homeAway(event,"home");
+const a = homeAway(event,"away");
+
+list.push({
+  id:event.id,
+  home:teamName(h),
+  away:teamName(a),
+  date:eventDate(event),
+  league:event.__league || ""
+});
+
+}
+
+saveFavorites(list);
+
+renderFavorites();
+
+if(selectedGame &&
+String(selectedGame.id)===String(event.id)){
+
+updateFavoriteButton(event);
+
+}
+
+}
+
+function updateFavoriteButton(event){
+
+const btn =
+document.getElementById("favoriteMatchBtn");
+
+if(!btn || !event) return;
+
+btn.textContent =
+isFavorite(event.id)
+? "⭐ Remover dos favoritos"
+: "☆ Adicionar aos favoritos";
+
+}
+
+function renderFavorites(){
+
+const box =
+document.getElementById("favoritesContent");
+
+if(!box) return;
+
+const list = getFavorites();
+
+if(!list.length){
+
+box.innerHTML = `
+  <div class="status">
+    Ainda não tens jogos favoritos.
+  </div>
+`;
+
+return;
+
+}
+
+box.innerHTML = list.map(item=>{
+
+return `
+  <div class="card">
+
+    <div style="
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      align-items:center
+    ">
+
+      <div style="min-width:0">
+
+        <b>
+          ${esc(item.home)}
+          <span class="status"> vs </span>
+          ${esc(item.away)}
+        </b>
+
+        <div class="status">
+          ${esc(formatDate(item.date))}
+        </div>
+
+      </div>
+
+      <button
+        class="secondary"
+        onclick="removeFavorite('${esc(item.id)}')"
+      >
+        ✕
+      </button>
+
+    </div>
+
+  </div>
+`;
+
+}).join("");
+
+}
+
+function removeFavorite(id){
+
+const list = getFavorites()
+.filter(x=>String(x.id)!==String(id));
+
+saveFavorites(list);
+
+renderFavorites();
+
+if(selectedGame &&
+String(selectedGame.id)===String(id)){
+
+updateFavoriteButton(selectedGame);
+
+}
+
+}
+
+/* ---------- TABELAS ---------- */
+
+const TABLE_LEAGUES = [
+["por.1","Liga Portugal"],
+["por.2","Liga 2"],
+["eng.1","Premier League"],
+["esp.1","LaLiga"],
+["ita.1","Serie A"],
+["ger.1","Bundesliga"],
+["fra.1","Ligue 1"]
+];
+
+async function loadStandings(league){
+
+const box =
+document.getElementById("tablesContent");
+
+if(!box) return;
+
+box.innerHTML =
+'<div class="status">A carregar classificação...</div>';
+
+try{
+
+const url =
+  `${ESPN_SITE}${league}/standings`;
+
+const data =
+  await getJSON(url);
+
+let entries = [];
+
+if(Array.isArray(data?.children)){
+
+  data.children.forEach(group=>{
+
+    if(Array.isArray(group?.standings?.entries)){
+      entries.push(
+        ...group.standings.entries
+      );
+    }
+
+  });
+
+}
+
+if(!entries.length &&
+   Array.isArray(data?.standings?.entries)){
+
+  entries =
+    data.standings.entries;
+
+}
+
+if(!entries.length){
+
+  box.innerHTML =
+    '<div class="status">Classificação não disponível neste momento.</div>';
+
+  return;
+
+}
+
+entries.sort((a,b)=>{
+
+  const ar =
+    a?.stats?.find(x=>x.name==="rank")?.value;
+
+  const br =
+    b?.stats?.find(x=>x.name==="rank")?.value;
+
+  return Number(ar ?? 999) -
+         Number(br ?? 999);
+
+});
+
+box.innerHTML = `
+
+  <div class="card">
+
+    <div class="sectionTitle">
+      ${esc(
+        TABLE_LEAGUES.find(x=>x[0]===league)?.[1] ||
+        "Classificação"
+      )}
+    </div>
+
+    <div style="
+      display:grid;
+      grid-template-columns:32px 1fr 42px 42px 42px 42px;
+      gap:5px;
+      padding:8px 4px;
+      font-size:11px;
+      color:#9aa3af;
+      border-bottom:1px solid #252c36
+    ">
+
+      <b>#</b>
+      <b>Equipa</b>
+      <b>J</b>
+      <b>V</b>
+      <b>E</b>
+      <b>P</b>
+
+    </div>
+
+    ${
+      entries.map((entry,index)=>{
+
+        const team =
+          entry?.team || {};
+
+        const stats =
+          {};
+
+        (entry?.stats || []).forEach(s=>{
+          stats[s.name] =
+            s.displayValue ??
+            s.value;
+        });
+
+        const rank =
+          stats.rank ??
+          index+1;
+
+        return `
+
+          <div style="
+            display:grid;
+            grid-template-columns:32px 1fr 42px 42px 42px 42px;
+            gap:5px;
+            align-items:center;
+            padding:9px 4px;
+            border-bottom:1px solid #252c36
+          ">
+
+            <b>${esc(rank)}</b>
+
+            <div style="
+              display:flex;
+              align-items:center;
+              gap:6px;
+              min-width:0
+            ">
+
+              ${
+                team.logo
+                  ? `
+                    <img
+                      src="${esc(team.logo)}"
+                      style="
+                        width:25px;
+                        height:25px;
+                        object-fit:contain
+                      "
+                    >
+                  `
+                  : ""
+              }
+
+              <span style="
+                overflow:hidden;
+                text-overflow:ellipsis;
+                white-space:nowrap
+              ">
+                ${esc(
+                  team.displayName ||
+                  team.name ||
+                  "-"
+                )}
+              </span>
+
+            </div>
+
+            <span>${esc(stats.gamesPlayed ?? stats.played ?? "-")}</span>
+            <span>${esc(stats.wins ?? "-")}</span>
+            <span>${esc(stats.ties ?? stats.draws ?? "-")}</span>
+            <b>${esc(stats.points ?? "-")}</b>
+
+          </div>
+
+        `;
+
+      }).join("")
+    }
+
+  </div>
+
+`;
+
+}catch(error){
+
+box.innerHTML =
+  '<div class="err">Não foi possível carregar a classificação.</div>';
+
+}
+
+}
+
+function renderTables(){
+
+const box =
+document.getElementById("tablesContent");
+
+if(!box) return;
+
+box.innerHTML = `
+
+<div class="leagueScroller">
+
+  ${
+    TABLE_LEAGUES.map((x,i)=>`
+
+      <button
+        class="leagueChip ${i===0 ? "active":""}"
+        onclick="selectTableLeague(this,'${x[0]}')"
+      >
+        ${esc(x[1])}
+      </button>
+
+    `).join("")
+  }
+
+</div>
+
+<div id="tableData">
+  <div class="status">
+    A carregar classificação...
+  </div>
+</div>
+
+`;
+
+loadStandings(TABLE_LEAGUES[0][0]);
+
+}
+
+function selectTableLeague(button,league){
+
+document
+.querySelectorAll("#tablesContent .leagueChip")
+.forEach(x=>x.classList.remove("active"));
+
+button.classList.add("active");
+
+loadStandings(league);
+
+}
+
+/* ---------- NOTÍCIAS ---------- */
+
+async function loadNews(){
+
+const box =
+document.getElementById("newsContent");
+
+if(!box) return;
+
+box.innerHTML =
+'<div class="status">A carregar notícias...</div>';
+
+try{
+
+const url =
+  "https://site.api.espn.com/apis/site/v2/sports/soccer/news";
+
+const data =
+  await getJSON(url);
+
+const articles =
+  Array.isArray(data?.articles)
+    ? data.articles.slice(0,12)
+    : [];
+
+if(!articles.length){
+
+  box.innerHTML =
+    '<div class="status">Não existem notícias disponíveis.</div>';
+
+  return;
+
+}
+
+box.innerHTML = articles.map(article=>{
+
+  const link =
+    safeUrl(article?.links?.web?.href);
+
+  const image =
+    article?.images?.[0]?.url || "";
+
+  return `
+
+    <article class="card">
+
+      ${
+        image
+          ? `
+            <img
+              src="${esc(image)}"
+              style="
+                width:100%;
+                max-height:190px;
+                object-fit:cover;
+                border-radius:8px;
+                margin-bottom:8px
+              "
+            >
+          `
+          : ""
+      }
+
+      <div class="sectionTitle">
+        ${esc(article?.headline || "Notícia")}
+      </div>
+
+      ${
+        article?.description
+          ? `
+            <div class="hint">
+              ${esc(article.description)}
+            </div>
+          `
+          : ""
+      }
+
+      <div class="status" style="margin-top:6px">
+        ${esc(article?.published || "")}
+      </div>
+
+      ${
+        link
+          ? `
+            <a
+              href="${esc(link)}"
+              target="_blank"
+              rel="noopener"
+              style="
+                display:inline-block;
+                margin-top:9px;
+                background:#1769d5;
+                color:#fff;
+                text-decoration:none;
+                padding:9px 12px;
+                border-radius:7px;
+                font-weight:700
+              "
+            >
+              📰 Ler notícia
+            </a>
+          `
+          : ""
+      }
+
+    </article>
+
+  `;
+
+}).join("");
+
+}catch(error){
+
+box.innerHTML = `
+  <div class="err">
+    Não foi possível carregar as notícias neste momento.
+  </div>
+`;
+
+}
+
+}
+
+/* ---------- NAVEGAÇÃO ---------- */
+
+function showSection(section){
+
+const sections = [
+"premiumSuggestions",
+"gamesSection",
+"tablesSection",
+"newsSection",
+"favoritesSection"
+];
+
+sections.forEach(id=>{
+
+const el =
+  document.getElementById(id);
+
+if(el){
+  el.classList.add("hidden");
+}
+
+});
+
+const target =
+document.getElementById(section);
+
+if(target){
+target.classList.remove("hidden");
+}
+
+if(section==="tablesSection"){
+renderTables();
+}
+
+if(section==="newsSection"){
+loadNews();
+}
+
+if(section==="favoritesSection"){
+renderFavorites();
+}
+
+}
+
+/* ---------- CRIAR MENU E ÁREAS ---------- */
+
+(function initFutzoneExtra(){
+
+const main =
+document.querySelector("main.wrap");
+
+if(!main) return;
+
+const nav =
+document.createElement("div");
+
+nav.className = "card";
+
+nav.innerHTML = `
+
+<div
+  style="
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:5px
+  "
+>
+
+  <button
+    class="secondary"
+    onclick="showSection('premiumSuggestions')"
+  >
+    🔥 Premium
+  </button>
+
+  <button
+    class="secondary"
+    onclick="showSection('gamesSection')"
+  >
+    ⚽ Jogos
+  </button>
+
+  <button
+    class="secondary"
+    onclick="showSection('tablesSection')"
+  >
+    📊 Tabelas
+  </button>
+
+  <button
+    class="secondary"
+    onclick="showSection('newsSection')"
+  >
+    📰 Notícias
+  </button>
+
+  <button
+    class="secondary"
+    onclick="showSection('favoritesSection')"
+  >
+    ⭐ Favoritos
+  </button>
+
+</div>
+
+`;
+
+main.insertBefore(nav,main.firstChild);
+
+const premium =
+document.getElementById("premiumSuggestions");
+
+const games =
+document.querySelector("#games")?.closest("section");
+
+if(premium){
+premium.id = "premiumSuggestions";
+}
+
+if(games){
+games.id = "gamesSection";
+}
+
+const tables =
+document.createElement("section");
+
+tables.id =
+"tablesSection";
+
+tables.className =
+"card hidden";
+
+tables.innerHTML = `
+
+<div class="sectionTitle">
+  📊 Tabelas
+</div>
+
+<div id="tablesContent"></div>
+
+`;
+
+const news =
+document.createElement("section");
+
+news.id =
+"newsSection";
+
+news.className =
+"hidden";
+
+news.innerHTML = `
+
+<div class="card">
+
+  <div class="sectionTitle">
+    📰 Notícias de futebol
+  </div>
+
+  <div id="newsContent">
+    <div class="status">
+      A carregar notícias...
+    </div>
+  </div>
+
+</div>
+
+`;
+
+const favorites =
+document.createElement("section");
+
+favorites.id =
+"favoritesSection";
+
+favorites.className =
+"card hidden";
+
+favorites.innerHTML = `
+
+<div class="sectionTitle">
+  ⭐ Favoritos
+</div>
+
+<div
+  id="favoritesContent"
+>
+  <div class="status">
+    Ainda não tens jogos favoritos.
+  </div>
+</div>
+
+`;
+
+main.appendChild(tables);
+main.appendChild(news);
+main.appendChild(favorites);
+
+/*
+Botão de favorito dentro do jogo selecionado.
+*/
+
+const matchCard =
+document.querySelector("#matchPanel .card");
+
+if(matchCard){
+
+const btn =
+  document.createElement("button");
+
+btn.id =
+  "favoriteMatchBtn";
+
+btn.className =
+  "secondary";
+
+btn.style =
+  "width:100%;margin-top:9px";
+
+btn.onclick = ()=>{
+  if(selectedGame){
+    toggleFavorite(selectedGame);
+  }
+};
+
+btn.textContent =
+  "☆ Adicionar aos favoritos";
+
+const where =
+  document.getElementById("whereToWatch");
+
+if(where){
+  where.after(btn);
+}else{
+  matchCard.appendChild(btn);
+}
+
+}
+
+})();
 </script></body>
 </html>
