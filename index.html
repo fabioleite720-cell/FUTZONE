@@ -1812,23 +1812,76 @@ async function loadWhereToWatch(event){
 }
 
 
-function makeSuggestion(event,index){
+function makeSuggestion(event,index,risco){
 
   const h = homeAway(event,"home");
   const a = homeAway(event,"away");
 
-  const hs = Number(eventScore(event,"home"));
-  const as = Number(eventScore(event,"away"));
+  const homeName = teamName(h);
+  const awayName = teamName(a);
 
-  const markets = [
-    "Mais de 1.5 golos",
-    "Menos de 4.5 golos",
-    "Dupla possibilidade 1X",
-    "Dupla possibilidade X2",
-    "Ambas marcam",
-    "Mais de 2.5 golos",
-    "Menos de 3.5 golos"
+  const mercadosMedioAlto = [
+    {
+      selection:`${homeName} — Dupla possibilidade 1X`,
+      market:"1X"
+    },
+    {
+      selection:`${awayName} — Dupla possibilidade X2`,
+      market:"X2"
+    },
+    {
+      selection:"Mais de 1.5 golos",
+      market:"Over 1.5"
+    },
+    {
+      selection:"Menos de 4.5 golos",
+      market:"Under 4.5"
+    },
+    {
+      selection:"Equipa da casa marca 1+ golo",
+      market:"Casa +0.5"
+    }
   ];
+
+  const mercadosMedioBaixo = [
+    {
+      selection:"Mais de 0.5 golos",
+      market:"Over 0.5"
+    },
+    {
+      selection:"Menos de 5.5 golos",
+      market:"Under 5.5"
+    },
+    {
+      selection:`${homeName} ou empate`,
+      market:"1X"
+    },
+    {
+      selection:`${awayName} ou empate`,
+      market:"X2"
+    },
+    {
+      selection:"Mais de 1.5 cartões",
+      market:"Cartões +1.5"
+    }
+  ];
+
+  const lista =
+    risco === "medio-alto"
+      ? mercadosMedioAlto
+      : mercadosMedioBaixo;
+
+  const pick = lista[index % lista.length];
+
+  return {
+    event,
+    home:h,
+    away:a,
+    market:pick.market,
+    selection:pick.selection,
+    risk:risco
+  };
+}
 
   let market = markets[index % markets.length];
 
