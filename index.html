@@ -2000,40 +2000,28 @@ async function generateStartupSuggestions(){
 
   const now = Date.now();
 
-  /*
-    Retirar jogos terminados.
-    As sugestões só usam jogos futuros ou em direto.
-  */
+  const candidates = allGames
+    .filter(e=>{
 
-  const candidates =
-    allGames
-      .filter(e=>{
+      if(eventFinished(e)) return false;
 
-        const d = new Date(eventDate(e)).getTime();
+      const date =
+        new Date(eventDate(e)).getTime();
 
-        return (
-          !eventFinished(e) &&
-          (
-            eventLive(e) ||
-            !Number.isNaN(d) && d >= now - 60*60*1000
-          )
-        );
+      if(Number.isNaN(date)) return false;
 
-      })
-      .sort((a,b)=>{
+      return eventLive(e) || date >= now;
 
-        /*
-          Primeiro jogos em direto.
-          Depois jogos mais próximos.
-        */
+    })
+    .sort((a,b)=>{
 
-        if(eventLive(a) && !eventLive(b)) return -1;
-        if(!eventLive(a) && eventLive(b)) return 1;
+      if(eventLive(a) && !eventLive(b)) return -1;
+      if(!eventLive(a) && eventLive(b)) return 1;
 
-        return new Date(eventDate(a)) -
-               new Date(eventDate(b));
+      return new Date(eventDate(a)) -
+             new Date(eventDate(b));
 
-      });
+    });
 
   const selected = [];
 
@@ -2044,9 +2032,7 @@ async function generateStartupSuggestions(){
 
     if(!teamId(h) || !teamId(a)) continue;
 
-    selected.push(
-      makeSuggestion(e,selected.length)
-    );
+    selected.push(e);
 
     if(selected.length >= 5) break;
 
@@ -2055,29 +2041,54 @@ async function generateStartupSuggestions(){
   if(!selected.length){
 
     box.innerHTML =
-      '<div class="status">Neste momento não foram encontradas cinco sugestões disponíveis.</div>';
+      '<div class="status">Não existem neste momento 5 jogos disponíveis para gerar sugestões.</div>';
 
     return;
   }
 
-  box.innerHTML =
-    selected.map(renderSuggestion).join("");
+  let html = `
+    <div class="sectionTitle">
+      🔥 Sugestões Premium automáticas
+    </div>
 
+    <div class="hint">
+      5 jogos selecionados automaticamente ·
+      5 sugestões médio-alto + 5 sugestões médio-baixo
+    </div>
+  `;
+
+  html += `
+    <div class="sectionTitle" style="margin-top:15px">
+      🟠 Risco médio-alto
+    </div>
+  `;
+
+  selected.forEach((event,index)=>{
+
+    html += renderSuggestion(
+      makeSuggestion(event,index,"medio-alto"),
+      index
+    );
+
+  });
+
+  html += `
+    <div class="sectionTitle" style="margin-top:18px">
+      🟢 Risco médio-baixo
+    </div>
+  `;
+
+  selected.forEach((event,index)=>{
+
+    html += renderSuggestion(
+      makeSuggestion(event,index,"medio-baixo"),
+      index
+    );
+
+  });
+
+  box.innerHTML = html;
 }
-
-
-async function loadPremiumAnalysis(event){
-
-  const box =
-    document.getElementById("premiumAnalysis");
-
-  const h =
-    homeAway(event,"home");
-
-  const a =
-    homeAway(event,"away");
-
-  box.innerHTML = `
 
     <div
       style="
