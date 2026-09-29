@@ -5201,3 +5201,432 @@ setInterval(function(){
 })();
 
 </script>
+<script>
+/* =========================================================
+   FUTZONE — CORREÇÃO FINAL
+   5 ÚLTIMOS JOGOS REAIS + RESULTADO
+   NOTÍCIAS GERAIS EM PORTUGUÊS
+   ========================================================= */
+
+(function(){
+
+  const FZ_OLD_LAST5 = window.last5;
+
+  async function FZ_getTeamLast5(teamId, boxId, excludeId){
+
+    const box = document.getElementById(boxId);
+    if(!box || !teamId) return;
+
+    box.innerHTML =
+      '<div class="loading">A procurar os últimos 5 jogos...</div>';
+
+    try{
+
+      let data = null;
+
+      /* Primeiro tenta o calendário completo da equipa */
+      const urls = [
+        API + 'teams/' + encodeURIComponent(teamId) +
+        '/schedule?limit=100',
+
+        API + 'teams/' + encodeURIComponent(teamId) +
+        '/schedule?limit=100&season=2026'
+      ];
+
+      for(const url of urls){
+
+        try{
+          const d = await jsonUrl(url,12000);
+
+          if(d && Array.isArray(d.events) && d.events.length){
+            data = d;
+            break;
+          }
+
+        }catch(e){}
+      }
+
+      let events = Array.isArray(data?.events)
+        ? data.events
+        : [];
+
+      /* Apenas jogos terminados */
+      events = events.filter(e => {
+
+        if(!e) return false;
+
+        if(excludeId && String(e.id) === String(excludeId))
+          return false;
+
+        return completed(e);
+
+      });
+
+      /* Mais recentes primeiro */
+      events.sort((a,b) =>
+        new Date(b.date || 0) - new Date(a.date || 0)
+      );
+
+      /* Retira possíveis duplicados */
+      const seen = new Set();
+
+      events = events.filter(e => {
+
+        const key = String(e.id || '') +
+          '|' + String(e.date || '');
+
+        if(seen.has(key)) return false;
+
+        seen.add(key);
+        return true;
+
+      });
+
+      events = events.slice(0,5);
+
+      if(!events.length){
+
+        box.innerHTML =
+          '<div class="muted">Não foi possível encontrar os últimos 5 jogos.</div>';
+
+        return;
+      }
+
+      let html = '';
+
+      for(const e of events){
+
+        const r = resultForTeam(e,teamId);
+
+        if(!r) continue;
+
+        let cls = 'draw';
+        let label = 'Empate';
+
+        if(r.result === 'V'){
+          cls = 'win';
+          label = 'Vitória';
+        }
+
+        if(r.result === 'D'){
+          cls = 'loss';
+          label = 'Derrota';
+        }
+
+        html += `
+          <div class="fz-last5-item">
+            <div class="fz-last5-date">
+              ${esc(fmtDate(r.date))}
+            </div>
+
+            <div class="fz-last5-main">
+              <div class="fz-last5-opponent">
+                ${esc(r.opponent || 'Adversário')}
+              </div>
+
+              <div class="fz-last5-score">
+                ${esc(String(r.gf))} - ${esc(String(r.ga))}
+              </div>
+
+              <div class="fz-last5-result ${cls}">
+                ${label}
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      box.innerHTML = `
+        <div class="fz-last5-list">
+          ${html}
+        </div>
+      `;
+
+    }catch(err){
+
+      console.warn('FUTZONE últimos 5:',err);
+
+      box.innerHTML =
+        '<div class="muted">Não foi possível obter os últimos jogos.</div>';
+    }
+  }
+
+
+  /* Resultado independente do nome da equipa */
+  function FZ_resultForTeam(e,teamId){
+
+    try{
+
+      const comps =
+        e?.competitions?.[0]?.competitors || [];
+
+      const me = comps.find(c =>
+        String(c?.team?.id) === String(teamId)
+      );
+
+      const other = comps.find(c =>
+        String(c?.team?.id) !== String(teamId)
+      );
+
+      if(!me || !other) return null;
+
+      const gf = Number(
+        me?.score?.displayValue ??
+        me?.score?.value ??
+        0
+      );
+
+      const ga = Number(
+        other?.score?.displayValue ??
+        other?.score?.value ??
+        0
+      );
+
+      let result = 'E';
+
+      if(gf > ga) result = 'V';
+      if(gf < ga) result = 'D';
+
+      return {
+        date:e.date,
+        opponent:other?.team?.displayName ||
+                 other?.team?.shortDisplayName ||
+                 'Adversário',
+        gf,
+        ga,
+        result
+      };
+
+    }catch(err){
+      return null;
+    }
+  }
+
+
+  /* Substitui a função dos últimos 5 */
+  window.last5 = async function(teamId,boxId,excludeId){
+
+    /* Usa a nova versão */
+    return FZ_getTeamLast5(teamId,boxId,excludeId);
+
+  };
+
+
+  /* =========================================================
+     ESTILO DOS ÚLTIMOS 5
+     ========================================================= */
+
+  if(!document.getElementById('fz-last5-style')){
+
+    const st = document.createElement('style');
+
+    st.id = 'fz-last5-style';
+
+    st.textContent = `
+
+      .fz-last5-list{
+        display:flex;
+        flex-direction:column;
+        gap:8px;
+        margin-top:8px;
+      }
+
+      .fz-last5-item{
+        background:#0a111b;
+        border:1px solid rgba(255,255,255,.07);
+        border-radius:10px;
+        padding:9px 10px;
+      }
+
+      .fz-last5-date{
+        font-size:11px;
+        opacity:.60;
+        margin-bottom:5px;
+      }
+
+      .fz-last5-main{
+        display:grid;
+        grid-template-columns:1fr auto auto;
+        align-items:center;
+        gap:8px;
+      }
+
+      .fz-last5-opponent{
+        font-size:13px;
+        font-weight:600;
+      }
+
+      .fz-last5-score{
+        font-size:14px;
+        font-weight:800;
+      }
+
+      .fz-last5-result{
+        font-size:11px;
+        font-weight:800;
+        padding:4px 7px;
+        border-radius:6px;
+        white-space:nowrap;
+      }
+
+      .fz-last5-result.win{
+        background:rgba(32,214,138,.14);
+        color:#20d68a;
+      }
+
+      .fz-last5-result.draw{
+        background:rgba(255,212,59,.14);
+        color:#ffd43b;
+      }
+
+      .fz-last5-result.loss{
+        background:rgba(255,64,84,.14);
+        color:#ff4054;
+      }
+
+    `;
+
+    document.head.appendChild(st);
+  }
+
+
+  /* =========================================================
+     NOTÍCIAS GERAIS — SEMPRE TRADUZIDAS PARA PORTUGUÊS
+     ========================================================= */
+
+  window.FZ_news_portuguese = async function(){
+
+    const box = document.getElementById('newsList');
+
+    if(!box) return;
+
+    try{
+
+      const d = await jsonUrl(
+        FZ_SITE + 'news?limit=20',
+        12000
+      );
+
+      let articles =
+        d?.articles ||
+        d?.news ||
+        d?.items ||
+        [];
+
+      if(!Array.isArray(articles))
+        articles = [];
+
+      if(!articles.length){
+
+        box.innerHTML =
+          '<div class="muted">Não existem notícias disponíveis.</div>';
+
+        return;
+      }
+
+      const selected = articles.slice(0,15);
+
+      const translated = await Promise.all(
+
+        selected.map(async article => {
+
+          const title =
+            article?.headline ||
+            article?.title ||
+            '';
+
+          const description =
+            article?.description ||
+            article?.summary ||
+            article?.dek ||
+            '';
+
+          let ptTitle = title;
+          let ptDescription = description;
+
+          try{
+            if(title)
+              ptTitle = await fzTranslate(title);
+          }catch(e){}
+
+          try{
+            if(description)
+              ptDescription = await fzTranslate(description);
+          }catch(e){}
+
+          const link =
+            article?.links?.web?.href ||
+            article?.web?.href ||
+            article?.link ||
+            '#';
+
+          return {
+            title:ptTitle || title,
+            description:ptDescription || description,
+            link
+          };
+
+        })
+      );
+
+      box.innerHTML = translated.map(n => `
+
+        <div class="card">
+
+          <div class="value">
+            ${esc(n.title)}
+          </div>
+
+          ${
+            n.description
+            ? `<div class="muted" style="margin-top:6px">
+                 ${esc(n.description)}
+               </div>`
+            : ''
+          }
+
+          ${
+            n.link && n.link !== '#'
+            ? `<div style="margin-top:8px">
+                 <a
+                   href="${esc(n.link)}"
+                   target="_blank"
+                   rel="noopener"
+                   style="color:#1683ff;text-decoration:none"
+                 >
+                   Ler notícia
+                 </a>
+               </div>`
+            : ''
+          }
+
+        </div>
+
+      `).join('');
+
+    }catch(err){
+
+      console.warn('FUTZONE notícias:',err);
+
+      box.innerHTML =
+        '<div class="muted">Não foi possível carregar as notícias.</div>';
+    }
+  };
+
+
+  /* =========================================================
+     ATUALIZA AS NOTÍCIAS QUANDO A FUNÇÃO EXISTENTE É CHAMADA
+     ========================================================= */
+
+  setTimeout(() => {
+
+    try{
+      if(typeof window.FZ_news_portuguese === 'function')
+        window.FZ_news_portuguese();
+    }catch(e){}
+
+  },800);
+
+
+})();
+</script>
