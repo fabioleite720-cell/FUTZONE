@@ -605,6 +605,672 @@ console.log(
 );
 
 </script>
+<script>
 
+/* =========================================
+   FUTZONE TESTE — BLOCO 2
+   JOGOS REAIS + COMPETIÇÕES
+========================================= */
+
+const LEAGUES_TEST = [
+
+  ['Todos','all'],
+
+  ['Liga Portugal','por.1'],
+  ['Liga 2','por.2'],
+  ['Liga 3','por.3'],
+  ['Liga BPI','por.w.1'],
+
+  ['Premier League','eng.1'],
+  ['Championship','eng.2'],
+
+  ['LaLiga','esp.1'],
+  ['LaLiga 2','esp.2'],
+
+  ['Serie A','ita.1'],
+  ['Serie B','ita.2'],
+
+  ['Bundesliga','ger.1'],
+  ['2. Bundesliga','ger.2'],
+
+  ['Ligue 1','fra.1'],
+
+  ['Eredivisie','ned.1'],
+
+  ['Escócia','sco.1'],
+
+  ['Turquia','tur.1'],
+
+  ['Arábia Saudita','ksa.1'],
+
+  ['MLS','usa.1']
+
+];
+
+
+function scoreFromTeam(team){
+
+  const value=
+    team?.score?.displayValue ??
+    team?.score?.value ??
+    team?.score;
+
+  const n=Number(value);
+
+  return Number.isFinite(n)
+    ? n
+    : null;
+
+}
+
+
+function getHome(event){
+
+  return event
+    ?.competitions?.[0]
+    ?.competitors
+    ?.find(x=>x.homeAway==='home');
+
+}
+
+
+function getAway(event){
+
+  return event
+    ?.competitions?.[0]
+    ?.competitors
+    ?.find(x=>x.homeAway==='away');
+
+}
+
+
+function teamName(team){
+
+  return team
+    ?.team
+    ?.displayName ||
+    'Equipa';
+
+}
+
+
+function formatTime(date){
+
+  if(!date)return '';
+
+  try{
+
+    return new Date(date)
+      .toLocaleTimeString(
+        'pt-PT',
+        {
+          hour:'2-digit',
+          minute:'2-digit'
+        }
+      );
+
+  }catch(e){
+
+    return '';
+
+  }
+
+}
+
+
+function isLive(event){
+
+  const state=
+    String(
+      event
+        ?.status
+        ?.type
+        ?.state ||
+      ''
+    ).toLowerCase();
+
+  return state==='in';
+
+}
+
+
+function isFinished(event){
+
+  return !!(
+    event
+      ?.status
+      ?.type
+      ?.completed===true ||
+    String(
+      event
+        ?.status
+        ?.type
+        ?.state ||
+      ''
+    ).toLowerCase()==='post'
+  );
+
+}
+
+
+/* =========================================
+   COMPETIÇÕES
+========================================= */
+
+function drawLeagueButtons(){
+
+  const box=
+    document.getElementById(
+      'leagueChips'
+    );
+
+  if(!box)return;
+
+
+  box.innerHTML=
+    LEAGUES_TEST.map(
+      (x,i)=>`
+
+        <button
+          class="chip ${i===0?'active':''}"
+          onclick="
+            selectLeagueTest(
+              '${esc(x[1])}',
+              this
+            )
+          ">
+
+          ${esc(x[0])}
+
+        </button>
+
+      `
+    ).join('');
+
+}
+
+
+function selectLeagueTest(
+  league,
+  button
+){
+
+  document
+    .querySelectorAll(
+      '#leagueChips .chip'
+    )
+    .forEach(x=>
+      x.classList.remove('active')
+    );
+
+
+  button?.classList.add('active');
+
+
+  loadGamesTest(league);
+
+}
+
+
+/* =========================================
+   CARREGAR JOGOS
+========================================= */
+
+async function getJSON(
+  url
+){
+
+  try{
+
+    const response=
+      await fetch(
+        url,
+        {
+          cache:'no-store'
+        }
+      );
+
+    if(!response.ok)
+      return null;
+
+    return await response.json();
+
+  }catch(error){
+
+    console.log(
+      'Erro API:',
+      error
+    );
+
+    return null;
+
+  }
+
+}
+
+
+async function loadGamesTest(
+  league='all'
+){
+
+  const box=
+    document.getElementById(
+      'gamesList'
+    );
+
+  if(!box)return;
+
+
+  box.innerHTML=
+    `
+      <div class="card loading">
+        A carregar jogos...
+      </div>
+    `;
+
+
+  let data=null;
+
+
+  if(league==='all'){
+
+    data=
+      await getJSON(
+        API+
+        'scoreboard?limit=100'
+      );
+
+  }else{
+
+    data=
+      await getJSON(
+        API+
+        league+
+        '/scoreboard?limit=100'
+      );
+
+  }
+
+
+  const events=
+    Array.isArray(
+      data?.events
+    )
+      ? data.events
+      : [];
+
+
+  games=events;
+
+
+  if(!events.length){
+
+    box.innerHTML=`
+
+      <div class="card">
+
+        <div class="muted">
+          Não existem jogos disponíveis
+          neste momento nesta competição.
+        </div>
+
+      </div>
+
+    `;
+
+    return;
+
+  }
+
+
+  renderGamesTest(events);
+
+}
+
+
+/* =========================================
+   MOSTRAR JOGOS
+========================================= */
+
+function renderGamesTest(
+  events
+){
+
+  const box=
+    document.getElementById(
+      'gamesList'
+    );
+
+  if(!box)return;
+
+
+  const groups={};
+
+
+  events.forEach(event=>{
+
+    const league=
+      event
+        ?.league
+        ?.name ||
+      event
+        ?.competitions?.[0]
+        ?.league
+        ?.name ||
+      'Futebol';
+
+
+    if(!groups[league])
+      groups[league]=[];
+
+
+    groups[league].push(event);
+
+  });
+
+
+  let html='';
+
+
+  Object
+    .entries(groups)
+    .forEach(
+      ([league,list])=>{
+
+        html+=`
+
+          <div class="section-title">
+            <span>
+              ${esc(league)}
+            </span>
+          </div>
+
+        `;
+
+
+        list.forEach(event=>{
+
+          const home=
+            getHome(event);
+
+          const away=
+            getAway(event);
+
+
+          const homeName=
+            teamName(home);
+
+          const awayName=
+            teamName(away);
+
+
+          const homeScore=
+            scoreFromTeam(home);
+
+          const awayScore=
+            scoreFromTeam(away);
+
+
+          let score='—';
+
+
+          if(
+            homeScore!==null &&
+            awayScore!==null
+          ){
+
+            score=
+              homeScore+
+              ' - '+
+              awayScore;
+
+          }
+
+
+          let status='';
+
+
+          if(isLive(event)){
+
+            status=`
+              <span
+                class="badge high">
+                🔴 AO VIVO
+              </span>
+            `;
+
+          }else if(isFinished(event)){
+
+            status=`
+              <span
+                class="badge low">
+                FINAL
+              </span>
+            `;
+
+          }else{
+
+            status=`
+              <span class="muted">
+                ${esc(
+                  formatTime(
+                    event.date
+                  )
+                )}
+              </span>
+            `;
+
+          }
+
+
+          html+=`
+
+            <div
+              class="card suggestion"
+              onclick="
+                openTestMatch(
+                  '${esc(event.id)}'
+                )
+              ">
+
+              <div
+                class="team-row">
+
+                <div class="team">
+                  ${esc(homeName)}
+                </div>
+
+                <div class="score">
+                  ${esc(score)}
+                </div>
+
+                <div
+                  class="team"
+                  style="
+                    text-align:right;
+                  ">
+
+                  ${esc(awayName)}
+
+                </div>
+
+              </div>
+
+
+              <div
+                style="
+                  display:flex;
+                  justify-content:
+                    space-between;
+                  align-items:center;
+                  margin-top:8px;
+                ">
+
+                <span
+                  class="muted">
+
+                  ${esc(
+                    formatTime(
+                      event.date
+                    )
+                  )}
+
+                </span>
+
+                ${status}
+
+              </div>
+
+            </div>
+
+          `;
+
+        });
+
+      }
+    );
+
+
+  box.innerHTML=html;
+
+}
+
+
+/* =========================================
+   ABRIR JOGO
+========================================= */
+
+async function openTestMatch(
+  id
+){
+
+  current=
+    games.find(
+      x=>String(x.id)===String(id)
+    );
+
+
+  if(!current){
+
+    return;
+
+  }
+
+
+  showPage('analysis');
+
+
+  const box=
+    document.getElementById(
+      'analysisBox'
+    );
+
+
+  box.innerHTML=`
+
+    <div class="card">
+
+      <div
+        class="team-row">
+
+        <div class="team">
+          ${esc(
+            teamName(
+              getHome(current)
+            )
+          )}
+        </div>
+
+        <div class="score">
+          ${scoreFromTeam(
+            getHome(current)
+          ) ?? '—'}
+          -
+          ${scoreFromTeam(
+            getAway(current)
+          ) ?? '—'}
+        </div>
+
+        <div
+          class="team"
+          style="
+            text-align:right;
+          ">
+
+          ${esc(
+            teamName(
+              getAway(current)
+            )
+          )}
+
+        </div>
+
+      </div>
+
+
+      <div
+        class="muted"
+        style="
+          text-align:center;
+          margin-top:7px;
+        ">
+
+        ${esc(
+          formatTime(
+            current.date
+          )
+        )}
+
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="section-title">
+        <span>
+          📋 Detalhes
+        </span>
+      </div>
+
+      <div class="muted">
+
+        No próximo bloco entram:
+        Últimos 5 jogos,
+        Onde ver,
+        acontecimentos,
+        estatísticas e
+        11 titular.
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================
+   ARRANQUE
+========================================= */
+
+drawLeagueButtons();
+
+
+/*
+   Não substitui as sugestões.
+   Apenas prepara os jogos.
+*/
+
+setTimeout(
+  ()=>{
+    loadGamesTest('all');
+  },
+  300
+);
+
+          </script>
 </body>
 </html>
