@@ -510,4 +510,529 @@ window.fzOpenPlayer = async function(id){
   'redcards',
   'red card',
   'red'
- ]);</body></html>
+ ]);<!-- FUTZONE PREMIUM — BLOCO EXTRA: ESTATÍSTICAS DO JOGO + 11 TITULAR -->
+<style>
+.fz-match-extra{
+  margin-top:12px;
+}
+.fz-match-title{
+  font-size:13px;
+  font-weight:900;
+  margin:12px 0 8px;
+}
+.fz-match-stats{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+}
+.fz-match-stat{
+  background:#08111c;
+  border:1px solid var(--l);
+  border-radius:9px;
+  padding:9px;
+  text-align:center;
+}
+.fz-match-stat b{
+  display:block;
+  font-size:13px;
+}
+.fz-match-stat span{
+  display:block;
+  color:var(--m);
+  font-size:9px;
+  margin-top:4px;
+}
+.fz-lineups{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.fz-lineup{
+  background:#08111c;
+  border:1px solid var(--l);
+  border-radius:9px;
+  padding:9px;
+}
+.fz-lineup h4{
+  margin:0 0 7px;
+  font-size:11px;
+}
+.fz-lineup-player{
+  padding:6px 0;
+  border-top:1px solid var(--l);
+  font-size:10px;
+}
+.fz-lineup-player small{
+  color:var(--m);
+}
+.fz-event{
+  padding:7px 0;
+  border-top:1px solid var(--l);
+  font-size:10px;
+}
+@media(max-width:600px){
+  .fz-lineups{
+    grid-template-columns:1fr;
+  }
+}
+</style>
+
+<script>
+(function(){
+
+  const FZ_ORIGINAL_OPEN_MATCH = window.openMatch;
+
+  async function fzGameData(eventId){
+
+    try{
+
+      const controller = new AbortController();
+
+      const timer = setTimeout(
+        ()=>controller.abort(),
+        12000
+      );
+
+      const r = await fetch(
+        API + 'summary?event=' +
+        encodeURIComponent(eventId),
+        {
+          cache:'no-store',
+          signal:controller.signal
+        }
+      );
+
+      clearTimeout(timer);
+
+      if(!r.ok) return null;
+
+      return await r.json();
+
+    }catch(e){
+
+      return null;
+
+    }
+
+  }
+
+  function fzValue(stats,names){
+
+    for(const name of names){
+
+      const item = (stats || []).find(
+        x =>
+          x.name === name ||
+          x.displayName === name
+      );
+
+      if(item){
+
+        return item.displayValue ??
+               item.value ??
+               '—';
+
+      }
+
+    }
+
+    return '—';
+
+  }
+
+  function fzPlayerName(p){
+
+    return p?.athlete?.displayName ||
+           p?.athlete?.fullName ||
+           p?.displayName ||
+           p?.fullName ||
+           p?.name ||
+           'Jogador';
+
+  }
+
+  function fzTeamName(t){
+
+    return t?.team?.displayName ||
+           t?.team?.fullName ||
+           t?.team?.shortDisplayName ||
+           t?.displayName ||
+           t?.name ||
+           'Equipa';
+
+  }
+
+  function fzEsc2(v){
+
+    return String(v ?? '').replace(
+      /[&<>"']/g,
+      m => ({
+        '&':'&amp;',
+        '<':'&lt;',
+        '>':'&gt;',
+        '"':'&quot;',
+        "'":'&#39;'
+      }[m])
+    );
+
+  }
+
+  function fzEvents(data){
+
+    const events =
+      data?.keyEvents ||
+      data?.plays ||
+      data?.commentary ||
+      [];
+
+    if(!Array.isArray(events) || !events.length){
+
+      return '<div class="muted">' +
+             'Não existem acontecimentos detalhados disponíveis.' +
+             '</div>';
+
+    }
+
+    return events
+      .slice()
+      .reverse()
+      .slice(0,30)
+      .map(p=>{
+
+        const text =
+          p.text ||
+          p.description ||
+          p.shortText ||
+          p.type?.text ||
+          'Acontecimento';
+
+        const clock =
+          p.clock?.displayValue ||
+          p.clock?.value ||
+          '';
+
+        const type =
+          (
+            p.type?.text ||
+            ''
+          ).toLowerCase();
+
+        let icon='•';
+
+        if(type.includes('goal'))
+          icon='⚽';
+
+        else if(
+          type.includes('yellow') ||
+          type.includes('card')
+        )
+          icon='🟨';
+
+        else if(type.includes('red'))
+          icon='🟥';
+
+        else if(type.includes('sub'))
+          icon='🔄';
+
+        return `
+          <div class="fz-event">
+            <strong>${fzEsc2(clock)}</strong>
+            ${icon}
+            ${fzEsc2(text)}
+          </div>
+        `;
+
+      })
+      .join('');
+
+  }
+
+  function fzLineup(data,teamId,teamName){
+
+    let rosters =
+      data?.rosters ||
+      data?.lineups ||
+      [];
+
+    if(!Array.isArray(rosters))
+      rosters=[];
+
+    let roster =
+      rosters.find(r =>
+        String(
+          r?.team?.id ||
+          r?.teamId
+        ) === String(teamId)
+      );
+
+    let players =
+      roster?.roster ||
+      roster?.athletes ||
+      roster?.players ||
+      [];
+
+    if(!players.length){
+
+      return `
+        <div class="fz-lineup">
+          <h4>11 titular — ${fzEsc2(teamName)}</h4>
+          <div class="muted">
+            Onze titular não disponibilizado pela fonte.
+          </div>
+        </div>
+      `;
+
+    }
+
+    let starters =
+      players.filter(p =>
+        p.starter === true ||
+        p.starter === 'true' ||
+        p.status?.type?.name === 'starter'
+      );
+
+    if(starters.length < 11)
+      starters = players.slice(0,11);
+
+    starters = starters.slice(0,11);
+
+    return `
+      <div class="fz-lineup">
+
+        <h4>
+          11 titular — ${fzEsc2(teamName)}
+        </h4>
+
+        ${starters.map((p,i)=>{
+
+          const position =
+            p?.position?.displayName ||
+            p?.position?.abbreviation ||
+            p?.athlete?.position?.displayName ||
+            '';
+
+          return `
+            <div class="fz-lineup-player">
+
+              <strong>
+                ${i+1}. ${fzEsc2(fzPlayerName(p))}
+              </strong>
+
+              <br>
+
+              <small>
+                ${fzEsc2(position)}
+              </small>
+
+            </div>
+          `;
+
+        }).join('')}
+
+      </div>
+    `;
+
+  }
+
+  async function fzAddMatchInfo(eventId){
+
+    const box =
+      document.getElementById('analysisBox');
+
+    if(!box) return;
+
+    /*
+      Evita duplicar o bloco se o jogo for aberto
+      novamente.
+    */
+
+    const old =
+      document.getElementById(
+        'fz-match-extra'
+      );
+
+    if(old) old.remove();
+
+    const data =
+      await fzGameData(eventId);
+
+    if(!data) return;
+
+    const competition =
+      data?.header?.competitions?.[0];
+
+    const competitors =
+      competition?.competitors || [];
+
+    const home =
+      competitors.find(
+        x=>x.homeAway==='home'
+      ) || competitors[0];
+
+    const away =
+      competitors.find(
+        x=>x.homeAway==='away'
+      ) || competitors[1];
+
+    if(!home || !away) return;
+
+    const homeStats =
+      home.statistics || [];
+
+    const awayStats =
+      away.statistics || [];
+
+    const stats = [
+
+      [
+        'Posse de bola',
+        ['possession','possessionPct']
+      ],
+
+      [
+        'Remates',
+        ['shotsTotal','totalShots']
+      ],
+
+      [
+        'Remates à baliza',
+        ['shotsOnGoal','shotsOnTarget']
+      ],
+
+      [
+        'Cantos',
+        ['wonCorners','corners']
+      ],
+
+      [
+        'Faltas',
+        ['foulsCommitted','fouls']
+      ],
+
+      [
+        'Foras de jogo',
+        ['offsides']
+      ],
+
+      [
+        'Defesas',
+        ['saves']
+      ],
+
+      [
+        'Passes',
+        ['totalPasses','passes']
+      ]
+
+    ];
+
+    const statsHTML =
+      stats.map(item=>{
+
+        const homeValue =
+          fzValue(
+            homeStats,
+            item[1]
+          );
+
+        const awayValue =
+          fzValue(
+            awayStats,
+            item[1]
+          );
+
+        return `
+          <div class="fz-match-stat">
+
+            <b>
+              ${fzEsc2(homeValue)}
+              —
+              ${fzEsc2(awayValue)}
+            </b>
+
+            <span>
+              ${fzEsc2(item[0])}
+            </span>
+
+          </div>
+        `;
+
+      }).join('');
+
+    const html = `
+
+      <div
+        id="fz-match-extra"
+        class="card fz-match-extra"
+      >
+
+        <div class="fz-match-title">
+          📊 Estatísticas reais do jogo
+        </div>
+
+        <div class="fz-match-stats">
+          ${statsHTML}
+        </div>
+
+        <div class="fz-match-title">
+          ⚽ Golos · Assistências · Cartões · Substituições
+        </div>
+
+        <div class="last">
+          ${fzEvents(data)}
+        </div>
+
+        <div class="fz-match-title">
+          👥 11 titular
+        </div>
+
+        <div class="fz-lineups">
+
+          ${fzLineup(
+            data,
+            home.team?.id,
+            fzTeamName(home)
+          )}
+
+          ${fzLineup(
+            data,
+            away.team?.id,
+            fzTeamName(away)
+          )}
+
+        </div>
+
+      </div>
+
+    `;
+
+    box.insertAdjacentHTML(
+      'beforeend',
+      html
+    );
+
+  }
+
+  /*
+    Mantém o openMatch original.
+    Apenas acrescenta as novas informações.
+  */
+
+  window.openMatch = function(id){
+
+    if(typeof FZ_ORIGINAL_OPEN_MATCH === 'function'){
+
+      FZ_ORIGINAL_OPEN_MATCH(id);
+
+    }
+
+    setTimeout(()=>{
+
+      fzAddMatchInfo(id);
+
+    },700);
+
+  };
+
+})();
+</script></body></html>
