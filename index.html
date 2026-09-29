@@ -1925,5 +1925,487 @@ console.log(
 );
 
 </script>
+      <!-- FUTZONE — BLOCO 3D — 11 TITULAR / JOGADORES -->
+
+<script>
+
+async function FZ3D_get(url){
+  try{
+    const r=await fetch(url);
+    if(!r.ok)return null;
+    return await r.json();
+  }catch(e){
+    return null;
+  }
+}
+
+function FZ3D_playerId(p){
+  return p?.athlete?.id ||
+         p?.player?.id ||
+         p?.id ||
+         null;
+}
+
+function FZ3D_playerName(p){
+  return p?.athlete?.displayName ||
+         p?.athlete?.fullName ||
+         p?.player?.displayName ||
+         p?.displayName ||
+         p?.fullName ||
+         'Jogador';
+}
+
+function FZ3D_find(node,out){
+
+  if(!node)return;
+
+  if(Array.isArray(node)){
+    node.forEach(x=>FZ3D_find(x,out));
+    return;
+  }
+
+  if(typeof node!=='object')return;
+
+  if(Array.isArray(node.athletes)){
+    node.athletes.forEach(x=>out.push(x));
+  }
+
+  if(Array.isArray(node.players)){
+    node.players.forEach(x=>out.push(x));
+  }
+
+  if(Array.isArray(node.roster)){
+    node.roster.forEach(x=>out.push(x));
+  }
+
+  if(Array.isArray(node.statistics)){
+    node.statistics.forEach(x=>{
+      if(Array.isArray(x?.athletes)){
+        x.athletes.forEach(a=>out.push(a));
+      }
+    });
+  }
+}
+
+function FZ3D_starter(p){
+
+  return p?.starter===true ||
+         p?.starter==='true' ||
+         p?.lineupStatus==='starter';
+}
+
+function FZ3D_playerButton(id,name){
+
+  const n=
+    JSON.stringify(String(name))
+      .replace(/"/g,'&quot;');
+
+  return 'FZ3D_player('+
+    (Number(id)||0)+','+
+    n+
+    ')';
+}
+
+async function FZ3D_load(ev){
+
+  const area=
+    document.getElementById('analysisBox');
+
+  if(!area)return;
+
+  const data=
+    await FZ3D_get(
+      API+'summary?event='+ev.id
+    );
+
+  const players=[];
+
+  FZ3D_find(
+    data?.rosters,
+    players
+  );
+
+  FZ3D_find(
+    data?.lineups,
+    players
+  );
+
+  FZ3D_find(
+    data?.boxscore?.players,
+    players
+  );
+
+  const unique=[];
+  const seen=new Set();
+
+  players.forEach(p=>{
+
+    const id=FZ3D_playerId(p);
+
+    if(!id)return;
+
+    if(seen.has(String(id)))return;
+
+    seen.add(String(id));
+    unique.push(p);
+  });
+
+  const starters=
+    unique.filter(FZ3D_starter);
+
+  const box=
+    document.createElement('div');
+
+  box.style.cssText=
+    'background:var(--card);'+
+    'border:1px solid var(--line);'+
+    'border-radius:14px;'+
+    'padding:14px;'+
+    'margin:10px 0';
+
+  let html='<b>👥 11 titular</b>';
+
+  if(!starters.length){
+
+    html+=
+      '<div style="color:var(--muted);margin-top:8px">'+
+      'O ESPN não disponibilizou o 11 titular deste jogo.'+
+      '</div>';
+
+  }else{
+
+    html+=
+      '<div style="color:var(--muted);font-size:12px;margin:8px 0">'+
+      'Toca num jogador para abrir a ficha.'+
+      '</div>';
+
+    starters.forEach(p=>{
+
+      const id=
+        FZ3D_playerId(p);
+
+      const name=
+        FZ3D_playerName(p);
+
+      html+=
+        '<button onclick="'+
+        FZ3D_playerButton(id,name)+
+        '" style="'+
+        'display:block;'+
+        'width:100%;'+
+        'text-align:left;'+
+        'padding:9px;'+
+        'margin:5px 0;'+
+        'border:1px solid var(--line);'+
+        'border-radius:9px;'+
+        'background:var(--card2);'+
+        'color:var(--text);'+
+        'font-weight:700">'+
+        '⚽ '+name+
+        '</button>';
+    });
+  }
+
+  box.innerHTML=html;
+  area.appendChild(box);
+}
+
+
+/* Ficha simples do jogador */
+
+async function FZ3D_player(id,name){
+
+  const area=
+    document.getElementById('analysisBox');
+
+  if(!area)return;
+
+  area.innerHTML=
+    '<div style="background:var(--card);'+
+    'border:1px solid var(--line);'+
+    'border-radius:14px;padding:14px">'+
+    '<button onclick="openTestMatch(current?.id)" '+
+    'style="padding:8px 12px;margin-bottom:10px">'+
+    '← Voltar ao jogo</button>'+
+    '<h3>👤 '+name+'</h3>'+
+    '<div style="color:var(--muted)">A carregar dados...</div>'+
+    '</div>';
+
+  if(!id)return;
+
+  const data=
+    await FZ3D_get(
+      'https://sports.core.api.espn.com/v2/sports/soccer/athletes/'+
+      id
+    );
+
+  if(!data)return;
+
+  let html=
+    '<div style="background:var(--card);'+
+    'border:1px solid var(--line);'+
+    'border-radius:14px;padding:14px">'+
+
+    '<button onclick="openTestMatch(current?.id)" '+
+    'style="padding:8px 12px;margin-bottom:10px">'+
+    '← Voltar ao jogo</button>'+
+
+    '<h3>👤 '+
+    (data.displayName||name)+
+    '</h3>';
+
+  const pos=
+    data?.position?.displayName ||
+    data?.position?.name ||
+    '';
+
+  const nat=
+    data?.citizenship ||
+    data?.nationality ||
+    '';
+
+  if(pos)
+    html+=
+      '<p><b>Posição:</b> '+pos+'</p>';
+
+  if(nat)
+    html+=
+      '<p><b>Nacionalidade:</b> '+nat+'</p>';
+
+  html+='</div>';
+
+  area.innerHTML=html;
+}
+
+
+/* Acrescentar 11 titular ao detalhe */
+
+const FZ3D_oldOpen=
+  openTestMatch;
+
+openTestMatch=async function(id){
+
+  const ev=
+    games.find(x=>
+      String(x.id)===String(id)
+    );
+
+  if(!ev)return;
+
+  await FZ3D_oldOpen(id);
+
+  await FZ3D_load(ev);
+};
+
+console.log(
+  'FUTZONE TESTE — BLOCO 3D OK'
+);
+
+</script>
+      <!-- FUTZONE TESTE — BLOCO 3E -->
+<style>
+.fz3e-box{
+  margin-top:12px;
+  padding:12px;
+  background:#0e1723;
+  border:1px solid #1c2b3d;
+  border-radius:12px;
+}
+.fz3e-title{
+  font-weight:800;
+  margin-bottom:8px;
+}
+.fz3e-row{
+  padding:7px 0;
+  border-bottom:1px solid #1c2b3d;
+  font-size:14px;
+}
+.fz3e-row:last-child{border-bottom:0}
+.fz3e-empty{color:#91a0b3}
+</style>
+
+<script>
+async function FZ3E_get(url){
+  try{
+    const r=await fetch(url);
+    if(!r.ok)return null;
+    return await r.json();
+  }catch(e){
+    return null;
+  }
+}
+
+function FZ3E_name(x){
+  if(!x)return 'Jogador';
+  return x.fullName ||
+         x.displayName ||
+         x.shortName ||
+         x.name ||
+         x.athlete?.displayName ||
+         x.athlete?.fullName ||
+         'Jogador';
+}
+
+function FZ3E_eventText(e){
+  const type=String(
+    e?.type?.text ||
+    e?.type?.name ||
+    e?.type?.id ||
+    ''
+  ).toLowerCase();
+
+  const text=String(
+    e?.text ||
+    e?.description ||
+    ''
+  );
+
+  return (type+' '+text).toLowerCase();
+}
+
+async function FZ3E_stats(ev){
+  const area=document.getElementById('analysisBox');
+  if(!area)return;
+
+  const url=API+'summary?event='+encodeURIComponent(ev.id);
+  const data=await FZ3E_get(url);
+
+  if(!data){
+    area.insertAdjacentHTML(
+      'beforeend',
+      '<div class="fz3e-box"><div class="fz3e-title">📊 Estatísticas</div><div class="fz3e-empty">Estatísticas indisponíveis.</div></div>'
+    );
+    return;
+  }
+
+  const plays=data?.plays||[];
+  const incidents=data?.incidents||[];
+
+  let goals=[];
+  let assists=[];
+  let yellow=[];
+  let red=[];
+  let subs=[];
+
+  incidents.forEach(e=>{
+    const t=FZ3E_eventText(e);
+
+    const player=FZ3E_name(
+      e?.athlete ||
+      e?.player ||
+      e?.participants?.[0]?.athlete
+    );
+
+    if(
+      t.includes('goal') ||
+      t.includes('golo') ||
+      e?.type?.id==='goal'
+    ){
+      goals.push(player);
+    }
+
+    if(
+      t.includes('assist') ||
+      t.includes('assistência')
+    ){
+      assists.push(player);
+    }
+
+    if(
+      t.includes('yellow') ||
+      t.includes('amarelo')
+    ){
+      yellow.push(player);
+    }
+
+    if(
+      t.includes('red') ||
+      t.includes('vermelho')
+    ){
+      red.push(player);
+    }
+
+    if(
+      t.includes('substitution') ||
+      t.includes('substituição') ||
+      t.includes('substituted')
+    ){
+      const out=FZ3E_name(
+        e?.athlete ||
+        e?.player ||
+        e?.participants?.[0]?.athlete
+      );
+
+      const inPlayer=FZ3E_name(
+        e?.substitution?.in ||
+        e?.replacement ||
+        e?.participants?.[1]?.athlete
+      );
+
+      subs.push(
+        inPlayer && inPlayer!=='Jogador'
+          ? out+' ➜ '+inPlayer
+          : out
+      );
+    }
+  });
+
+  if(!goals.length){
+    plays.forEach(e=>{
+      const t=FZ3E_eventText(e);
+      if(t.includes('goal') || t.includes('golo')){
+        goals.push(FZ3E_name(e?.athlete||e?.player));
+      }
+    });
+  }
+
+  const list=(arr)=>arr.length
+    ? arr.map(x=>'<div class="fz3e-row">• '+esc(x)+'</div>').join('')
+    : '<div class="fz3e-empty">Sem dados disponíveis.</div>';
+
+  area.insertAdjacentHTML('beforeend',`
+    <div class="fz3e-box">
+      <div class="fz3e-title">📊 Estatísticas</div>
+
+      <div class="fz3e-row">
+        ⚽ <b>Golos:</b> ${goals.length}
+      </div>
+      ${list(goals)}
+
+      <div class="fz3e-row">
+        🎯 <b>Assistências:</b> ${assists.length}
+      </div>
+      ${list(assists)}
+
+      <div class="fz3e-row">
+        🟨 <b>Cartões amarelos:</b> ${yellow.length}
+      </div>
+      ${list(yellow)}
+
+      <div class="fz3e-row">
+        🟥 <b>Cartões vermelhos:</b> ${red.length}
+      </div>
+      ${list(red)}
+
+      <div class="fz3e-row">
+        🔄 <b>Substituições:</b> ${subs.length}
+      </div>
+      ${list(subs)}
+    </div>
+  `);
+}
+
+const FZ3E_oldOpen=openTestMatch;
+
+openTestMatch=async function(id){
+  const ev=games.find(x=>String(x.id)===String(id));
+  if(!ev)return;
+
+  await FZ3E_oldOpen(id);
+  await FZ3E_stats(ev);
+};
+
+console.log('FUTZONE TESTE — BLOCO 3E OK');
+</script>
 </body>
 </html>
