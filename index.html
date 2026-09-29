@@ -6065,3 +6065,1052 @@ setInterval(function(){
 
 })();
 </script>
+ <!-- =========================================================
+ FUTZONE PREMIUM — CORREÇÃO LIMPA
+ 10 SUGESTÕES + TODOS OS JOGOS + ÚLTIMOS 5 + NOTÍCIAS PT
+ ========================================================= -->
+
+<script>
+(function(){
+
+  /* =========================================================
+     1 — ESTILOS
+     ========================================================= */
+
+  if(!document.getElementById('fz-clean-fix-style')){
+
+    const st=document.createElement('style');
+    st.id='fz-clean-fix-style';
+
+    st.textContent=`
+
+      .fz-clean-last5{
+        display:flex;
+        flex-direction:column;
+        gap:7px;
+        margin-top:8px;
+      }
+
+      .fz-clean-last5-row{
+        display:grid;
+        grid-template-columns:1fr auto auto;
+        align-items:center;
+        gap:8px;
+        padding:9px;
+        border-radius:9px;
+        background:#0a111b;
+        border:1px solid rgba(255,255,255,.07);
+      }
+
+      .fz-clean-opponent{
+        font-size:13px;
+        font-weight:700;
+      }
+
+      .fz-clean-score{
+        font-size:14px;
+        font-weight:900;
+        white-space:nowrap;
+      }
+
+      .fz-clean-result{
+        font-size:10px;
+        font-weight:900;
+        padding:4px 7px;
+        border-radius:6px;
+        white-space:nowrap;
+      }
+
+      .fz-clean-win{
+        color:#20d68a;
+        background:rgba(32,214,138,.13);
+      }
+
+      .fz-clean-draw{
+        color:#ffd43b;
+        background:rgba(255,212,59,.13);
+      }
+
+      .fz-clean-loss{
+        color:#ff4054;
+        background:rgba(255,64,84,.13);
+      }
+
+      .fz-clean-suggestions{
+        display:flex;
+        flex-direction:column;
+        gap:9px;
+      }
+
+      .fz-clean-level{
+        font-size:11px;
+        font-weight:900;
+        margin:10px 0 5px;
+        text-transform:uppercase;
+      }
+
+      .fz-clean-watch{
+        display:flex;
+        flex-direction:column;
+        gap:7px;
+        margin-top:8px;
+      }
+
+      .fz-clean-watch a{
+        display:block;
+        padding:9px;
+        border-radius:8px;
+        background:#0a111b;
+        border:1px solid rgba(255,255,255,.07);
+        color:#1683ff;
+        text-decoration:none;
+      }
+
+    `;
+
+    document.head.appendChild(st);
+  }
+
+
+  /* =========================================================
+     2 — FUNÇÕES AUXILIARES
+     ========================================================= */
+
+  function fzFinished(e){
+
+    const s=e?.status?.type;
+
+    if(s?.completed===true) return true;
+    if(s?.state==='post') return true;
+
+    if(
+      e?.status?.type?.name==='STATUS_FINAL' ||
+      e?.status?.type?.name==='STATUS_FULL_TIME'
+    ) return true;
+
+    return false;
+  }
+
+
+  function fzTeamScore(c){
+
+    const v=c?.score?.value;
+
+    if(v!==undefined && v!==null && v!==''){
+      const n=Number(v);
+      if(Number.isFinite(n)) return n;
+    }
+
+    const d=c?.score?.displayValue;
+
+    if(d!==undefined && d!==null){
+      const n=parseInt(String(d),10);
+      if(Number.isFinite(n)) return n;
+    }
+
+    return null;
+  }
+
+
+  function fzResult(e,teamId){
+
+    const competitors=
+      e?.competitions?.[0]?.competitors || [];
+
+    const mine=competitors.find(c=>
+      String(c?.team?.id)===String(teamId)
+    );
+
+    const opponent=competitors.find(c=>
+      String(c?.team?.id)!==String(teamId)
+    );
+
+    if(!mine || !opponent) return null;
+
+    const gf=fzTeamScore(mine);
+    const ga=fzTeamScore(opponent);
+
+    if(gf===null || ga===null) return null;
+
+    let result='E';
+
+    if(gf>ga) result='V';
+    else if(gf<ga) result='D';
+
+    return {
+      date:e?.date || '',
+      opponent:
+        opponent?.team?.displayName ||
+        opponent?.team?.shortDisplayName ||
+        'Adversário',
+      gf,
+      ga,
+      result
+    };
+  }
+
+
+  /* =========================================================
+     3 — ÚLTIMOS 5 JOGOS
+     USA O CALENDÁRIO GLOBAL DA EQUIPA
+     ========================================================= */
+
+  async function FZ_LAST5_CLEAN(teamId,boxId,excludeId){
+
+    const box=document.getElementById(boxId);
+
+    if(!box || !teamId) return;
+
+    box.innerHTML=
+      '<div class="loading">A carregar últimos 5 jogos...</div>';
+
+    try{
+
+      const urls=[
+
+        API+
+        'all/teams/'+
+        encodeURIComponent(teamId)+
+        '/schedule?limit=100',
+
+        API+
+        'teams/'+
+        encodeURIComponent(teamId)+
+        '/schedule?limit=100'
+
+      ];
+
+      let events=[];
+
+      for(const url of urls){
+
+        try{
+
+          const d=await jsonUrl(url,15000);
+
+          if(Array.isArray(d?.events)){
+            events=d.events;
+
+            if(events.length) break;
+          }
+
+        }catch(err){}
+
+      }
+
+
+      /* Retira o próprio jogo que está aberto */
+
+      events=events.filter(e=>{
+
+        if(!e) return false;
+
+        if(
+          excludeId &&
+          String(e.id)===String(excludeId)
+        ) return false;
+
+        return fzFinished(e);
+      });
+
+
+      /* Mais recentes primeiro */
+
+      events.sort((a,b)=>
+        new Date(b?.date||0)-
+        new Date(a?.date||0)
+      );
+
+
+      /* Remove duplicados */
+
+      const seen=new Set();
+
+      events=events.filter(e=>{
+
+        const id=String(e?.id||'');
+
+        if(!id) return true;
+
+        if(seen.has(id)) return false;
+
+        seen.add(id);
+
+        return true;
+      });
+
+
+      const selected=events.slice(0,5);
+
+      if(!selected.length){
+
+        box.innerHTML=
+          '<div class="muted">Sem jogos anteriores disponíveis.</div>';
+
+        return;
+      }
+
+
+      let html='';
+
+      for(const e of selected){
+
+        let r=fzResult(e,teamId);
+
+
+        /*
+          Alguns calendários ESPN podem trazer o evento
+          sem o resultado completo. Nesse caso tentamos
+          obter o resumo do jogo.
+        */
+
+        if(!r && e?.id){
+
+          try{
+
+            const summary=await jsonUrl(
+              API+
+              'summary?event='+
+              encodeURIComponent(e.id),
+              10000
+            );
+
+            r=fzResult(summary,teamId);
+
+          }catch(err){}
+        }
+
+
+        if(!r) continue;
+
+
+        let cls='fz-clean-draw';
+        let label='Empate';
+
+        if(r.result==='V'){
+
+          cls='fz-clean-win';
+          label='Vitória';
+
+        }else if(r.result==='D'){
+
+          cls='fz-clean-loss';
+          label='Derrota';
+        }
+
+
+        html+=`
+
+          <div class="fz-clean-last5-row">
+
+            <div>
+
+              <div class="fz-clean-opponent">
+                ${esc(r.opponent)}
+              </div>
+
+              <div class="muted"
+                   style="font-size:10px;margin-top:3px">
+                ${esc(fmtDate(r.date))}
+              </div>
+
+            </div>
+
+            <div class="fz-clean-score">
+              ${r.gf} - ${r.ga}
+            </div>
+
+            <div class="fz-clean-result ${cls}">
+              ${label}
+            </div>
+
+          </div>
+
+        `;
+      }
+
+
+      if(!html){
+
+        box.innerHTML=
+          '<div class="muted">Não foi possível obter os resultados.</div>';
+
+        return;
+      }
+
+
+      box.innerHTML=
+        '<div class="fz-clean-last5">'+
+        html+
+        '</div>';
+
+
+    }catch(err){
+
+      console.warn(
+        'FUTZONE últimos 5:',
+        err
+      );
+
+      box.innerHTML=
+        '<div class="muted">Não foi possível obter os últimos 5 jogos.</div>';
+    }
+  }
+
+
+  /* =========================================================
+     4 — SUBSTITUI A FUNÇÃO QUE CARREGA OS DETALHES
+     GARANTE QUE O NOVO ÚLTIMOS 5 É REALMENTE USADO
+     ========================================================= */
+
+  const FZ_OLD_DETAILS=window.loadMatchDetails;
+
+
+  async function FZ_LOAD_DETAILS_CLEAN(e){
+
+    try{
+
+      /*
+        Mantém exatamente os mesmos blocos da aplicação.
+        Primeiro tentamos deixar o sistema original montar
+        os detalhes.
+      */
+
+      if(typeof FZ_OLD_DETAILS==='function'){
+
+        try{
+          await FZ_OLD_DETAILS(e);
+        }catch(err){
+          console.warn('Detalhes originais:',err);
+        }
+
+      }
+
+
+      /*
+        Depois substituímos SOMENTE os últimos 5.
+      */
+
+      const home=
+        typeof teamFromEvent==='function'
+        ? teamFromEvent(e,true)
+        : null;
+
+      const away=
+        typeof teamFromEvent==='function'
+        ? teamFromEvent(e,false)
+        : null;
+
+
+      const homeId=
+        home?.team?.id ||
+        home?.id ||
+        null;
+
+      const awayId=
+        away?.team?.id ||
+        away?.id ||
+        null;
+
+
+      await Promise.allSettled([
+
+        FZ_LAST5_CLEAN(
+          homeId,
+          'lastHome',
+          e?.id
+        ),
+
+        FZ_LAST5_CLEAN(
+          awayId,
+          'lastAway',
+          e?.id
+        )
+
+      ]);
+
+    }catch(err){
+
+      console.warn(
+        'FUTZONE detalhes clean:',
+        err
+      );
+    }
+  }
+
+
+  window.loadMatchDetails=FZ_LOAD_DETAILS_CLEAN;
+
+
+  /* =========================================================
+     5 — CARREGAR TODOS OS JOGOS
+     NÃO USA O get() ANTIGO QUE ABORTAVA OS PEDIDOS
+     ========================================================= */
+
+  async function FZ_LOAD_ALL_GAMES_CLEAN(){
+
+    const box=document.getElementById('gamesList');
+
+    if(box){
+
+      box.innerHTML=
+        '<div class="loading">A carregar jogos...</div>';
+
+    }
+
+
+    const all=[];
+
+
+    /*
+      Carrega várias ligas ao mesmo tempo.
+      Isto evita que uma chamada cancele a anterior.
+    */
+
+    const batchSize=4;
+
+    for(
+      let start=0;
+      start<LEAGUES.length;
+      start+=batchSize
+    ){
+
+      const batch=LEAGUES.slice(
+        start,
+        start+batchSize
+      );
+
+
+      const results=await Promise.all(
+
+        batch.map(async pair=>{
+
+          const league=pair[0];
+          const name=pair[1];
+
+          try{
+
+            const d=await jsonUrl(
+              API+
+              league+
+              '/scoreboard?limit=100',
+              15000
+            );
+
+            return (d?.events||[]).map(e=>{
+
+              e.leagueName=name;
+
+              return e;
+
+            });
+
+          }catch(err){
+
+            console.warn(
+              'Liga FUTZONE:',
+              league,
+              err
+            );
+
+            return [];
+          }
+
+        })
+
+      );
+
+
+      results.forEach(arr=>{
+        arr.forEach(e=>all.push(e));
+      });
+
+    }
+
+
+    /*
+      Remove jogos duplicados
+    */
+
+    const seen=new Set();
+
+    const unique=all.filter(e=>{
+
+      const id=String(e?.id||'');
+
+      if(!id) return true;
+
+      if(seen.has(id)) return false;
+
+      seen.add(id);
+
+      return true;
+    });
+
+
+    unique.sort((a,b)=>
+      new Date(a?.date||0)-
+      new Date(b?.date||0)
+    );
+
+
+    games=unique;
+
+
+    if(typeof render==='function'){
+
+      try{
+        render(games);
+      }catch(err){
+        console.warn('Render FUTZONE:',err);
+      }
+
+    }
+
+
+    /*
+      Depois dos jogos carregados, cria as 10 sugestões.
+    */
+
+    setTimeout(()=>{
+
+      try{
+        FZ_SUGGESTIONS_CLEAN();
+      }catch(err){}
+
+    },100);
+
+  }
+
+
+  /* =========================================================
+     6 — 10 SUGESTÕES
+     5 MÉDIO-ALTO + 5 MÉDIO-BAIXO
+     ========================================================= */
+
+  function FZ_SUGGESTIONS_CLEAN(){
+
+    const box=
+      document.getElementById('suggestions') ||
+      document.getElementById('suggestionsList') ||
+      document.querySelector('[data-suggestions]');
+
+
+    if(!box) return;
+
+
+    let available=(games||[]).filter(e=>{
+
+      if(!e?.id) return false;
+
+      /*
+        Sugestões apenas para jogos que ainda não terminaram.
+      */
+
+      if(fzFinished(e)) return false;
+
+      return true;
+
+    });
+
+
+    /*
+      Remove duplicados.
+    */
+
+    const seen=new Set();
+
+    available=available.filter(e=>{
+
+      const id=String(e.id);
+
+      if(seen.has(id)) return false;
+
+      seen.add(id);
+
+      return true;
+    });
+
+
+    /*
+      Até 10 jogos diferentes.
+    */
+
+    available=available.slice(0,10);
+
+
+    if(!available.length){
+
+      box.innerHTML=
+        '<div class="muted">Sem jogos disponíveis para sugestões.</div>';
+
+      return;
+    }
+
+
+    let html='';
+
+
+    /* ---------------------------------------------------------
+       5 MÉDIO-ALTO
+       --------------------------------------------------------- */
+
+    html+=`
+      <div class="fz-clean-level">
+        MÉDIO-ALTO
+      </div>
+    `;
+
+
+    available.slice(0,5).forEach((e,i)=>{
+
+      const home=
+        typeof teamFromEvent==='function'
+        ? teamFromEvent(e,true)
+        : null;
+
+      const away=
+        typeof teamFromEvent==='function'
+        ? teamFromEvent(e,false)
+        : null;
+
+
+      const homeName=
+        home?.team?.displayName ||
+        'Casa';
+
+      const awayName=
+        away?.team?.displayName ||
+        'Fora';
+
+
+      const market=
+        homeName+
+        ' ou empate (1X)';
+
+
+      html+=`
+
+        <div class="card"
+             onclick="openMatch('${esc(e.id)}')"
+             style="cursor:pointer">
+
+          <div class="value">
+            ${esc(homeName)}
+            <span class="muted"> vs </span>
+            ${esc(awayName)}
+          </div>
+
+          <div class="muted"
+               style="margin-top:5px">
+            Médio-Alto
+          </div>
+
+          <div style="
+            margin-top:8px;
+            font-weight:800;
+          ">
+            ${esc(market)}
+          </div>
+
+        </div>
+
+      `;
+
+    });
+
+
+    /* ---------------------------------------------------------
+       5 MÉDIO-BAIXO
+       --------------------------------------------------------- */
+
+    html+=`
+      <div class="fz-clean-level">
+        MÉDIO-BAIXO
+      </div>
+    `;
+
+
+    available.slice(5,10).forEach(e=>{
+
+      const home=
+        typeof teamFromEvent==='function'
+        ? teamFromEvent(e,true)
+        : null;
+
+      const away=
+        typeof teamFromEvent==='function'
+        ? teamFromEvent(e,false)
+        : null;
+
+
+      const homeName=
+        home?.team?.displayName ||
+        'Casa';
+
+      const awayName=
+        away?.team?.displayName ||
+        'Fora';
+
+
+      html+=`
+
+        <div class="card"
+             onclick="openMatch('${esc(e.id)}')"
+             style="cursor:pointer">
+
+          <div class="value">
+            ${esc(homeName)}
+            <span class="muted"> vs </span>
+            ${esc(awayName)}
+          </div>
+
+          <div class="muted"
+               style="margin-top:5px">
+            Médio-Baixo
+          </div>
+
+          <div style="
+            margin-top:8px;
+            font-weight:800;
+          ">
+            Mais de 0,5 golos
+          </div>
+
+        </div>
+
+      `;
+
+    });
+
+
+    box.innerHTML=
+      '<div class="fz-clean-suggestions">'+
+      html+
+      '</div>';
+
+  }
+
+
+  /* =========================================================
+     7 — NOTÍCIAS GERAIS EM PORTUGUÊS
+     ========================================================= */
+
+  async function FZ_NEWS_PT_CLEAN(){
+
+    const box=document.getElementById('newsList');
+
+    if(!box) return;
+
+
+    try{
+
+      const d=await jsonUrl(
+        FZ_SITE+'news?limit=20',
+        15000
+      );
+
+
+      let articles=
+        d?.articles ||
+        d?.news ||
+        d?.items ||
+        [];
+
+
+      if(!Array.isArray(articles))
+        articles=[];
+
+
+      const list=articles.slice(0,15);
+
+
+      if(!list.length){
+
+        box.innerHTML=
+          '<div class="muted">Sem notícias disponíveis.</div>';
+
+        return;
+      }
+
+
+      const translated=await Promise.all(
+
+        list.map(async a=>{
+
+          const title=
+            a?.headline ||
+            a?.title ||
+            '';
+
+
+          const description=
+            a?.description ||
+            a?.summary ||
+            a?.dek ||
+            '';
+
+
+          let ptTitle=title;
+          let ptDescription=description;
+
+
+          try{
+
+            if(title)
+              ptTitle=await fzTranslate(title);
+
+          }catch(err){}
+
+
+          try{
+
+            if(description)
+              ptDescription=
+                await fzTranslate(description);
+
+          }catch(err){}
+
+
+          const link=
+            a?.links?.web?.href ||
+            a?.web?.href ||
+            a?.link ||
+            '';
+
+
+          return{
+            title:ptTitle||title,
+            description:ptDescription||description,
+            link
+          };
+
+        })
+
+      );
+
+
+      box.innerHTML=translated.map(n=>`
+
+        <div class="card">
+
+          <div class="value">
+            ${esc(n.title)}
+          </div>
+
+          ${
+            n.description
+            ? `
+              <div class="muted"
+                   style="margin-top:6px">
+                ${esc(n.description)}
+              </div>
+            `
+            :''
+          }
+
+          ${
+            n.link
+            ? `
+              <div style="margin-top:8px">
+                <a
+                  href="${esc(n.link)}"
+                  target="_blank"
+                  rel="noopener"
+                  style="
+                    color:#1683ff;
+                    text-decoration:none;
+                  "
+                >
+                  Ler notícia
+                </a>
+              </div>
+            `
+            :''
+          }
+
+        </div>
+
+      `).join('');
+
+
+    }catch(err){
+
+      console.warn(
+        'FUTZONE notícias PT:',
+        err
+      );
+
+      box.innerHTML=
+        '<div class="muted">Não foi possível carregar as notícias.</div>';
+    }
+
+  }
+
+
+  /* =========================================================
+     8 — INICIALIZAÇÃO
+     ========================================================= */
+
+  function FZ_START_CLEAN(){
+
+    /*
+      Dá tempo para a página terminar de montar.
+    */
+
+    setTimeout(()=>{
+
+      try{
+        FZ_LOAD_ALL_GAMES_CLEAN();
+      }catch(err){
+        console.warn(err);
+      }
+
+    },500);
+
+
+    setTimeout(()=>{
+
+      try{
+        FZ_NEWS_PT_CLEAN();
+      }catch(err){}
+
+    },1200);
+
+  }
+
+
+  if(
+    document.readyState==='loading'
+  ){
+
+    document.addEventListener(
+      'DOMContentLoaded',
+      FZ_START_CLEAN
+    );
+
+  }else{
+
+    FZ_START_CLEAN();
+
+  }
+
+
+  /*
+    Expõe as funções para teste.
+  */
+
+  window.FZ_LAST5_CLEAN=
+    FZ_LAST5_CLEAN;
+
+  window.FZ_LOAD_ALL_GAMES_CLEAN=
+    FZ_LOAD_ALL_GAMES_CLEAN;
+
+  window.FZ_SUGGESTIONS_CLEAN=
+    FZ_SUGGESTIONS_CLEAN;
+
+  window.FZ_NEWS_PT_CLEAN=
+    FZ_NEWS_PT_CLEAN;
+
+})();
+ </script>
