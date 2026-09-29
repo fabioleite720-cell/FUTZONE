@@ -54,4 +54,460 @@ async function watch(e){let b=document.getElementById('watch'),a=e?.competitions
 function openTeam(id){let t=teams[id];if(!t)return;document.querySelectorAll('main>section').forEach(s=>s.classList.add('hidden'));document.getElementById('roster').classList.remove('hidden');document.getElementById('rosterTitle').textContent='📋 Plantel — '+tn(t);loadRoster(t)}async function loadRoster(t){let b=document.getElementById('rosterBox'),d=await get('all/teams/'+encodeURIComponent(t.id)+'/roster?limit=100',11000),a=d?.athletes||[];b.innerHTML=a.length?'<div class="roster">'+a.map(p=>`<div class="player"><strong>${esc(p.fullName||p.displayName||p.name||'Jogador')}</strong><div class="pos">${esc(p.position?.displayName||p.position?.abbreviation||'')}</div></div>`).join('')+'</div>':'<div class="card err">Plantel indisponível neste momento.</div>'}function back(){document.getElementById('analysis').classList.add('hidden');document.getElementById('premium').classList.remove('hidden')}function backRoster(){document.getElementById('roster').classList.add('hidden');document.getElementById('analysis').classList.remove('hidden')}
 async function loadTables(){let b=document.getElementById('tablesList');b.innerHTML='<div class="loading">A carregar...</div>';let d=await get('por.1/standings?limit=100');let es=d?.standings?.entries||[];b.innerHTML=es.length?'<div class="card">'+es.map((x,i)=>`<div style="padding:7px;border-bottom:1px solid var(--l)">${i+1}. ${esc(tn(x.team))}</div>`).join('')+'</div>':'<div class="card err">Tabelas indisponíveis.</div>'}async function loadNews(){let b=document.getElementById('newsList'),d=await get('news'),a=d?.articles||[];b.innerHTML=a.length?a.slice(0,20).map(x=>`<div class="card" style="margin-bottom:8px"><strong>${esc(x.headline||x.title||'Notícia')}</strong><div class="muted">${esc(x.description||'')}</div></div>`).join(''):'<div class="card err">Notícias indisponíveis.</div>'}
 async function load(){games=[];let ids=leagues;for(let i=0;i<ids.length;i+=4){await Promise.all(ids.slice(i,i+4).map(async id=>add(await get(id+'/scoreboard?limit=100'),id)));render(games);suggestions()}if(!games.length)document.getElementById('gamesList').innerHTML='<div class="card err">Não foi possível obter os jogos através da fonte de dados.</div>';suggestions()}load();setInterval(load,600000);
-</script></body></html>
+</script><!-- FUTZONE PREMIUM — BLOCO TABELAS + EQUIPAS + JOGADORES + ESTATÍSTICAS + ÚLTIMOS 5 -->
+<script>
+/* =========================================================
+   FUTZONE PREMIUM — MELHORIAS
+   1. Tabelas de várias competições
+   2. Clubes/seleções clicáveis
+   3. Plantel clicável
+   4. Jogadores clicáveis
+   5. Golos / assistências / cartões
+   6. Estatísticas nos jogos
+   7. Últimos 5 jogos com fallback por competição
+   ========================================================= */
+
+(function(){
+
+const FZ_LEAGUES = [
+ ['por.1','Liga Portugal'],
+ ['por.2','Liga 2 Portugal'],
+ ['por.3','Liga 3 Portugal'],
+ ['por.w.1','Liga BPI Feminina'],
+ ['eng.1','Premier League'],
+ ['esp.1','LaLiga'],
+ ['ita.1','Serie A'],
+ ['ger.1','Bundesliga'],
+ ['fra.1','Ligue 1'],
+ ['tur.1','Liga Turca'],
+ ['ksa.1','Liga Saudita'],
+ ['usa.1','MLS'],
+ ['uefa.champions','Liga dos Campeões'],
+ ['uefa.europa','Liga Europa'],
+ ['uefa.europa.conf','Liga Conference'],
+ ['uefa.nations','Liga das Nações'],
+ ['fifa.worldq.uefa','Qualificação Mundial UEFA'],
+ ['fifa.worldq.conmebol','Qualificação Mundial CONMEBOL'],
+ ['fifa.friendly','Amigáveis Internacionais'],
+ ['conmebol.libertadores','Libertadores'],
+ ['conmebol.sudamericana','Sul-Americana']
+];
+
+window.FZ_PLAYERS = {};
+window.FZ_TEAM_CACHE = window.FZ_TEAM_CACHE || {};
+window.FZ_TABLE_CACHE = {};
+
+function fzEsc(v){
+ return String(v ?? '').replace(/[&<>"']/g,m=>({
+  '&':'&amp;',
+  '<':'&lt;',
+  '>':'&gt;',
+  '"':'&quot;',
+  "'":'&#39;'
+ }[m]));
+}
+
+async function fzGet(path,timeout=12000){
+ const c=new AbortController();
+ const timer=setTimeout(()=>c.abort(),timeout);
+ try{
+  const r=await fetch(API+path,{
+   cache:'no-store',
+   signal:c.signal
+  });
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  return await r.json();
+ }catch(e){
+  return null;
+ }finally{
+  clearTimeout(timer);
+ }
+}
+
+/* ---------------------------------------------------------
+   TABELAS
+   --------------------------------------------------------- */
+
+window.loadTables = async function(){
+
+ const box=document.getElementById('tablesList');
+
+ if(!box) return;
+
+ box.innerHTML=`
+ <div class="chips" id="fzTableButtons"></div>
+ <div id="fzTableContent" class="loading">
+   A carregar classificações...
+ </div>`;
+
+ const buttons=document.getElementById('fzTableButtons');
+
+ buttons.innerHTML=FZ_LEAGUES.map((l,i)=>`
+   <button class="chip"
+     onclick="fzLoadTable('${fzEsc(l[0])}')">
+     ${fzEsc(l[1])}
+   </button>
+ `).join('');
+
+ fzLoadTable('por.1');
+};
+
+
+window.fzLoadTable = async function(league){
+
+ const box=document.getElementById('fzTableContent');
+
+ if(!box) return;
+
+ box.innerHTML='<div class="loading">A carregar classificação...</div>';
+
+ let data=FZ_TABLE_CACHE[league];
+
+ if(!data){
+  data=await fzGet(
+   league+'/standings?limit=100',
+   15000
+  );
+
+  if(data)
+   FZ_TABLE_CACHE[league]=data;
+ }
+
+ const entries=data?.standings?.entries || [];
+
+ if(!entries.length){
+  box.innerHTML=`
+   <div class="card err">
+    Classificação indisponível neste momento para esta competição.
+   </div>`;
+  return;
+ }
+
+ function stat(entry,name){
+  const s=(entry.stats||[]).find(x=>x.name===name);
+  return s?.displayValue ??
+         s?.value ??
+         '-';
+ }
+
+ entries.forEach(entry=>{
+  const t=entry.team || {};
+
+  if(t.id)
+   teams[t.id]=t;
+
+  FZ_TEAM_CACHE[t.id]=t;
+ });
+
+ box.innerHTML=`
+ <div class="card">
+
+  <div style="font-size:15px;font-weight:900;margin-bottom:10px">
+   ${fzEsc(
+    (FZ_LEAGUES.find(x=>x[0]===league)||[])[1] || league
+   )}
+  </div>
+
+  <div style="overflow-x:auto">
+
+   <table class="table">
+
+    <thead>
+     <tr>
+      <th>#</th>
+      <th>Equipa</th>
+      <th>J</th>
+      <th>V</th>
+      <th>E</th>
+      <th>D</th>
+      <th>GM</th>
+      <th>GS</th>
+      <th>PTS</th>
+     </tr>
+    </thead>
+
+    <tbody>
+
+     ${entries.map((entry,i)=>{
+
+       const t=entry.team||{};
+
+       return `
+       <tr
+        class="click"
+        onclick="fzOpenTeam('${fzEsc(t.id||'')}')">
+
+        <td>
+         <strong>${i+1}</strong>
+        </td>
+
+        <td>
+         <strong>${fzEsc(
+           t.displayName ||
+           t.fullName ||
+           t.shortDisplayName ||
+           t.name ||
+           'Equipa'
+         )}</strong>
+        </td>
+
+        <td>${fzEsc(stat(entry,'gamesPlayed'))}</td>
+        <td>${fzEsc(stat(entry,'wins'))}</td>
+        <td>${fzEsc(stat(entry,'ties'))}</td>
+        <td>${fzEsc(stat(entry,'losses'))}</td>
+        <td>${fzEsc(stat(entry,'pointsFor'))}</td>
+        <td>${fzEsc(stat(entry,'pointsAgainst'))}</td>
+
+        <td>
+         <strong>${fzEsc(stat(entry,'points'))}</strong>
+        </td>
+
+       </tr>`;
+     }).join('')}
+
+    </tbody>
+   </table>
+
+  </div>
+ </div>`;
+};
+
+
+/* ---------------------------------------------------------
+   EQUIPA
+   --------------------------------------------------------- */
+
+window.fzOpenTeam = async function(id){
+
+ let t=teams[id] || FZ_TEAM_CACHE[id];
+
+ if(!t) return;
+
+ teams[id]=t;
+ FZ_TEAM_CACHE[id]=t;
+
+ document.querySelectorAll('main>section')
+   .forEach(s=>s.classList.add('hidden'));
+
+ const section=document.getElementById('roster');
+
+ if(!section) return;
+
+ section.classList.remove('hidden');
+
+ document.getElementById('rosterTitle').textContent=
+   '📋 '+(
+     t.displayName ||
+     t.fullName ||
+     t.shortDisplayName ||
+     t.name ||
+     'Equipa'
+   );
+
+ await fzLoadRoster(t);
+};
+
+
+/* ---------------------------------------------------------
+   PLANTEL
+   --------------------------------------------------------- */
+
+window.fzLoadRoster = async function(team){
+
+ const box=document.getElementById('rosterBox');
+
+ if(!box) return;
+
+ box.innerHTML=
+  '<div class="loading">A carregar jogadores...</div>';
+
+ let data=null;
+
+ const paths=[
+  'all/teams/'+encodeURIComponent(team.id)+'/roster?limit=100'
+ ];
+
+ for(const path of paths){
+
+  data=await fzGet(path,15000);
+
+  if(data?.athletes?.length)
+   break;
+ }
+
+ const players=data?.athletes || [];
+
+ if(!players.length){
+
+  box.innerHTML=`
+   <div class="card err">
+    Não foi possível obter o plantel desta equipa.
+   </div>`;
+
+  return;
+ }
+
+ players.forEach(p=>{
+  if(p?.id)
+   FZ_PLAYERS[p.id]=p;
+ });
+
+ box.innerHTML=`
+
+ <div class="card">
+
+  <div class="muted" style="margin-bottom:10px">
+   Plantel · toque num jogador para abrir as estatísticas
+  </div>
+
+  <div class="roster">
+
+   ${players.map(p=>{
+
+    const name=
+      p.fullName ||
+      p.displayName ||
+      p.name ||
+      'Jogador';
+
+    const pos=
+      p.position?.displayName ||
+      p.position?.abbreviation ||
+      '—';
+
+    return `
+    <div
+      class="player"
+      onclick="fzOpenPlayer('${fzEsc(p.id)}')">
+
+      <strong>${fzEsc(name)}</strong>
+
+      <div class="pos">
+       ${fzEsc(pos)}
+      </div>
+
+      <div class="muted" style="margin-top:5px">
+       ⚽ Golos · 🎯 Assistências · 🟨 Cartões
+      </div>
+
+    </div>`;
+   }).join('')}
+
+  </div>
+ </div>`;
+};
+
+
+/* ---------------------------------------------------------
+   JANELA DO JOGADOR
+   --------------------------------------------------------- */
+
+window.fzOpenPlayer = async function(id){
+
+ const p=FZ_PLAYERS[id];
+
+ if(!p) return;
+
+ let old=document.getElementById('fzPlayerSection');
+
+ if(old)
+  old.remove();
+
+ const section=document.createElement('section');
+
+ section.id='fzPlayerSection';
+
+ section.innerHTML=`
+
+ <div class="title">
+
+  <h2>
+   👤 ${fzEsc(
+     p.fullName ||
+     p.displayName ||
+     p.name ||
+     'Jogador'
+   )}
+  </h2>
+
+  <button onclick="fzClosePlayer()">
+   ← Voltar
+  </button>
+
+ </div>
+
+ <div id="fzPlayerContent">
+  <div class="loading">
+   A carregar estatísticas...
+  </div>
+ </div>`;
+
+ document.querySelector('main').appendChild(section);
+
+ document.querySelectorAll('main>section')
+  .forEach(s=>{
+   if(s!==section)
+    s.classList.add('hidden');
+  });
+
+ const box=document.getElementById('fzPlayerContent');
+
+ let data=await fzGet(
+  'athletes/'+encodeURIComponent(id),
+  15000
+ );
+
+ const a=data?.athlete || data || p;
+
+ let statistics=
+  a?.statistics ||
+  a?.stats ||
+  [];
+
+ function findStat(names){
+
+  if(!Array.isArray(statistics))
+   return '—';
+
+  for(const s of statistics){
+
+   const name=String(
+    s.name ||
+    s.displayName ||
+    s.label ||
+    ''
+   ).toLowerCase();
+
+   for(const wanted of names){
+
+    if(name.includes(wanted))
+     return s.displayValue ??
+            s.value ??
+            '—';
+   }
+  }
+
+  return '—';
+ }
+
+ const goals=findStat([
+  'goals',
+  'goal'
+ ]);
+
+ const assists=findStat([
+  'assists',
+  'assist'
+ ]);
+
+ const yellow=findStat([
+  'yellowcards',
+  'yellow card',
+  'yellow'
+ ]);
+
+ const red=findStat([
+  'redcards',
+  'red card',
+  'red'
+ ]);</body></html>
