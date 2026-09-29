@@ -7324,202 +7324,6 @@ async function FZ_LOAD_WATCH_REAL(e){
 
         const country=
           b?.market?.country?.name||
-          b?.market?.country||
-          b?.region||
-          '';
-
-
-        names.forEach(name=>
-          addCanal(
-            name,
-            url,
-            country
-          )
-        );
-
-    });
-
-
-    /* ========================================================
-       2 — ESPN CORE BROADCASTS
-       ======================================================== */
-
-    try{
-
-        const league=
-          e?.
-          competitions?.[0]?.
-          league?.
-          id;
-
-        const competition=
-          e?.
-          competitions?.[0]?.
-          id;
-
-        if(
-          league &&
-          competition &&
-          e?.id
-        ){
-
-            const regions=[
-                'pt',
-                'eu',
-                'gb'
-            ];
-
-
-            for(const region of regions){
-
-                try{
-
-                    const url=
-                      CORE+
-                      league+
-                      '/events/'+
-                      encodeURIComponent(e.id)+
-                      '/competitions/'+
-                      encodeURIComponent(competition)+
-                      '/broadcasts?region='+
-                      region+
-                      '&limit=100';
-
-
-                    const d=
-                      await jsonUrl(
-                        url,
-                        10000
-                      );
-
-
-                    const arr=
-                      d?.items||
-                      d?.broadcasts||
-                      [];
-
-
-                    if(!Array.isArray(arr))
-                        continue;
-
-
-                    arr.forEach(b=>{
-
-                        const name=
-                          b?.media?.
-                          shortName||
-
-                          b?.media?.
-                          name||
-
-                          b?.station?.
-                          name||
-
-                          b?.name||
-                          'Transmissão';
-
-
-                        const country=
-                          b?.market?.
-                          country?.
-                          name||
-
-                          b?.market?.
-                          country||
-
-                          b?.region||
-
-                          region.toUpperCase();
-
-
-                        const url=
-                          b?.url||
-                          b?.links?.
-                          web?.
-                          href||
-                          '';
-
-
-                        addCanal(
-                          name,
-                          url,
-                          country
-                        );
-
-                    });
-
-                }catch(err){}
-
-            }
-
-        }
-
-    }catch(err){}
-
-
-    /* ========================================================
-       3 — SOFASCORE
-       ======================================================== */
-
-    try{
-
-        const sid=
-          await sofaEventId(e);
-
-        if(sid){
-
-            const d=
-              await jsonUrl(
-                SOFA+
-                '/event/'+
-                sid+
-                '/tv-stations',
-                15000
-              );
-
-
-            const stations=
-              d?.tvStations||[];
-
-
-            if(Array.isArray(stations)){
-
-                stations.forEach(s=>{
-
-                    const name=
-                      s?.station?.name||
-                      s?.name||
-                      'Transmissão';
-
-
-                    const url=
-                      s?.url||
-                      s?.station?.
-                      url||
-                      '';
-
-
-                    const country=
-                      s?.country?.name||
-                      s?.country?.
-                      alpha2||
-                      s?.country||
-                      '';
-
-
-                    addCanal(
-                      name,
-                      url,
-                      country
-                    );
-
-                });
-
-            }
-
-        }
-
-    }catch(err){}
 
 
     /* ========================================================
@@ -7956,91 +7760,837 @@ try{
 
     last5=FZ_LAST5_REAL;
 
-}catch(err){
-
-    console.warn(
-      'FUTZONE last5:',
-      err
-    );
-
-}
-
-window.last5=
-  FZ_LAST5_REAL;
-
-
-try{
-
-    loadWatch=
-      FZ_LOAD_WATCH_REAL;
-
-}catch(err){
-
-    console.warn(
-      'FUTZONE loadWatch:',
-      err
-    );
-
-}
-
-window.loadWatch=
-  FZ_LOAD_WATCH_REAL;
-
-
-try{
-
-    loadNews=
-      FZ_LOAD_NEWS_PT_REAL;
-
-}catch(err){
-
-    console.warn(
-      'FUTZONE loadNews:',
-      err
-    );
-
-}
-
-window.loadNews=
-  FZ_LOAD_NEWS_PT_REAL;
-
-
+<script>
 /* ============================================================
-   CARREGAR NOTÍCIAS QUANDO A SECÇÃO FOR ABERTA
+   FUTZONE PREMIUM — CORREÇÃO ÚNICA
+   ÚLTIMOS 5 + ONDE VER + NOTÍCIAS PT
    ============================================================ */
 
-const oldSec=
-  window.sec;
+(function(){
 
-if(typeof oldSec==='function'){
+/* ---------- ÚLTIMOS 5 REAIS ---------- */
+
+async function FZ_LAST5_FIX(teamId,boxId,excludeId){
+
+  const box=document.getElementById(boxId);
+  if(!box || !teamId)return;
+
+  box.innerHTML='<div class="loading">A carregar últimos 5 jogos...</div>';
+
+  try{
+
+    let events=[];
+
+    const urls=[
+      FZ_SITE+'all/teams/'+encodeURIComponent(teamId)+'/schedule?limit=1000',
+      API+'all/teams/'+encodeURIComponent(teamId)+'/schedule?limit=1000',
+      API+'teams/'+encodeURIComponent(teamId)+'/schedule?limit=1000'
+    ];
+
+    for(const url of urls){
+
+      try{
+
+        const d=await fzJson(url);
+
+        const arr=
+          d?.events||
+          d?.schedule?.events||
+          [];
+
+        if(Array.isArray(arr) && arr.length){
+          events=arr;
+          break;
+        }
+
+      }catch(e){}
+
+    }
+
+    events=events
+      .filter(e=>String(e?.id)!==String(excludeId))
+      .filter(e=>
+        e?.status?.type?.completed===true ||
+        ['post','final','finished','completed']
+          .includes(
+            String(e?.status?.type?.state||'').toLowerCase()
+          ) ||
+        String(e?.status?.type?.name||'')
+          .toLowerCase()
+          .includes('final')
+      )
+      .sort(
+        (a,b)=>
+          new Date(b?.date||0)-
+          new Date(a?.date||0)
+      );
+
+    const rows=[];
+
+    for(const e of events){
+
+      if(rows.length>=5)break;
+
+      let cs=
+        e?.competitions?.[0]?.competitors||[];
+
+      let me=cs.find(c=>
+        String(c?.team?.id)===String(teamId)
+      );
+
+      let op=cs.find(c=>
+        String(c?.team?.id)!==String(teamId)
+      );
+
+      let gf=scoreValue(me);
+      let ga=scoreValue(op);
+
+      /* Se o calendário não trouxer o resultado,
+         procura no summary do jogo. */
+
+      if(
+        (!me || !op || gf===null || ga===null) &&
+        e?.id
+      ){
+
+        try{
+
+          const d=await fzJson(
+            API+'summary?event='+
+            encodeURIComponent(e.id)
+          );
+
+          cs=
+            d?.header?.competitions?.[0]?.competitors||
+            d?.competitions?.[0]?.competitors||
+            [];
+
+          me=cs.find(c=>
+            String(c?.team?.id)===String(teamId)
+          );
+
+          op=cs.find(c=>
+            String(c?.team?.id)!==String(teamId)
+          );
+
+          gf=scoreValue(me);
+          ga=scoreValue(op);
+
+        }catch(err){}
+
+      }
+
+      if(!me || !op || gf===null || ga===null)
+        continue;
+
+      let resultado='Empate';
+      let classe='empate';
+
+      if(gf>ga){
+        resultado='Vitória';
+        classe='vitoria';
+      }else if(gf<ga){
+        resultado='Derrota';
+        classe='derrota';
+      }
+
+      rows.push({
+        date:e.date,
+        opponent:
+          op?.team?.displayName||
+          op?.team?.shortDisplayName||
+          'Adversário',
+        gf,
+        ga,
+        resultado,
+        classe
+      });
+
+    }
+
+    if(!rows.length){
+
+      box.innerHTML=
+        '<div class="muted">Não foi possível obter os últimos 5 jogos.</div>';
+
+      return;
+    }
+
+    box.innerHTML=rows.map(r=>`
+
+      <div class="fz-fix-last5">
+
+        <div>
+
+          <div class="fz-fix-opponent">
+            ${esc(r.opponent)}
+          </div>
+
+          <div class="muted fz-fix-date">
+            ${fmtDate(r.date)}
+          </div>
+
+        </div>
+
+        <strong class="fz-fix-score">
+          ${r.gf} - ${r.ga}
+        </strong>
+
+        <span class="fz-fix-result ${r.classe}">
+          ${r.resultado}
+        </span>
+
+      </div>
+
+    `).join('');
+
+  }catch(err){
+
+    console.warn('FUTZONE Últimos 5',err);
+
+    box.innerHTML=
+      '<div class="muted">Não foi possível obter os últimos 5 jogos.</div>';
+
+  }
+
+}
+
+
+/* ---------- ONDE VER ---------- */
+
+async function FZ_WATCH_FIX(e){
+
+  const box=document.getElementById('watchBox');
+  if(!box)return;
+
+  box.innerHTML=
+    '<div class="loading">A procurar canais...</div>';
+
+  const list=[];
+  const seen=new Set();
+
+  function add(name,url,country){
+
+    if(!name)return;
+
+    const key=
+      String(name).trim().toLowerCase()+
+      '|' +
+      String(country||'').trim().toLowerCase();
+
+    if(seen.has(key))return;
+
+    seen.add(key);
+
+    list.push({
+      name:String(name).trim(),
+      url:url||'',
+      country:country||''
+    });
+
+  }
+
+  try{
+
+    const b=
+      e?.competitions?.[0]?.broadcasts||[];
+
+    b.forEach(x=>{
+
+      const names=[];
+
+      if(Array.isArray(x?.names))
+        names.push(...x.names);
+
+      if(x?.name)
+        names.push(x.name);
+
+      if(x?.media?.shortName)
+        names.push(x.media.shortName);
+
+      if(x?.station?.name)
+        names.push(x.station.name);
+
+      const url=
+        x?.url||
+        x?.market?.url||
+        x?.links?.web?.href||
+        '';
+
+      const country=
+        x?.market?.country?.name||
+        x?.market?.country||
+        x?.region||
+        '';
+
+      names.forEach(n=>add(n,url,country));
+
+    });
+
+  }catch(err){}
+
+
+  /* ESPN summary */
+
+  try{
+
+    const d=await fzSummary(e);
+
+    const arrays=[
+      d?.broadcasts,
+      d?.header?.competitions?.[0]?.broadcasts,
+      d?.header?.competitions?.[0]?.geoBroadcasts
+    ];
+
+    arrays.forEach(arr=>{
+
+      if(!Array.isArray(arr))return;
+
+      arr.forEach(x=>{
+
+        const names=[];
+
+        if(Array.isArray(x?.names))
+          names.push(...x.names);
+
+        if(x?.name)
+          names.push(x.name);
+
+        if(x?.media?.shortName)
+          names.push(x.media.shortName);
+
+        if(x?.station?.name)
+          names.push(x.station.name);
+
+        const url=
+          x?.url||
+          x?.links?.web?.href||
+          x?.market?.url||
+          '';
+
+        const country=
+          x?.market?.country?.name||
+          x?.market?.country||
+          x?.region||
+          '';
+
+        names.forEach(n=>add(n,url,country));
+
+      });
+
+    });
+
+  }catch(err){}
+
+
+  /* SofaScore */
+
+  try{
+
+    const sid=await sofaEventId(e);
+
+    if(sid){
+
+      const d=await fzJson(
+        SOFA+'/event/'+sid+'/tv-stations'
+      );
+
+      const stations=d?.tvStations||[];
+
+      if(Array.isArray(stations)){
+
+        stations.forEach(x=>{
+
+          add(
+            x?.station?.name||
+            x?.name,
+            x?.url||
+            x?.station?.url||
+            '',
+            x?.country?.name||
+            x?.country?.alpha2||
+            ''
+          );
+
+        });
+
+      }
+
+    }
+
+  }catch(err){}
+
+
+  if(!list.length){
+
+    box.innerHTML=
+      '<div class="muted">Não foi indicada uma transmissão para este jogo.</div>';
+
+    return;
+  }
+
+  box.innerHTML=`
+
+    <div class="fz-fix-watch">
+
+      ${list.map(x=>`
+
+        <div class="fz-fix-watch-row">
+
+          <div>
+
+            <div class="fz-fix-channel">
+              📺 ${esc(x.name)}
+            </div>
+
+            ${
+              x.country
+              ?
+              `<div class="muted fz-fix-country">
+                ${esc(x.country)}
+              </div>`
+              :
+              ''
+            }
+
+          </div>
+
+          ${
+            x.url
+            ?
+            `<a
+              href="${esc(x.url)}"
+              target="_blank"
+              rel="noopener"
+              class="fz-fix-watch-button">
+              Ver
+            </a>`
+            :
+            ''
+          }
+
+        </div>
+
+      `).join('')}
+
+    </div>
+
+  `;
+
+}
+
+
+/* ---------- CARREGAMENTO DO JOGO ---------- */
+
+async function FZ_LOAD_MATCH_FIX(e){
+
+  const box=document.getElementById('matchDetails');
+  if(!box)return;
+
+  box.innerHTML=`
+
+    <div class="card row">
+
+      <div class="label">
+        Acontecimentos do jogo
+      </div>
+
+      <div id="incidentsBox">
+        <div class="loading">A carregar...</div>
+      </div>
+
+    </div>
+
+    <div class="card row">
+
+      <div class="label">
+        Estatísticas
+      </div>
+
+      <div id="statsBox">
+        <div class="loading">A carregar...</div>
+      </div>
+
+    </div>
+
+    <div class="card row">
+
+      <div class="label">
+        11 titular
+      </div>
+
+      <div id="lineupBox">
+        <div class="loading">A carregar...</div>
+      </div>
+
+    </div>
+
+    <div class="card row">
+
+      <div class="label">
+        Últimos 5 jogos
+      </div>
+
+      <div class="lastgrid">
+
+        <div>
+
+          <div class="value">
+            ${esc(teamNameFromEvent(e,true))}
+          </div>
+
+          <div id="lastHome">
+            <div class="loading">A carregar...</div>
+          </div>
+
+        </div>
+
+        <div>
+
+          <div class="value">
+            ${esc(teamNameFromEvent(e,false))}
+          </div>
+
+          <div id="lastAway">
+            <div class="loading">A carregar...</div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="card row">
+
+      <div class="label">
+        Onde ver
+      </div>
+
+      <div id="watchBox">
+        <div class="loading">A procurar transmissão...</div>
+      </div>
+
+    </div>
+
+  `;
+
+  await Promise.allSettled([
+
+    loadIncidents(e),
+
+    loadStatistics(e),
+
+    loadLineups(e),
+
+    FZ_LAST5_FIX(
+      teamFromEvent(e,true)?.team?.id,
+      'lastHome',
+      e.id
+    ),
+
+    FZ_LAST5_FIX(
+      teamFromEvent(e,false)?.team?.id,
+      'lastAway',
+      e.id
+    ),
+
+    FZ_WATCH_FIX(e)
+
+  ]);
+
+}
+
+
+/* ---------- NOTÍCIAS PT ---------- */
+
+async function FZ_NEWS_FIX(){
+
+  const box=document.getElementById('newsList');
+  if(!box)return;
+
+  box.innerHTML=
+    '<div class="loading">A carregar notícias...</div>';
+
+  try{
+
+    const d=await fzJson(
+      FZ_SITE+'news'
+    );
+
+    let articles=
+      d?.articles||
+      d?.news||
+      d?.items||
+      [];
+
+    if(!Array.isArray(articles))
+      articles=[];
+
+    articles=articles.slice(0,15);
+
+    if(!articles.length){
+
+      box.innerHTML=
+        '<div class="muted">Não existem notícias disponíveis.</div>';
+
+      return;
+    }
+
+    box.innerHTML=articles.map((x,i)=>`
+
+      <div class="card" style="margin-bottom:8px">
+
+        <div id="fzFixNewsTitle${i}" class="value">
+          ${esc(x?.headline||x?.title||'Notícia')}
+        </div>
+
+        ${
+          x?.description||
+          x?.summary
+          ?
+          `<div
+             id="fzFixNewsDesc${i}"
+             class="muted"
+             style="margin-top:6px">
+             ${esc(x.description||x.summary||'')}
+           </div>`
+          :
+          ''
+        }
+
+        ${
+          x?.links?.web?.href
+          ?
+          `<a
+             href="${esc(x.links.web.href)}"
+             target="_blank"
+             rel="noopener"
+             style="display:block;margin-top:8px;color:#1683ff;font-size:11px">
+             Ler notícia
+           </a>`
+          :
+          ''
+        }
+
+      </div>
+
+    `).join('');
+
+    /* Tradução em paralelo */
+
+    await Promise.all(
+      articles.map(async(x,i)=>{
+
+        const title=
+          x?.headline||
+          x?.title||
+          '';
+
+        const desc=
+          x?.description||
+          x?.summary||
+          '';
+
+        try{
+
+          if(title){
+
+            const pt=await fzTranslate(title);
+
+            const el=document.getElementById(
+              'fzFixNewsTitle'+i
+            );
+
+            if(el && pt)
+              el.textContent=pt;
+
+          }
+
+        }catch(err){}
+
+        try{
+
+          if(desc){
+
+            const pt=await fzTranslate(desc);
+
+            const el=document.getElementById(
+              'fzFixNewsDesc'+i
+            );
+
+            if(el && pt)
+              el.textContent=pt;
+
+          }
+
+        }catch(err){}
+
+      })
+    );
+
+  }catch(err){
+
+    console.warn('FUTZONE Notícias',err);
+
+    box.innerHTML=
+      '<div class="muted">Não foi possível carregar as notícias.</div>';
+
+  }
+
+}
+
+
+/* ---------- CSS ---------- */
+
+const style=document.createElement('style');
+
+style.textContent=`
+
+.fz-fix-last5{
+  display:grid;
+  grid-template-columns:1fr auto auto;
+  align-items:center;
+  gap:8px;
+  padding:9px;
+  margin-top:7px;
+  background:#0a111b;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:9px;
+}
+
+.fz-fix-opponent{
+  font-weight:800;
+  font-size:12px;
+}
+
+.fz-fix-date{
+  font-size:10px;
+  margin-top:3px;
+}
+
+.fz-fix-score{
+  font-size:14px;
+  white-space:nowrap;
+}
+
+.fz-fix-result{
+  font-size:10px;
+  font-weight:900;
+  padding:4px 7px;
+  border-radius:6px;
+  white-space:nowrap;
+}
+
+.fz-fix-result.vitoria{
+  color:#20d68a;
+  background:rgba(32,214,138,.13);
+}
+
+.fz-fix-result.empate{
+  color:#ffd43b;
+  background:rgba(255,212,59,.13);
+}
+
+.fz-fix-result.derrota{
+  color:#ff4054;
+  background:rgba(255,64,84,.13);
+}
+
+.fz-fix-watch{
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  margin-top:7px;
+}
+
+.fz-fix-watch-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:9px;
+  background:#0a111b;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:9px;
+}
+
+.fz-fix-channel{
+  font-size:12px;
+  font-weight:800;
+}
+
+.fz-fix-country{
+  font-size:10px;
+  margin-top:3px;
+}
+
+.fz-fix-watch-button{
+  padding:5px 9px;
+  border-radius:6px;
+  background:#1683ff;
+  color:#fff;
+  text-decoration:none;
+  font-size:11px;
+  font-weight:800;
+}
+
+@media(max-width:600px){
+
+  .fz-fix-last5{
+    grid-template-columns:1fr auto;
+  }
+
+  .fz-fix-result{
+    grid-column:2;
+  }
+
+}
+
+`;
+
+document.head.appendChild(style);
+
+
+/* ---------- SUBSTITUI DIRETAMENTE AS FUNÇÕES USADAS ---------- */
+
+try{
+  loadMatchDetails=FZ_LOAD_MATCH_FIX;
+}catch(e){}
+
+window.loadMatchDetails=FZ_LOAD_MATCH_FIX;
+
+try{
+  loadNews=FZ_NEWS_FIX;
+}catch(e){}
+
+window.loadNews=FZ_NEWS_FIX;
+
+
+/* Se a secção Notícias for aberta */
+try{
+
+  const originalSec=window.sec;
+
+  if(typeof originalSec==='function'){
 
     window.sec=function(id,btn){
 
-        oldSec(id,btn);
+      originalSec(id,btn);
 
-        if(id==='news'){
-
-            setTimeout(
-              FZ_LOAD_NEWS_PT_REAL,
-              100
-            );
-
-        }
+      if(id==='news'){
+        setTimeout(FZ_NEWS_FIX,150);
+      }
 
     };
 
-}
+  }
+
+}catch(e){}
 
 
-/* ============================================================
-   GARANTE QUE NOTÍCIAS APARECEM
-   ============================================================ */
-
-setTimeout(
-  FZ_LOAD_NEWS_PT_REAL,
-  1500
-);
-
+/* Notícias também ficam prontas ao abrir a página */
+setTimeout(FZ_NEWS_FIX,1800);
 
 })();
 </script>
