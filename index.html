@@ -4086,3 +4086,685 @@ setInterval(()=>{
 },5*60*1000);
 
 </script>
+<!-- =========================================================
+     FUTZONE PREMIUM — BLOCO ÚNICO DE CORREÇÃO
+     NÃO APAGAR O RESTO DO CÓDIGO
+     ========================================================= -->
+
+<script>
+
+(function(){
+
+/* ---------------------------------------------------------
+   1. GET SEM CANCELAR OS OUTROS PEDIDOS
+   --------------------------------------------------------- */
+
+window.FZ_originalGet =
+  window.get || null;
+
+window.get = async function(path){
+
+  try{
+
+    const r = await fetch(
+      API + path,
+      {
+        cache:'no-store'
+      }
+    );
+
+    if(!r.ok){
+      throw new Error(
+        'HTTP '+r.status
+      );
+    }
+
+    return await r.json();
+
+  }catch(e){
+
+    console.warn(
+      'FUTZONE GET:',
+      path,
+      e
+    );
+
+    return null;
+
+  }
+
+};
+
+
+/* ---------------------------------------------------------
+   2. ÚLTIMOS 5 JOGOS
+   --------------------------------------------------------- */
+
+window.last5 = async function(team,id,exclude){
+
+  const box =
+    document.getElementById(id);
+
+  if(!box || !team)return;
+
+  box.innerHTML =
+    '<div class="loading">' +
+    'A procurar os últimos 5 jogos...' +
+    '</div>';
+
+  let events=[];
+
+  const urls=[
+
+    API+
+    'all/teams/' +
+    encodeURIComponent(team) +
+    '/schedule?limit=100',
+
+    API+
+    'teams/' +
+    encodeURIComponent(team) +
+    '/schedule?limit=100'
+
+  ];
+
+  for(const url of urls){
+
+    try{
+
+      const data =
+        await jsonUrl(
+          url,
+          15000
+        );
+
+      if(
+        Array.isArray(data?.events) &&
+        data.events.length
+      ){
+
+        events =
+          data.events;
+
+        break;
+
+      }
+
+    }catch(e){
+
+      console.warn(
+        'Últimos 5:',
+        e
+      );
+
+    }
+
+  }
+
+
+  const rows = events
+
+    .filter(e =>
+      String(e?.id) !==
+      String(exclude)
+    )
+
+    .filter(e =>
+      completed(e)
+    )
+
+    .map(e =>
+      resultForTeam(
+        e,
+        team
+      )
+    )
+
+    .filter(Boolean)
+
+    .sort((a,b)=>
+      new Date(b.date) -
+      new Date(a.date)
+    )
+
+    .slice(0,5);
+
+
+  if(!rows.length){
+
+    box.innerHTML =
+      '<div class="muted">' +
+      'Não foi possível obter os últimos 5 jogos.' +
+      '</div>';
+
+    return;
+
+  }
+
+
+  box.innerHTML =
+    rows.map(r=>{
+
+      let texto =
+        'Derrota';
+
+      let classe =
+        'd';
+
+      if(r.result==='V'){
+
+        texto =
+          'Vitória';
+
+        classe =
+          'v';
+
+      }
+
+      else if(r.result==='E'){
+
+        texto =
+          'Empate';
+
+        classe =
+          'e';
+
+      }
+
+
+      return `
+
+        <div class="last">
+
+          <div class="muted">
+            ${fmtDate(r.date)}
+          </div>
+
+          <div class="match">
+
+            <span>
+              ${esc(r.opponent)}
+            </span>
+
+            <b>
+              ${esc(r.gf)}-${esc(r.ga)}
+            </b>
+
+          </div>
+
+          <div class="form">
+
+            <b class="${classe}"
+               style="
+                 width:auto;
+                 min-width:78px;
+                 padding:0 8px;
+               ">
+
+              ${texto}
+
+            </b>
+
+          </div>
+
+        </div>
+
+      `;
+
+    }).join('');
+
+};
+
+
+/* ---------------------------------------------------------
+   3. 10 SUGESTÕES
+      5 MÉDIO-ALTO
+      5 MÉDIO-BAIXO
+   --------------------------------------------------------- */
+
+window.suggestions = function(){
+
+  const box =
+    document.getElementById(
+      'suggestions'
+    );
+
+  if(!box)return;
+
+
+  const valid =
+    (games || [])
+
+      .filter(e =>
+        e?.competitions?.[0]
+          ?.competitors
+          ?.length >= 2
+      )
+
+      .filter(e =>
+        !completed(e)
+      );
+
+
+  if(!valid.length){
+
+    box.innerHTML =
+      '<div class="loading">' +
+      'Sem sugestões disponíveis.' +
+      '</div>';
+
+    return;
+
+  }
+
+
+  const selected=[];
+  const ids=new Set();
+
+
+  for(const e of valid){
+
+    const id =
+      String(e.id || '');
+
+    if(!id || ids.has(id))
+      continue;
+
+    ids.add(id);
+
+    selected.push(e);
+
+    if(selected.length>=10)
+      break;
+
+  }
+
+
+  const cards=[];
+
+
+  /* ---------- 5 MÉDIO-ALTO ---------- */
+
+  selected
+    .slice(0,5)
+    .forEach(e=>{
+
+      const h =
+        teamFromEvent(
+          e,
+          true
+        );
+
+      const a =
+        teamFromEvent(
+          e,
+          false
+        );
+
+      if(!h || !a)
+        return;
+
+
+      const s =
+        suggestMarket(e);
+
+
+      cards.push(`
+
+        <div
+          class="card suggest game"
+          onclick="openMatch('${esc(e.id)}')"
+        >
+
+          <div class="market orange">
+            Médio-alto
+          </div>
+
+          <div class="match">
+
+            <span>
+              ${esc(
+                h.team?.displayName ||
+                'Casa'
+              )}
+            </span>
+
+            <span>
+              vs
+            </span>
+
+            <span>
+              ${esc(
+                a.team?.displayName ||
+                'Visitante'
+              )}
+            </span>
+
+          </div>
+
+          <div class="value">
+
+            ${esc(
+              s?.high ||
+              (
+                h.team?.displayName +
+                ' ou empate (1X)'
+              )
+            )}
+
+          </div>
+
+          <div class="status">
+
+            ${esc(
+              e.leagueName ||
+              'Futebol'
+            )}
+
+            ·
+
+            ${fmtDate(e.date)}
+            ${fmtTime(e.date)}
+
+          </div>
+
+        </div>
+
+      `);
+
+    });
+
+
+  /* ---------- 5 MÉDIO-BAIXO ---------- */
+
+  selected
+    .slice(5,10)
+    .forEach(e=>{
+
+      const h =
+        teamFromEvent(
+          e,
+          true
+        );
+
+      const a =
+        teamFromEvent(
+          e,
+          false
+        );
+
+      if(!h || !a)
+        return;
+
+
+      const s =
+        suggestMarket(e);
+
+
+      cards.push(`
+
+        <div
+          class="card suggest game"
+          onclick="openMatch('${esc(e.id)}')"
+        >
+
+          <div class="market green">
+            Médio-baixo
+          </div>
+
+          <div class="match">
+
+            <span>
+              ${esc(
+                h.team?.displayName ||
+                'Casa'
+              )}
+            </span>
+
+            <span>
+              vs
+            </span>
+
+            <span>
+              ${esc(
+                a.team?.displayName ||
+                'Visitante'
+              )}
+            </span>
+
+          </div>
+
+          <div class="value">
+
+            ${esc(
+              s?.low ||
+              'Mais de 0,5 golos'
+            )}
+
+          </div>
+
+          <div class="status">
+
+            ${esc(
+              e.leagueName ||
+              'Futebol'
+            )}
+
+            ·
+
+            ${fmtDate(e.date)}
+            ${fmtTime(e.date)}
+
+          </div>
+
+        </div>
+
+      `);
+
+    });
+
+
+  box.innerHTML =
+    cards.length
+      ? cards.join('')
+      :
+        '<div class="loading">' +
+        'Sem sugestões disponíveis.' +
+        '</div>';
+
+};
+
+
+/* ---------------------------------------------------------
+   4. CARREGAR TODAS AS LIGAS
+   --------------------------------------------------------- */
+
+window.FZ_loadAllGames =
+async function(){
+
+  const box =
+    document.getElementById(
+      'gamesList'
+    );
+
+  if(box){
+
+    box.innerHTML =
+      '<div class="loading">' +
+      'A carregar todos os jogos...' +
+      '</div>';
+
+  }
+
+
+  const all=[];
+  const ids=new Set();
+
+
+  /*
+     Carregamos 4 ligas de cada vez.
+     Assim não sobrecarrega o telemóvel,
+     mas nenhum pedido cancela outro.
+  */
+
+  for(
+    let i=0;
+    i<LEAGUES.length;
+    i+=4
+  ){
+
+    const batch =
+      LEAGUES.slice(
+        i,
+        i+4
+      );
+
+
+    const results =
+      await Promise.all(
+
+        batch.map(
+          async ([league,name])=>{
+
+            try{
+
+              const data =
+                await jsonUrl(
+                  API+
+                  league+
+                  '/scoreboard?limit=100',
+                  15000
+                );
+
+
+              return (
+                data?.events || []
+              ).map(e=>({
+
+                ...e,
+
+                leagueName:
+                  name
+
+              }));
+
+
+            }catch(error){
+
+              console.warn(
+                'FUTZONE liga:',
+                league,
+                error
+              );
+
+              return [];
+
+            }
+
+          }
+        )
+
+      );
+
+
+    results
+      .flat()
+      .forEach(e=>{
+
+        const id =
+          String(e?.id || '');
+
+        if(
+          id &&
+          !ids.has(id)
+        ){
+
+          ids.add(id);
+
+          all.push(e);
+
+        }
+
+      });
+
+  }
+
+
+  all.sort(
+    (a,b)=>
+      new Date(a.date) -
+      new Date(b.date)
+  );
+
+
+  games=all;
+
+
+  /* Mostrar todos os jogos separados pelas ligas */
+
+  if(typeof render === 'function'){
+
+    render(
+      games
+    );
+
+  }
+
+
+  /* Mostrar as 10 sugestões */
+
+  window.suggestions();
+
+
+  const count =
+    document.getElementById(
+      'count'
+    );
+
+  if(count){
+
+    count.textContent =
+      games.length +
+      (
+        games.length===1
+          ? ' jogo'
+          : ' jogos'
+      );
+
+  }
+
+};
+
+
+/* ---------------------------------------------------------
+   5. EXECUTAR A NOVA CARGA
+   --------------------------------------------------------- */
+
+setTimeout(function(){
+
+  window.FZ_loadAllGames();
+
+},500);
+
+
+/* ---------------------------------------------------------
+   6. REFAZER AS SUGESTÕES APÓS O CARREGAMENTO
+   --------------------------------------------------------- */
+
+setTimeout(function(){
+
+  if(
+    Array.isArray(window.games) &&
+    window.games.length
+  ){
+
+    window.suggestions();
+
+  }
+
+},3000);
+
+
+})();
+
+</script>
