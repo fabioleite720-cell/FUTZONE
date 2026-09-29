@@ -1701,5 +1701,229 @@ openTestMatch=async function(id){
 };
 
       </script>
+      <!-- FUTZONE — BLOCO 3C — GOLOS / ASSISTÊNCIAS / CARTÕES / SUBSTITUIÇÕES -->
+
+<script>
+
+async function FZ3C_get(url){
+  try{
+    const r=await fetch(url);
+    if(!r.ok)return null;
+    return await r.json();
+  }catch(e){
+    return null;
+  }
+}
+
+function FZ3C_clock(x){
+  return x?.clock?.displayValue ||
+         x?.clock?.value ||
+         '';
+}
+
+function FZ3C_player(x){
+  return x?.athlete?.displayName ||
+         x?.athlete?.fullName ||
+         x?.athlete?.shortName ||
+         x?.displayName ||
+         x?.fullName ||
+         '';
+}
+
+function FZ3C_team(x){
+  return x?.team?.displayName ||
+         x?.team?.shortDisplayName ||
+         '';
+}
+
+function FZ3C_isSub(x){
+
+  const type=
+    String(
+      x?.type?.name ||
+      x?.type?.text ||
+      ''
+    ).toLowerCase();
+
+  return !!(
+    x?.substitution ||
+    x?.isSubstitution ||
+    type.includes('substitution')
+  );
+}
+
+function FZ3C_substitution(x){
+
+  const entrada=
+    x?.substitution?.in?.athlete?.displayName ||
+    x?.substitution?.in?.displayName ||
+    x?.athletesIn?.[0]?.displayName ||
+    x?.athletesIn?.[0]?.athlete?.displayName ||
+    '';
+
+  const saida=
+    x?.substitution?.out?.athlete?.displayName ||
+    x?.substitution?.out?.displayName ||
+    x?.athletesOut?.[0]?.displayName ||
+    x?.athletesOut?.[0]?.athlete?.displayName ||
+    '';
+
+  if(entrada || saida){
+
+    return '🔄 '+
+      (saida || '?')+
+      ' → '+
+      (entrada || '?');
+  }
+
+  return '🔄 Substituição';
+}
+
+async function FZ3C_events(ev){
+
+  const area=
+    document.getElementById('analysisBox');
+
+  if(!area)return;
+
+  const data=
+    await FZ3C_get(
+      API+'summary?event='+ev.id
+    );
+
+  const incidents=
+    Array.isArray(data?.incidents)
+      ? data.incidents
+      : [];
+
+  const useful=
+    incidents.filter(x =>
+      x?.isGoal ||
+      x?.isYellowCard ||
+      x?.isRedCard ||
+      FZ3C_isSub(x)
+    );
+
+  const box=
+    document.createElement('div');
+
+  box.style.cssText=
+    'background:var(--card);'+
+    'border:1px solid var(--line);'+
+    'border-radius:14px;'+
+    'padding:14px;'+
+    'margin:10px 0';
+
+  let html=
+    '<b>🎯 Acontecimentos</b>';
+
+  if(!useful.length){
+
+    html+=
+      '<div style="color:var(--muted);margin-top:8px">'+
+      'Não foram disponibilizados acontecimentos detalhados.'+
+      '</div>';
+
+  }else{
+
+    useful.forEach(x=>{
+
+      let icon='';
+      let text='';
+
+      if(x.isGoal){
+
+        icon='⚽';
+
+        const scorer=
+          FZ3C_player(x);
+
+        const assist=
+          x?.assist?.displayName ||
+          x?.assist?.fullName ||
+          '';
+
+        text=
+          scorer ||
+          'Golo';
+
+        if(assist){
+          text+=
+            ' — assistência: '+
+            assist;
+        }
+
+      }else if(x.isRedCard){
+
+        icon='🟥';
+        text=
+          FZ3C_player(x) ||
+          'Cartão vermelho';
+
+      }else if(x.isYellowCard){
+
+        icon='🟨';
+        text=
+          FZ3C_player(x) ||
+          'Cartão amarelo';
+
+      }else if(FZ3C_isSub(x)){
+
+        text=
+          FZ3C_substitution(x);
+      }
+
+      html+=
+        '<div style="'+
+        'padding:9px 0;'+
+        'border-bottom:1px solid var(--line);'+
+        'font-size:13px">'+
+
+        '<b>'+
+        FZ3C_clock(x)+
+        '</b> '+
+
+        icon+' '+
+        text+
+
+        (FZ3C_team(x)
+          ? ' <span style="color:var(--muted)">('+
+            FZ3C_team(x)+
+            ')</span>'
+          : '')+
+
+        '</div>';
+    });
+  }
+
+  box.innerHTML=html;
+  area.appendChild(box);
+}
+
+
+/* Adiciona os acontecimentos sem substituir os blocos anteriores */
+
+const FZ3C_oldOpen=
+  openTestMatch;
+
+openTestMatch=async function(id){
+
+  const ev=
+    games.find(x=>
+      String(x.id)===String(id)
+    );
+
+  if(!ev)return;
+
+  await FZ3C_oldOpen(id);
+
+  await FZ3C_events(ev);
+};
+
+console.log(
+  'FUTZONE TESTE — BLOCO 3C OK'
+);
+
+</script>
 </body>
 </html>
