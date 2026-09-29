@@ -1272,5 +1272,252 @@ setTimeout(
 );
 
           </script>
+      <!-- FUTZONE — BLOCO 3A -->
+<script>
+async function FZ3A_json(url){
+  try{
+    const r=await fetch(url);
+    if(!r.ok)return null;
+    return await r.json();
+  }catch(e){
+    return null;
+  }
+}
+
+function FZ3A_teamId(c){
+  return c?.team?.id || c?.id || null;
+}
+
+function FZ3A_teamName(c){
+  return c?.team?.displayName ||
+         c?.team?.shortDisplayName ||
+         c?.displayName ||
+         c?.name ||
+         'Equipa';
+}
+
+function FZ3A_finished(e){
+  return e?.competitions?.[0]?.status?.type?.completed===true;
+}
+
+async function FZ3A_schedule(id){
+
+  if(!id)return[];
+
+  const urls=[
+    API+'all/teams/'+id+'/schedule?limit=100',
+    API+'teams/'+id+'/schedule?limit=100'
+  ];
+
+  for(const u of urls){
+    const d=await FZ3A_json(u);
+    if(d?.events?.length)return d.events;
+  }
+
+  return[];
+}
+
+async function FZ3A_last5(id,currentId){
+
+  const events=await FZ3A_schedule(id);
+  const result=[];
+
+  for(const e of events){
+
+    if(String(e.id)===String(currentId))continue;
+    if(!FZ3A_finished(e))continue;
+
+    const cs=e?.competitions?.[0]?.competitors||[];
+    if(cs.length<2)continue;
+
+    const me=cs.find(c=>String(FZ3A_teamId(c))===String(id));
+    if(!me)continue;
+
+    const opp=cs.find(c=>String(FZ3A_teamId(c))!==String(id));
+    if(!opp)continue;
+
+    const a=Number(me.score);
+    const b=Number(opp.score);
+
+    if(!Number.isFinite(a)||!Number.isFinite(b))continue;
+
+    let r='Empate';
+    let cl='fz3a-draw';
+
+    if(a>b){
+      r='Vitória';
+      cl='fz3a-win';
+    }
+
+    if(a<b){
+      r='Derrota';
+      cl='fz3a-loss';
+    }
+
+    result.push({
+      date:e.date||'',
+      opponent:FZ3A_teamName(opp),
+      score:a+' - '+b,
+      result:r,
+      cls:cl
+    });
+  }
+
+  result.sort((a,b)=>
+    new Date(b.date)-new Date(a.date)
+  );
+
+  return result.slice(0,5);
+}
+
+async function FZ3A_show(teamId,teamName,currentId){
+
+  const box=document.createElement('div');
+
+  box.style.cssText=
+    'background:var(--card);'+
+    'border:1px solid var(--line);'+
+    'border-radius:14px;'+
+    'padding:14px;'+
+    'margin:10px 0';
+
+  box.innerHTML=
+    '<b>📊 Últimos 5 — '+
+    String(teamName)+'</b>'+
+    '<div style="color:var(--muted);margin-top:8px">'+
+    'A carregar...'+
+    '</div>';
+
+  const area=document.getElementById('analysisBox');
+
+  if(!area)return;
+
+  area.appendChild(box);
+
+  const games5=
+    await FZ3A_last5(
+      teamId,
+      currentId
+    );
+
+  if(!games5.length){
+
+    box.innerHTML=
+      '<b>📊 Últimos 5 — '+
+      String(teamName)+'</b>'+
+      '<div style="color:var(--muted);margin-top:8px">'+
+      'Últimos jogos indisponíveis no ESPN.'+
+      '</div>';
+
+    return;
+  }
+
+  let html=
+    '<b>📊 Últimos 5 — '+
+    String(teamName)+'</b>';
+
+  games5.forEach(g=>{
+
+    html+=
+      '<div style="'+
+      'display:flex;'+
+      'justify-content:space-between;'+
+      'gap:8px;'+
+      'padding:9px 0;'+
+      'border-bottom:1px solid var(--line);'+
+      'font-size:13px">'+
+
+      '<span style="flex:1">'+
+      String(g.opponent)+
+      '</span>'+
+
+      '<b>'+g.score+'</b>'+
+
+      '<b class="'+g.cls+'">'+
+      g.result+
+      '</b>'+
+
+      '</div>';
+  });
+
+  box.innerHTML=html;
+}
+
+const fz3a_oldOpen=
+  openTestMatch;
+
+openTestMatch=async function(id){
+
+  const ev=
+    games.find(x=>
+      String(x.id)===String(id)
+    );
+
+  if(!ev)return;
+
+  current=ev;
+
+  showPage('analysis');
+
+  const area=
+    document.getElementById('analysisBox');
+
+  if(!area)return;
+
+  const cs=
+    ev?.competitions?.[0]?.competitors||[];
+
+  const home=
+    cs.find(c=>c.homeAway==='home')||cs[0];
+
+  const away=
+    cs.find(c=>c.homeAway==='away')||cs[1];
+
+  area.innerHTML=
+    '<div style="background:var(--card);'+
+    'border:1px solid var(--line);'+
+    'border-radius:14px;padding:14px;'+
+    'margin-bottom:10px;text-align:center">'+
+
+    '<b>'+FZ3A_teamName(home)+
+    '</b>'+
+
+    '<div style="font-size:25px;font-weight:900;margin:8px">'+
+    (home?.score??'')+
+    ' - '+
+    (away?.score??'')+
+    '</div>'+
+
+    '<b>'+FZ3A_teamName(away)+
+    '</b>'+
+
+    '</div>';
+
+  await FZ3A_show(
+    FZ3A_teamId(home),
+    FZ3A_teamName(home),
+    ev.id
+  );
+
+  await FZ3A_show(
+    FZ3A_teamId(away),
+    FZ3A_teamName(away),
+    ev.id
+  );
+};
+
+</script>
+
+<style>
+.fz3a-win{
+  color:var(--green);
+}
+.fz3a-draw{
+  color:var(--yellow);
+}
+.fz3a-loss{
+  color:var(--red);
+}
+</style>
 </body>
 </html>
