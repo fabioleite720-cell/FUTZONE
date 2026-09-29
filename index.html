@@ -9262,6 +9262,674 @@ async function FZ_NEWS_FINAL(){
 }
 
 
+<!-- FUTZONE PREMIUM — CORREÇÃO SELEÇÕES / PLANTEIS / NOTÍCIAS -->
+<script>
+(function(){
+
+/* =========================================================
+   ÚLTIMOS 5 — CLUBES + SELEÇÕES
+   ========================================================= */
+
+async function FZ_LAST5_FINAL(teamId,boxId,excludeId){
+
+  const box=document.getElementById(boxId);
+  if(!box || !teamId)return;
+
+  box.innerHTML=
+    '<div class="loading">A procurar os últimos 5 jogos...</div>';
+
+  let events=[];
+
+  /* 1 — calendário normal da equipa */
+  const teamUrls=[
+    API+'all/teams/'+encodeURIComponent(teamId)+'/schedule?limit=200',
+    API+'teams/'+encodeURIComponent(teamId)+'/schedule?limit=200'
+  ];
+
+  for(const url of teamUrls){
+
+    const d=await jsonUrl(url,15000);
+
+    if(Array.isArray(d?.events) && d.events.length){
+      events.push(...d.events);
+      break;
+    }
+
+  }
+
+  /*
+    2 — fallback para seleções:
+    procura jogos anteriores no scoreboard.
+    Divide os últimos meses em períodos de 30 dias.
+  */
+
+  if(events.length<5){
+
+    const now=new Date();
+    const requests=[];
+
+    for(let i=0;i<6;i++){
+
+      const end=new Date(now);
+      end.setDate(end.getDate()-(i*30));
+
+      const start=new Date(end);
+      start.setDate(start.getDate()-29);
+
+      const a=
+        start.getUTCFullYear()+
+        String(start.getUTCMonth()+1).padStart(2,'0')+
+        String(start.getUTCDate()).padStart(2,'0');
+
+      const b=
+        end.getUTCFullYear()+
+        String(end.getUTCMonth()+1).padStart(2,'0')+
+        String(end.getUTCDate()).padStart(2,'0');
+
+      requests.push(
+        jsonUrl(
+          API+'scoreboard?dates='+a+'-'+b,
+          12000
+        )
+      );
+
+    }
+
+    const results=await Promise.all(requests);
+
+    results.forEach(d=>{
+
+      if(Array.isArray(d?.events))
+        events.push(...d.events);
+
+    });
+
+  }
+
+  /* eliminar duplicados */
+
+  const seen=new Set();
+
+  events=events.filter(e=>{
+
+    const id=String(e?.id||'');
+
+    if(!id)return false;
+    if(seen.has(id))return false;
+
+    seen.add(id);
+
+    return true;
+
+  });
+
+  /* apenas jogos terminados */
+
+  events=events.filter(e=>{
+
+    if(String(e?.id)===String(excludeId))
+      return false;
+
+    const state=
+      String(e?.status?.type?.state||'')
+      .toLowerCase();
+
+    const name=
+      String(e?.status?.type?.name||'')
+      .toLowerCase();
+
+    return(
+      e?.status?.type?.completed===true ||
+      state==='post' ||
+      state==='final' ||
+      name.includes('final') ||
+      name.includes('finished')
+    );
+
+  });
+
+  events.sort((a,b)=>
+    new Date(b?.date||0)-
+    new Date(a?.date||0)
+  );
+
+  const rows=[];
+
+  for(const e of events){
+
+    if(rows.length>=5)break;
+
+    let cs=
+      e?.competitions?.[0]?.competitors||[];
+
+    let me=cs.find(c=>
+      String(c?.team?.id)===String(teamId)
+    );
+
+    let op=cs.find(c=>
+      String(c?.team?.id)!==String(teamId)
+    );
+
+    if(!me || !op)
+      continue;
+
+    let gf=Number(
+      me?.score?.value ??
+      me?.score?.displayValue
+    );
+
+    let ga=Number(
+      op?.score?.value ??
+      op?.score?.displayValue
+    );
+
+    /* Se faltar resultado, tenta o summary */
+
+    if(!Number.isFinite(gf) || !Number.isFinite(ga)){
+
+      const s=await jsonUrl(
+        API+'summary?event='+encodeURIComponent(e.id),
+        10000
+      );
+
+      const sc=
+        s?.header?.competitions?.[0]?.competitors||
+        s?.competitions?.[0]?.competitors||
+        [];
+
+      me=sc.find(c=>
+        String(c?.team?.id)===String(teamId)
+      );
+
+      op=sc.find(c=>
+        String(c?.team?.id)!==String(teamId)
+      );
+
+      gf=Number(
+        me?.score?.value ??
+        me?.score?.displayValue
+      );
+
+      ga=Number(
+        op?.score?.value ??
+        op?.score?.displayValue
+      );
+
+    }
+
+    if(!Number.isFinite(gf) || !Number.isFinite(ga))
+      continue;
+
+    let resultado='Empate';
+    let classe='fz-r-empate';
+
+    if(gf>ga){
+      resultado='Vitória';
+      classe='fz-r-vitoria';
+    }
+    else if(gf<ga){
+      resultado='Derrota';
+      classe='fz-r-derrota';
+    }
+
+    rows.push({
+      date:e.date,
+      opponent:
+        op?.team?.displayName||
+        op?.team?.shortDisplayName||
+        'Adversário',
+      gf,
+      ga,
+      resultado,
+      classe
+    });
+
+  }
+
+  if(!rows.length){
+
+    box.innerHTML=
+      '<div class="muted">Não foi possível encontrar jogos anteriores.</div>';
+
+    return;
+
+  }
+
+  box.innerHTML=`
+
+    <div class="fz-real-last5">
+
+      ${rows.map(r=>`
+
+        <div class="fz-real-last5-row">
+
+          <div class="fz-real-last5-opponent">
+            ${esc(r.opponent)}
+
+            <div class="muted"
+                 style="font-size:10px;margin-top:3px">
+              ${esc(fmtDate(r.date))}
+            </div>
+          </div>
+
+          <div class="fz-real-last5-score">
+            ${r.gf} - ${r.ga}
+          </div>
+
+          <div class="fz-real-result ${r.classe}">
+            ${r.resultado}
+          </div>
+
+        </div>
+
+      `).join('')}
+
+    </div>
+
+  `;
+}
+
+
+/* =========================================================
+   PLANTEL — EQUIPAS E SELEÇÕES
+   ========================================================= */
+
+async function FZ_ROSTER_FINAL(t){
+
+  const box=document.getElementById('rosterBox');
+  if(!box)return;
+
+  box.innerHTML=
+    '<div class="loading">A carregar plantel...</div>';
+
+  let d=await jsonUrl(
+    API+'all/teams/'+encodeURIComponent(t.id)+'/roster?limit=200',
+    15000
+  );
+
+  let athletes=
+    d?.athletes||
+    d?.roster||
+    [];
+
+  /* fallback */
+  if(!athletes.length){
+
+    d=await jsonUrl(
+      API+'teams/'+encodeURIComponent(t.id)+'/roster?limit=200',
+      15000
+    );
+
+    athletes=
+      d?.athletes||
+      d?.roster||
+      [];
+
+  }
+
+  if(!athletes.length){
+
+    box.innerHTML=
+      '<div class="muted">Plantel não disponível para esta equipa/seleção.</div>';
+
+    return;
+
+  }
+
+  box.innerHTML=`
+
+    <div class="roster">
+
+      ${athletes.map(p=>{
+
+        const a=p?.athlete||p;
+
+        const id=a?.id||'';
+
+        const name=
+          a?.displayName||
+          a?.fullName||
+          a?.shortName||
+          'Jogador';
+
+        const pos=
+          a?.position?.displayName||
+          a?.position?.abbreviation||
+          '';
+
+        return`
+
+          <div class="player"
+               onclick="openPlayer('${esc(id)}','${esc(name)}')">
+
+            <b>${esc(name)}</b>
+
+            <div class="pos">
+              ${esc(pos)}
+            </div>
+
+          </div>
+
+        `;
+
+      }).join('')}
+
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================================
+   JOGADOR — MAIS INFORMAÇÃO
+   ========================================================= */
+
+async function FZ_PLAYER_FINAL(id,name){
+
+  const box=document.getElementById('playerBox');
+
+  if(!box)return;
+
+  sec('player');
+
+  document.getElementById('playerTitle').textContent=
+    '👤 '+name;
+
+  box.innerHTML=
+    '<div class="loading">A carregar jogador...</div>';
+
+  let d=null;
+
+  if(id){
+
+    d=await jsonUrl(
+      'https://sports.core.api.espn.com/v2/sports/soccer/athletes/'+
+      encodeURIComponent(id),
+      12000
+    );
+
+  }
+
+  const a=d?.athlete||d||{};
+
+  const photo=
+    a?.headshot?.href||
+    a?.headshot?.url||
+    '';
+
+  const position=
+    a?.position?.displayName||
+    a?.position?.abbreviation||
+    '';
+
+  const team=
+    a?.team?.displayName||
+    a?.team?.name||
+    '';
+
+  box.innerHTML=`
+
+    <div class="card">
+
+      ${
+        photo
+        ?
+        `<img src="${esc(photo)}"
+              style="width:90px;height:90px;
+                     object-fit:contain;
+                     display:block;margin:auto">`
+        :
+        ''
+      }
+
+      <div class="value"
+           style="text-align:center;margin-top:8px">
+        ${esc(
+          a?.displayName||
+          a?.fullName||
+          name
+        )}
+      </div>
+
+      ${
+        position
+        ?
+        `<div class="muted"
+              style="text-align:center;margin-top:5px">
+           ${esc(position)}
+         </div>`
+        :
+        ''
+      }
+
+      ${
+        team
+        ?
+        `<div class="muted"
+              style="text-align:center;margin-top:5px">
+           ${esc(team)}
+         </div>`
+        :
+        ''
+      }
+
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================================
+   NOTÍCIAS GLOBAIS — PORTUGUÊS
+   ========================================================= */
+
+async function FZ_NEWS_FINAL(){
+
+  const box=document.getElementById('newsList');
+
+  if(!box)return;
+
+  box.innerHTML=
+    '<div class="loading">A carregar notícias globais...</div>';
+
+  let articles=[];
+
+  const sources=[
+    'news',
+    'por.1/news',
+    'eng.1/news',
+    'esp.1/news',
+    'ita.1/news',
+    'ger.1/news',
+    'fra.1/news',
+    'uefa.champions/news'
+  ];
+
+  for(const path of sources){
+
+    const d=await jsonUrl(
+      API+path,
+      10000
+    );
+
+    const arr=
+      d?.articles||
+      d?.news||
+      [];
+
+    if(Array.isArray(arr))
+      articles.push(...arr);
+
+    if(articles.length>=20)
+      break;
+
+  }
+
+  const seen=new Set();
+
+  articles=articles.filter(x=>{
+
+    const key=
+      x?.id||
+      x?.links?.web?.href||
+      x?.headline||
+      x?.title;
+
+    if(!key || seen.has(key))
+      return false;
+
+    seen.add(key);
+    return true;
+
+  }).slice(0,15);
+
+  if(!articles.length){
+
+    box.innerHTML=
+      '<div class="muted">Não existem notícias disponíveis.</div>';
+
+    return;
+
+  }
+
+  box.innerHTML=articles.map((x,i)=>{
+
+    const title=
+      x?.headline||
+      x?.title||
+      'Notícia';
+
+    const desc=
+      x?.description||
+      x?.summary||
+      '';
+
+    const image=
+      x?.images?.[0]?.url||
+      x?.image?.url||
+      '';
+
+    const link=
+      x?.links?.web?.href||
+      x?.link||
+      '';
+
+    return`
+
+      <div class="card" style="margin-bottom:8px">
+
+        ${
+          image
+          ?
+          `<img src="${esc(image)}"
+                style="width:100%;
+                       max-height:190px;
+                       object-fit:cover;
+                       border-radius:9px">`
+          :
+          ''
+        }
+
+        <div id="fzNewsTitle${i}"
+             class="value"
+             style="margin-top:7px">
+          ${esc(title)}
+        </div>
+
+        ${
+          desc
+          ?
+          `<div id="fzNewsDesc${i}"
+                class="muted"
+                style="margin-top:6px">
+             ${esc(desc)}
+           </div>`
+          :
+          ''
+        }
+
+        ${
+          link
+          ?
+          `<a href="${esc(link)}"
+              target="_blank"
+              rel="noopener"
+              style="display:block;
+                     margin-top:8px;
+                     color:#1683ff;
+                     font-size:11px">
+             Ler notícia
+           </a>`
+          :
+          ''
+        }
+
+      </div>
+
+    `;
+
+  }).join('');
+
+
+  /* traduz títulos e descrições para PT */
+
+  await Promise.all(
+    articles.map(async(x,i)=>{
+
+      const title=
+        x?.headline||
+        x?.title||
+        '';
+
+      const desc=
+        x?.description||
+        x?.summary||
+        '';
+
+      if(title){
+
+        try{
+
+          const pt=await fzTranslate(title);
+
+          const el=
+            document.getElementById(
+              'fzNewsTitle'+i
+            );
+
+          if(el && pt)
+            el.textContent=pt;
+
+        }catch(e){}
+
+      }
+
+      if(desc){
+
+        try{
+
+          const pt=await fzTranslate(desc);
+
+          const el=
+            document.getElementById(
+              'fzNewsDesc'+i
+            );
+
+          if(el && pt)
+            el.textContent=pt;
+
+        }catch(e){}
+
+      }
+
+    })
+  );
+
+}
+
+
 /* =========================================================
    LIGAR AS CORREÇÕES À BASE EXISTENTE
    ========================================================= */
@@ -9313,4 +9981,5 @@ console.log(
 );
 
 })();
-       </script>
+</script>
+
