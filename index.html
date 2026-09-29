@@ -538,9 +538,7 @@ async function jsonUrl(url,timeout=10000){
   }
 }
 
-
-/*
-   <script>
+<script>
 
 /* ================================
    BLOCO 2
@@ -1013,8 +1011,6 @@ async function initBlock2(){
 initBlock2();
 
 </script>
-*/
-
 </script>
 <script>
 
@@ -1836,5 +1832,1163 @@ document.addEventListener(
 );
 
 </script>
+  <script>
+
+/* =========================================
+   BLOCO 4
+   ACONTECIMENTOS
+   ESTATÍSTICAS
+   11 TITULAR
+   JOGADORES / EQUIPAS
+========================================= */
+
+
+/* =========================================
+   RESUMO ESPN
+========================================= */
+
+async function getMatchSummary(eventId){
+
+  if(!eventId)return null;
+
+  return await jsonUrl(
+    API+
+    'summary?event='+
+    encodeURIComponent(eventId),
+    15000
+  );
+
+}
+
+
+/* =========================================
+   ACONTECIMENTOS
+========================================= */
+
+async function loadIncidents4(e){
+
+  const box=
+    document.getElementById('incidentsBox');
+
+  if(!box)return;
+
+  box.innerHTML=
+    '<div class="loading">A carregar acontecimentos...</div>';
+
+  const data=
+    await getMatchSummary(e.id);
+
+  const incidents=
+    data?.incidents || [];
+
+  if(!Array.isArray(incidents) ||
+     !incidents.length){
+
+    box.innerHTML=
+      '<div class="muted">Não existem acontecimentos disponíveis.</div>';
+
+    return;
+  }
+
+  const useful=incidents.filter(x=>{
+
+    const type=
+      String(
+        x?.type?.text ||
+        x?.type?.name ||
+        ''
+      ).toLowerCase();
+
+    return (
+      x?.isGoal===true ||
+      x?.goal===true ||
+      type.includes('goal') ||
+      type.includes('card') ||
+      type.includes('substitution') ||
+      type.includes('sub')
+    );
+
+  });
+
+
+  if(!useful.length){
+
+    box.innerHTML=
+      '<div class="muted">Não existem acontecimentos disponíveis.</div>';
+
+    return;
+  }
+
+
+  box.innerHTML=useful.map(x=>{
+
+    const minute=
+      x?.clock?.displayValue ||
+      x?.time?.displayValue ||
+      x?.minute ||
+      '';
+
+    const athlete=
+      x?.athlete?.displayName ||
+      x?.athletes?.[0]?.displayName ||
+      '';
+
+    const assist=
+      x?.assist?.displayName ||
+      x?.assist?.athlete?.displayName ||
+      '';
+
+    const type=
+      String(
+        x?.type?.text ||
+        x?.type?.name ||
+        ''
+      ).toLowerCase();
+
+
+    let label='Acontecimento';
+    let icon='•';
+
+    if(
+      x?.isGoal===true ||
+      x?.goal===true ||
+      type.includes('goal')
+    ){
+
+      label='Golo';
+      icon='⚽';
+
+    }else if(type.includes('yellow')){
+
+      label='Cartão amarelo';
+      icon='🟨';
+
+    }else if(type.includes('red')){
+
+      label='Cartão vermelho';
+      icon='🟥';
+
+    }else if(
+      type.includes('substitution') ||
+      type.includes('sub')
+    ){
+
+      label='Substituição';
+      icon='🔄';
+
+    }
+
+
+    let extra='';
+
+    if(
+      label==='Golo' &&
+      assist
+    ){
+
+      extra=
+        '<div class="muted">Assistência: '+
+        esc(assist)+
+        '</div>';
+
+    }
+
+
+    return `
+      <div class="card"
+           style="margin-bottom:6px">
+
+        <div style="
+          display:flex;
+          gap:8px;
+          align-items:flex-start;
+        ">
+
+          <div style="
+            font-size:18px;
+            width:25px;
+          ">
+            ${icon}
+          </div>
+
+          <div>
+
+            <div style="
+              font-weight:900;
+            ">
+              ${esc(label)}
+            </div>
+
+            <div style="
+              margin-top:3px;
+            ">
+              ${esc(athlete || 'Jogador')}
+            </div>
+
+            ${
+              minute
+                ? `
+                  <div class="muted">
+                    ${esc(minute)}
+                  </div>
+                `
+                : ''
+            }
+
+            ${extra}
+
+          </div>
+
+        </div>
+
+      </div>
+    `;
+
+  }).join('');
+
+}
+
+
+/* =========================================
+   ESTATÍSTICAS
+========================================= */
+
+async function loadStatistics4(e){
+
+  const box=
+    document.getElementById('statsBox');
+
+  if(!box)return;
+
+  box.innerHTML=
+    '<div class="loading">A carregar estatísticas...</div>';
+
+  const data=
+    await getMatchSummary(e.id);
+
+  const comp=
+    data?.boxscore?.teams ||
+    data?.boxscore?.teamStats ||
+    [];
+
+  if(!Array.isArray(comp) || !comp.length){
+
+    box.innerHTML=
+      '<div class="muted">Estatísticas não disponíveis.</div>';
+
+    return;
+  }
+
+
+  const rows=[];
+
+
+  comp.forEach(t=>{
+
+    const team=
+      t?.team?.displayName ||
+      t?.displayName ||
+      '';
+
+    const stats=
+      t?.statistics ||
+      t?.stats ||
+      [];
+
+    const obj={};
+
+    if(Array.isArray(stats)){
+
+      stats.forEach(s=>{
+
+        const name=
+          String(
+            s?.name ||
+            s?.label ||
+            ''
+          ).toLowerCase();
+
+        obj[name]=
+          s?.displayValue ??
+          s?.value ??
+          '';
+
+      });
+
+    }
+
+
+    rows.push({
+      team,
+      stats:obj
+    });
+
+  });
+
+
+  if(!rows.length){
+
+    box.innerHTML=
+      '<div class="muted">Estatísticas não disponíveis.</div>';
+
+    return;
+  }
+
+
+  const keys=[
+    ['shots','Remates'],
+    ['shotsontarget','Remates à baliza'],
+    ['possession','Posse'],
+    ['corners','Cantos'],
+    ['fouls','Faltas'],
+    ['yellowcards','Cartões amarelos'],
+    ['redcards','Cartões vermelhos']
+  ];
+
+
+  let html=`
+    <div style="
+      display:grid;
+      gap:8px;
+    ">
+  `;
+
+
+  keys.forEach(([key,label])=>{
+
+    const values=
+      rows.map(r=>{
+
+        const found=
+          Object.keys(r.stats)
+            .find(k=>k.replace(/[\s_-]/g,'')
+              .includes(key));
+
+        return found
+          ? r.stats[found]
+          : '—';
+
+      });
+
+
+    html+=`
+      <div class="card"
+           style="margin:0">
+
+        <div style="
+          display:grid;
+          grid-template-columns:1fr auto 1fr;
+          gap:8px;
+          align-items:center;
+        ">
+
+          <div style="
+            font-weight:800;
+          ">
+            ${esc(values[0] ?? '—')}
+          </div>
+
+          <div class="muted"
+               style="text-align:center">
+            ${esc(label)}
+          </div>
+
+          <div style="
+            font-weight:800;
+            text-align:right;
+          ">
+            ${esc(values[1] ?? '—')}
+          </div>
+
+        </div>
+
+      </div>
+    `;
+
+  });
+
+
+  html+='</div>';
+
+  box.innerHTML=html;
+
+}
+
+
+/* =========================================
+   11 TITULAR / LINEUPS
+========================================= */
+
+async function loadLineups4(e){
+
+  const box=
+    document.getElementById('lineupBox');
+
+  if(!box)return;
+
+  box.innerHTML=
+    '<div class="loading">A carregar 11 titular...</div>';
+
+  const data=
+    await getMatchSummary(e.id);
+
+  const lineups=
+    data?.boxscore?.players ||
+    data?.rosters ||
+    data?.lineups ||
+    [];
+
+
+  if(!Array.isArray(lineups) ||
+     !lineups.length){
+
+    box.innerHTML=
+      '<div class="muted">11 titular não disponível para este jogo.</div>';
+
+    return;
+  }
+
+
+  let teams4=[];
+
+
+  lineups.forEach(team=>{
+
+    const name=
+      team?.team?.displayName ||
+      team?.displayName ||
+      '';
+
+    let athletes=
+      team?.statistics ||
+      team?.athletes ||
+      team?.players ||
+      [];
+
+
+    if(!Array.isArray(athletes))
+      athletes=[];
+
+
+    const starters=
+      athletes.filter(p=>
+        p?.starter===true ||
+        p?.isStarter===true
+      );
+
+
+    if(starters.length){
+
+      teams4.push({
+        name,
+        players:starters.slice(0,11)
+      });
+
+    }
+
+  });
+
+
+  if(!teams4.length){
+
+    box.innerHTML=
+      '<div class="muted">11 titular não disponível para este jogo.</div>';
+
+    return;
+  }
+
+
+  box.innerHTML=
+    teams4.map(team=>`
+
+      <div class="card">
+
+        <div style="
+          font-weight:900;
+          margin-bottom:8px;
+        ">
+          ${esc(team.name)}
+        </div>
+
+        <div style="
+          display:grid;
+          grid-template-columns:
+            repeat(2,minmax(0,1fr));
+          gap:6px;
+        ">
+
+          ${team.players.map((p,i)=>{
+
+            const athlete=
+              p?.athlete ||
+              p?.player ||
+              p;
+
+            const name=
+              athlete?.displayName ||
+              athlete?.fullName ||
+              athlete?.shortName ||
+              'Jogador '+(i+1);
+
+            const position=
+              athlete?.position?.abbreviation ||
+              athlete?.position?.displayName ||
+              '';
+
+            const id=
+              athlete?.id ||
+              p?.id ||
+              '';
+
+            return `
+              <div class="card"
+                   style="
+                     margin:0;
+                     cursor:pointer;
+                   "
+                   onclick="openPlayer4(
+                     '${esc(id)}',
+                     '${esc(name)}'
+                   )">
+
+                <div style="
+                  font-weight:800;
+                  font-size:12px;
+                ">
+                  ${i+1}. ${esc(name)}
+                </div>
+
+                ${
+                  position
+                    ? `
+                      <div class="muted">
+                        ${esc(position)}
+                      </div>
+                    `
+                    : ''
+                }
+
+              </div>
+            `;
+
+          }).join('')}
+
+        </div>
+
+      </div>
+
+    `).join('');
+
+}
+
+
+/* =========================================
+   JOGADORES
+========================================= */
+
+async function loadTeamRoster4(teamId){
+
+  if(!teamId)return [];
+
+  const urls=[
+    API+
+      'teams/'+
+      encodeURIComponent(teamId)+
+      '/roster',
+
+    API+
+      'teams/'+
+      encodeURIComponent(teamId)+
+      '/roster?limit=100'
+  ];
+
+
+  for(const url of urls){
+
+    const data=
+      await jsonUrl(url,15000);
+
+    const athletes=
+      data?.athletes ||
+      data?.roster ||
+      data?.items ||
+      [];
+
+    if(
+      Array.isArray(athletes) &&
+      athletes.length
+    ){
+
+      return athletes;
+
+    }
+
+  }
+
+  return [];
+
+}
+
+
+async function openTeam4(
+  teamId,
+  teamName
+){
+
+  showSection('analysis');
+
+  const box=
+    document.getElementById(
+      'analysisBox'
+    );
+
+  if(!box)return;
+
+  box.innerHTML=`
+
+    <div class="card">
+
+      <div class="section-title">
+        <span>👥 ${esc(teamName)}</span>
+      </div>
+
+      <div id="teamRoster4">
+        <div class="loading">
+          A carregar jogadores...
+        </div>
+      </div>
+
+    </div>
+
+  `;
+
+
+  const players=
+    await loadTeamRoster4(teamId);
+
+  const target=
+    document.getElementById(
+      'teamRoster4'
+    );
+
+
+  if(!target)return;
+
+
+  if(!players.length){
+
+    target.innerHTML=
+      '<div class="muted">Plantel não disponível.</div>';
+
+    return;
+  }
+
+
+  target.innerHTML=`
+
+    <div style="
+      display:grid;
+      grid-template-columns:
+        repeat(2,minmax(0,1fr));
+      gap:7px;
+    ">
+
+      ${players.map(p=>{
+
+        const athlete=
+          p?.athlete ||
+          p;
+
+        const id=
+          athlete?.id ||
+          p?.id ||
+          '';
+
+        const name=
+          athlete?.displayName ||
+          athlete?.fullName ||
+          athlete?.shortName ||
+          'Jogador';
+
+        const pos=
+          athlete?.position?.displayName ||
+          athlete?.position?.abbreviation ||
+          '';
+
+        return `
+          <div class="card"
+               style="
+                 margin:0;
+                 cursor:pointer;
+               "
+               onclick="openPlayer4(
+                 '${esc(id)}',
+                 '${esc(name)}'
+               )">
+
+            <div style="
+              font-weight:900;
+              font-size:12px;
+            ">
+              ${esc(name)}
+            </div>
+
+            ${
+              pos
+                ? `
+                  <div class="muted"
+                       style="margin-top:3px">
+                    ${esc(pos)}
+                  </div>
+                `
+                : ''
+            }
+
+          </div>
+        `;
+
+      }).join('')}
+
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================
+   DETALHES DO JOGADOR
+========================================= */
+
+async function openPlayer4(
+  playerId,
+  fallbackName
+){
+
+  const box=
+    document.getElementById(
+      'analysisBox'
+    );
+
+  if(!box)return;
+
+  box.innerHTML=`
+
+    <div class="card">
+
+      <div class="section-title">
+        <span>👤 ${esc(fallbackName)}</span>
+      </div>
+
+      <div id="playerData4">
+        <div class="loading">
+          A carregar jogador...
+        </div>
+      </div>
+
+    </div>
+
+  `;
+
+
+  if(!playerId){
+
+    document.getElementById(
+      'playerData4'
+    ).innerHTML=
+      '<div class="muted">Dados do jogador não disponíveis.</div>';
+
+    return;
+  }
+
+
+  const urls=[
+
+    'https://sports.core.api.espn.com/v2/sports/soccer/athletes/'+
+      encodeURIComponent(playerId),
+
+    'https://site.api.espn.com/apis/site/v2/sports/soccer/athletes/'+
+      encodeURIComponent(playerId)
+
+  ];
+
+
+  let data=null;
+
+
+  for(const url of urls){
+
+    data=
+      await jsonUrl(url,12000);
+
+    if(data)break;
+
+  }
+
+
+  const target=
+    document.getElementById(
+      'playerData4'
+    );
+
+
+  if(!target)return;
+
+
+  if(!data){
+
+    target.innerHTML=`
+      <div class="muted">
+        Não foi possível obter os dados deste jogador.
+      </div>
+    `;
+
+    return;
+  }
+
+
+  const athlete=
+    data?.athlete ||
+    data;
+
+
+  const name=
+    athlete?.displayName ||
+    athlete?.fullName ||
+    fallbackName;
+
+
+  const position=
+    athlete?.position?.displayName ||
+    athlete?.position?.abbreviation ||
+    '';
+
+
+  const nationality=
+    athlete?.nationality?.displayName ||
+    athlete?.nationality?.name ||
+    '';
+
+
+  const age=
+    athlete?.age ||
+    '';
+
+
+  target.innerHTML=`
+
+    <div style="
+      display:grid;
+      gap:7px;
+    ">
+
+      <div class="card"
+           style="margin:0">
+
+        <div style="
+          font-size:17px;
+          font-weight:900;
+        ">
+          ${esc(name)}
+        </div>
+
+        ${
+          position
+            ? `
+              <div class="muted"
+                   style="margin-top:5px">
+                Posição: ${esc(position)}
+              </div>
+            `
+            : ''
+        }
+
+        ${
+          nationality
+            ? `
+              <div class="muted"
+                   style="margin-top:3px">
+                Nacionalidade: ${esc(nationality)}
+              </div>
+            `
+            : ''
+        }
+
+        ${
+          age
+            ? `
+              <div class="muted"
+                   style="margin-top:3px">
+                Idade: ${esc(age)}
+              </div>
+            `
+            : ''
+        }
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================
+   NOVA VERSÃO DOS DETALHES DO JOGO
+========================================= */
+
+loadMatchDetails = async function(e){
+
+  const box=
+    document.getElementById(
+      'analysisBox'
+    );
+
+  if(!box)return;
+
+
+  const home=
+    teamFromEvent(e,true);
+
+  const away=
+    teamFromEvent(e,false);
+
+
+  box.innerHTML=`
+
+    <div class="card">
+
+      <div class="team-row">
+
+        <div class="team">
+          ${esc(
+            home?.team?.displayName ||
+            'Casa'
+          )}
+        </div>
+
+        <div class="score">
+          ${scoreValue(home) ?? '—'}
+          -
+          ${scoreValue(away) ?? '—'}
+        </div>
+
+        <div class="team"
+             style="text-align:right">
+          ${esc(
+            away?.team?.displayName ||
+            'Fora'
+          )}
+        </div>
+
+      </div>
+
+      <div class="muted"
+           style="
+             text-align:center;
+             margin-top:7px;
+           ">
+        ${esc(fmtDate(e.date))}
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="section-title">
+        <span>⚽ Acontecimentos</span>
+      </div>
+
+      <div id="incidentsBox">
+        <div class="loading">
+          A carregar...
+        </div>
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="section-title">
+        <span>📊 Estatísticas</span>
+      </div>
+
+      <div id="statsBox">
+        <div class="loading">
+          A carregar...
+        </div>
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="section-title">
+        <span>👕 11 titular</span>
+      </div>
+
+      <div id="lineupBox">
+        <div class="loading">
+          A carregar...
+        </div>
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="section-title">
+        <span>📋 Últimos 5 jogos</span>
+      </div>
+
+      <div>
+
+        <div style="
+          font-weight:900;
+          margin-bottom:5px;
+        ">
+          ${esc(
+            home?.team?.displayName ||
+            'Casa'
+          )}
+        </div>
+
+        <div id="lastHome">
+          <div class="loading">
+            A carregar...
+          </div>
+        </div>
+
+      </div>
+
+
+      <div style="
+        margin-top:12px;
+      ">
+
+        <div style="
+          font-weight:900;
+          margin-bottom:5px;
+        ">
+          ${esc(
+            away?.team?.displayName ||
+            'Fora'
+          )}
+        </div>
+
+        <div id="lastAway">
+          <div class="loading">
+            A carregar...
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <div class="section-title">
+        <span>📺 Onde ver</span>
+      </div>
+
+      <div id="watchBox">
+        <div class="loading">
+          A procurar transmissão...
+        </div>
+      </div>
+
+    </div>
+
+  `;
+
+
+  await Promise.allSettled([
+
+    loadIncidents4(e),
+
+    loadStatistics4(e),
+
+    loadLineups4(e),
+
+    loadLast5(
+      home?.team?.id,
+      'lastHome',
+      e.id
+    ),
+
+    loadLast5(
+      away?.team?.id,
+      'lastAway',
+      e.id
+    ),
+
+    loadWatch(e)
+
+  ]);
+
+};
+
+
+/* =========================================
+   CSS EXTRA
+========================================= */
+
+const style4=
+document.createElement('style');
+
+style4.textContent=`
+
+.v{
+  color:#19c37d;
+}
+
+.e{
+  color:#f5c542;
+}
+
+.d{
+  color:#ef5350;
+}
+
+.lastgrid{
+  display:grid;
+  grid-template-columns:
+    repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+
+@media(max-width:520px){
+
+  .lastgrid{
+    grid-template-columns:1fr;
+  }
+
+}
+
+.value{
+  font-weight:900;
+}
+
+`;
+
+document.head.appendChild(style4);
+
+
+/* =========================================
+   ARRANQUE FINAL
+========================================= */
+
+console.log(
+  'FUTZONE PREMIUM — TESTE COMPLETO'
+);
+
+                    </script>
 </body>
 </html>
