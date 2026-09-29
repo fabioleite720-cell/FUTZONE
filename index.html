@@ -2507,111 +2507,1582 @@ suggestions();
 load();
 
  </script>
- <script>
 
-/*
- FUTZONE PREMIUM
- BLOCO FINAL
- Correções de segurança e atualização automática
-*/
+<script>
 
-window.addEventListener('error',function(e){
-console.warn('FUTZONE:',e.message||e.error);
-});
+/* =========================================================
+   FUTZONE PREMIUM — BLOCO 4 CORRIGIDO
+   Dados do jogo directamente pela ESPN
+   ========================================================= */
 
-window.addEventListener('unhandledrejection',function(e){
-console.warn('FUTZONE promise:',e.reason);
-});
+const FZ_WEB='https://site.web.api.espn.com/apis/site/v2/sports/soccer/';
+const FZ_SITE='https://site.api.espn.com/apis/site/v2/sports/soccer/';
+
+async function fzJson(url,timeout=15000){
+
+  const c=new AbortController();
+
+  const timer=setTimeout(()=>{
+    try{c.abort()}catch(e){}
+  },timeout);
+
+  try{
+
+    const r=await fetch(url,{
+      cache:'no-store',
+      signal:c.signal
+    });
+
+    if(!r.ok)throw new Error('HTTP '+r.status);
+
+    return await r.json();
+
+  }catch(e){
+
+    console.warn('FUTZONE API:',url,e);
+
+    return null;
+
+  }finally{
+
+    clearTimeout(timer);
+
+  }
+
+}
 
 
-/* Atualiza os jogos sem apagar o que já está carregado */
-setInterval(async()=>{
+/* =========================================================
+   RESUMO COMPLETO DO JOGO
+   ========================================================= */
+
+async function fzSummary(e){
+
+  if(!e)return null;
+
+  const league=
+    e?.league?.id||
+    e?.competitions?.[0]?.league?.id||
+    e?.leagueId||
+    'all';
+
+  const id=e.id;
+
+  const urls=[
+
+    FZ_SITE+league+'/summary?event='+encodeURIComponent(id),
+
+    FZ_WEB+league+'/summary?event='+encodeURIComponent(id),
+
+    FZ_SITE+'all/summary?event='+encodeURIComponent(id),
+
+    FZ_WEB+'all/summary?event='+encodeURIComponent(id)
+
+  ];
+
+  for(const url of urls){
+
+    const d=await fzJson(url);
+
+    if(d && (
+      d.header||
+      d.boxscore||
+      d.keyEvents||
+      d.plays||
+      d.broadcasts||
+      d.rosters
+    ))return d;
+
+  }
+
+  return null;
+
+}
+
+
+/* =========================================================
+   ACONTECIMENTOS
+   ========================================================= */
+
+async function loadIncidents(e){
+
+  const box=document.getElementById('incidentsBox');
+
+  if(!box)return;
+
+  box.innerHTML=
+    '<div class="loading">A carregar acontecimentos...</div>';
+
+  const d=await fzSummary(e);
+
+  if(!d){
+
+    box.innerHTML=
+      '<div class="muted">Acontecimentos não disponíveis para este jogo.</div>';
+
+    return;
+
+  }
+
+  let arr=[];
+
+  if(Array.isArray(d.keyEvents))
+    arr=d.keyEvents;
+
+  if(!arr.length && Array.isArray(d.plays))
+    arr=d.plays;
+
+  if(!arr.length && Array.isArray(d.commentary))
+    arr=d.commentary;
+
+  if(!arr.length){
+
+    box.innerHTML=
+      '<div class="muted">Não existem acontecimentos detalhados disponíveis.</div>';
+
+    return;
+
+  }
+
+  const html=arr.map(x=>{
+
+    const type=String(
+      x?.type?.text||
+      x?.type?.name||
+      x?.type||
+      ''
+    ).toLowerCase();
+
+    let icon='⚽';
+
+    if(type.includes('yellow'))icon='🟨';
+    if(type.includes('red'))icon='🟥';
+    if(type.includes('card'))icon='🟨';
+    if(type.includes('sub'))icon='🔄';
+    if(type.includes('goal'))icon='⚽';
+    if(type.includes('var'))icon='📺';
+
+    const clock=
+      x?.clock?.displayValue||
+      x?.clock?.value||
+      x?.period?.displayValue||
+      x?.time||
+      '';
+
+    const text=
+      x?.text||
+      x?.shortText||
+      x?.description||
+      x?.type?.text||
+      '';
+
+    const athlete=
+      x?.participants?.[0]?.athlete?.displayName||
+      x?.athlete?.displayName||
+      x?.player?.displayName||
+      '';
+
+    const finalText=
+      text||
+      athlete||
+      'Acontecimento';
+
+    return`
+
+      <div class="eventItem">
+
+        <b>${esc(clock)}</b>
+        &nbsp;
+        ${icon}
+        ${esc(finalText)}
+
+      </div>
+
+    `;
+
+  }).join('');
+
+  box.innerHTML=html||
+    '<div class="muted">Não existem acontecimentos detalhados disponíveis.</div>';
+
+}
+
+
+/* =========================================================
+   ESTATÍSTICAS
+   ========================================================= */
+
+function fzStatName(name){
+
+  const n=String(name||'')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]/g,'');
+
+  const map={
+
+    possession:'Posse',
+    possessionpct:'Posse',
+    possessionpercentage:'Posse',
+
+    totalshots:'Remates',
+    shots:'Remates',
+    attemptedshots:'Remates',
+
+    shotsontarget:'Remates à baliza',
+    ontarget:'Remates à baliza',
+
+    corners:'Cantos',
+    cornerkicks:'Cantos',
+
+    fouls:'Faltas',
+    foulscommitted:'Faltas',
+
+    offsides:'Foras de jogo',
+    offside:'Foras de jogo',
+
+    saves:'Defesas',
+    goalkeepersaves:'Defesas',
+
+    passes:'Passes',
+    totalpasses:'Passes',
+    accuratepasses:'Passes',
+
+    passaccuracy:'Precisão de passe',
+    passingaccuracy:'Precisão de passe'
+
+  };
+
+  return map[n]||null;
+
+}
+
+
+function fzExtractStats(d){
+
+  const result=[];
+
+  const teams=
+    d?.boxscore?.teams||
+    d?.boxscore?.teamStatistics||
+    [];
+
+  if(Array.isArray(teams)){
+
+    teams.forEach(t=>{
+
+      const team=
+        t?.team?.displayName||
+        t?.team?.shortDisplayName||
+        '';
+
+      const stats=
+        t?.statistics||
+        t?.stats||
+        [];
+
+      if(Array.isArray(stats)){
+
+        stats.forEach(s=>{
+
+          const label=fzStatName(
+            s?.name||
+            s?.label||
+            s?.displayName
+          );
+
+          if(!label)return;
+
+          const value=
+            s?.displayValue??
+            s?.value;
+
+          if(value!==undefined&&value!==null){
+
+            result.push({
+              label,
+              team,
+              value
+            });
+
+          }
+
+        });
+
+      }
+
+    });
+
+  }
+
+  /* fallback: procura estatísticas recursivamente */
+
+  if(!result.length){
+
+    function walk(x){
+
+      if(!x)return;
+
+      if(Array.isArray(x)){
+
+        x.forEach(walk);
+        return;
+
+      }
+
+      if(typeof x!=='object')return;
+
+      const label=fzStatName(
+        x.name||
+        x.label||
+        x.displayName
+      );
+
+      if(label){
+
+        const value=
+          x.displayValue??
+          x.value;
+
+        if(value!==undefined&&value!==null){
+
+          result.push({
+            label,
+            team:'',
+            value
+          });
+
+        }
+
+      }
+
+      Object.values(x).forEach(v=>{
+
+        if(v&&typeof v==='object')
+          walk(v);
+
+      });
+
+    }
+
+    walk(d);
+
+  }
+
+  return result;
+
+}
+
+
+async function loadStatistics(e){
+
+  const box=document.getElementById('statsBox');
+
+  if(!box)return;
+
+  box.innerHTML=
+    '<div class="loading">A carregar estatísticas...</div>';
+
+  const d=await fzSummary(e);
+
+  const stats=fzExtractStats(d);
+
+  const wanted=[
+
+    'Posse',
+    'Remates',
+    'Remates à baliza',
+    'Cantos',
+    'Faltas',
+    'Foras de jogo',
+    'Defesas',
+    'Passes',
+    'Precisão de passe'
+
+  ];
+
+  const rows=[];
+
+  wanted.forEach(label=>{
+
+    const found=stats.filter(
+      x=>x.label===label
+    );
+
+    if(!found.length)return;
+
+    const vals=found
+      .slice(0,2)
+      .map(x=>x.value);
+
+    rows.push({
+
+      label,
+
+      value:vals.join(' — ')
+
+    });
+
+  });
+
+  if(!rows.length){
+
+    box.innerHTML=
+      '<div class="muted">Estatísticas detalhadas não disponíveis para este jogo.</div>';
+
+    return;
+
+  }
+
+  box.innerHTML=`
+
+    <div class="statsgrid">
+
+      ${rows.map(x=>`
+
+        <div class="statbox">
+
+          <b>${esc(x.value)}</b>
+
+          <span>${esc(x.label)}</span>
+
+        </div>
+
+      `).join('')}
+
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================================
+   11 TITULAR
+   ========================================================= */
+
+function fzFindRosters(d){
+
+  const out=[];
+
+  function walk(x){
+
+    if(!x)return;
+
+    if(Array.isArray(x)){
+
+      x.forEach(walk);
+      return;
+
+    }
+
+    if(typeof x!=='object')return;
+
+    if(Array.isArray(x.roster))
+      out.push(...x.roster);
+
+    if(Array.isArray(x.players))
+      out.push(...x.players);
+
+    Object.keys(x).forEach(k=>{
+
+      if(
+        k==='rosters'||
+        k==='teams'||
+        k==='roster'||
+        k==='players'
+      ){
+
+        walk(x[k]);
+
+      }
+
+    });
+
+  }
+
+  walk(d);
+
+  return out;
+
+}
+
+
+function fzPlayerName(p){
+
+  return p?.athlete?.displayName||
+    p?.athlete?.fullName||
+    p?.player?.displayName||
+    p?.player?.fullName||
+    p?.displayName||
+    p?.fullName||
+    p?.name||
+    '';
+
+}
+
+
+function fzIsStarter(p){
+
+  if(p?.starter===true)return true;
+
+  if(p?.isStarter===true)return true;
+
+  if(p?.starter?.value===true)return true;
+
+  if(
+    String(
+      p?.position?.displayName||
+      p?.position?.name||
+      ''
+    ).toLowerCase().includes('starter')
+  )return true;
+
+  return false;
+
+}
+
+
+async function loadLineups(e){
+
+  const box=document.getElementById('lineupBox');
+
+  if(!box)return;
+
+  box.innerHTML=
+    '<div class="loading">A carregar 11 titular...</div>';
+
+  const d=await fzSummary(e);
+
+  const rosters=fzFindRosters(d);
+
+  const homeId=String(
+    teamFromEvent(e,true)?.team?.id||''
+  );
+
+  const awayId=String(
+    teamFromEvent(e,false)?.team?.id||''
+  );
+
+  let home=[];
+  let away=[];
+
+  rosters.forEach(r=>{
+
+    const tid=String(
+      r?.team?.id||
+      r?.team?.uid||
+      ''
+    );
+
+    const player=
+      r?.athlete||
+      r?.player?
+        r:
+        r;
+
+    if(tid===homeId)
+      home.push(player);
+
+    else if(tid===awayId)
+      away.push(player);
+
+  });
+
+  /* fallback: alguns feeds colocam os atletas directamente */
+
+  if(!home.length||!away.length){
+
+    const raw=
+      d?.rosters||
+      d?.boxscore?.rosters||
+      [];
+
+    if(Array.isArray(raw)){
+
+      raw.forEach(r=>{
+
+        const tid=String(r?.team?.id||'');
+
+        const players=
+          r?.roster||
+          r?.players||
+          [];
+
+        if(tid===homeId)
+          home=players;
+
+        if(tid===awayId)
+          away=players;
+
+      });
+
+    }
+
+  }
+
+  function starters(arr){
+
+    const s=arr.filter(fzIsStarter);
+
+    if(s.length>=11)
+      return s.slice(0,11);
+
+    return arr.slice(0,11);
+
+  }
+
+  home=starters(home);
+  away=starters(away);
+
+  function renderTeam(name,players){
+
+    return`
+
+      <div>
+
+        <div class="value">
+          ${esc(name)}
+        </div>
+
+        <div class="roster">
+
+          ${players.map((p,i)=>`
+
+            <div class="player">
+
+              <b>
+                ${i+1}. ${esc(fzPlayerName(p)||'Jogador')}
+              </b>
+
+              <div class="pos">
+                ${esc(
+                  p?.position?.displayName||
+                  p?.position?.abbreviation||
+                  p?.position||
+                  ''
+                )}
+              </div>
+
+            </div>
+
+          `).join('')}
+
+        </div>
+
+      </div>
+
+    `;
+
+  }
+
+  if(!home.length&&!away.length){
+
+    box.innerHTML=
+      '<div class="muted">11 titular ainda não disponível para este jogo.</div>';
+
+    return;
+
+  }
+
+  box.innerHTML=`
+
+    <div class="lineups">
+
+      ${renderTeam(
+        teamNameFromEvent(e,true),
+        home
+      )}
+
+      ${renderTeam(
+        teamNameFromEvent(e,false),
+        away
+      )}
+
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================================
+   ÚLTIMOS 5
+   ========================================================= */
+
+async function fzTeamSchedule(teamId){
+
+  if(!teamId)return [];
+
+  const urls=[
+
+    FZ_WEB+'all/teams/'+
+      encodeURIComponent(teamId)+
+      '/schedule',
+
+    FZ_SITE+'all/teams/'+
+      encodeURIComponent(teamId)+
+      '/schedule',
+
+    FZ_SITE+'all/teams/'+
+      encodeURIComponent(teamId)+
+      '/schedule?limit=1000'
+
+  ];
+
+  for(const url of urls){
+
+    const d=await fzJson(url);
+
+    const arr=
+      d?.events||
+      d?.schedule?.events||
+      [];
+
+    if(Array.isArray(arr)&&arr.length)
+      return arr;
+
+  }
+
+  return [];
+
+}
+
+
+async function last5(teamId,boxId,excludeId){
+
+  const box=document.getElementById(boxId);
+
+  if(!box)return;
+
+  box.innerHTML=
+    '<div class="loading">A procurar os últimos 5 jogos...</div>';
+
+  const events=await fzTeamSchedule(teamId);
+
+  const rows=events
+    .filter(e=>String(e.id)!==String(excludeId))
+    .filter(e=>
+      e?.status?.type?.completed===true||
+      String(e?.status?.type?.state||'').toLowerCase()==='post'||
+      String(e?.status?.type?.name||'').toLowerCase()==='status_final'
+    )
+    .sort((a,b)=>
+      new Date(b.date)-new Date(a.date)
+    )
+    .slice(0,5)
+    .map(e=>{
+
+      const r=resultForTeam(e,teamId);
+
+      if(r)return r;
+
+      const c=e?.competitions?.[0]?.competitors||[];
+
+      const me=c.find(x=>
+        String(x?.team?.id)===String(teamId)
+      );
+
+      const op=c.find(x=>
+        String(x?.team?.id)!==String(teamId)
+      );
+
+      const gf=scoreValue(me);
+      const ga=scoreValue(op);
+
+      if(gf===null||ga===null)return null;
+
+      return{
+
+        date:e.date,
+
+        opponent:
+          op?.team?.displayName||
+          'Adversário',
+
+        gf,
+        ga,
+
+        result:
+          gf>ga?'V':
+          gf===ga?'E':
+          'D'
+
+      };
+
+    })
+    .filter(Boolean);
+
+  if(!rows.length){
+
+    box.innerHTML=
+      '<div class="muted">Não foi possível obter os últimos jogos.</div>';
+
+    return;
+
+  }
+
+  box.innerHTML=rows.map(r=>`
+
+    <div class="last">
+
+      <div class="muted">
+        ${fmtDate(r.date)}
+      </div>
+
+      <div class="match">
+
+        <span>${esc(r.opponent)}</span>
+
+        <b>${r.gf}-${r.ga}</b>
+
+      </div>
+
+      <div class="form">
+
+        <b class="${
+          r.result==='V'?'v':
+          r.result==='E'?'e':'d'
+        }">
+
+          ${r.result}
+
+        </b>
+
+      </div>
+
+    </div>
+
+  `).join('');
+
+}
+
+
+/* =========================================================
+   ONDE VER
+   ========================================================= */
+
+async function loadWatch(e){
+
+  const box=document.getElementById('watchBox');
+
+  if(!box)return;
+
+  box.innerHTML=
+    '<div class="loading">A procurar transmissão...</div>';
+
+  const d=await fzSummary(e);
+
+  const list=[];
+
+  const addBroadcast=x=>{
+
+    if(!x)return;
+
+    const names=[];
+
+    if(Array.isArray(x.names))
+      names.push(...x.names);
+
+    if(x.name)
+      names.push(x.name);
+
+    if(x.media?.shortName)
+      names.push(x.media.shortName);
+
+    if(x.station?.name)
+      names.push(x.station.name);
+
+    if(!names.length)return;
+
+    const name=[...new Set(names)].join(' / ');
+
+    const url=
+      x.url||
+      x.links?.web?.href||
+      x.market?.url||
+      '';
+
+    if(!list.some(y=>y.name===name))
+      list.push({name,url});
+
+  };
+
+  const b1=d?.broadcasts;
+
+  if(Array.isArray(b1))
+    b1.forEach(addBroadcast);
+
+  const b2=d?.header?.competitions?.[0]?.broadcasts;
+
+  if(Array.isArray(b2))
+    b2.forEach(addBroadcast);
+
+  const b3=e?.competitions?.[0]?.broadcasts;
+
+  if(Array.isArray(b3))
+    b3.forEach(addBroadcast);
+
+  const geo=e?.competitions?.[0]?.geoBroadcasts;
+
+  if(Array.isArray(geo))
+    geo.forEach(addBroadcast);
+
+  if(!list.length){
+
+    box.innerHTML=
+      '<div class="muted">Não foi indicada uma transmissão para este jogo.</div>';
+
+    return;
+
+  }
+
+  box.innerHTML=`
+
+    <div class="watch">
+
+      ${list.map(x=>x.url?
+
+        `<a href="${esc(x.url)}"
+            target="_blank"
+            rel="noopener">
+
+          📺 ${esc(x.name)}
+
+        </a>`:
+
+        `<div class="watch">
+
+          <a href="javascript:void(0)">
+
+            📺 ${esc(x.name)}
+
+          </a>
+
+        </div>`
+
+      ).join('')}
+
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================================
+   TABELAS CLASSIFICATIVAS
+   ========================================================= */
+
+async function loadTables(){
+
+  const box=document.getElementById('tablesList');
+
+  if(!box)return;
+
+  box.innerHTML=`
+
+    <div class="chips">
+
+      ${LEAGUES.map(([id,name])=>`
+
+        <button
+          class="chip"
+          onclick="loadOneTable('${esc(id)}','${esc(name)}')">
+
+          ${esc(name)}
+
+        </button>
+
+      `).join('')}
+
+    </div>
+
+    <div id="oneTable">
+
+      <div class="loading">
+        A carregar Liga Portugal...
+      </div>
+
+    </div>
+
+  `;
+
+  await loadOneTable('por.1','Liga Portugal');
+
+}
+
+
+function fzEntries(d){
+
+  const out=[];
+
+  function walk(x){
+
+    if(!x)return;
+
+    if(Array.isArray(x)){
+
+      x.forEach(walk);
+      return;
+
+    }
+
+    if(typeof x!=='object')return;
+
+    if(Array.isArray(x.entries))
+      out.push(...x.entries);
+
+    if(Array.isArray(x.standings?.entries))
+      out.push(...x.standings.entries);
+
+    Object.keys(x).forEach(k=>{
+
+      if(
+        k==='children'||
+        k==='groups'||
+        k==='standings'||
+        k==='content'
+      ){
+
+        walk(x[k]);
+
+      }
+
+    });
+
+  }
+
+  walk(d);
+
+  const map=new Map();
+
+  out.forEach(x=>{
+
+    const id=
+      x?.team?.id||
+      x?.team?.uid||
+      x?.uid;
+
+    if(id&&!map.has(id))
+      map.set(id,x);
+
+  });
+
+  return [...map.values()];
+
+}
+
+
+function fzStat(entry,names){
+
+  const arr=entry?.stats||[];
+
+  for(const name of names){
+
+    const x=arr.find(s=>
+      String(s?.name||'').toLowerCase()===name
+    );
+
+    if(x)
+      return x.displayValue??x.value;
+
+  }
+
+  return '—';
+
+}
+
+
+async function loadOneTable(league,name){
+
+  const box=document.getElementById('oneTable');
+
+  if(!box)return;
+
+  box.innerHTML=
+    '<div class="loading">A carregar '+esc(name)+'...</div>';
+
+  /* IMPORTANTE:
+     standings do soccer usa /apis/v2
+  */
+
+  const urls=[
+
+    FZ_SITE.replace(
+      '/apis/site/v2/',
+      '/apis/v2/'
+    )+
+    league+'/standings',
+
+    'https://site.web.api.espn.com/apis/v2/sports/soccer/'+
+    league+'/standings',
+
+    'https://sports.core.api.espn.com/v2/sports/soccer/leagues/'+
+    league+'/standings'
+
+  ];
+
+  let data=null;
+
+  for(const url of urls){
+
+    const d=await fzJson(url);
+
+    const entries=fzEntries(d);
+
+    if(entries.length){
+
+      data=entries;
+      break;
+
+    }
+
+  }
+
+  if(!data||!data.length){
+
+    box.innerHTML=
+      '<div class="err">Tabela classificativa indisponível neste momento.</div>';
+
+    return;
+
+  }
+
+  data.sort((a,b)=>{
+
+    const pa=Number(
+      fzStat(a,['points','pts'])||0
+    );
+
+    const pb=Number(
+      fzStat(b,['points','pts'])||0
+    );
+
+    return pb-pa;
+
+  });
+
+  box.innerHTML=`
+
+    <div class="card">
+
+      <div class="title">
+
+        <h2>${esc(name)}</h2>
+
+        <span class="muted">
+          ${data.length} equipas
+        </span>
+
+      </div>
+
+      <div class="tablewrap">
+
+        <table class="table">
+
+          <thead>
+
+            <tr>
+
+              <th>#</th>
+              <th>Equipa</th>
+              <th>J</th>
+              <th>V</th>
+              <th>E</th>
+              <th>D</th>
+              <th>GM</th>
+              <th>GS</th>
+              <th>Pts</th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            ${data.map((x,i)=>{
+
+              const t=x?.team||{};
+
+              return`
+
+                <tr>
+
+                  <td>${i+1}</td>
+
+                  <td>
+
+                    <b>
+                      ${esc(
+                        t.displayName||
+                        t.name||
+                        'Equipa'
+                      )}
+                    </b>
+
+                  </td>
+
+                  <td>
+                    ${esc(fzStat(x,['gamesPlayed','played']))}
+                  </td>
+
+                  <td>
+                    ${esc(fzStat(x,['wins']))}
+                  </td>
+
+                  <td>
+                    ${esc(fzStat(x,['ties','draws']))}
+                  </td>
+
+                  <td>
+                    ${esc(fzStat(x,['losses']))}
+                  </td>
+
+                  <td>
+                    ${esc(fzStat(x,['pointsFor','goalsFor']))}
+                  </td>
+
+                  <td>
+                    ${esc(fzStat(x,['pointsAgainst','goalsAgainst']))}
+                  </td>
+
+                  <td>
+
+                    <b>
+                      ${esc(fzStat(x,['points','pts']))}
+                    </b>
+
+                  </td>
+
+                </tr>
+
+              `;
+
+            }).join('')}
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+/* =========================================================
+   CORRIGE TAMBÉM O CARREGAMENTO DO JOGO
+   ========================================================= */
+
+async function loadMatchDetails(e){
+
+  const box=document.getElementById('matchDetails');
+
+  if(!box)return;
+
+  const home=teamFromEvent(e,true);
+  const away=teamFromEvent(e,false);
+
+  box.innerHTML=`
+
+    <div class="card row">
+
+      <div class="label">
+        Acontecimentos do jogo
+      </div>
+
+      <div id="incidentsBox">
+        <div class="loading">A carregar...</div>
+      </div>
+
+    </div>
+
+
+    <div class="card row">
+
+      <div class="label">
+        Estatísticas
+      </div>
+
+      <div id="statsBox">
+        <div class="loading">A carregar...</div>
+      </div>
+
+    </div>
+
+
+    <div class="card row">
+
+      <div class="label">
+        11 titular
+      </div>
+
+      <div id="lineupBox">
+        <div class="loading">A carregar...</div>
+      </div>
+
+    </div>
+
+
+    <div class="card row">
+
+      <div class="label">
+        Últimos 5 jogos
+      </div>
+
+      <div class="lastgrid">
+
+        <div>
+
+          <div class="value">
+            ${esc(teamNameFromEvent(e,true))}
+          </div>
+
+          <div id="lastHome">
+            <div class="loading">A carregar...</div>
+          </div>
+
+        </div>
+
+
+        <div>
+
+          <div class="value">
+            ${esc(teamNameFromEvent(e,false))}
+          </div>
+
+          <div id="lastAway">
+            <div class="loading">A carregar...</div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="card row">
+
+      <div class="label">
+        Onde ver
+      </div>
+
+      <div id="watchBox">
+        <div class="loading">A procurar transmissão...</div>
+      </div>
+
+    </div>
+
+  `;
+
+  await Promise.allSettled([
+
+    loadIncidents(e),
+
+    loadStatistics(e),
+
+    loadLineups(e),
+
+    last5(
+      teamFromEvent(e,true)?.team?.id,
+      'lastHome',
+      e.id
+    ),
+
+    last5(
+      teamFromEvent(e,false)?.team?.id,
+      'lastAway',
+      e.id
+    ),
+
+    loadWatch(e)
+
+  ]);
+
+}
+
+
+/* =========================================================
+   NOTÍCIAS EM PORTUGUÊS
+   ========================================================= */
+
+async function fzTranslate(text){
+
+  if(!text)return '';
+
+  try{
+
+    const url=
+      'https://translate.googleapis.com/translate_a/single'+
+      '?client=gtx'+
+      '&sl=auto'+
+      '&tl=pt'+
+      '&dt=t'+
+      '&q='+encodeURIComponent(text);
+
+    const d=await fzJson(url,8000);
+
+    if(Array.isArray(d?.[0])){
+
+      return d[0]
+        .map(x=>x?.[0]||'')
+        .join('');
+
+    }
+
+  }catch(e){}
+
+  return text;
+
+}
+
+
+async function loadNews(){
+
+  const box=document.getElementById('newsList');
+
+  if(!box)return;
+
+  box.innerHTML=
+    '<div class="loading">A carregar notícias...</div>';
+
+  const d=await fzJson(
+    FZ_SITE+'news'
+  );
+
+  let articles=
+    d?.articles||
+    d?.news||
+    [];
+
+  if(!Array.isArray(articles)||!articles.length){
+
+    box.innerHTML=
+      '<div class="muted">Não existem notícias disponíveis.</div>';
+
+    return;
+
+  }
+
+  articles=articles.slice(0,15);
+
+  box.innerHTML=articles.map((x,i)=>`
+
+    <div class="card" style="margin-bottom:8px">
+
+      <div id="newsTitle${i}" class="value">
+
+        ${esc(
+          x.headline||
+          x.title||
+          'Notícia'
+        )}
+
+      </div>
+
+      <div id="newsDesc${i}"
+           class="muted"
+           style="margin-top:6px">
+
+        ${esc(
+          x.description||
+          x.summary||
+          ''
+        )}
+
+      </div>
+
+      ${
+        x.links?.web?.href?
+
+        `<a href="${esc(x.links.web.href)}"
+            target="_blank"
+            rel="noopener"
+            style="display:block;margin-top:8px;color:#1683ff;font-size:11px">
+
+          Ler notícia
+
+        </a>`:''
+      }
+
+    </div>
+
+  `).join('');
+
+  /* tradução assíncrona */
+
+  for(let i=0;i<articles.length;i++){
+
+    const title=
+      articles[i].headline||
+      articles[i].title||
+      '';
+
+    const desc=
+      articles[i].description||
+      articles[i].summary||
+      '';
+
+    if(title){
+
+      const t=await fzTranslate(title);
+
+      const el=document.getElementById(
+        'newsTitle'+i
+      );
+
+      if(el)el.textContent=t;
+
+    }
+
+    if(desc){
+
+      const t=await fzTranslate(desc);
+
+      const el=document.getElementById(
+        'newsDesc'+i
+      );
+
+      if(el)el.textContent=t;
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   ARRANQUE
+   ========================================================= */
 
 try{
 
-const all=[];
-
-for(const [league,name] of LEAGUES){
-
-try{
-
-const d=await jsonUrl(
-API+league+'/scoreboard?limit=100'
-);
-
-const arr=d?.events||[];
-
-arr.forEach(e=>{
-e.leagueName=name;
-all.push(e);
-});
-
-}catch(e){}
-
-}
-
-if(all.length){
-
-games=all;
-
-games.sort((a,b)=>
-new Date(a.date)-new Date(b.date)
-);
-
-const gamesSection=
-document.getElementById('games');
-
-if(gamesSection&&!gamesSection.classList.contains('hidden')){
-render(games);
-}
-
-}
+  load();
 
 }catch(e){
-console.warn('Atualização automática:',e);
+
+  console.error('FUTZONE load:',e);
+
 }
+
+
+/* actualização automática dos jogos */
+
+setInterval(()=>{
+
+  try{
+
+    load();
+
+  }catch(e){}
 
 },5*60*1000);
 
-
-/*
- Garante que, ao voltar à aplicação,
- as sugestões são carregadas novamente.
-*/
-document.addEventListener('visibilitychange',()=>{
-
-if(!document.hidden){
-
-try{
-
-if(games.length){
-
-suggestions();
-
-}
-
-}catch(e){}
-
-}
-
-});
-
-
-/*
- Botão/voltar do Android
-*/
-window.addEventListener('popstate',()=>{
-
-try{
-
-sec('premium');
-
-}catch(e){}
-
-});
-
-
 </script>
-
-</body>
-</html>
