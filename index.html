@@ -1519,5 +1519,187 @@ openTestMatch=async function(id){
   color:var(--red);
 }
 </style>
+      <!-- FUTZONE — BLOCO 3B — ONDE VER -->
+
+<script>
+
+async function FZ3B_get(url){
+  try{
+    const r=await fetch(url);
+    if(!r.ok)return null;
+    return await r.json();
+  }catch(e){
+    return null;
+  }
+}
+
+function FZ3B_channels(ev,data){
+
+  const found=[];
+  const seen=new Set();
+
+  function add(x){
+
+    if(!x)return;
+
+    const name=
+      x.name ||
+      x.shortName ||
+      x.names?.[0] ||
+      x.media?.name ||
+      x.station?.name ||
+      '';
+
+    if(!name)return;
+
+    const region=
+      x.region ||
+      x.market ||
+      x.country ||
+      '';
+
+    const link=
+      x.href ||
+      x.url ||
+      x.link ||
+      x.media?.href ||
+      '';
+
+    const key=name+'|'+region;
+
+    if(seen.has(key))return;
+
+    seen.add(key);
+
+    found.push({
+      name:name,
+      region:region,
+      link:link
+    });
+  }
+
+  const c=
+    ev?.competitions?.[0];
+
+  (c?.broadcasts||[]).forEach(add);
+  (c?.geoBroadcasts||[]).forEach(add);
+
+  (ev?.broadcasts||[]).forEach(add);
+  (ev?.geoBroadcasts||[]).forEach(add);
+
+  const sc=
+    data?.header?.competitions?.[0];
+
+  (sc?.broadcasts||[]).forEach(add);
+  (sc?.geoBroadcasts||[]).forEach(add);
+
+  (data?.broadcasts||[]).forEach(add);
+  (data?.geoBroadcasts||[]).forEach(add);
+
+  return found;
+}
+
+async function FZ3B_watch(ev){
+
+  const area=
+    document.getElementById('analysisBox');
+
+  if(!area)return;
+
+  const box=
+    document.createElement('div');
+
+  box.style.cssText=
+    'background:var(--card);'+
+    'border:1px solid var(--line);'+
+    'border-radius:14px;'+
+    'padding:14px;'+
+    'margin:10px 0';
+
+  box.innerHTML=
+    '<b>📺 Onde ver</b>'+
+    '<div style="color:var(--muted);margin-top:8px">'+
+    'A procurar transmissões...'+
+    '</div>';
+
+  area.appendChild(box);
+
+  const data=
+    await FZ3B_get(
+      API+'summary?event='+ev.id
+    );
+
+  const channels=
+    FZ3B_channels(ev,data);
+
+  if(!channels.length){
+
+    box.innerHTML=
+      '<b>📺 Onde ver</b>'+
+      '<div style="color:var(--muted);margin-top:8px">'+
+      'Não foi indicada uma transmissão oficial pelo ESPN para este jogo.'+
+      '</div>';
+
+    return;
+  }
+
+  let html='<b>📺 Onde ver</b>';
+
+  channels.forEach(c=>{
+
+    html+=
+      '<div style="'+
+      'display:flex;'+
+      'justify-content:space-between;'+
+      'align-items:center;'+
+      'gap:8px;'+
+      'padding:9px 0;'+
+      'border-bottom:1px solid var(--line)">'+
+
+      '<span>'+
+      c.name+
+      (c.region
+        ? ' <small style="color:var(--muted)">('+
+          c.region+
+          ')</small>'
+        : '')+
+      '</span>'+
+
+      (c.link
+        ? '<a href="'+
+          c.link+
+          '" target="_blank" rel="noopener" '+
+          'style="color:#58a6ff;font-weight:800">'+
+          'Abrir'+
+          '</a>'
+        : '')+
+
+      '</div>';
+  });
+
+  box.innerHTML=html;
+}
+
+
+/* Acrescenta o Onde Ver ao detalhe do jogo */
+
+const FZ3B_oldOpen=
+  openTestMatch;
+
+openTestMatch=async function(id){
+
+  const ev=
+    games.find(x=>
+      String(x.id)===String(id)
+    );
+
+  if(!ev)return;
+
+  await FZ3B_oldOpen(id);
+
+  await FZ3B_watch(ev);
+};
+
+      </script>
 </body>
 </html>
