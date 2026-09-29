@@ -6925,192 +6925,1122 @@ setInterval(function(){
       const list=articles.slice(0,15);
 
 
-      if(!list.length){
+<script>
+/* ============================================================
+   FUTZONE PREMIUM — CORREÇÃO REAL
+   ÚLTIMOS 5 + ONDE VER + NOTÍCIAS PT
+   ============================================================ */
 
-        box.innerHTML=
-          '<div class="muted">Sem notícias disponíveis.</div>';
+(function(){
 
-        return;
-      }
+/* ============================================================
+   ÚLTIMOS 5 JOGOS
+   ============================================================ */
 
+async function FZ_LAST5_REAL(teamId, boxId, excludeId){
 
-      const translated=await Promise.all(
+    const box=document.getElementById(boxId);
 
-        list.map(async a=>{
+    if(!box || !teamId) return;
 
-          const title=
-            a?.headline ||
-            a?.title ||
-            '';
+    box.innerHTML=
+      '<div class="loading">A carregar últimos 5 jogos...</div>';
 
+    try{
 
-          const description=
-            a?.description ||
-            a?.summary ||
-            a?.dek ||
-            '';
+        let events=[];
 
+        const urls=[
 
-          let ptTitle=title;
-          let ptDescription=description;
+            API+
+            'all/teams/'+
+            encodeURIComponent(teamId)+
+            '/schedule?limit=100',
 
+            API+
+            'teams/'+
+            encodeURIComponent(teamId)+
+            '/schedule?limit=100'
 
-          try{
+        ];
 
-            if(title)
-              ptTitle=await fzTranslate(title);
+        for(const url of urls){
 
-          }catch(err){}
+            try{
 
+                const d=await jsonUrl(url,20000);
 
-          try{
+                if(Array.isArray(d?.events) &&
+                   d.events.length){
 
-            if(description)
-              ptDescription=
-                await fzTranslate(description);
+                    events=d.events;
+                    break;
 
-          }catch(err){}
+                }
 
+            }catch(err){}
 
-          const link=
-            a?.links?.web?.href ||
-            a?.web?.href ||
-            a?.link ||
-            '';
-
-
-          return{
-            title:ptTitle||title,
-            description:ptDescription||description,
-            link
-          };
-
-        })
-
-      );
+        }
 
 
-      box.innerHTML=translated.map(n=>`
+        /* Só jogos terminados */
 
-        <div class="card">
+        events=events.filter(e=>{
 
-          <div class="value">
-            ${esc(n.title)}
+            if(!e) return false;
+
+            if(
+                excludeId &&
+                String(e.id)===String(excludeId)
+            ){
+                return false;
+            }
+
+            const state=
+              String(
+                e?.status?.type?.state||''
+              ).toLowerCase();
+
+            const name=
+              String(
+                e?.status?.type?.name||''
+              ).toLowerCase();
+
+            return(
+                e?.status?.type?.completed===true ||
+                state==='post' ||
+                name.includes('final')
+            );
+
+        });
+
+
+        /* Mais recentes primeiro */
+
+        events.sort((a,b)=>
+            new Date(b?.date||0)-
+            new Date(a?.date||0)
+        );
+
+
+        /* Eliminar duplicados */
+
+        const seen=new Set();
+
+        events=events.filter(e=>{
+
+            const id=String(e?.id||'');
+
+            if(!id)return true;
+
+            if(seen.has(id))return false;
+
+            seen.add(id);
+
+            return true;
+
+        });
+
+
+        const rows=[];
+
+
+        /* =====================================================
+           Obtém resultado directamente dos jogos
+           ===================================================== */
+
+        for(const e of events){
+
+            let competitors=
+              e?.competitions?.[0]?.competitors||[];
+
+            /*
+             Se o calendário não trouxer os resultados,
+             consulta o resumo desse jogo.
+            */
+
+            if(
+              (!competitors.length ||
+               competitors.some(x=>
+                 x?.score==null
+               )) &&
+              e?.id
+            ){
+
+                try{
+
+                    const summary=
+                      await jsonUrl(
+                        API+
+                        'summary?event='+
+                        encodeURIComponent(e.id),
+                        12000
+                      );
+
+                    const summaryComp=
+                      summary?.
+                      header?.
+                      competitions?.[0]?.
+                      competitors;
+
+                    if(
+                      Array.isArray(summaryComp) &&
+                      summaryComp.length
+                    ){
+                        competitors=summaryComp;
+                    }
+
+                }catch(err){}
+
+            }
+
+
+            const mine=
+              competitors.find(c=>
+                String(c?.team?.id)===
+                String(teamId)
+              );
+
+            const opponent=
+              competitors.find(c=>
+                String(c?.team?.id)!==
+                String(teamId)
+              );
+
+
+            if(!mine || !opponent)
+                continue;
+
+
+            const gf=
+              Number(
+                mine?.score?.value ??
+                mine?.score?.displayValue
+              );
+
+            const ga=
+              Number(
+                opponent?.score?.value ??
+                opponent?.score?.displayValue
+              );
+
+
+            if(
+              !Number.isFinite(gf) ||
+              !Number.isFinite(ga)
+            ){
+                continue;
+            }
+
+
+            let resultado='Empate';
+            let classe='fz-r-empate';
+
+            if(gf>ga){
+
+                resultado='Vitória';
+                classe='fz-r-vitoria';
+
+            }else if(gf<ga){
+
+                resultado='Derrota';
+                classe='fz-r-derrota';
+
+            }
+
+
+            rows.push({
+
+                date:e.date,
+
+                opponent:
+                  opponent?.team?.displayName||
+                  opponent?.team?.shortDisplayName||
+                  'Adversário',
+
+                gf,
+                ga,
+
+                resultado,
+                classe
+
+            });
+
+
+            if(rows.length>=5)
+                break;
+
+        }
+
+
+        if(!rows.length){
+
+            box.innerHTML=
+              '<div class="muted">'+
+              'Não foi possível obter os últimos 5 jogos desta equipa.'+
+              '</div>';
+
+            return;
+
+        }
+
+
+        box.innerHTML=`
+
+          <div class="fz-real-last5">
+
+            ${rows.map(r=>`
+
+              <div class="fz-real-last5-row">
+
+                <div class="fz-real-last5-info">
+
+                  <div class="fz-real-last5-opponent">
+                    ${esc(r.opponent)}
+                  </div>
+
+                  <div class="muted"
+                       style="font-size:10px;margin-top:3px">
+
+                    ${esc(fmtDate(r.date))}
+
+                  </div>
+
+                </div>
+
+                <div class="fz-real-last5-score">
+
+                  ${r.gf} - ${r.ga}
+
+                </div>
+
+                <div class="fz-real-result ${r.classe}">
+
+                  ${r.resultado}
+
+                </div>
+
+              </div>
+
+            `).join('')}
+
           </div>
 
-          ${
-            n.description
-            ? `
-              <div class="muted"
-                   style="margin-top:6px">
-                ${esc(n.description)}
-              </div>
-            `
-            :''
-          }
-
-          ${
-            n.link
-            ? `
-              <div style="margin-top:8px">
-                <a
-                  href="${esc(n.link)}"
-                  target="_blank"
-                  rel="noopener"
-                  style="
-                    color:#1683ff;
-                    text-decoration:none;
-                  "
-                >
-                  Ler notícia
-                </a>
-              </div>
-            `
-            :''
-          }
-
-        </div>
-
-      `).join('');
-
+        `;
 
     }catch(err){
 
-      console.warn(
-        'FUTZONE notícias PT:',
-        err
-      );
+        console.warn(
+          'FUTZONE Últimos 5:',
+          err
+        );
 
-      box.innerHTML=
-        '<div class="muted">Não foi possível carregar as notícias.</div>';
+        box.innerHTML=
+          '<div class="muted">'+
+          'Não foi possível obter os últimos 5 jogos.'+
+          '</div>';
+
     }
 
-  }
+}
 
 
-  /* =========================================================
-     8 — INICIALIZAÇÃO
-     ========================================================= */
+/* ============================================================
+   ONDE VER
+   ESPN BROADCASTS + BROADCASTS CORE + SOFASCORE
+   ============================================================ */
 
-  function FZ_START_CLEAN(){
+async function FZ_LOAD_WATCH_REAL(e){
 
-    /*
-      Dá tempo para a página terminar de montar.
-    */
+    const box=
+      document.getElementById('watchBox');
 
-    setTimeout(()=>{
+    if(!box)return;
 
-      try{
-        FZ_LOAD_ALL_GAMES_CLEAN();
-      }catch(err){
-        console.warn(err);
+    box.innerHTML=
+      '<div class="loading">A procurar canais e serviços...</div>';
+
+
+    const canais=[];
+
+
+    function addCanal(name,url,country){
+
+        if(!name)return;
+
+        const key=
+          String(name).trim().toLowerCase()+
+          '|'+
+          String(country||'').trim().toLowerCase();
+
+        if(
+          canais.some(x=>x.key===key)
+        ){
+            return;
+        }
+
+        canais.push({
+
+            key,
+            name:String(name).trim(),
+            url:url||'',
+            country:country||''
+
+        });
+
+    }
+
+
+    /* ========================================================
+       1 — ESPN EVENTO
+       ======================================================== */
+
+    const broadcasts=
+      e?.competitions?.[0]?.broadcasts||[];
+
+    broadcasts.forEach(b=>{
+
+        const names=[];
+
+        if(Array.isArray(b?.names))
+            names.push(...b.names);
+
+        if(b?.name)
+            names.push(b.name);
+
+        if(b?.media?.shortName)
+            names.push(b.media.shortName);
+
+        if(b?.station?.name)
+            names.push(b.station.name);
+
+
+        const url=
+          b?.url||
+          b?.market?.url||
+          b?.links?.web?.href||
+          '';
+
+
+        const country=
+          b?.market?.country?.name||
+          b?.market?.country||
+          b?.region||
+          '';
+
+
+        names.forEach(name=>
+          addCanal(
+            name,
+            url,
+            country
+          )
+        );
+
+    });
+
+
+    /* ========================================================
+       2 — ESPN CORE BROADCASTS
+       ======================================================== */
+
+    try{
+
+        const league=
+          e?.
+          competitions?.[0]?.
+          league?.
+          id;
+
+        const competition=
+          e?.
+          competitions?.[0]?.
+          id;
+
+        if(
+          league &&
+          competition &&
+          e?.id
+        ){
+
+            const regions=[
+                'pt',
+                'eu',
+                'gb'
+            ];
+
+
+            for(const region of regions){
+
+                try{
+
+                    const url=
+                      CORE+
+                      league+
+                      '/events/'+
+                      encodeURIComponent(e.id)+
+                      '/competitions/'+
+                      encodeURIComponent(competition)+
+                      '/broadcasts?region='+
+                      region+
+                      '&limit=100';
+
+
+                    const d=
+                      await jsonUrl(
+                        url,
+                        10000
+                      );
+
+
+                    const arr=
+                      d?.items||
+                      d?.broadcasts||
+                      [];
+
+
+                    if(!Array.isArray(arr))
+                        continue;
+
+
+                    arr.forEach(b=>{
+
+                        const name=
+                          b?.media?.
+                          shortName||
+
+                          b?.media?.
+                          name||
+
+                          b?.station?.
+                          name||
+
+                          b?.name||
+                          'Transmissão';
+
+
+                        const country=
+                          b?.market?.
+                          country?.
+                          name||
+
+                          b?.market?.
+                          country||
+
+                          b?.region||
+
+                          region.toUpperCase();
+
+
+                        const url=
+                          b?.url||
+                          b?.links?.
+                          web?.
+                          href||
+                          '';
+
+
+                        addCanal(
+                          name,
+                          url,
+                          country
+                        );
+
+                    });
+
+                }catch(err){}
+
+            }
+
+        }
+
+    }catch(err){}
+
+
+    /* ========================================================
+       3 — SOFASCORE
+       ======================================================== */
+
+    try{
+
+        const sid=
+          await sofaEventId(e);
+
+        if(sid){
+
+            const d=
+              await jsonUrl(
+                SOFA+
+                '/event/'+
+                sid+
+                '/tv-stations',
+                15000
+              );
+
+
+            const stations=
+              d?.tvStations||[];
+
+
+            if(Array.isArray(stations)){
+
+                stations.forEach(s=>{
+
+                    const name=
+                      s?.station?.name||
+                      s?.name||
+                      'Transmissão';
+
+
+                    const url=
+                      s?.url||
+                      s?.station?.
+                      url||
+                      '';
+
+
+                    const country=
+                      s?.country?.name||
+                      s?.country?.
+                      alpha2||
+                      s?.country||
+                      '';
+
+
+                    addCanal(
+                      name,
+                      url,
+                      country
+                    );
+
+                });
+
+            }
+
+        }
+
+    }catch(err){}
+
+
+    /* ========================================================
+       MOSTRAR
+       ======================================================== */
+
+    if(!canais.length){
+
+        box.innerHTML=
+          '<div class="muted">'+
+          'Não foi indicada uma transmissão para este jogo.'+
+          '</div>';
+
+        return;
+
+    }
+
+
+    box.innerHTML=`
+
+      <div class="fz-watch-real">
+
+        ${canais.map(c=>`
+
+          <div class="fz-watch-row">
+
+            <div>
+
+              <div style="font-weight:800">
+                📺 ${esc(c.name)}
+              </div>
+
+              ${
+                c.country
+                ?
+                `<div class="muted"
+                      style="font-size:10px;margin-top:3px">
+                    ${esc(c.country)}
+                 </div>`
+                :
+                ''
+              }
+
+            </div>
+
+            ${
+              c.url
+              ?
+              `<a
+                 href="${esc(c.url)}"
+                 target="_blank"
+                 rel="noopener"
+                 class="fz-watch-link">
+                 Ver
+               </a>`
+              :
+              ''
+            }
+
+          </div>
+
+        `).join('')}
+
+      </div>
+
+    `;
+
+}
+
+
+/* ============================================================
+   NOTÍCIAS GERAIS — PORTUGUÊS
+   ============================================================ */
+
+async function FZ_LOAD_NEWS_PT_REAL(){
+
+    const box=
+      document.getElementById('newsList');
+
+    if(!box)return;
+
+    box.innerHTML=
+      '<div class="loading">'+
+      'A carregar notícias em português...'+
+      '</div>';
+
+
+    try{
+
+        const d=
+          await jsonUrl(
+            FZ_SITE+'news?limit=30',
+            20000
+          );
+
+
+        let articles=
+          d?.articles||
+          d?.news||
+          d?.items||
+          [];
+
+
+        if(!Array.isArray(articles))
+            articles=[];
+
+
+        articles=
+          articles.slice(0,15);
+
+
+        if(!articles.length){
+
+            box.innerHTML=
+              '<div class="muted">'+
+              'Não existem notícias disponíveis.'+
+              '</div>';
+
+            return;
+
+        }
+
+
+        /*
+          Primeiro mostra as notícias.
+          Depois traduz cada título/resumo.
+        */
+
+        box.innerHTML=
+          articles.map((a,i)=>{
+
+            const title=
+              a?.headline||
+              a?.title||
+              'Notícia';
+
+
+            const description=
+              a?.description||
+              a?.summary||
+              a?.dek||
+              '';
+
+
+            const link=
+              a?.links?.web?.href||
+              a?.web?.href||
+              a?.link||
+              '';
+
+
+            return`
+
+              <div class="card"
+                   style="margin-bottom:8px">
+
+                <div
+                  id="fzPTTitle${i}"
+                  class="value">
+
+                  ${esc(title)}
+
+                </div>
+
+
+                ${
+                  description
+                  ?
+                  `<div
+                     id="fzPTDesc${i}"
+                     class="muted"
+                     style="margin-top:6px">
+
+                     ${esc(description)}
+
+                   </div>`
+                  :
+                  ''
+                }
+
+
+                ${
+                  link
+                  ?
+                  `<a
+                     href="${esc(link)}"
+                     target="_blank"
+                     rel="noopener"
+                     style="
+                       display:block;
+                       margin-top:8px;
+                       color:#1683ff;
+                       text-decoration:none;
+                       font-size:11px;
+                     ">
+
+                     Ler notícia
+
+                   </a>`
+                  :
+                  ''
+                }
+
+              </div>
+
+            `;
+
+          }).join('');
+
+
+        /*
+          Traduz para PT.
+        */
+
+        for(
+          let i=0;
+          i<articles.length;
+          i++
+        ){
+
+            const title=
+              articles[i]?.headline||
+              articles[i]?.title||
+              '';
+
+
+            const description=
+              articles[i]?.description||
+              articles[i]?.summary||
+              articles[i]?.dek||
+              '';
+
+
+            if(title){
+
+                try{
+
+                    const pt=
+                      await fzTranslate(title);
+
+
+                    const el=
+                      document.getElementById(
+                        'fzPTTitle'+i
+                      );
+
+
+                    if(
+                      el &&
+                      pt &&
+                      String(pt).trim()
+                    ){
+
+                        el.textContent=pt;
+
+                    }
+
+                }catch(err){}
+
+            }
+
+
+            if(description){
+
+                try{
+
+                    const pt=
+                      await fzTranslate(
+                        description
+                      );
+
+
+                    const el=
+                      document.getElementById(
+                        'fzPTDesc'+i
+                      );
+
+
+                    if(
+                      el &&
+                      pt &&
+                      String(pt).trim()
+                    ){
+
+                        el.textContent=pt;
+
+                    }
+
+                }catch(err){}
+
+            }
+
+        }
+
+    }catch(err){
+
+        console.warn(
+          'FUTZONE notícias:',
+          err
+        );
+
+        box.innerHTML=
+          '<div class="muted">'+
+          'Não foi possível carregar as notícias.'+
+          '</div>';
+
+    }
+
+}
+
+
+/* ============================================================
+   CSS
+   ============================================================ */
+
+if(!document.getElementById(
+  'fz-real-correction-style'
+)){
+
+    const st=
+      document.createElement('style');
+
+    st.id=
+      'fz-real-correction-style';
+
+    st.textContent=`
+
+      .fz-real-last5{
+        display:flex;
+        flex-direction:column;
+        gap:7px;
+        margin-top:8px;
       }
 
-    },500);
+      .fz-real-last5-row{
+        display:grid;
+        grid-template-columns:1fr auto auto;
+        align-items:center;
+        gap:8px;
+        padding:9px;
+        border-radius:9px;
+        background:#0a111b;
+        border:1px solid rgba(255,255,255,.07);
+      }
+
+      .fz-real-last5-opponent{
+        font-size:13px;
+        font-weight:700;
+      }
+
+      .fz-real-last5-score{
+        font-size:14px;
+        font-weight:900;
+        white-space:nowrap;
+      }
+
+      .fz-real-result{
+        font-size:10px;
+        font-weight:900;
+        padding:4px 7px;
+        border-radius:6px;
+        white-space:nowrap;
+      }
+
+      .fz-r-vitoria{
+        color:#20d68a;
+        background:rgba(32,214,138,.13);
+      }
+
+      .fz-r-empate{
+        color:#ffd43b;
+        background:rgba(255,212,59,.13);
+      }
+
+      .fz-r-derrota{
+        color:#ff4054;
+        background:rgba(255,64,84,.13);
+      }
+
+      .fz-watch-real{
+        display:flex;
+        flex-direction:column;
+        gap:7px;
+        margin-top:8px;
+      }
+
+      .fz-watch-row{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:8px;
+        padding:9px;
+        border-radius:8px;
+        background:#0a111b;
+        border:1px solid rgba(255,255,255,.07);
+      }
+
+      .fz-watch-link{
+        padding:5px 9px;
+        border-radius:6px;
+        background:#1683ff;
+        color:#fff;
+        text-decoration:none;
+        font-size:11px;
+        font-weight:800;
+      }
+
+      @media(max-width:600px){
+
+        .fz-real-last5-row{
+          grid-template-columns:1fr auto;
+        }
+
+        .fz-real-result{
+          grid-column:2;
+          grid-row:1;
+        }
+
+      }
+
+    `;
+
+    document.head.appendChild(st);
+
+}
 
 
-    setTimeout(()=>{
+/* ============================================================
+   MUITO IMPORTANTE:
+   SUBSTITUI AS VARIÁVEIS/FUNÇÕES QUE openMatch USA
+   ============================================================ */
 
-      try{
-        FZ_NEWS_PT_CLEAN();
-      }catch(err){}
+try{
 
-    },1200);
+    last5=FZ_LAST5_REAL;
 
-  }
+}catch(err){
 
-
-  if(
-    document.readyState==='loading'
-  ){
-
-    document.addEventListener(
-      'DOMContentLoaded',
-      FZ_START_CLEAN
+    console.warn(
+      'FUTZONE last5:',
+      err
     );
 
-  }else{
+}
 
-    FZ_START_CLEAN();
+window.last5=
+  FZ_LAST5_REAL;
 
-  }
+
+try{
+
+    loadWatch=
+      FZ_LOAD_WATCH_REAL;
+
+}catch(err){
+
+    console.warn(
+      'FUTZONE loadWatch:',
+      err
+    );
+
+}
+
+window.loadWatch=
+  FZ_LOAD_WATCH_REAL;
 
 
-  /*
-    Expõe as funções para teste.
-  */
+try{
 
-  window.FZ_LAST5_CLEAN=
-    FZ_LAST5_CLEAN;
+    loadNews=
+      FZ_LOAD_NEWS_PT_REAL;
 
-  window.FZ_LOAD_ALL_GAMES_CLEAN=
-    FZ_LOAD_ALL_GAMES_CLEAN;
+}catch(err){
 
-  window.FZ_SUGGESTIONS_CLEAN=
-    FZ_SUGGESTIONS_CLEAN;
+    console.warn(
+      'FUTZONE loadNews:',
+      err
+    );
 
-  window.FZ_NEWS_PT_CLEAN=
-    FZ_NEWS_PT_CLEAN;
+}
+
+window.loadNews=
+  FZ_LOAD_NEWS_PT_REAL;
+
+
+/* ============================================================
+   CARREGAR NOTÍCIAS QUANDO A SECÇÃO FOR ABERTA
+   ============================================================ */
+
+const oldSec=
+  window.sec;
+
+if(typeof oldSec==='function'){
+
+    window.sec=function(id,btn){
+
+        oldSec(id,btn);
+
+        if(id==='news'){
+
+            setTimeout(
+              FZ_LOAD_NEWS_PT_REAL,
+              100
+            );
+
+        }
+
+    };
+
+}
+
+
+/* ============================================================
+   GARANTE QUE NOTÍCIAS APARECEM
+   ============================================================ */
+
+setTimeout(
+  FZ_LOAD_NEWS_PT_REAL,
+  1500
+);
+
 
 })();
- </script>
+</script>
