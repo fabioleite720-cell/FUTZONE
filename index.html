@@ -4767,4 +4767,437 @@ setTimeout(function(){
 
 })();
 
+</script> 
+<script>
+
+/* =========================================================
+   FUTZONE PREMIUM — CORREÇÃO FINAL
+   ÚLTIMOS 5 + NOTÍCIAS EM PORTUGUÊS
+   ========================================================= */
+
+(function(){
+
+/* ---------------------------------------------------------
+   ÚLTIMOS 5 JOGOS
+   --------------------------------------------------------- */
+
+async function FZ_last5_final(team, id, exclude){
+
+  const box=document.getElementById(id);
+
+  if(!box || !team)return;
+
+  box.innerHTML=
+    '<div class="loading">A procurar os últimos 5 jogos...</div>';
+
+  let events=[];
+
+  const urls=[
+
+    API+'all/teams/'+
+    encodeURIComponent(team)+
+    '/schedule?limit=100',
+
+    API+'teams/'+
+    encodeURIComponent(team)+
+    '/schedule?limit=100'
+
+  ];
+
+  for(const url of urls){
+
+    try{
+
+      const data=await jsonUrl(url,15000);
+
+      if(
+        Array.isArray(data?.events) &&
+        data.events.length
+      ){
+
+        events=data.events;
+        break;
+
+      }
+
+    }catch(e){
+
+      console.warn(
+        'FUTZONE últimos 5:',
+        e
+      );
+
+    }
+
+  }
+
+
+  const rows=events
+
+    .filter(e=>
+      String(e?.id)!==
+      String(exclude)
+    )
+
+    .filter(e=>
+      completed(e)
+    )
+
+    .map(e=>
+      resultForTeam(e,team)
+    )
+
+    .filter(Boolean)
+
+    .sort((a,b)=>
+      new Date(b.date)-
+      new Date(a.date)
+    )
+
+    .slice(0,5);
+
+
+  if(!rows.length){
+
+    box.innerHTML=
+      '<div class="muted">'+
+      'Não foi possível obter os últimos 5 jogos.'+
+      '</div>';
+
+    return;
+
+  }
+
+
+  box.innerHTML=rows.map(r=>{
+
+    let texto='Derrota';
+    let classe='d';
+
+    if(r.result==='V'){
+
+      texto='Vitória';
+      classe='v';
+
+    }else if(r.result==='E'){
+
+      texto='Empate';
+      classe='e';
+
+    }
+
+
+    return `
+
+      <div class="last">
+
+        <div class="muted">
+          ${fmtDate(r.date)}
+        </div>
+
+        <div class="match">
+
+          <span>
+            ${esc(r.opponent)}
+          </span>
+
+          <b>
+            ${esc(r.gf)}-${esc(r.ga)}
+          </b>
+
+        </div>
+
+        <div class="form">
+
+          <b class="${classe}"
+             style="
+               width:auto;
+               min-width:78px;
+               padding:0 8px;
+             ">
+
+            ${texto}
+
+          </b>
+
+        </div>
+
+      </div>
+
+    `;
+
+  }).join('');
+
+}
+
+
+/*
+   IMPORTANTE:
+   substitui também a referência da função original.
+   Assim o loadMatchDetails existente passa a usar
+   esta versão dos últimos 5.
+*/
+
+try{
+
+  last5=FZ_last5_final;
+
+}catch(e){
+
+  console.warn(
+    'Não foi possível substituir last5:',
+    e
+  );
+
+}
+
+window.last5=FZ_last5_final;
+
+
+/* ---------------------------------------------------------
+   NOTÍCIAS
+   --------------------------------------------------------- */
+
+async function FZ_news_final(){
+
+  const box=
+    document.getElementById('newsList');
+
+  if(!box)return;
+
+  box.innerHTML=
+    '<div class="loading">'+
+    'A carregar notícias em português...'+
+    '</div>';
+
+
+  let data=null;
+
+  try{
+
+    data=await fzJson(
+      FZ_SITE+'news',
+      12000
+    );
+
+  }catch(e){
+
+    console.warn(
+      'FUTZONE notícias:',
+      e
+    );
+
+  }
+
+
+  let articles=
+    data?.articles||
+    data?.news||
+    [];
+
+
+  if(
+    !Array.isArray(articles) ||
+    !articles.length
+  ){
+
+    box.innerHTML=
+      '<div class="muted">'+
+      'Não existem notícias disponíveis neste momento.'+
+      '</div>';
+
+    return;
+
+  }
+
+
+  articles=
+    articles.slice(0,15);
+
+
+  box.innerHTML=
+    articles.map((x,i)=>{
+
+      const title=
+        x.headline||
+        x.title||
+        'Notícia';
+
+      const desc=
+        x.description||
+        x.summary||
+        '';
+
+      const link=
+        x.links?.web?.href||
+        x.link||
+        '';
+
+      return `
+
+        <div
+          class="card"
+          style="margin-bottom:8px"
+        >
+
+          <div
+            id="fzNewsTitle${i}"
+            class="value"
+          >
+            ${esc(title)}
+          </div>
+
+          ${
+            desc
+              ?
+              `<div
+                 id="fzNewsDesc${i}"
+                 class="muted"
+                 style="margin-top:6px"
+               >
+                 ${esc(desc)}
+               </div>`
+              :
+              ''
+          }
+
+          ${
+            link
+              ?
+              `<a
+                 href="${esc(link)}"
+                 target="_blank"
+                 rel="noopener"
+                 style="
+                   display:block;
+                   margin-top:8px;
+                   color:#1683ff;
+                   font-size:11px;
+                 "
+               >
+                 Ler notícia
+               </a>`
+              :
+              ''
+          }
+
+        </div>
+
+      `;
+
+    }).join('');
+
+
+  /*
+     Traduz títulos e descrições para português.
+     Se já vierem em português, permanecem em português.
+  */
+
+  for(
+    let i=0;
+    i<articles.length;
+    i++
+  ){
+
+    const title=
+      articles[i].headline||
+      articles[i].title||
+      '';
+
+    const desc=
+      articles[i].description||
+      articles[i].summary||
+      '';
+
+
+    if(title){
+
+      try{
+
+        const pt=
+          await fzTranslate(title);
+
+        const el=
+          document.getElementById(
+            'fzNewsTitle'+i
+          );
+
+        if(el && pt){
+
+          el.textContent=pt;
+
+        }
+
+      }catch(e){}
+
+    }
+
+
+    if(desc){
+
+      try{
+
+        const pt=
+          await fzTranslate(desc);
+
+        const el=
+          document.getElementById(
+            'fzNewsDesc'+i
+          );
+
+        if(el && pt){
+
+          el.textContent=pt;
+
+        }
+
+      }catch(e){}
+
+    }
+
+  }
+
+}
+
+
+/* Substitui a função de notícias existente */
+
+try{
+
+  loadNews=FZ_news_final;
+
+}catch(e){
+
+  console.warn(
+    'Não foi possível substituir loadNews:',
+    e
+  );
+
+}
+
+window.loadNews=FZ_news_final;
+
+
+/* ---------------------------------------------------------
+   CARREGAR NOTÍCIAS AUTOMATICAMENTE
+   --------------------------------------------------------- */
+
+setTimeout(function(){
+
+  FZ_news_final();
+
+},1200);
+
+
+/* Atualizar notícias sem mexer nos jogos */
+
+setInterval(function(){
+
+  FZ_news_final();
+
+},10*60*1000);
+
+
+})();
+
 </script>
