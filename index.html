@@ -9982,4 +9982,430 @@ console.log(
 
 })();
 </script>
+<script>
+/* =====================================================
+   FUTZONE — ANÁLISE PREMIUM DAS SUGESTÕES
+   ===================================================== */
 
+async function FZ_ANALISE_PREMIUM(e){
+
+  const casa = teamFromEvent(e,true);
+  const fora = teamFromEvent(e,false);
+
+  if(!casa || !fora) return null;
+
+  async function obterForma(id){
+
+    try{
+
+      const urls = [
+        API+'all/teams/'+encodeURIComponent(id)+'/schedule?limit=100',
+        API+'teams/'+encodeURIComponent(id)+'/schedule?limit=100'
+      ];
+
+      let eventos=[];
+
+      for(const url of urls){
+
+        const d=await jsonUrl(url,12000);
+
+        if(Array.isArray(d?.events) && d.events.length){
+          eventos=d.events;
+          break;
+        }
+
+      }
+
+      const jogos=eventos
+        .filter(x=>completed(x))
+        .filter(x=>String(x.id)!==String(e.id))
+        .map(x=>{
+
+          const cs=x?.competitions?.[0]?.competitors||[];
+
+          const me=cs.find(
+            c=>String(c?.team?.id)===String(id)
+          );
+
+          const op=cs.find(
+            c=>String(c?.team?.id)!==String(id)
+          );
+
+          if(!me||!op)return null;
+
+          const gf=scoreValue(me);
+          const ga=scoreValue(op);
+
+          if(gf===null||ga===null)return null;
+
+          return {
+            gf,
+            ga,
+            casa:String(me.team.id)===String(id),
+            resultado:
+              gf>ga?'V':
+              gf===ga?'E':'D'
+          };
+
+        })
+        .filter(Boolean)
+        .slice(0,8);
+
+      if(!jogos.length)return null;
+
+      let pontos=0;
+      let marcados=0;
+      let sofridos=0;
+      let vitorias=0;
+
+      jogos.forEach(j=>{
+
+        marcados+=j.gf;
+        sofridos+=j.ga;
+
+        if(j.resultado==='V'){
+          pontos+=3;
+          vitorias++;
+        }
+
+        if(j.resultado==='E'){
+          pontos++;
+        }
+
+      });
+
+      const casaJogos=jogos.filter(j=>j.casa);
+      const foraJogos=jogos.filter(j=>!j.casa);
+
+      function mediaPontos(lista){
+
+        if(!lista.length)return null;
+
+        let p=0;
+
+        lista.forEach(j=>{
+          if(j.resultado==='V')p+=3;
+          if(j.resultado==='E')p++;
+        });
+
+        return p/lista.length;
+
+      }
+
+      return {
+
+        jogos:jogos.length,
+        ppg:pontos/jogos.length,
+        vitorias,
+        winRate:vitorias/jogos.length,
+
+        gf:marcados/jogos.length,
+        ga:sofridos/jogos.length,
+
+        saldo:
+          (marcados-sofridos)/jogos.length,
+
+        casaPPG:mediaPontos(casaJogos),
+        foraPPG:mediaPontos(foraJogos)
+
+      };
+
+    }catch(err){
+
+      return null;
+
+    }
+
+  }
+
+  const dados=await Promise.all([
+
+    obterForma(casa.team.id),
+    obterForma(fora.team.id)
+
+  ]);
+
+  const fc=dados[0];
+  const ff=dados[1];
+
+  if(!fc||!ff){
+
+    return {
+
+      high:'Análise insuficiente',
+
+      low:'Mais de 0,5 golos',
+
+      motivo:
+        'Dados recentes insuficientes para comparar as equipas.'
+
+    };
+
+  }
+
+  /*
+   * PONTUAÇÃO DA EQUIPA
+   *
+   * Forma      35%
+   * Saldo      15%
+   * Ataque     15%
+   * Defesa     10%
+   * Vitórias   20%
+   * Casa/fora   5%
+   */
+
+  let forçaCasa=
+      fc.ppg*35+
+      fc.saldo*15+
+      fc.gf*15+
+      (3-fc.ga)*10+
+      fc.winRate*20;
+
+  let forçaFora=
+      ff.ppg*35+
+      ff.saldo*15+
+      ff.gf*15+
+      (3-ff.ga)*10+
+      ff.winRate*20;
+
+  /*
+   * CASA/FORA É APENAS UM PEQUENO AJUSTE
+   */
+
+  if(fc.casaPPG!==null)
+    forçaCasa+=fc.casaPPG*3;
+
+  if(ff.foraPPG!==null)
+    forçaFora+=ff.foraPPG*3;
+
+  const diferença=forçaCasa-forçaFora;
+
+  let mercado;
+
+  if(diferença>=25){
+
+    mercado=casa.team.displayName+
+      ' — Vitória (1)';
+
+  }else if(diferença>=8){
+
+    mercado=casa.team.displayName+
+      ' ou empate (1X)';
+
+  }else if(diferença<=-25){
+
+    mercado=fora.team.displayName+
+      ' — Vitória (2)';
+
+  }else if(diferença<=-8){
+
+    mercado=fora.team.displayName+
+      ' ou empate (X2)';
+
+  }else{
+
+    mercado=
+      'Jogo equilibrado — sem favorito claro';
+
+  }
+
+  /*
+   * GOLOS
+   */
+
+  const golos=
+    (fc.gf+ff.gf+fc.ga+ff.ga)/2;
+
+  let golosSugestao;
+
+  if(golos>=3){
+
+    golosSugestao='Mais de 2,5 golos';
+
+  }else if(golos>=2){
+
+    golosSugestao='Mais de 1,5 golos';
+
+  }else{
+
+    golosSugestao='Menos de 3,5 golos';
+
+  }
+
+  const melhor=
+    fc.ppg>=ff.ppg
+      ?casa.team.displayName
+      :fora.team.displayName;
+
+  const motivo=
+    'Últimos '+Math.max(fc.jogos,ff.jogos)+
+    ' jogos: '+
+    casa.team.displayName+
+    ' '+fc.ppg.toFixed(2)+
+    ' pts/jogo; '+
+    fora.team.displayName+
+    ' '+ff.ppg.toFixed(2)+
+    ' pts/jogo. '+
+    'Melhor forma recente: '+
+    melhor+
+    '. '+
+    'Golos/jogo: '+
+    casa.team.displayName+
+    ' '+fc.gf.toFixed(1)+
+    ' | '+
+    fora.team.displayName+
+    ' '+ff.gf.toFixed(1)+
+    '.';
+
+  return {
+
+    high:mercado,
+    low:golosSugestao,
+    motivo
+
+  };
+
+}
+
+
+/*
+ * NOVA FUNÇÃO DE SUGESTÕES
+ */
+
+async function FZ_MOSTRAR_SUGESTOES(){
+
+  const box=
+    document.getElementById('suggestions');
+
+  if(!box)return;
+
+  const jogos=
+    games
+      .filter(e=>e?.competitions?.[0])
+      .filter(e=>!completed(e))
+      .slice(0,10);
+
+  if(!jogos.length){
+
+    box.innerHTML=
+      '<div class="loading">'+
+      'Sem sugestões disponíveis.'+
+      '</div>';
+
+    return;
+
+  }
+
+  box.innerHTML=
+    '<div class="loading">'+
+    'A estudar cada jogo...'+
+    '</div>';
+
+  const resultados=[];
+
+  for(const e of jogos){
+
+    const analise=
+      await FZ_ANALISE_PREMIUM(e);
+
+    resultados.push({
+      e,
+      analise
+    });
+
+  }
+
+  box.innerHTML=
+    resultados.map(x=>{
+
+      const e=x.e;
+      const s=x.analise;
+
+      const h=teamFromEvent(e,true);
+      const a=teamFromEvent(e,false);
+
+      return `
+
+      <div
+        class="card suggest game"
+        onclick="openMatch('${esc(e.id)}')"
+      >
+
+        <div class="match">
+
+          <span>
+            ${esc(
+              h?.team?.displayName||'Casa'
+            )}
+          </span>
+
+          <span>vs</span>
+
+          <span>
+            ${esc(
+              a?.team?.displayName||'Visitante'
+            )}
+          </span>
+
+        </div>
+
+        <div class="market orange">
+          Médio-alto
+        </div>
+
+        <div class="value">
+          ${esc(
+            s?.high||
+            'Análise Premium'
+          )}
+        </div>
+
+        <div class="market green">
+          Médio-baixo
+        </div>
+
+        <div class="value">
+          ${esc(
+            s?.low||
+            'Mais de 1,5 golos'
+          )}
+        </div>
+
+        <div class="status">
+          ${esc(
+            s?.motivo||
+            'A analisar...'
+          )}
+        </div>
+
+        <div class="status">
+          ${fmtDate(e.date)}
+          ${fmtTime(e.date)}
+        </div>
+
+      </div>
+
+      `;
+
+    }).join('');
+
+}
+
+
+/*
+ * EXECUTA A NOVA ANÁLISE QUANDO A PÁGINA
+ * TERMINAR DE CARREGAR.
+ */
+
+setTimeout(()=>{
+
+  if(typeof games!=='undefined' &&
+     Array.isArray(games)){
+
+    FZ_MOSTRAR_SUGESTOES();
+
+  }
+
+},3000);
+
+</script>
