@@ -794,169 +794,20 @@ return s;
 
 }
 
-async function loadSuggestionOdds(){
 
-  const lista=games.slice(0,10);
-
-  for(const e of lista){
-
-    e._fzOdds=null;
-
-    try{
-
-      const league=e?._fzLeague;
-      const eventId=e?.id;
-      const compId=e?.competitions?.[0]?.id;
-
-      if(!league||!eventId||!compId) continue;
-
-      const url=
-        "https://sports.core.api.espn.com/v2/sports/soccer/leagues/"+
-        encodeURIComponent(league)+
-        "/events/"+
-        encodeURIComponent(eventId)+
-        "/competitions/"+
-        encodeURIComponent(compId)+
-        "/odds?limit=10";
-
-      const data=await jsonUrl(url,3000);
-
-      let items=Array.isArray(data?.items)
-        ? data.items
-        : [];
-
-      for(let item of items){
-
-        if(item?.$ref){
-
-          try{
-
-            const ref=
-              String(item.$ref)
-              .replace(/^http:/,"https:");
-
-            const refData=
-              await jsonUrl(ref,2500);
-
-            if(refData){
-              item=refData;
-            }
-
-          }catch(err){
-
-            continue;
-
-          }
-
-        }
-
-        const h=
-          Number(item?.homeTeamOdds?.moneyLine);
-
-        const d=
-          Number(item?.drawOdds?.moneyLine);
-
-        const a=
-          Number(item?.awayTeamOdds?.moneyLine);
-
-        if(
-          Number.isFinite(h)&&
-          Number.isFinite(d)&&
-          Number.isFinite(a)
-        ){
-
-          e._fzOdds={
-            home:h,
-            draw:d,
-            away:a
-          };
-
-          break;
-
-        }
-
-      }
-
-    }catch(err){
-
-      e._fzOdds=null;
-
-    }
-
-  }
-
- function suggestMarket(e){
+function suggestMarket(e){
 
 const h=teamFromEvent(e,true);
 const a=teamFromEvent(e,false);
 
 if(!h||!a)return null;
 
-const home=h.team.displayName;
-const away=a.team.displayName;
-
-const o=e?._fzOdds;
-
-const homeOdd=Number(o?.home);
-const drawOdd=Number(o?.draw);
-const awayOdd=Number(o?.away);
-
-if(
-!Number.isFinite(homeOdd)||
-!Number.isFinite(drawOdd)||
-!Number.isFinite(awayOdd)
-){
-
 return{
-high:'Dupla possibilidade',
+high:h.team.displayName+' ou empate (1X)',
 low:'Mais de 0,5 golos'
 };
 
 }
-
-if(awayOdd<=1.50){
-
-return{
-high:'Vitória '+away,
-low:away+' ou empate (X2)'
-};
-
-}
-
-if(homeOdd<=1.50){
-
-return{
-high:'Vitória '+home,
-low:home+' ou empate (1X)'
-};
-
-}
-
-if(awayOdd<homeOdd && awayOdd<drawOdd){
-
-return{
-high:away+' ou empate (X2)',
-low:'Mais de 0,5 golos'
-};
-
-}
-
-if(homeOdd<awayOdd && homeOdd<drawOdd){
-
-return{
-high:home+' ou empate (1X)',
-low:'Mais de 0,5 golos'
-};
-
-}
-
-return{
-high:'Dupla possibilidade',
-low:'Mais de 0,5 golos'
-};
-
-}
-
 
 
 function suggestions(){
@@ -971,14 +822,12 @@ const valid=games
 
 if(!valid.length){
 
-box.innerHTML=
-'<div class="loading">Sem sugestões disponíveis.</div>';
-
+box.innerHTML='<div class="loading">Sem sugestões disponíveis.</div>';
 return;
 
 }
 
-box.innerHTML=valid.map(e=>{
+box.innerHTML=valid.map((e,i)=>{
 
 const h=teamFromEvent(e,true);
 const a=teamFromEvent(e,false);
@@ -1027,6 +876,8 @@ ${fmtDate(e.date)} ${fmtTime(e.date)}
 }).join('');
 
 }
+
+
 function render(list=games){
 
 const box=document.getElementById('gamesList');
@@ -2631,7 +2482,6 @@ const arr=d?.events||[];
 arr.forEach(e=>{
 
 e.leagueName=name;
-e._fzLeague=league;
 
 all.push(e);
 
@@ -2648,8 +2498,6 @@ new Date(a.date)-new Date(b.date)
 );
 
 render(games);
-
-await loadSuggestionOdds();
 
 suggestions();
 
