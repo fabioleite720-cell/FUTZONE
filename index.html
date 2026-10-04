@@ -969,52 +969,61 @@ low:'Mais de 0,5 golos'
 
 }
 
-async function testarUmaOdd(){
+async function testarOddsVisiveis(){
 
-try{
+  try{
 
-const e=games[0];
+    const e=games[0];
 
-if(!e){
+    if(!e){
+      alert("FUTZONE: ainda não há jogos carregados.");
+      return;
+    }
 
-console.log("FUTZONE TESTE: sem jogo");
-return;
+    const comp=e?.competitions?.[0];
+
+    const league=e?._fzLeague;
+    const eventId=e?.id;
+    const compId=comp?.id;
+
+    const url=
+      "https://sports.core.api.espn.com/v2/sports/soccer/leagues/"+
+      encodeURIComponent(league)+
+      "/events/"+
+      encodeURIComponent(eventId)+
+      "/competitions/"+
+      encodeURIComponent(compId)+
+      "/odds";
+
+    const d=await jsonUrl(url,10000);
+
+    const items=d?.items||[];
+
+    alert(
+      "FUTZONE TESTE ODDS\n\n"+
+      "Jogo: "+
+      (e?.name||"desconhecido")+
+      "\n\n"+
+      "Liga: "+league+
+      "\nEvent: "+eventId+
+      "\nCompetition: "+compId+
+      "\n\nItens recebidos: "+items.length+
+      "\n\n"+
+      JSON.stringify(d).slice(0,1200)
+    );
+
+  }catch(err){
+
+    alert(
+      "FUTZONE TESTE ODDS — ERRO\n\n"+
+      String(err)
+    );
+
+  }
 
 }
 
-const comp=e?.competitions?.[0];
-
-const league=e?._fzLeague;
-const eventId=e?.id;
-const compId=comp?.id;
-
-console.log("FUTZONE TESTE JOGO:",e);
-console.log("FUTZONE TESTE LIGA:",league,"EVENT:",eventId,"COMP:",compId);
-
-const url=
-"https://sports.core.api.espn.com/v2/sports/soccer/leagues/"+
-encodeURIComponent(league)+
-"/events/"+
-encodeURIComponent(eventId)+
-"/competitions/"+
-encodeURIComponent(compId)+
-"/odds";
-
-console.log("FUTZONE TESTE URL:",url);
-
-const d=await jsonUrl(url,10000);
-
-console.log("FUTZONE TESTE ODDS:",d);
-
-}catch(err){
-
-console.log("FUTZONE TESTE ERRO:",err);
-
-}
-
-}
-
-testarUmaOdd();
+setTimeout(testarOddsVisiveis,3000);
 function suggestions(){
 
 const box=document.getElementById('suggestions');
