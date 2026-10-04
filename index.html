@@ -796,6 +796,7 @@ return s;
 
 
 async function loadSuggestionOdds(){
+async function loadSuggestionOdds(){
 
 const lista=games
 .filter(e=>e?.competitions?.[0])
@@ -805,12 +806,10 @@ await Promise.all(lista.map(async e=>{
 
 try{
 
-const comp=e.competitions?.[0];
+const comp=e.competitions[0];
+const eventId=e.id;
 
-if(!comp?.id || !e?.id)return;
-
-
-/* Liga usada para obter as odds */
+if(!eventId || !comp?.id)return;
 
 const leagueSlug=
 e._fzLeague ||
@@ -819,56 +818,33 @@ e.league?.abbreviation ||
 e.league?.id ||
 '';
 
-
 if(!leagueSlug)return;
 
-
-/* Endpoint ESPN */
-
-const url=
+let url=
 "https://sports.core.api.espn.com/v2/sports/soccer/leagues/"+
 encodeURIComponent(leagueSlug)+
 "/events/"+
-encodeURIComponent(e.id)+
+encodeURIComponent(eventId)+
 "/competitions/"+
 encodeURIComponent(comp.id)+
 "/odds";
 
+let d=await jsonUrl(url,10000);
 
-const d=await jsonUrl(url,8000);
+let items=Array.isArray(d?.items)?d.items:[];
 
-const items=
-Array.isArray(d?.items)
-?d.items
-:[];
+for(let item of items){
 
+/* ESPN pode devolver a odd através de $ref */
 
-/*
- O ESPN pode devolver as odds através
- de uma referência $ref.
-*/
-
-for(const raw of items){
-
-let item=raw;
-
-
-/* Se for uma referência, abrir a referência */
-
-if(
-item?.$ref &&
-!item?.homeTeamOdds &&
-!item?.awayTeamOdds &&
-!item?.drawOdds
-){
+if(item?.$ref && !item.homeTeamOdds){
 
 try{
 
-const ref=
-String(item.$ref)
-.replace(/^http:/,'https:');
-
-item=await jsonUrl(ref,8000);
+item=await jsonUrl(
+item.$ref.replace(/^http:/,'https:'),
+10000
+);
 
 }catch(err){
 
@@ -878,20 +854,17 @@ continue;
 
 }
 
+const homeOdd=Number(
+item?.homeTeamOdds?.moneyLine
+);
 
-/* Procurar uma resposta com 1X2 */
+const drawOdd=Number(
+item?.drawOdds?.moneyLine
+);
 
-const homeOdd=
-Number(item?.homeTeamOdds?.moneyLine);
-
-const drawOdd=
-Number(item?.drawOdds?.moneyLine);
-
-const awayOdd=
-Number(item?.awayTeamOdds?.moneyLine);
-
-
-/* Se encontramos as três odds, guardar */
+const awayOdd=Number(
+item?.awayTeamOdds?.moneyLine
+);
 
 if(
 Number.isFinite(homeOdd) &&
@@ -900,17 +873,10 @@ Number.isFinite(awayOdd)
 ){
 
 e._fzOdds={
-
 home:homeOdd,
-
 draw:drawOdd,
-
 away:awayOdd
-
 };
-
-
-/* Parar depois de encontrar odds válidas */
 
 break;
 
@@ -921,7 +887,7 @@ break;
 }catch(err){
 
 console.log(
-"FUTZONE odds:",
+"FUTZONE ODDS ERRO:",
 e?.id,
 err
 );
@@ -930,8 +896,7 @@ err
 
 }));
 
-}
-
+ }
 function suggestMarket(e){
 
 const h=teamFromEvent(e,true);
