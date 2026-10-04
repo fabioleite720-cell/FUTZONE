@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FUTZONE TESTE ODDS</title>
+<title>FUTZONE PREMIUM — TESTE ESPN ODDS</title>
 
 <style>
 body{
@@ -14,249 +14,135 @@ color:#fff;
 font-family:Arial,sans-serif;
 }
 h1{
-text-align:center;
 color:#1683ff;
+text-align:center;
+}
+button{
+width:100%;
+padding:14px;
+border:0;
+border-radius:10px;
+background:#1683ff;
+color:#fff;
+font-size:16px;
+font-weight:bold;
+margin-bottom:15px;
 }
 .card{
 background:#0a111b;
-border:1px solid #1c2a3a;
+border:1px solid #26384d;
 border-radius:12px;
-padding:14px;
-margin:12px 0;
+padding:15px;
+margin-bottom:12px;
 }
-.teams{
-font-size:17px;
-font-weight:bold;
-margin-bottom:10px;
-}
-.odd{
-color:#aaa;
-font-size:13px;
-margin-bottom:10px;
-}
-.high{
-color:#ff9800;
-font-weight:bold;
-}
-.low{
+.ok{
 color:#39d353;
 font-weight:bold;
 }
-.label{
+.erro{
+color:#ff5252;
+font-weight:bold;
+}
+.nome{
+font-size:18px;
+font-weight:bold;
+margin-bottom:8px;
+}
+pre{
+white-space:pre-wrap;
+word-break:break-word;
 font-size:12px;
-margin-top:10px;
+color:#bbb;
 }
 </style>
 </head>
 
 <body>
 
-<h1>⚽ FUTZONE — TESTE ODDS</h1>
+<h1>🔥 FUTZONE PREMIUM</h1>
 
-<div id="app"></div>
+<button onclick="testar()">TESTAR ODDS ESPN</button>
+
+<div id="resultado">
+Carrega no botão para testar.
+</div>
 
 <script>
 
-const jogos=[
+async function testar(){
 
-{
-casa:"Índia",
-fora:"Brasil",
-oddCasa:12.00,
-oddEmpate:5.50,
-oddFora:1.15
-},
+const box=document.getElementById("resultado");
 
-{
-casa:"Azerbaijan",
-fora:"Lithuania",
-oddCasa:2.60,
-oddEmpate:3.10,
-oddFora:2.55
-},
+box.innerHTML=`
+<div class="card">
+A testar ligação às odds do ESPN...
+</div>
+`;
 
-{
-casa:"Comoros",
-fora:"Senegal",
-oddCasa:7.00,
-oddEmpate:3.80,
-oddFora:1.40
-},
+try{
 
-{
-casa:"Kyrgyz Republic",
-fora:"Lebanon",
-oddCasa:2.20,
-oddEmpate:3.10,
-oddFora:3.20
-},
+/*
+ Endpoint de teste.
+ Usamos um evento de futebol conhecido apenas
+ para verificar a estrutura da resposta.
+*/
 
-{
-casa:"Kosovo",
-fora:"Austria",
-oddCasa:3.60,
-oddEmpate:3.30,
-oddFora:1.95
-},
+const url=
+"https://sports.core.api.espn.com/v2/sports/soccer/leagues/eng.1/events?limit=1";
 
-{
-casa:"Portugal",
-fora:"Espanha",
-oddCasa:2.70,
-oddEmpate:3.20,
-oddFora:2.55
-},
+const resposta=await fetch(url);
 
-{
-casa:"Sporting",
-fora:"Arouca",
-oddCasa:1.45,
-oddEmpate:4.20,
-oddFora:7.00
-},
+if(!resposta.ok){
 
-{
-casa:"Liverpool",
-fora:"Arsenal",
-oddCasa:2.30,
-oddEmpate:3.40,
-oddFora:2.90
-},
-
-{
-casa:"Real Madrid",
-fora:"Getafe",
-oddCasa:1.30,
-oddEmpate:5.00,
-oddFora:9.00
-},
-
-{
-casa:"Escócia",
-fora:"França",
-oddCasa:5.50,
-oddEmpate:3.80,
-oddFora:1.55
-}
-
-];
-
-
-function analisar(j){
-
-const h=j.oddCasa;
-const d=j.oddEmpate;
-const a=j.oddFora;
-
-if(!h || !d || !a){
-
-return{
-high:"Análise indisponível",
-low:"Mais de 0,5 golos"
-};
+throw new Error(
+"HTTP "+resposta.status
+);
 
 }
 
+const dados=await resposta.json();
 
-if(a<=1.50){
-
-return{
-high:"Vitória "+j.fora,
-low:j.fora+" ou empate (X2)"
-};
-
-}
-
-
-if(h<=1.50){
-
-return{
-high:"Vitória "+j.casa,
-low:j.casa+" ou empate (1X)"
-};
-
-}
-
-
-if(a<h && a<d){
-
-return{
-high:j.fora+" ou empate (X2)",
-low:"Mais de 0,5 golos"
-};
-
-}
-
-
-if(h<a && h<d){
-
-return{
-high:j.casa+" ou empate (1X)",
-low:"Mais de 0,5 golos"
-};
-
-}
-
-
-return{
-high:"Dupla possibilidade",
-low:"Mais de 0,5 golos"
-};
-
-}
-
-
-function mostrar(){
-
-const box=document.getElementById("app");
-
-box.innerHTML=jogos.map(j=>{
-
-const s=analisar(j);
-
-return`
+box.innerHTML=`
 
 <div class="card">
 
-<div class="teams">
-${j.casa} ⚔️ ${j.fora}
+<div class="ok">
+✅ ESPN respondeu corretamente
 </div>
 
-<div class="odd">
-Odds 1X2:
-${j.oddCasa.toFixed(2)}
-/
-${j.oddEmpate.toFixed(2)}
-/
-${j.oddFora.toFixed(2)}
+<div class="nome">
+Eventos encontrados
 </div>
 
-<div class="label high">
-🟠 MÉDIO-ALTO
-</div>
-
-<div>
-${s.high}
-</div>
-
-<div class="label low">
-🟢 MÉDIO-BAIXO
-</div>
-
-<div>
-${s.low}
-</div>
+<pre>
+${JSON.stringify(dados,null,2).substring(0,6000)}
+</pre>
 
 </div>
 
 `;
 
-}).join("");
+}catch(erro){
+
+box.innerHTML=`
+
+<div class="card">
+
+<div class="erro">
+❌ Falha na ligação
+</div>
+
+<pre>
+${erro.message}
+</pre>
+
+</div>
+
+`;
 
 }
 
-
-mostrar();
+}
 
 </script>
 
