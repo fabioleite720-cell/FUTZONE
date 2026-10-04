@@ -7164,214 +7164,176 @@ setInterval(function(){
 
   }
 
+function FZ_SUGGESTIONS_CLEAN(){
 
-  /* =========================================================
-     6 — 10 SUGESTÕES
-     5 MÉDIO-ALTO + 5 MÉDIO-BAIXO
-     ========================================================= */
+  const box =
+    document.getElementById('suggestions') ||
+    document.getElementById('suggestionsList') ||
+    document.querySelector('[data-suggestions]');
 
-  function FZ_SUGGESTIONS_CLEAN(){
+  if(!box) return;
 
-    const box=
-      document.getElementById('suggestions') ||
-      document.getElementById('suggestionsList') ||
-      document.querySelector('[data-suggestions]');
+  let available = (games || []).filter(e=>{
 
+    if(!e?.id) return false;
 
-    if(!box) return;
-
-
-    let available=(games||[]).filter(e=>{
-
-      if(!e?.id) return false;
-
-      /*
-        Sugestões apenas para jogos que ainda não terminaram.
-      */
-
-      if(fzFinished(e)) return false;
-
-      return true;
-
-    });
-
-
-    /*
-      Remove duplicados.
-    */
-
-    const seen=new Set();
-
-    available=available.filter(e=>{
-
-      const id=String(e.id);
-
-      if(seen.has(id)) return false;
-
-      seen.add(id);
-
-      return true;
-    });
-
-
-    /*
-      Até 10 jogos diferentes.
-    */
-
-    available=available.slice(0,10);
-
-
-    if(!available.length){
-
-      box.innerHTML=
-        '<div class="muted">Sem jogos disponíveis para sugestões.</div>';
-
-      return;
+    if(
+      typeof fzFinished === 'function' &&
+      fzFinished(e)
+    ){
+      return false;
     }
 
+    return true;
 
-    let html='';
+  });
 
+  /* Remover jogos duplicados */
+  const seen = new Set();
 
-    /* ---------------------------------------------------------
-       5 MÉDIO-ALTO
-       --------------------------------------------------------- */
+  available = available.filter(e=>{
 
-    html+=`
-      <div class="fz-clean-level">
-        MÉDIO-ALTO
-      </div>
-    `;
+    const id = String(e.id);
 
+    if(seen.has(id)) return false;
 
-    available.slice(0,5).forEach((e,i)=>{
+    seen.add(id);
 
-      const home=
-        typeof teamFromEvent==='function'
-        ? teamFromEvent(e,true)
-        : null;
+    return true;
 
-      const away=
-        typeof teamFromEvent==='function'
-        ? teamFromEvent(e,false)
-        : null;
+  });
 
+  /* Apenas os primeiros 10 jogos */
+  available = available.slice(0,10);
 
-      const homeName=
-        home?.team?.displayName ||
-        'Casa';
+  if(!available.length){
 
-      const awayName=
-        away?.team?.displayName ||
-        'Fora';
+    box.innerHTML =
+      '<div class="muted">Sem jogos disponíveis para sugestões.</div>';
 
-
-      const market=
-        homeName+
-        ' ou empate (1X)';
-
-
-      html+=`
-
-        <div class="card"
-             onclick="openMatch('${esc(e.id)}')"
-             style="cursor:pointer">
-
-          <div class="value">
-            ${esc(homeName)}
-            <span class="muted"> vs </span>
-            ${esc(awayName)}
-          </div>
-
-          <div class="muted"
-               style="margin-top:5px">
-            Médio-Alto
-          </div>
-
-          <div style="
-            margin-top:8px;
-            font-weight:800;
-          ">
-            ${esc(market)}
-          </div>
-
-        </div>
-
-      `;
-
-    });
-
-
-    /* ---------------------------------------------------------
-       5 MÉDIO-BAIXO
-       --------------------------------------------------------- */
-
-    html+=`
-      <div class="fz-clean-level">
-        MÉDIO-BAIXO
-      </div>
-    `;
-
-
-    available.slice(5,10).forEach(e=>{
-
-      const home=
-        typeof teamFromEvent==='function'
-        ? teamFromEvent(e,true)
-        : null;
-
-      const away=
-        typeof teamFromEvent==='function'
-        ? teamFromEvent(e,false)
-        : null;
-
-
-      const homeName=
-        home?.team?.displayName ||
-        'Casa';
-
-      const awayName=
-        away?.team?.displayName ||
-        'Fora';
-
-
-      html+=`
-
-        <div class="card"
-             onclick="openMatch('${esc(e.id)}')"
-             style="cursor:pointer">
-
-          <div class="value">
-            ${esc(homeName)}
-            <span class="muted"> vs </span>
-            ${esc(awayName)}
-          </div>
-
-          <div class="muted"
-               style="margin-top:5px">
-            Médio-Baixo
-          </div>
-
-          <div style="
-            margin-top:8px;
-            font-weight:800;
-          ">
-            Mais de 0,5 golos
-          </div>
-
-        </div>
-
-      `;
-
-    });
-
-
-    box.innerHTML=
-      '<div class="fz-clean-suggestions">'+
-      html+
-      '</div>';
+    return;
 
   }
+
+  let html = '';
+
+  available.forEach(e=>{
+
+    const home =
+      typeof teamFromEvent === 'function'
+      ? teamFromEvent(e,true)
+      : null;
+
+    const away =
+      typeof teamFromEvent === 'function'
+      ? teamFromEvent(e,false)
+      : null;
+
+    const homeName =
+      home?.team?.displayName ||
+      home?.team?.shortDisplayName ||
+      'Casa';
+
+    const awayName =
+      away?.team?.displayName ||
+      away?.team?.shortDisplayName ||
+      'Visitante';
+
+    /*
+      Usar a análise individual do jogo.
+      Cada jogo recebe Médio-alto E Médio-baixo.
+    */
+    const analysis =
+      typeof suggestMarket === 'function'
+      ? suggestMarket(e)
+      : {
+          high:'Dupla possibilidade',
+          low:'Mais de 0,5 golos'
+        };
+
+    const high =
+      analysis?.high ||
+      'Dupla possibilidade';
+
+    const low =
+      analysis?.low ||
+      'Mais de 0,5 golos';
+
+    const competition =
+      e?.leagueName ||
+      e?.competitions?.[0]?.league?.name ||
+      'Futebol';
+
+    html += `
+
+      <div
+        class="card suggest game"
+        onclick="openMatch('${esc(e.id)}')"
+        style="cursor:pointer"
+      >
+
+        <div class="match">
+
+          <span>
+            ${esc(homeName)}
+          </span>
+
+          <span>
+            vs
+          </span>
+
+          <span>
+            ${esc(awayName)}
+          </span>
+
+        </div>
+
+        <div class="row">
+
+          <div class="label">
+            Médio-alto
+          </div>
+
+          <div class="value orange">
+            ${esc(high)}
+          </div>
+
+        </div>
+
+        <div class="row">
+
+          <div class="label">
+            Médio-baixo
+          </div>
+
+          <div class="value green">
+            ${esc(low)}
+          </div>
+
+        </div>
+
+        <div class="status">
+
+          ${esc(competition)}
+          ·
+          ${fmtDate(e.date)}
+          ${fmtTime(e.date)}
+
+        </div>
+
+      </div>
+
+    `;
+
+  });
+
+  box.innerHTML =
+    '<div class="fz-clean-suggestions">'+
+    html+
+    '</div>';
+
+   } 
+
 
 
   /* =========================================================
