@@ -797,106 +797,82 @@ return s;
 
 async function loadSuggestionOdds(){
 
+  const lista=games.slice(0,10);
 
-const lista=games
-.filter(e=>e?.competitions?.[0])
-.slice(0,10);
+  for(const e of lista){
 
-await Promise.all(lista.map(async e=>{
+    e._fzOdds=null;
 
-try{
+    try{
 
-const comp=e.competitions[0];
-const eventId=e.id;
+      const league=e?._fzLeague;
+      const eventId=e?.id;
+      const compId=e?.competitions?.[0]?.id;
 
-if(!eventId || !comp?.id)return;
+      if(!league||!eventId||!compId) continue;
 
-const leagueSlug=
-e._fzLeague ||
-e.league?.slug ||
-e.league?.abbreviation ||
-e.league?.id ||
-'';
+      const url=
+        "https://sports.core.api.espn.com/v2/sports/soccer/leagues/"+
+        encodeURIComponent(league)+
+        "/events/"+
+        encodeURIComponent(eventId)+
+        "/competitions/"+
+        encodeURIComponent(compId)+
+        "/odds?limit=10";
 
-if(!leagueSlug)return;
+      const data=await jsonUrl(url,3000);
 
-let url=
-"https://sports.core.api.espn.com/v2/sports/soccer/leagues/"+
-encodeURIComponent(leagueSlug)+
-"/events/"+
-encodeURIComponent(eventId)+
-"/competitions/"+
-encodeURIComponent(comp.id)+
-"/odds";
+      const items=Array.isArray(data?.items)?data.items:[];
 
-let d=await jsonUrl(url,10000);
+      for(let item of items){
 
-let items=Array.isArray(d?.items)?d.items:[];
+        if(item?.$ref && !item.provider){
 
-for(let item of items){
+          try{
 
-/* ESPN pode devolver a odd através de $ref */
+            const ref=item.$ref.replace(/^http:/,"https:");
 
-if(item?.$ref && !item.homeTeamOdds){
+            item=await jsonUrl(ref,2500);
 
-try{
+          }catch(err){
 
-item=await jsonUrl(
-item.$ref.replace(/^http:/,'https:'),
-10000
-);
+            continue;
 
-}catch(err){
+          }
 
-continue;
+        }
 
-}
+        const h=Number(item?.homeTeamOdds?.moneyLine);
+        const d=Number(item?.drawOdds?.moneyLine);
+        const a=Number(item?.awayTeamOdds?.moneyLine);
 
-}
+        if(
+          Number.isFinite(h)&&
+          Number.isFinite(d)&&
+          Number.isFinite(a)
+        ){
 
-const homeOdd=Number(
-item?.homeTeamOdds?.moneyLine
-);
+          e._fzOdds={
+            home:h,
+            draw:d,
+            away:a
+          };
 
-const drawOdd=Number(
-item?.drawOdds?.moneyLine
-);
+          break;
 
-const awayOdd=Number(
-item?.awayTeamOdds?.moneyLine
-);
+        }
 
-if(
-Number.isFinite(homeOdd) &&
-Number.isFinite(drawOdd) &&
-Number.isFinite(awayOdd)
-){
+      }
 
-e._fzOdds={
-home:homeOdd,
-draw:drawOdd,
-away:awayOdd
-};
+    }catch(err){
 
-break;
+      e._fzOdds=null;
 
-}
+    }
 
-}
+  }
 
-}catch(err){
-
-console.log(
-"FUTZONE ODDS ERRO:",
-e?.id,
-err
-);
-
-}
-
-}));
-
- }
+  }
  async function testarCompeticaoOdds(){
 
   try{
