@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FUTZONE PREMIUM — TESTE ESPN ODDS</title>
+<title>FUTZONE PREMIUM - TESTE ODDS REAIS</title>
 
 <style>
 body{
@@ -11,48 +11,66 @@ margin:0;
 padding:15px;
 background:#03060b;
 color:#fff;
-font-family:Arial,sans-serif;
+font-family:Arial,sans-serif
 }
+
 h1{
-color:#1683ff;
 text-align:center;
+color:#1683ff
 }
+
 button{
 width:100%;
-padding:14px;
+padding:15px;
 border:0;
 border-radius:10px;
 background:#1683ff;
 color:#fff;
 font-size:16px;
 font-weight:bold;
-margin-bottom:15px;
+margin-bottom:15px
 }
+
 .card{
 background:#0a111b;
 border:1px solid #26384d;
 border-radius:12px;
 padding:15px;
-margin-bottom:12px;
+margin-bottom:12px
 }
-.ok{
-color:#39d353;
-font-weight:bold;
-}
-.erro{
-color:#ff5252;
-font-weight:bold;
-}
+
 .nome{
 font-size:18px;
 font-weight:bold;
-margin-bottom:8px;
+margin-bottom:10px
 }
-pre{
-white-space:pre-wrap;
-word-break:break-word;
-font-size:12px;
-color:#bbb;
+
+.odds{
+color:#aaa;
+font-size:14px;
+margin-bottom:12px
+}
+
+.high{
+color:#ff9800;
+font-weight:bold;
+margin-top:8px
+}
+
+.low{
+color:#39d353;
+font-weight:bold;
+margin-top:8px
+}
+
+.ok{
+color:#39d353;
+font-weight:bold
+}
+
+.erro{
+color:#ff5252;
+font-weight:bold
 }
 </style>
 </head>
@@ -61,64 +79,248 @@ color:#bbb;
 
 <h1>🔥 FUTZONE PREMIUM</h1>
 
-<button onclick="testar()">TESTAR ODDS ESPN</button>
+<button onclick="testarOdds()">
+TESTAR ODDS REAIS ESPN
+</button>
 
 <div id="resultado">
-Carrega no botão para testar.
+Carrega no botão.
 </div>
 
 <script>
 
-async function testar(){
+async function testarOdds(){
 
 const box=document.getElementById("resultado");
 
 box.innerHTML=`
 <div class="card">
-A testar ligação às odds do ESPN...
+⏳ A procurar jogos reais e odds no ESPN...
 </div>
 `;
 
 try{
 
+const hoje=new Date();
+
+const data=
+hoje.getFullYear()+
+String(hoje.getMonth()+1).padStart(2,"0")+
+String(hoje.getDate()).padStart(2,"0");
+
+
 /*
- Endpoint de teste.
- Usamos um evento de futebol conhecido apenas
- para verificar a estrutura da resposta.
+ Premier League
 */
 
-const url=
-"https://sports.core.api.espn.com/v2/sports/soccer/leagues/eng.1/events?limit=1";
+const scoreboard=
+"https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates="+data;
 
-const resposta=await fetch(url);
+
+const resposta=await fetch(scoreboard);
+
 
 if(!resposta.ok){
 
 throw new Error(
-"HTTP "+resposta.status
+"Scoreboard HTTP "+resposta.status
 );
 
 }
 
+
 const dados=await resposta.json();
+
+const eventos=dados.events||[];
+
+
+if(!eventos.length){
+
+box.innerHTML=`
+<div class="card">
+<div class="erro">
+⚠️ Não existem jogos da Premier League hoje.
+</div>
+</div>
+`;
+
+return;
+
+}
+
+
+let html="";
+
+let encontrados=0;
+
+
+for(const evento of eventos.slice(0,10)){
+
+try{
+
+const competicao=
+evento.competitions?.[0];
+
+if(!competicao)continue;
+
+
+const eventId=evento.id;
+
+const competitionId=
+competicao.id || eventId;
+
+
+const oddsUrl=
+"https://sports.core.api.espn.com/v2/sports/soccer/leagues/eng.1/events/"
++eventId+
+"/competitions/"
++competitionId+
+"/odds";
+
+
+const r=await fetch(oddsUrl);
+
+
+if(!r.ok)continue;
+
+
+const oddsData=await r.json();
+
+const items=oddsData.items||[];
+
+
+if(!items.length)continue;
+
+
+const odd=items.find(x=>
+x.homeTeamOdds ||
+x.awayTeamOdds ||
+x.drawOdds
+) || items[0];
+
+
+if(!odd)continue;
+
+
+const casa=
+competicao.competitors?.find(x=>
+x.homeAway==="home"
+);
+
+
+const fora=
+competicao.competitors?.find(x=>
+x.homeAway==="away"
+);
+
+
+const nomeCasa=
+casa?.team?.displayName ||
+"Casa";
+
+
+const nomeFora=
+fora?.team?.displayName ||
+"Visitante";
+
+
+const oddCasa=
+odd.homeTeamOdds?.moneyLine;
+
+
+const oddFora=
+odd.awayTeamOdds?.moneyLine;
+
+
+const oddEmpate=
+odd.drawOdds?.moneyLine;
+
+
+html+=`
+
+<div class="card">
+
+<div class="nome">
+${nomeCasa}
+<br>
+vs
+<br>
+${nomeFora}
+</div>
+
+<div class="odds">
+
+Casa: ${oddCasa ?? "—"}<br>
+Empate: ${oddEmpate ?? "—"}<br>
+Fora: ${oddFora ?? "—"}
+
+</div>
+
+<div class="ok">
+✅ ODDS ESPN ENCONTRADAS
+</div>
+
+<div>
+Fornecedor:
+${odd.provider?.name || "ESPN"}
+</div>
+
+</div>
+
+`;
+
+encontrados++;
+
+}catch(e){
+
+console.log(e);
+
+}
+
+}
+
+
+if(!encontrados){
+
+box.innerHTML=`
+
+<div class="card">
+
+<div class="erro">
+⚠️ Jogos encontrados, mas o ESPN não
+forneceu odds para estes jogos.
+</div>
+
+<div style="margin-top:10px;color:#aaa">
+Isto não significa que o código esteja errado.
+Alguns jogos/competições simplesmente não têm
+mercado de apostas disponível.
+</div>
+
+</div>
+
+`;
+
+return;
+
+}
+
 
 box.innerHTML=`
 
 <div class="card">
 
 <div class="ok">
-✅ ESPN respondeu corretamente
+✅ ODDS REAIS ESPN ENCONTRADAS
 </div>
 
-<div class="nome">
-Eventos encontrados
+<div style="margin-top:8px">
+Foram encontrados ${encontrados} jogo(s) com odds.
 </div>
 
-<pre>
-${JSON.stringify(dados,null,2).substring(0,6000)}
-</pre>
-
 </div>
+
+${html}
 
 `;
 
@@ -129,12 +331,12 @@ box.innerHTML=`
 <div class="card">
 
 <div class="erro">
-❌ Falha na ligação
+❌ ERRO
 </div>
 
-<pre>
+<div style="margin-top:10px">
 ${erro.message}
-</pre>
+</div>
 
 </div>
 
