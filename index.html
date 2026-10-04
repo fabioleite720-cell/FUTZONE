@@ -4954,97 +4954,157 @@ window.suggestions = function(){
 
       `);
 
-    });
+window.suggestions = function(){
 
+  const box =
+    document.getElementById('suggestions');
 
-  /* ---------- 5 MÉDIO-BAIXO ---------- */
+  if(!box) return;
 
-  selected
-    .slice(5,10)
-    .forEach(e=>{
+  const valid =
+    (games || [])
+      .filter(e =>
+        e?.competitions?.[0]
+          ?.competitors
+          ?.length >= 2
+      )
+      .filter(e =>
+        !completed(e)
+      );
 
-      const h =
-        teamFromEvent(
-          e,
-          true
-        );
+  if(!valid.length){
 
-      const a =
-        teamFromEvent(
-          e,
-          false
-        );
+    box.innerHTML =
+      '<div class="loading">' +
+      'Sem sugestões disponíveis.' +
+      '</div>';
 
-      if(!h || !a)
-        return;
+    return;
+  }
 
+  const selected = [];
+  const ids = new Set();
 
-      const s =
-        suggestMarket(e);
+  for(const e of valid){
 
+    const id = String(e.id || '');
 
-      cards.push(`
+    if(!id || ids.has(id))
+      continue;
 
-        <div
-          class="card suggest game"
-          onclick="openMatch('${esc(e.id)}')"
-        >
+    ids.add(id);
+    selected.push(e);
 
-          <div class="market green">
-            Médio-baixo
+    if(selected.length >= 10)
+      break;
+  }
+
+  const cards = [];
+
+  /*
+    CADA JOGO TEM:
+    MÉDIO-ALTO
+    MÉDIO-BAIXO
+  */
+
+  selected.forEach(e=>{
+
+    const h =
+      teamFromEvent(e,true);
+
+    const a =
+      teamFromEvent(e,false);
+
+    if(!h || !a)
+      return;
+
+    const s =
+      suggestMarket(e);
+
+    const home =
+      h.team?.displayName ||
+      h.team?.shortDisplayName ||
+      'Casa';
+
+    const away =
+      a.team?.displayName ||
+      a.team?.shortDisplayName ||
+      'Visitante';
+
+    const high =
+      s?.high ||
+      'Dupla possibilidade';
+
+    const low =
+      s?.low ||
+      'Mais de 0,5 golos';
+
+    const competition =
+      e.leagueName ||
+      e.competitions?.[0]?.league?.name ||
+      'Futebol';
+
+    cards.push(`
+
+      <div
+        class="card suggest game"
+        onclick="openMatch('${esc(e.id)}')"
+      >
+
+        <div class="match">
+
+          <span>
+            ${esc(home)}
+          </span>
+
+          <span>
+            vs
+          </span>
+
+          <span>
+            ${esc(away)}
+          </span>
+
+        </div>
+
+        <div class="row">
+
+          <div class="label">
+            Médio-alto
           </div>
 
-          <div class="match">
-
-            <span>
-              ${esc(
-                h.team?.displayName ||
-                'Casa'
-              )}
-            </span>
-
-            <span>
-              vs
-            </span>
-
-            <span>
-              ${esc(
-                a.team?.displayName ||
-                'Visitante'
-              )}
-            </span>
-
-          </div>
-
-          <div class="value">
-
-            ${esc(
-              s?.low ||
-              'Mais de 0,5 golos'
-            )}
-
-          </div>
-
-          <div class="status">
-
-            ${esc(
-              e.leagueName ||
-              'Futebol'
-            )}
-
-            ·
-
-            ${fmtDate(e.date)}
-            ${fmtTime(e.date)}
-
+          <div class="value orange">
+            ${esc(high)}
           </div>
 
         </div>
 
-      `);
+        <div class="row">
 
-    });
+          <div class="label">
+            Médio-baixo
+          </div>
 
+          <div class="value green">
+            ${esc(low)}
+          </div>
+
+        </div>
+
+        <div class="status">
+
+          ${esc(competition)}
+          ·
+          ${fmtDate(e.date)}
+          ${fmtTime(e.date)}
+
+        </div>
+
+      </div>
+
+    `);
+
+  });
 
   box.innerHTML =
     cards.length
@@ -5055,7 +5115,6 @@ window.suggestions = function(){
         '</div>';
 
 };
-
 
 /* ---------------------------------------------------------
    4. CARREGAR TODAS AS LIGAS
