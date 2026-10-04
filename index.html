@@ -7118,146 +7118,237 @@ setInterval(function(){
 
   window.loadMatchDetails=FZ_LOAD_DETAILS_CLEAN;
 
+/* =========================================================
+   5 — CARREGAR TODOS OS JOGOS DE HOJE
+   ========================================================= */
 
-  /* =========================================================
-     5 — CARREGAR TODOS OS JOGOS
-     NÃO USA O get() ANTIGO QUE ABORTAVA OS PEDIDOS
-     ========================================================= */
+async function FZ_LOAD_ALL_GAMES_CLEAN(){
 
-  async function FZ_LOAD_ALL_GAMES_CLEAN(){
+  const box =
+    document.getElementById('gamesList');
 
-    const box=document.getElementById('gamesList');
+  if(box){
 
-    if(box){
-
-      box.innerHTML=
-        '<div class="loading">A carregar jogos...</div>';
-
-    }
-
-
-    const all=[];
-
-
-    /*
-      Carrega várias ligas ao mesmo tempo.
-      Isto evita que uma chamada cancele a anterior.
-    */
-
-    const batchSize=4;
-
-    for(
-      let start=0;
-      start<LEAGUES.length;
-      start+=batchSize
-    ){
-
-      const batch=LEAGUES.slice(
-        start,
-        start+batchSize
-      );
-
-
-      const results=await Promise.all(
-
-        batch.map(async pair=>{
-
-          const league=pair[0];
-          const name=pair[1];
-
-          try{
-
-            const d=await jsonUrl(
-              API+
-              league+
-              '/scoreboard?limit=100',
-              15000
-            );
-
-            return (d?.events||[]).map(e=>{
-
-              e.leagueName=name;
-
-              return e;
-
-            });
-
-          }catch(err){
-
-            console.warn(
-              'Liga FUTZONE:',
-              league,
-              err
-            );
-
-            return [];
-          }
-
-        })
-
-      );
-
-
-      results.forEach(arr=>{
-        arr.forEach(e=>all.push(e));
-      });
-
-    }
-
-
-    /*
-      Remove jogos duplicados
-    */
-
-    const seen=new Set();
-
-    const unique=all.filter(e=>{
-
-      const id=String(e?.id||'');
-
-      if(!id) return true;
-
-      if(seen.has(id)) return false;
-
-      seen.add(id);
-
-      return true;
-    });
-
-
-    unique.sort((a,b)=>
-      new Date(a?.date||0)-
-      new Date(b?.date||0)
-    );
-
-
-    games=unique;
-
-
-    if(typeof render==='function'){
-
-      try{
-        render(games);
-      }catch(err){
-        console.warn('Render FUTZONE:',err);
-      }
-
-    }
-
-
-    /*
-      Depois dos jogos carregados, cria as 10 sugestões.
-    */
-
-    setTimeout(()=>{
-
-      try{
-        FZ_SUGGESTIONS_CLEAN();
-      }catch(err){}
-
-    },100);
+    box.innerHTML =
+      '<div class="loading">A carregar jogos de hoje...</div>';
 
   }
+
+  const all = [];
+  const seen = new Set();
+
+
+  /* DATA DE HOJE NO FUSO LOCAL */
+
+  const now = new Date();
+
+  const yyyy =
+    now.getFullYear();
+
+  const mm =
+    String(now.getMonth()+1).padStart(2,'0');
+
+  const dd =
+    String(now.getDate()).padStart(2,'0');
+
+  const today =
+    yyyy + mm + dd;
+
+
+  /*
+    Carregar todas as ligas em grupos.
+  */
+
+  const batchSize = 4;
+
+
+  for(
+    let start = 0;
+    start < LEAGUES.length;
+    start += batchSize
+  ){
+
+    const batch =
+      LEAGUES.slice(
+        start,
+        start + batchSize
+      );
+
+
+    const results =
+      await Promise.all(
+
+        batch.map(
+          async pair => {
+
+            const league = pair[0];
+            const name = pair[1];
+
+
+            try{
+
+              const url =
+                API +
+                league +
+                '/scoreboard?dates=' +
+                today +
+                '&limit=100';
+
+
+              const d =
+                await jsonUrl(
+                  url,
+                  15000
+                );
+
+
+              return (
+                d?.events || []
+              ).map(e => ({
+
+                ...e,
+
+                leagueName:
+                  name
+
+              }));
+
+
+            }catch(err){
+
+              console.warn(
+                'Liga FUTZONE:',
+                league,
+                err
+              );
+
+              return [];
+
+            }
+
+          }
+        )
+
+      );
+
+
+    results.forEach(arr => {
+
+      arr.forEach(e => {
+
+        const id =
+          String(e?.id || '');
+
+
+        if(
+          id &&
+          !seen.has(id)
+        ){
+
+          seen.add(id);
+
+          all.push(e);
+
+        }
+
+      });
+
+    });
+
+  }
+
+
+  /*
+    Ordenar pela hora do jogo
+  */
+
+  all.sort(
+    (a,b) =>
+      new Date(a?.date || 0) -
+      new Date(b?.date || 0)
+  );
+
+
+  /*
+    Guardar os jogos
+  */
+
+  games = all;
+
+
+  /*
+    Mostrar os jogos
+  */
+
+  if(
+    typeof render === 'function'
+  ){
+
+    try{
+
+      render(games);
+
+    }catch(err){
+
+      console.warn(
+        'Render FUTZONE:',
+        err
+      );
+
+    }
+
+  }
+
+
+  /*
+    Atualizar contador
+  */
+
+  const count =
+    document.getElementById('count');
+
+  if(count){
+
+    count.textContent =
+      games.length +
+      (
+        games.length === 1
+          ? ' jogo'
+          : ' jogos'
+      );
+
+  }
+
+
+  /*
+    Criar sugestões
+  */
+
+  setTimeout(() => {
+
+    try{
+
+      if(
+        typeof FZ_SUGGESTIONS_CLEAN ===
+        'function'
+      ){
+
+        FZ_SUGGESTIONS_CLEAN();
+
+      }
+
+    }catch(err){
+
+      console.warn(
+        'Sugestões FUTZONE:',
+        err
+      );
+
+    }
+
+  },300);
+
+   }
 
 function FZ_SUGGESTIONS_CLEAN(){
 
