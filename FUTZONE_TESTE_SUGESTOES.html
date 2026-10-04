@@ -1,0 +1,333 @@
+<!doctype html>
+
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FUTZONE PREMIUM — TESTE</title><style>
+*{box-sizing:border-box}
+
+body{
+margin:0;
+padding:15px;
+background:#03060b;
+color:#fff;
+font-family:Arial,sans-serif;
+}
+
+h1{
+margin:5px 0 4px;
+font-size:21px;
+color:#1683ff;
+}
+
+.sub{
+font-size:12px;
+color:#9aa8b8;
+margin-bottom:15px;
+}
+
+.card{
+background:#0a111b;
+border:1px solid #26384d;
+border-radius:12px;
+padding:14px;
+margin-bottom:12px;
+}
+
+.teams{
+font-size:17px;
+font-weight:bold;
+line-height:1.3;
+}
+
+.vs{
+font-size:11px;
+color:#718196;
+margin:4px 0;
+}
+
+.label{
+margin-top:13px;
+font-size:11px;
+font-weight:bold;
+letter-spacing:.4px;
+}
+
+.high{
+color:#ff9d00;
+}
+
+.low{
+color:#35d07f;
+}
+
+.value{
+margin-top:5px;
+font-size:15px;
+font-weight:bold;
+}
+
+.reason{
+margin-top:10px;
+padding-top:9px;
+border-top:1px solid #1d2a38;
+font-size:11px;
+color:#9aa8b8;
+line-height:1.4;
+}
+
+.ok{
+margin:12px 0;
+padding:10px;
+background:#0b1b14;
+border:1px solid #1d5c43;
+border-radius:9px;
+color:#35d07f;
+font-size:12px;
+}
+</style></head><body><h1>🔥 FUTZONE PREMIUM — TESTE</h1><div class="sub">
+Teste da nova lógica de análise das sugestões
+</div><div class="ok">
+✅ TESTE OFFLINE — sem ESPN, sem fetch e sem ligação externa
+</div><div id="resultado"></div><script>
+
+/* =========================================================
+   JOGOS DE TESTE
+   ========================================================= */
+
+const jogosTeste = [
+
+{
+casa:"Índia",
+fora:"Brasil",
+forcaCasa:35,
+forcaFora:92
+},
+
+{
+casa:"Portugal",
+fora:"Espanha",
+forcaCasa:82,
+forcaFora:84
+},
+
+{
+casa:"Sporting",
+fora:"Arouca",
+forcaCasa:88,
+forcaFora:60
+},
+
+{
+casa:"Manchester City",
+fora:"Everton",
+forcaCasa:94,
+forcaFora:66
+},
+
+{
+casa:"Inter",
+fora:"Juventus",
+forcaCasa:86,
+forcaFora:84
+},
+
+{
+casa:"Bayern",
+fora:"Mainz",
+forcaCasa:93,
+forcaFora:65
+},
+
+{
+casa:"Liverpool",
+fora:"Arsenal",
+forcaCasa:90,
+forcaFora:88
+},
+
+{
+casa:"Real Madrid",
+fora:"Getafe",
+forcaCasa:92,
+forcaFora:62
+},
+
+{
+casa:"PSG",
+fora:"Lyon",
+forcaCasa:89,
+forcaFora:75
+},
+
+{
+casa:"Escócia",
+fora:"França",
+forcaCasa:62,
+forcaFora:91
+}
+
+];
+
+
+/* =========================================================
+   ANÁLISE
+   ========================================================= */
+
+function analisar(jogo){
+
+const h = jogo.forcaCasa;
+const a = jogo.forcaFora;
+
+const diferenca = Math.abs(h-a);
+
+let high = "";
+let low = "";
+let motivo = "";
+
+
+/* FORA MUITO MAIS FORTE */
+
+if(a-h >= 25){
+
+high = "Vitória " + jogo.fora;
+low = jogo.fora + " ou empate (X2)";
+
+motivo =
+"Visitante claramente mais forte ("+
+jogo.fora+
+" +"+
+(a-h)+
+" pontos).";
+
+
+/* FORA MODERADAMENTE MAIS FORTE */
+
+}else if(a-h >= 15){
+
+high = jogo.fora + " ou empate (X2)";
+low = jogo.fora + " ou empate (X2)";
+
+motivo =
+"Visitante com vantagem de "+
+(a-h)+
+" pontos.";
+
+
+/* CASA MUITO MAIS FORTE */
+
+}else if(h-a >= 25){
+
+high = "Vitória " + jogo.casa;
+low = jogo.casa + " ou empate (1X)";
+
+motivo =
+"Equipa da casa claramente mais forte ("+
+jogo.casa+
+" +"+
+(h-a)+
+" pontos).";
+
+
+/* CASA MODERADAMENTE MAIS FORTE */
+
+}else if(h-a >= 15){
+
+high = jogo.casa + " ou empate (1X)";
+low = jogo.casa + " ou empate (1X)";
+
+motivo =
+"Equipa da casa com vantagem de "+
+(h-a)+
+" pontos.";
+
+
+/* JOGO EQUILIBRADO */
+
+}else{
+
+high = "Dupla possibilidade";
+low = "Mais de 0,5 golos";
+
+motivo =
+"Jogo equilibrado: diferença de apenas "+
+diferenca+
+" pontos.";
+
+}
+
+return {
+high:high,
+low:low,
+motivo:motivo
+};
+
+}
+
+
+/* =========================================================
+   MOSTRAR RESULTADOS
+   ========================================================= */
+
+function mostrar(){
+
+const box = document.getElementById("resultado");
+
+box.innerHTML = jogosTeste.map(function(jogo){
+
+const r = analisar(jogo);
+
+return `
+
+<div class="card">
+
+<div class="teams">
+${jogo.casa}
+</div>
+
+<div class="vs">
+vs
+</div>
+
+<div class="teams">
+${jogo.fora}
+</div>
+
+<div class="label high">
+MÉDIO-ALTO
+</div>
+
+<div class="value">
+${r.high}
+</div>
+
+<div class="label low">
+MÉDIO-BAIXO
+</div>
+
+<div class="value">
+${r.low}
+</div>
+
+<div class="reason">
+${r.motivo}
+</div>
+
+</div>
+
+`;
+
+}).join("");
+
+}
+
+
+/* =========================================================
+   INICIAR
+   ========================================================= */
+
+mostrar();
+
+</script></body>
+</html>
