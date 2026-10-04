@@ -802,6 +802,87 @@ const a=teamFromEvent(e,false);
 
 if(!h||!a)return null;
 
+const hn=h.team.displayName;
+const an=a.team.displayName;
+
+/*
+ * Não assume automaticamente que a equipa da casa
+ * é favorita.
+ *
+ * Usa a informação de odds que já esteja no evento.
+ */
+
+const c=e.competitions?.[0]||{};
+const o=c.odds?.[0];
+
+if(o){
+
+const hp=Number(
+o.homeTeamOdds?.winPercentage
+);
+
+const ap=Number(
+o.awayTeamOdds?.winPercentage
+);
+
+if(Number.isFinite(hp)&&Number.isFinite(ap)){
+
+if(hp>=65 && hp-ap>=20){
+
+return{
+high:'Vitória '+hn,
+low:hn+' ou empate (1X)'
+};
+
+}
+
+if(ap>=65 && ap-hp>=20){
+
+return{
+high:'Vitória '+an,
+low:an+' ou empate (X2)'
+};
+
+}
+
+if(hp>ap){
+
+return{
+high:hn+' ou empate (1X)',
+low:'Mais de 0,5 golos'
+};
+
+}
+
+if(ap>hp){
+
+return{
+high:an+' ou empate (X2)',
+low:'Mais de 0,5 golos'
+};
+
+}
+
+}
+
+}
+
+/*
+ * Se a ESPN não disponibilizar probabilidades,
+ * não inventamos um favorito.
+ */
+
+return{
+high:'Dupla possibilidade',
+low:'Mais de 0,5 golos'
+};
+
+}
+const h=teamFromEvent(e,true);
+const a=teamFromEvent(e,false);
+
+if(!h||!a)return null;
+
 return{
 high:h.team.displayName+' ou empate (1X)',
 low:'Mais de 0,5 golos'
