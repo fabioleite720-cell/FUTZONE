@@ -956,79 +956,396 @@ fmtDate(e.date)+' '+fmtTime(e.date))}
 
 </div>
 
-`).join('');
+<script>
+/* =========================================================
+   FUTZONE PREMIUM — TESTE DE ANÁLISE INTELIGENTE
+   Não assume vantagem da equipa da casa
+   ========================================================= */
+
+function FZ_teamName(e, home){
+  const t=teamFromEvent(e,home);
+  return t?.team?.displayName || (home?'Casa':'Visitante');
+}
+
+
+/* ---------------------------------------------------------
+   ESTIMATIVA BASE
+   Usa odds/predictor da ESPN quando existirem.
+   Caso contrário, evita inventar vantagem da casa.
+   --------------------------------------------------------- */
+
+function FZ_getOdds(e){
+
+  const comp=e?.competitions?.[0];
+
+  const odds=
+    comp?.odds?.[0] ||
+    e?.odds?.[0] ||
+    null;
+
+  if(!odds)return null;
+
+  return odds;
+}
+
+
+function FZ_probability(e){
+
+  const o=FZ_getOdds(e);
+
+  if(!o)return null;
+
+  const home=
+    Number(
+      o?.homeTeamOdds?.winPercentage ??
+      o?.homeTeamOdds?.win ??
+      NaN
+    );
+
+  const away=
+    Number(
+      o?.awayTeamOdds?.winPercentage ??
+      o?.awayTeamOdds?.win ??
+      NaN
+    );
+
+  const draw=
+    Number(
+      o?.drawPercentage ??
+      o?.draw?.winPercentage ??
+      NaN
+    );
+
+  if(
+    Number.isFinite(home) ||
+    Number.isFinite(away) ||
+    Number.isFinite(draw)
+  ){
+
+    return{
+      home:Number.isFinite(home)?home:0,
+      draw:Number.isFinite(draw)?draw:0,
+      away:Number.isFinite(away)?away:0
+    };
+
+  }
+
+  return null;
+}
+
+
+/* ---------------------------------------------------------
+   ANÁLISE PREMIUM
+   --------------------------------------------------------- */
+
+function suggestMarket(e){
+
+  const h=teamFromEvent(e,true);
+  const a=teamFromEvent(e,false);
+
+  if(!h || !a)return null;
+
+  const home=FZ_teamName(e,true);
+  const away=FZ_teamName(e,false);
+
+  const p=FZ_probability(e);
+
+  /*
+   * REGRA 1
+   * Se existir probabilidade da ESPN, ela tem prioridade.
+   */
+
+  if(p){
+
+    const vals=[
+      {type:'home',value:p.home},
+      {type:'draw',value:p.draw},
+      {type:'away',value:p.away}
+    ].sort((x,y)=>y.value-x.value);
+
+    const best=vals[0];
+    const second=vals[1];
+
+    /*
+     * Grande diferença:
+     * não deixar a vantagem da casa substituir
+     * uma diferença clara de qualidade.
+     */
+
+    if(
+      best.value>=60 &&
+      best.value-second.value>=15
+    ){
+
+      let high='';
+
+      if(best.type==='home')
+        high='Vitória '+home;
+
+      if(best.type==='away')
+        high='Vitória '+away;
+
+      if(best.type==='draw')
+        high='Empate';
+
+      return{
+        high:high,
+        low:
+          best.type==='draw'
+            ? 'Dupla possibilidade: 1X ou X2'
+            : (
+              best.type==='home'
+                ? home+' ou empate (1X)'
+                : away+' ou empate (X2)'
+            )
+      };
+
+    }
+
+
+    /*
+     * Jogo equilibrado:
+     * não inventar favorito.
+     */
+
+    if(
+      Math.abs(best.value-second.value)<10
+    ){
+
+      return{
+        high:'Dupla possibilidade',
+        low:'Menos de 3,5 golos'
+      };
+
+    }
+
+
+    /*
+     * Diferença moderada.
+     */
+
+    if(best.type==='home'){
+
+      return{
+        high:home+' ou empate (1X)',
+        low:'Mais de 0,5 golos'
+      };
+
+    }
+
+    if(best.type==='away'){
+
+      return{
+        high:away+' ou empate (X2)',
+        low:'Mais de 0,5 golos'
+      };
+
+    }
+
+  }
+
+
+  /*
+   * SEM odds/probabilidades:
+   *
+   * NÃO assumir que a casa é favorita.
+   *
+   * Usamos um mercado conservador até existirem
+   * dados suficientes para escolher um vencedor.
+   */
+
+  return{
+
+    high:'Dupla possibilidade',
+    low:'Mais de 0,5 golos'
+
+  };
 
 }
 
 
-function showAll(){
+/* ---------------------------------------------------------
+   10 SUGESTÕES
+   --------------------------------------------------------- */
 
-render(games);
+function suggestions(){
 
-sec('games');
+  const box=document.getElementById('suggestions');
 
-}
+  if(!box)return;
 
-
-function showToday(){
-
-const now=new Date();
-
-const day=now.toISOString().slice(0,10);
-
-render(
-games.filter(e=>String(e.date||'').slice(0,10)===day)
-);
-
-}
+  const valid=games
+    .filter(e=>
+      e &&
+      e.competitions?.[0] &&
+      !completed(e)
+    )
+    .slice(0,30);
 
 
-function showLive(){
+  if(!valid.length){
 
-const live=games.filter(e=>
-e?.status?.type?.state==='in'
-);
+    box.innerHTML=
+      '<div class="loading">'+
+      'Sem sugestões disponíveis.'+
+      '</div>';
 
-const box=document.getElementById('liveList');
+    return;
 
-if(!box)return;
+  }
 
-if(!live.length){
 
-box.innerHTML='<div class="card muted">Não existem jogos ao vivo neste momento.</div>';
+  /*
+   * Calcula todas primeiro.
+   */
 
-}else{
+  const analysed=valid.map(e=>{
 
-box.innerHTML=live.map(e=>{
+    const s=suggestMarket(e);
 
-const h=teamFromEvent(e,true);
-const a=teamFromEvent(e,false);
+    return{
+      event:e,
+      suggestion:s
+    };
 
-return`
+  })
+  .filter(x=>x.suggestion);
 
-<div class="card game"
+
+  /*
+   * Primeiro os jogos com informação mais forte.
+   */
+
+  const high=analysed
+    .filter(x=>
+      !/Dupla possibilidade/i
+        .test(x.suggestion.high)
+    )
+    .slice(0,5);
+
+
+  /*
+   * Completa até 5 se não houver
+   * informação suficiente.
+   */
+
+  const remaining=analysed
+    .filter(x=>!high.includes(x));
+
+
+  while(high.length<5 && remaining.length){
+
+    high.push(
+      remaining.shift()
+    );
+
+  }
+
+
+  const low=remaining.slice(0,5);
+
+
+  const final=[
+    ...high.map(x=>({
+      ...x,
+      level:'Médio-alto'
+    })),
+    ...low.map(x=>({
+      ...x,
+      level:'Médio-baixo'
+    }))
+  ].slice(0,10);
+
+
+  if(!final.length){
+
+    box.innerHTML=
+      '<div class="loading">'+
+      'Sem sugestões disponíveis.'+
+      '</div>';
+
+    return;
+
+  }
+
+
+  box.innerHTML=final.map(x=>{
+
+    const e=x.event;
+
+    const h=teamFromEvent(e,true);
+    const a=teamFromEvent(e,false);
+
+    const s=x.suggestion;
+
+
+    return`
+
+<div class="card suggest game"
 onclick="openMatch('${esc(e.id)}')">
 
 <div class="match">
-<span>${esc(h?.team?.displayName)}</span>
-<b>${scoreValue(h)||0}-${scoreValue(a)||0}</b>
-<span>${esc(a?.team?.displayName)}</span>
+
+<span>
+${esc(h?.team?.displayName||'Casa')}
+</span>
+
+<span>vs</span>
+
+<span>
+${esc(a?.team?.displayName||'Visitante')}
+</span>
+
 </div>
 
-<div class="live">🔴 AO VIVO</div>
+
+<div class="market ${
+  x.level==='Médio-alto'
+    ? 'orange'
+    : 'green'
+}">
+
+${x.level}
+
+</div>
+
+
+<div class="value">
+
+${esc(s.high)}
+
+</div>
+
+
+<div class="market green">
+
+Análise conservadora
+
+</div>
+
+
+<div class="value">
+
+${esc(s.low)}
+
+</div>
+
+
+<div class="status">
+
+${fmtDate(e.date)}
+${fmtTime(e.date)}
+
+</div>
 
 </div>
 
 `;
 
-}).join('');
+  }).join('');
 
 }
-
-sec('live');
-
-}
- </script>
+</script>
  <script>
 
 async function openMatch(id){
