@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FUTZONE Premium — Teste Análise</title>
+
+<style>
+body{
+  margin:0;
+  padding:15px;
+  background:#03060b;
+  color:#fff;
+  font-family:Arial,sans-serif;
+}
+
+h2{
+  color:#1683ff;
+}
+
+.card{
+  background:#0a111b;
+  border:1px solid #26384d;
+  border-radius:12px;
+  padding:15px;
+  margin:12px 0;
+}
+
+.teams{
+  font-size:18px;
+  font-weight:bold;
+}
+
+.high{
+  color:#ff9d00;
+  margin-top:12px;
+}
+
+.low{
+  color:#35d07f;
+  margin-top:8px;
+}
+
+.prob{
+  color:#aaa;
+  font-size:13px;
+  margin-top:10px;
+}
+
+.loading{
+  color:#aaa;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🔥 FUTZONE PREMIUM — TESTE</h2>
+
+<div id="resultado" class="loading">
+A analisar jogos...
+</div>
+
+
+<script>
+
+const API=
+'https://site.api.espn.com/apis/site/v2/sports/soccer/';
+
+
+async function carregar(){
+
+const box=document.getElementById('resultado');
+
+try{
+
+const r=await fetch(
+API+'scoreboard?limit=30'
+);
+
+const data=await r.json();
+
+const jogos=(data.events||[])
+.filter(e=>
+e.competitions?.[0] &&
+e.status?.type?.state==='pre'
+)
+.slice(0,10);
+
+
+if(!jogos.length){
+
+box.innerHTML='Não foram encontrados jogos futuros.';
+return;
+
+}
+
+
+box.innerHTML=jogos.map(analisar).join('');
+
+
+}catch(err){
+
+box.innerHTML=
+'Erro ao carregar os jogos.<br><br>'+
+err.message;
+
+}
+
+}
+
+
+function analisar(e){
+
+const c=e.competitions[0];
+
+const h=
+c.competitors.find(x=>x.homeAway==='home');
+
+const a=
+c.competitors.find(x=>x.homeAway==='away');
+
+
+const hn=
+h?.team?.displayName||'Casa';
+
+const an=
+a?.team?.displayName||'Visitante';
+
+
+/*
+ * TESTE:
+ * não assume vantagem da casa.
+ *
+ * Procuramos primeiro informação
+ * de probabilidade já fornecida pela ESPN.
+ */
+
+const odds=
+c.odds?.[0]||null;
+
+
+let hp=Number(
+odds?.homeTeamOdds?.winPercentage
+);
+
+let ap=Number(
+odds?.awayTeamOdds?.winPercentage
+);
+
+
+let high;
+let low;
+let texto;
+
+
+if(
+Number.isFinite(hp)&&
+Number.isFinite(ap)
+){
+
+if(hp>ap){
+
+if(hp-ap>=20){
+
+high='Vitória '+hn;
+
+}else{
+
+high=hn+' ou empate (1X)';
+
+}
+
+low=hn+' ou empate (1X)';
+
+texto=
+hn+' '+hp.toFixed(0)+'% — '+
+an+' '+ap.toFixed(0)+'%';
+
+}else{
+
+if(ap-hp>=20){
+
+high='Vitória '+an;
+
+}else{
+
+high=an+' ou empate (X2)';
+
+}
+
+low=an+' ou empate (X2)';
+
+texto=
+hn+' '+hp.toFixed(0)+'% — '+
+an+' '+ap.toFixed(0)+'%';
+
+}
+
+}else{
+
+/*
+ * Sem dados suficientes:
+ * não escolhe automaticamente a equipa da casa.
+ */
+
+high='Dupla possibilidade';
+
+low='Mais de 0,5 golos';
+
+texto=
+'Sem probabilidades disponíveis';
+
+}
+
+
+return`
+
+<div class="card">
+
+<div class="teams">
+${hn} vs ${an}
+</div>
+
+<div class="high">
+MÉDIO-ALTO
+</div>
+
+<div>
+${high}
+</div>
+
+<div class="low">
+MÉDIO-BAIXO
+</div>
+
+<div>
+${low}
+</div>
+
+<div class="prob">
+${texto}
+</div>
+
+</div>
+
+`;
+
+}
+
+
+carregar();
+
+</script>
+
+</body>
+</html>
