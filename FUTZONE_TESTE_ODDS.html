@@ -1,38 +1,146 @@
 <!doctype html>
-
 <html lang="pt-PT">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FUTZONE — TESTE ODDS</title>
+<title>FUTZONE TESTE ODDS</title>
+
 <style>
-body{margin:0;padding:15px;background:#03060b;color:#fff;font-family:Arial,sans-serif}
-h1{font-size:21px;color:#1683ff}
-.card{background:#0a111b;border:1px solid #26384d;border-radius:12px;padding:14px;margin:12px 0}
-.teams{font-size:17px;font-weight:bold}
-.label{margin-top:13px;font-size:11px;font-weight:bold}
-.orange{color:#ff9d00}.green{color:#35d07f}
-.value{margin-top:5px;font-size:15px;font-weight:bold}
-.info{margin-top:10px;color:#9aa8b8;font-size:11px}
+body{
+margin:0;
+padding:15px;
+background:#03060b;
+color:#fff;
+font-family:Arial,sans-serif;
+}
+h1{
+text-align:center;
+color:#1683ff;
+}
+.card{
+background:#0a111b;
+border:1px solid #1c2a3a;
+border-radius:12px;
+padding:14px;
+margin:12px 0;
+}
+.teams{
+font-size:17px;
+font-weight:bold;
+margin-bottom:10px;
+}
+.odd{
+color:#aaa;
+font-size:13px;
+margin-bottom:10px;
+}
+.high{
+color:#ff9800;
+font-weight:bold;
+}
+.low{
+color:#39d353;
+font-weight:bold;
+}
+.label{
+font-size:12px;
+margin-top:10px;
+}
 </style>
 </head>
-<body><h1>🔥 FUTZONE PREMIUM — TESTE ODDS</h1><div id="resultado"></div><script>
+
+<body>
+
+<h1>⚽ FUTZONE — TESTE ODDS</h1>
+
+<div id="app"></div>
+
+<script>
 
 const jogos=[
 
-{casa:"Índia",fora:"Brasil",oddCasa:12.00,oddEmpate:5.50,oddFora:1.15},
+{
+casa:"Índia",
+fora:"Brasil",
+oddCasa:12.00,
+oddEmpate:5.50,
+oddFora:1.15
+},
 
-{casa:"Azerbaijan",fora:"Lithuania",oddCasa:2.60,oddEmpate:3.10,oddFora:2.55},
+{
+casa:"Azerbaijan",
+fora:"Lithuania",
+oddCasa:2.60,
+oddEmpate:3.10,
+oddFora:2.55
+},
 
-{casa:"Comoros",fora:"Senegal",oddCasa:7.00,oddEmpate:3.80,oddFora:1.40},
+{
+casa:"Comoros",
+fora:"Senegal",
+oddCasa:7.00,
+oddEmpate:3.80,
+oddFora:1.40
+},
 
-{casa:"Kyrgyz Republic",fora:"Lebanon",oddCasa:2.20,oddEmpate:3.10,oddFora:3.20},
+{
+casa:"Kyrgyz Republic",
+fora:"Lebanon",
+oddCasa:2.20,
+oddEmpate:3.10,
+oddFora:3.20
+},
 
-{casa:"Kosovo",fora:"Austria",oddCasa:3.60,oddEmpate:3.30,oddFora:1.95},
+{
+casa:"Kosovo",
+fora:"Austria",
+oddCasa:3.60,
+oddEmpate:3.30,
+oddFora:1.95
+},
 
-{casa:"Portugal",fora:"Espanha",oddCasa:2.70,oddEmpate:3.20,oddFora:2.55}
+{
+casa:"Portugal",
+fora:"Espanha",
+oddCasa:2.70,
+oddEmpate:3.20,
+oddFora:2.55
+},
+
+{
+casa:"Sporting",
+fora:"Arouca",
+oddCasa:1.45,
+oddEmpate:4.20,
+oddFora:7.00
+},
+
+{
+casa:"Liverpool",
+fora:"Arsenal",
+oddCasa:2.30,
+oddEmpate:3.40,
+oddFora:2.90
+},
+
+{
+casa:"Real Madrid",
+fora:"Getafe",
+oddCasa:1.30,
+oddEmpate:5.00,
+oddFora:9.00
+},
+
+{
+casa:"Escócia",
+fora:"França",
+oddCasa:5.50,
+oddEmpate:3.80,
+oddFora:1.55
+}
 
 ];
+
 
 function analisar(j){
 
@@ -40,7 +148,7 @@ const h=j.oddCasa;
 const d=j.oddEmpate;
 const a=j.oddFora;
 
-if(!h||!d||!a){
+if(!h || !d || !a){
 
 return{
 high:"Análise indisponível",
@@ -48,6 +156,7 @@ low:"Mais de 0,5 golos"
 };
 
 }
+
 
 if(a<=1.50){
 
@@ -58,6 +167,7 @@ low:j.fora+" ou empate (X2)"
 
 }
 
+
 if(h<=1.50){
 
 return{
@@ -66,6 +176,7 @@ low:j.casa+" ou empate (1X)"
 };
 
 }
+
 
 if(a<h && a<d){
 
@@ -76,6 +187,7 @@ low:"Mais de 0,5 golos"
 
 }
 
+
 if(h<a && h<d){
 
 return{
@@ -85,6 +197,7 @@ low:"Mais de 0,5 golos"
 
 }
 
+
 return{
 high:"Dupla possibilidade",
 low:"Mais de 0,5 golos"
@@ -92,28 +205,46 @@ low:"Mais de 0,5 golos"
 
 }
 
-document.getElementById("resultado").innerHTML=
 
-jogos.map(j=>{
+function mostrar(){
 
-const r=analisar(j);
+const box=document.getElementById("app");
+
+box.innerHTML=jogos.map(j=>{
+
+const s=analisar(j);
 
 return`
 
 <div class="card">
 
-<div class="teams">${j.casa}</div>
-<div style="color:#718196;margin:5px 0">vs</div>
-<div class="teams">${j.fora}</div>
+<div class="teams">
+${j.casa} ⚔️ ${j.fora}
+</div>
 
-<div class="label orange">MÉDIO-ALTO</div>
-<div class="value">${r.high}</div>
+<div class="odd">
+Odds 1X2:
+${j.oddCasa.toFixed(2)}
+/
+${j.oddEmpate.toFixed(2)}
+/
+${j.oddFora.toFixed(2)}
+</div>
 
-<div class="label green">MÉDIO-BAIXO</div>
-<div class="value">${r.low}</div>
+<div class="label high">
+🟠 MÉDIO-ALTO
+</div>
 
-<div class="info">
-Odds teste: ${j.oddCasa} / ${j.oddEmpate} / ${j.oddFora}
+<div>
+${s.high}
+</div>
+
+<div class="label low">
+🟢 MÉDIO-BAIXO
+</div>
+
+<div>
+${s.low}
 </div>
 
 </div>
@@ -122,5 +253,12 @@ Odds teste: ${j.oddCasa} / ${j.oddEmpate} / ${j.oddFora}
 
 }).join("");
 
-</script></body>
+}
+
+
+mostrar();
+
+</script>
+
+</body>
 </html>
