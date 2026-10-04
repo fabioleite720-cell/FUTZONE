@@ -913,15 +913,73 @@ const homeOdd=Number(o?.home);
 const drawOdd=Number(o?.draw);
 const awayOdd=Number(o?.away);
 
+if(
+!Number.isFinite(homeOdd)||
+!Number.isFinite(drawOdd)||
+!Number.isFinite(awayOdd)
+){
+
+return{
+high:'Dupla possibilidade',
+low:'Mais de 0,5 golos'
+};
+
+}
+
+if(awayOdd<=1.50){
+
+return{
+high:'Vitória '+away,
+low:away+' ou empate (X2)'
+};
+
+}
+
+if(homeOdd<=1.50){
+
+return{
+high:'Vitória '+home,
+low:home+' ou empate (1X)'
+};
+
+}
+
+if(awayOdd<homeOdd && awayOdd<drawOdd){
+
+return{
+high:away+' ou empate (X2)',
+low:'Mais de 0,5 golos'
+};
+
+}
+
+if(homeOdd<awayOdd && homeOdd<drawOdd){
+
+return{
+high:home+' ou empate (1X)',
+low:'Mais de 0,5 golos'
+};
+
+}
+
+return{
+high:'Dupla possibilidade',
+low:'Mais de 0,5 golos'
+};
+
+}
+
+
 async function loadSuggestionOdds(){
 
-  for(const e of games.slice(0,10)){
+for(const e of games.slice(0,10)){
 
-    e._fzOdds=null;
+e._fzOdds=null;
 
-  }
+}
 
- }
+}
+
 
 function suggestions(){
 
@@ -935,12 +993,14 @@ const valid=games
 
 if(!valid.length){
 
-box.innerHTML='<div class="loading">Sem sugestões disponíveis.</div>';
+box.innerHTML=
+'<div class="loading">Sem sugestões disponíveis.</div>';
+
 return;
 
 }
 
-box.innerHTML=valid.map((e,i)=>{
+box.innerHTML=valid.map(e=>{
 
 const h=teamFromEvent(e,true);
 const a=teamFromEvent(e,false);
@@ -989,8 +1049,6 @@ ${fmtDate(e.date)} ${fmtTime(e.date)}
 }).join('');
 
 }
-
-
 function render(list=games){
 
 const box=document.getElementById('gamesList');
