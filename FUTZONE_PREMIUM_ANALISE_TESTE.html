@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FUTZONE Premium — Teste Análise</title>
+<title>FUTZONE PREMIUM — TESTE</title>
 
 <style>
 body{
@@ -13,11 +13,10 @@ body{
   color:#fff;
   font-family:Arial,sans-serif;
 }
-
-h2{
+h1{
+  font-size:21px;
   color:#1683ff;
 }
-
 .card{
   background:#0a111b;
   border:1px solid #26384d;
@@ -25,191 +24,261 @@ h2{
   padding:15px;
   margin:12px 0;
 }
-
 .teams{
-  font-size:18px;
+  font-size:17px;
   font-weight:bold;
 }
-
-.high{
-  color:#ff9d00;
-  margin-top:12px;
+.label{
+  margin-top:13px;
+  font-size:11px;
+  font-weight:bold;
 }
-
-.low{
-  color:#35d07f;
-  margin-top:8px;
+.orange{color:#ff9d00}
+.green{color:#35d07f}
+.value{
+  margin-top:5px;
+  font-size:16px;
+  font-weight:bold;
 }
-
-.prob{
-  color:#aaa;
-  font-size:13px;
+.info{
   margin-top:10px;
-}
-
-.loading{
-  color:#aaa;
+  color:#9aa8b8;
+  font-size:12px;
 }
 </style>
 </head>
 
 <body>
 
-<h2>🔥 FUTZONE PREMIUM — TESTE</h2>
+<h1>🔥 FUTZONE PREMIUM — TESTE</h1>
 
-<div id="resultado" class="loading">
-A analisar jogos...
-</div>
-
+<div id="resultado"></div>
 
 <script>
 
-const API=
-'https://site.api.espn.com/apis/site/v2/sports/soccer/';
+/*
+=========================================================
+ FUTZONE PREMIUM — MOTOR DE TESTE
+ SEM INTERNET
+ SEM FETCH
+ SEM ESPN
+=========================================================
+*/
 
+/*
+ Estes são apenas jogos de teste.
+ A análise NÃO dá automaticamente vantagem
+ à equipa da casa.
+*/
 
-async function carregar(){
+const jogosTeste=[
 
-const box=document.getElementById('resultado');
+{
+ casa:'Índia',
+ fora:'Brasil',
+ casaForca:35,
+ foraForca:92
+},
 
-try{
+{
+ casa:'Portugal',
+ fora:'Espanha',
+ casaForca:82,
+ foraForca:84
+},
 
-const r=await fetch(
-API+'scoreboard?limit=30'
-);
+{
+ casa:'Sporting',
+ fora:'Arouca',
+ casaForca:88,
+ foraForca:60
+},
 
-const data=await r.json();
+{
+ casa:'Manchester City',
+ fora:'Everton',
+ casaForca:94,
+ foraForca:66
+},
 
-const jogos=(data.events||[])
-.filter(e=>
-e.competitions?.[0] &&
-e.status?.type?.state==='pre'
-)
-.slice(0,10);
+{
+ casa:'Inter',
+ fora:'Juventus',
+ casaForca:86,
+ foraForca:84
+},
 
+{
+ casa:'Bayern',
+ fora:'Mainz',
+ casaForca:93,
+ foraForca:65
+},
 
-if(!jogos.length){
+{
+ casa:'Liverpool',
+ fora:'Arsenal',
+ casaForca:90,
+ foraForca:88
+},
 
-box.innerHTML='Não foram encontrados jogos futuros.';
-return;
+{
+ casa:'Real Madrid',
+ fora:'Getafe',
+ casaForca:92,
+ foraForca:62
+},
 
+{
+ casa:'PSG',
+ fora:'Lyon',
+ casaForca:89,
+ foraForca:75
+},
+
+{
+ casa:'Escócia',
+ fora:'França',
+ casaForca:62,
+ foraForca:91
 }
 
-
-box.innerHTML=jogos.map(analisar).join('');
-
-
-}catch(err){
-
-box.innerHTML=
-'Erro ao carregar os jogos.<br><br>'+
-err.message;
-
-}
-
-}
-
-
-function analisar(e){
-
-const c=e.competitions[0];
-
-const h=
-c.competitors.find(x=>x.homeAway==='home');
-
-const a=
-c.competitors.find(x=>x.homeAway==='away');
-
-
-const hn=
-h?.team?.displayName||'Casa';
-
-const an=
-a?.team?.displayName||'Visitante';
+];
 
 
 /*
- * TESTE:
- * não assume vantagem da casa.
- *
- * Procuramos primeiro informação
- * de probabilidade já fornecida pela ESPN.
- */
+=========================================================
+ ANÁLISE
+=========================================================
+*/
 
-const odds=
-c.odds?.[0]||null;
+function analisar(jogo){
 
+const h=jogo.casaForca;
+const a=jogo.foraForca;
 
-let hp=Number(
-odds?.homeTeamOdds?.winPercentage
-);
+const diferenca=Math.abs(h-a);
 
-let ap=Number(
-odds?.awayTeamOdds?.winPercentage
-);
-
-
+let favorito;
 let high;
 let low;
-let texto;
 
-
-if(
-Number.isFinite(hp)&&
-Number.isFinite(ap)
-){
-
-if(hp>ap){
-
-if(hp-ap>=20){
-
-high='Vitória '+hn;
-
-}else{
-
-high=hn+' ou empate (1X)';
-
-}
-
-low=hn+' ou empate (1X)';
-
-texto=
-hn+' '+hp.toFixed(0)+'% — '+
-an+' '+ap.toFixed(0)+'%';
-
-}else{
-
-if(ap-hp>=20){
-
-high='Vitória '+an;
-
-}else{
-
-high=an+' ou empate (X2)';
-
-}
-
-low=an+' ou empate (X2)';
-
-texto=
-hn+' '+hp.toFixed(0)+'% — '+
-an+' '+ap.toFixed(0)+'%';
-
-}
-
-}else{
 
 /*
- * Sem dados suficientes:
- * não escolhe automaticamente a equipa da casa.
- */
+ Visitante claramente superior
+*/
+
+if(a-h>=15){
+
+favorito='fora';
+
+if(a-h>=25){
+
+high='Vitória '+jogo.fora;
+
+}else{
+
+high=jogo.fora+' ou empate (X2)';
+
+}
+
+low=jogo.fora+' ou empate (X2)';
+
+}
+
+
+/*
+ Casa claramente superior
+*/
+
+else if(h-a>=15){
+
+favorito='casa';
+
+if(h-a>=25){
+
+high='Vitória '+jogo.casa;
+
+}else{
+
+high=jogo.casa+' ou empate (1X)';
+
+}
+
+low=jogo.casa+' ou empate (1X)';
+
+}
+
+
+/*
+ Jogo equilibrado
+*/
+
+else{
+
+favorito='equilibrado';
 
 high='Dupla possibilidade';
 
 low='Mais de 0,5 golos';
 
-texto=
-'Sem probabilidades disponíveis';
+}
+
+
+return{
+
+high,
+low,
+favorito,
+diferenca
+
+};
+
+}
+
+
+/*
+=========================================================
+ MOSTRAR
+=========================================================
+*/
+
+function mostrar(){
+
+const box=document.getElementById('resultado');
+
+box.innerHTML=jogosTeste.map(jogo=>{
+
+const r=analisar(jogo);
+
+let info='';
+
+if(r.favorito==='fora'){
+
+info=
+'⚠️ Visitante mais forte — '+
+jogo.fora+
+' tem vantagem de '+
+r.diferenca+
+' pontos';
+
+}
+
+else if(r.favorito==='casa'){
+
+info=
+'🏠 Casa mais forte — '+
+jogo.casa+
+' tem vantagem de '+
+r.diferenca+
+' pontos';
+
+}
+
+else{
+
+info=
+'⚖️ Equipas equilibradas';
 
 }
 
@@ -219,37 +288,47 @@ return`
 <div class="card">
 
 <div class="teams">
-${hn} vs ${an}
+${jogo.casa}
 </div>
 
-<div class="high">
+<div style="color:#77889b;margin:4px 0">
+vs
+</div>
+
+<div class="teams">
+${jogo.fora}
+</div>
+
+<div class="label orange">
 MÉDIO-ALTO
 </div>
 
-<div>
-${high}
+<div class="value">
+${r.high}
 </div>
 
-<div class="low">
+<div class="label green">
 MÉDIO-BAIXO
 </div>
 
-<div>
-${low}
+<div class="value">
+${r.low}
 </div>
 
-<div class="prob">
-${texto}
+<div class="info">
+${info}
 </div>
 
 </div>
 
 `;
 
+}).join('');
+
 }
 
 
-carregar();
+mostrar();
 
 </script>
 
