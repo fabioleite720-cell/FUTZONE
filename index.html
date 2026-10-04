@@ -795,6 +795,36 @@ return s;
 }
 
 
+
+
+
+/* ============================================================
+   FUTZONE PREMIUM — SUGESTÕES DO DIA
+   10 JOGOS | MÉDIO-ALTO + MÉDIO-BAIXO
+   ANÁLISE INDIVIDUAL | SEM FAVORECER SEMPRE A CASA
+   ============================================================ */
+
+
+function fzSuggestionNumber(v){
+
+  if(v===undefined || v===null || v==='') return null;
+
+  const n=Number(
+    String(v)
+      .replace(',','.')
+      .replace(/[^\d.+-]/g,'')
+  );
+
+  return Number.isFinite(n)?n:null;
+
+}
+
+
+/* ------------------------------------------------------------
+   Lê odds que já estejam dentro do evento ESPN.
+   NÃO faz nenhum pedido adicional.
+   ------------------------------------------------------------ */
+
 function getSuggestionOdds(e){
 
   const c=e?.competitions?.[0];
@@ -802,49 +832,56 @@ function getSuggestionOdds(e){
   const sources=[
     e?.odds,
     c?.odds,
-    c?.odds?.[0],
-    e?.odds?.[0],
-    e?.competitions?.[0]?.odds?.[0]
+    e?.competitions?.[0]?.odds
   ];
 
-  for(const o of sources){
+  for(const source of sources){
 
-    if(!o) continue;
+    const list=Array.isArray(source)
+      ? source
+      : [source];
 
-    const item=Array.isArray(o)?o[0]:o;
+    for(const item of list){
 
-    const h=Number(
-      item?.homeTeamOdds?.moneyLine ??
-      item?.homeTeamOdds?.american ??
-      item?.home?.moneyLine ??
-      item?.home
-    );
+      if(!item) continue;
 
-    const d=Number(
-      item?.drawOdds?.moneyLine ??
-      item?.drawOdds?.american ??
-      item?.draw?.moneyLine ??
-      item?.draw
-    );
+      const h=fzSuggestionNumber(
+        item?.homeTeamOdds?.moneyLine ??
+        item?.homeTeamOdds?.moneyline ??
+        item?.homeTeamOdds?.american ??
+        item?.home?.moneyLine ??
+        item?.home
+      );
 
-    const a=Number(
-      item?.awayTeamOdds?.moneyLine ??
-      item?.awayTeamOdds?.american ??
-      item?.away?.moneyLine ??
-      item?.away
-    );
+      const d=fzSuggestionNumber(
+        item?.drawOdds?.moneyLine ??
+        item?.drawOdds?.moneyline ??
+        item?.drawOdds?.american ??
+        item?.draw?.moneyLine ??
+        item?.draw
+      );
 
-    if(
-      Number.isFinite(h)&&
-      Number.isFinite(d)&&
-      Number.isFinite(a)
-    ){
+      const a=fzSuggestionNumber(
+        item?.awayTeamOdds?.moneyLine ??
+        item?.awayTeamOdds?.moneyline ??
+        item?.awayTeamOdds?.american ??
+        item?.away?.moneyLine ??
+        item?.away
+      );
 
-      return{
-        home:h,
-        draw:d,
-        away:a
-      };
+      if(
+        h!==null &&
+        d!==null &&
+        a!==null
+      ){
+
+        return{
+          home:h,
+          draw:d,
+          away:a
+        };
+
+      }
 
     }
 
@@ -855,12 +892,105 @@ function getSuggestionOdds(e){
 }
 
 
-function suggestMarket(e){
+/* ------------------------------------------------------------
+   Tenta encontrar o ranking ESPN da equipa.
+   ------------------------------------------------------------ */
+
+function fzTeamRank(c){
+
+  const values=[
+
+    c?.curatedRank?.current,
+    c?.curatedRank?.rank,
+    c?.rank,
+    c?.team?.curatedRank?.current,
+    c?.team?.rank
+
+  ];
+
+  for(const v of values){
+
+    const n=parseInt(v,10);
+
+    if(Number.isFinite(n) && n>0)
+      return n;
+
+  }
+
+  return null;
+
+}
+
+
+/* ------------------------------------------------------------
+   Tenta encontrar forma/registo da equipa.
+   ------------------------------------------------------------ */
+
+function fzTeamFormScore(c){
+
+  let score=0;
+
+  const form=
+    c?.form ||
+    c?.team?.form ||
+    '';
+
+  if(typeof form==='string' && form.length){
+
+    for(const x of form.toUpperCase()){
+
+      if(x==='W') score+=3;
+      else if(x==='D') score+=1;
+
+    }
+
+  }
+
+  const records=[
+    ...(Array.isArray(c?.records)?c.records:[]),
+    ...(Array.isArray(c?.team?.records)?c.team.records:[])
+  ];
+
+  for(const r of records){
+
+    const summary=String(
+      r?.summary ||
+      r?.displayValue ||
+      ''
+    );
+
+    const m=summary.match(
+      /(\d+)\s*-\s*(\d+)\s*-\s*(\d+)/
+    );
+
+    if(m){
+
+      score+=
+        Number(m[1])*3+
+        Number(m[2]);
+
+      break;
+
+    }
+
+  }
+
+  return score;
+
+}
+
+
+/* ------------------------------------------------------------
+   Análise sem odds.
+   Usa ranking / forma / vantagem de casa.
+   ------------------------------------------------------------ */
+
+function fzSuggestionFallback(e){
 
   const h=teamFromEvent(e,true);
   const a=teamFromEvent(e,false);
 
-  if(!h||!a){
+  if(!h || !a){
 
     return{
       high:'Análise indisponível',
@@ -869,55 +999,61 @@ function suggestMarket(e){
 
   }
 
-  const home=h.team.displayName;
-  const away=a.team.displayName;
+  const home=
+    h.team?.displayName ||
+    h.team?.shortDisplayName ||
+    'Casa';
 
-  const o=getSuggestionOdds(e);
+  const away=
+    a.team?.displayName ||
+    a.team?.shortDisplayName ||
+    'Visitante';
 
-  if(!o){
+
+  const hr=fzTeamRank(h);
+  const ar=fzTeamRank(a);
+
+  const hf=fzTeamFormScore(h);
+  const af=fzTeamFormScore(a);
+
+
+  /* Ranking disponível */
+
+  if(hr!==null && ar!==null){
+
+    if(hr<ar){
+
+      return{
+        high:'Vitória '+home,
+        low:home+' ou empate (1X)'
+      };
+
+    }
+
+    if(ar<hr){
+
+      return{
+        high:'Vitória '+away,
+        low:away+' ou empate (X2)'
+      };
+
+    }
+
+  }
+
+
+  /* Forma disponível */
+
+  if(hf>af){
 
     return{
-      high:'Análise Premium',
+      high:home+' ou empate (1X)',
       low:'Mais de 0,5 golos'
     };
 
   }
 
-  const homeOdd=o.home;
-  const drawOdd=o.draw;
-  const awayOdd=o.away;
-
-
-  /* FAVORITO MUITO FORTE FORA */
-
-  if(awayOdd<=1.50){
-
-    return{
-      high:'Vitória '+away,
-      low:away+' ou empate (X2)'
-    };
-
-  }
-
-
-  /* FAVORITO MUITO FORTE EM CASA */
-
-  if(homeOdd<=1.50){
-
-    return{
-      high:'Vitória '+home,
-      low:home+' ou empate (1X)'
-    };
-
-  }
-
-
-  /* FORA É A MELHOR COTA ENTRE OS 3 RESULTADOS */
-
-  if(
-    awayOdd<homeOdd &&
-    awayOdd<drawOdd
-  ){
+  if(af>hf){
 
     return{
       high:away+' ou empate (X2)',
@@ -927,22 +1063,8 @@ function suggestMarket(e){
   }
 
 
-  /* CASA É A MELHOR COTA ENTRE OS 3 RESULTADOS */
-
-  if(
-    homeOdd<awayOdd &&
-    homeOdd<drawOdd
-  ){
-
-    return{
-      high:home+' ou empate (1X)',
-      low:'Mais de 0,5 golos'
-    };
-
-  }
-
-
-  /* SEM FAVORITO CLARO */
+  /* Último recurso:
+     não inventa favorito forte */
 
   return{
     high:'Dupla possibilidade',
@@ -951,72 +1073,332 @@ function suggestMarket(e){
 
 }
 
+
+/* ------------------------------------------------------------
+   ANÁLISE PRINCIPAL
+   ------------------------------------------------------------ */
+
+function suggestMarket(e){
+
+  const h=teamFromEvent(e,true);
+  const a=teamFromEvent(e,false);
+
+  if(!h || !a){
+
+    return{
+      high:'Análise indisponível',
+      low:'Mais de 0,5 golos'
+    };
+
+  }
+
+  const home=
+    h.team?.displayName ||
+    h.team?.shortDisplayName ||
+    'Casa';
+
+  const away=
+    a.team?.displayName ||
+    a.team?.shortDisplayName ||
+    'Visitante';
+
+
+  const odds=getSuggestionOdds(e);
+
+
+  /* ==========================================================
+     1 — ODDS REAIS DISPONÍVEIS NO EVENTO
+     ========================================================== */
+
+  if(odds){
+
+    const homeOdd=odds.home;
+    const drawOdd=odds.draw;
+    const awayOdd=odds.away;
+
+
+    /* Favorito muito forte fora */
+
+    if(
+      awayOdd>0 &&
+      awayOdd<=1.50
+    ){
+
+      return{
+        high:'Vitória '+away,
+        low:away+' ou empate (X2)'
+      };
+
+    }
+
+
+    /* Favorito muito forte em casa */
+
+    if(
+      homeOdd>0 &&
+      homeOdd<=1.50
+    ){
+
+      return{
+        high:'Vitória '+home,
+        low:home+' ou empate (1X)'
+      };
+
+    }
+
+
+    /* Visitante com melhor odd */
+
+    if(
+      awayOdd>0 &&
+      awayOdd<homeOdd &&
+      awayOdd<drawOdd
+    ){
+
+      return{
+        high:away+' ou empate (X2)',
+        low:'Mais de 0,5 golos'
+      };
+
+    }
+
+
+    /* Casa com melhor odd */
+
+    if(
+      homeOdd>0 &&
+      homeOdd<awayOdd &&
+      homeOdd<drawOdd
+    ){
+
+      return{
+        high:home+' ou empate (1X)',
+        low:'Mais de 0,5 golos'
+      };
+
+    }
+
+
+    /* Sem favorito claro */
+
+    return{
+      high:'Dupla possibilidade',
+      low:'Mais de 0,5 golos'
+    };
+
+  }
+
+
+  /* ==========================================================
+     2 — SEM ODDS: USA DADOS ESPN JÁ EXISTENTES
+     ========================================================== */
+
+  return fzSuggestionFallback(e);
+
+}
+
+
+/* ------------------------------------------------------------
+   ESCOLHE OS 10 JOGOS
+   ------------------------------------------------------------ */
+
+function fzSuggestionGames(){
+
+  const now=Date.now();
+
+  return games
+
+    .filter(e=>e?.competitions?.[0])
+
+    /* elimina jogos terminados */
+
+    .filter(e=>{
+
+      const finished=
+        e?.status?.type?.completed===true ||
+        ['post','final','finished','completed']
+          .includes(
+            String(
+              e?.status?.type?.state||''
+            ).toLowerCase()
+          );
+
+      return !finished;
+
+    })
+
+    /* evita jogos muito antigos */
+
+    .filter(e=>{
+
+      const t=new Date(e.date).getTime();
+
+      return !Number.isFinite(t) || t>=now-30*60*1000;
+
+    })
+
+    /* mais próximos primeiro */
+
+    .sort((a,b)=>
+      new Date(a.date)-new Date(b.date)
+    )
+
+    .slice(0,10);
+
+}
+
+
+/* ------------------------------------------------------------
+   DESENHA AS 10 SUGESTÕES
+   ------------------------------------------------------------ */
+
 function suggestions(){
 
-const box=document.getElementById('suggestions');
+  const box=
+    document.getElementById('suggestions');
 
-if(!box)return;
+  if(!box)return;
 
-const valid=games
-.filter(e=>e.competitions?.[0])
-.slice(0,10);
 
-if(!valid.length){
+  const valid=fzSuggestionGames();
 
-box.innerHTML='<div class="loading">Sem sugestões disponíveis.</div>';
-return;
 
-}
+  if(!valid.length){
 
-box.innerHTML=valid.map((e,i)=>{
+    box.innerHTML=`
 
-const h=teamFromEvent(e,true);
-const a=teamFromEvent(e,false);
+      <div class="card">
 
-const s=suggestMarket(e);
+        <div class="loading">
+          Não existem sugestões disponíveis.
+        </div>
 
-return`
+      </div>
 
-<div class="card suggest game"
-onclick="openMatch('${esc(e.id)}')">
+    `;
 
-<div class="match">
+    return;
 
-<span>${esc(h?.team?.displayName||'Casa')}</span>
+  }
 
-<span>vs</span>
 
-<span>${esc(a?.team?.displayName||'Visitante')}</span>
+  box.innerHTML=valid.map((e)=>{
 
-</div>
+    const h=
+      teamFromEvent(e,true);
 
-<div class="market orange">
-Médio-alto
-</div>
+    const a=
+      teamFromEvent(e,false);
 
-<div class="value">
-${esc(s?.high||'Análise Premium')}
-</div>
+    const s=
+      suggestMarket(e);
 
-<div class="market green">
-Médio-baixo
-</div>
 
-<div class="value">
-${esc(s?.low||'Mais de 0,5 golos')}
-</div>
+    const home=
+      h?.team?.displayName ||
+      h?.team?.shortDisplayName ||
+      'Casa';
 
-<div class="status">
-${fmtDate(e.date)} ${fmtTime(e.date)}
-</div>
+    const away=
+      a?.team?.displayName ||
+      a?.team?.shortDisplayName ||
+      'Visitante';
 
-</div>
 
-`;
+    const competition=
+      e?.leagueName ||
+      e?.competitions?.[0]?.league?.name ||
+      'Futebol';
 
-}).join('');
 
-}
+    return`
+
+      <div
+        class="card suggest game"
+        onclick="openMatch('${esc(e.id)}')"
+      >
+
+        <div class="match">
+
+          <span>
+            ${esc(home)}
+          </span>
+
+          <span>
+            vs
+          </span>
+
+          <span>
+            ${esc(away)}
+          </span>
+
+        </div>
+
+
+        <div class="market orange">
+
+          Médio-alto
+
+        </div>
+
+
+        <div class="value">
+
+          ${esc(
+            s?.high ||
+            'Dupla possibilidade'
+          )}
+
+        </div>
+
+
+        <div class="market green">
+
+          Médio-baixo
+
+        </div>
+
+
+        <div class="value">
+
+          ${esc(
+            s?.low ||
+            'Mais de 0,5 golos'
+          )}
+
+        </div>
+
+
+        <div class="status">
+
+          ${esc(competition)}
+          ·
+          ${fmtDate(e.date)}
+          ${fmtTime(e.date)}
+
+        </div>
+
+      </div>
+
+    `;
+
+  }).join('');
+
+
+  /* Atualiza automaticamente as sugestões.
+     Quando um jogo termina, sai da lista e
+     entra o próximo disponível. */
+
+  clearTimeout(window.fzSuggestionTimer);
+
+  window.fzSuggestionTimer=
+    setTimeout(()=>{
+
+      suggestions();
+
+    },60000);
+
+  }
 
 
 function render(list=games){
