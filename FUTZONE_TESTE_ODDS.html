@@ -1,0 +1,126 @@
+<!doctype html>
+
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FUTZONE — TESTE ODDS</title>
+<style>
+body{margin:0;padding:15px;background:#03060b;color:#fff;font-family:Arial,sans-serif}
+h1{font-size:21px;color:#1683ff}
+.card{background:#0a111b;border:1px solid #26384d;border-radius:12px;padding:14px;margin:12px 0}
+.teams{font-size:17px;font-weight:bold}
+.label{margin-top:13px;font-size:11px;font-weight:bold}
+.orange{color:#ff9d00}.green{color:#35d07f}
+.value{margin-top:5px;font-size:15px;font-weight:bold}
+.info{margin-top:10px;color:#9aa8b8;font-size:11px}
+</style>
+</head>
+<body><h1>🔥 FUTZONE PREMIUM — TESTE ODDS</h1><div id="resultado"></div><script>
+
+const jogos=[
+
+{casa:"Índia",fora:"Brasil",oddCasa:12.00,oddEmpate:5.50,oddFora:1.15},
+
+{casa:"Azerbaijan",fora:"Lithuania",oddCasa:2.60,oddEmpate:3.10,oddFora:2.55},
+
+{casa:"Comoros",fora:"Senegal",oddCasa:7.00,oddEmpate:3.80,oddFora:1.40},
+
+{casa:"Kyrgyz Republic",fora:"Lebanon",oddCasa:2.20,oddEmpate:3.10,oddFora:3.20},
+
+{casa:"Kosovo",fora:"Austria",oddCasa:3.60,oddEmpate:3.30,oddFora:1.95},
+
+{casa:"Portugal",fora:"Espanha",oddCasa:2.70,oddEmpate:3.20,oddFora:2.55}
+
+];
+
+function analisar(j){
+
+const h=j.oddCasa;
+const d=j.oddEmpate;
+const a=j.oddFora;
+
+if(!h||!d||!a){
+
+return{
+high:"Análise indisponível",
+low:"Mais de 0,5 golos"
+};
+
+}
+
+if(a<=1.50){
+
+return{
+high:"Vitória "+j.fora,
+low:j.fora+" ou empate (X2)"
+};
+
+}
+
+if(h<=1.50){
+
+return{
+high:"Vitória "+j.casa,
+low:j.casa+" ou empate (1X)"
+};
+
+}
+
+if(a<h && a<d){
+
+return{
+high:j.fora+" ou empate (X2)",
+low:"Mais de 0,5 golos"
+};
+
+}
+
+if(h<a && h<d){
+
+return{
+high:j.casa+" ou empate (1X)",
+low:"Mais de 0,5 golos"
+};
+
+}
+
+return{
+high:"Dupla possibilidade",
+low:"Mais de 0,5 golos"
+};
+
+}
+
+document.getElementById("resultado").innerHTML=
+
+jogos.map(j=>{
+
+const r=analisar(j);
+
+return`
+
+<div class="card">
+
+<div class="teams">${j.casa}</div>
+<div style="color:#718196;margin:5px 0">vs</div>
+<div class="teams">${j.fora}</div>
+
+<div class="label orange">MÉDIO-ALTO</div>
+<div class="value">${r.high}</div>
+
+<div class="label green">MÉDIO-BAIXO</div>
+<div class="value">${r.low}</div>
+
+<div class="info">
+Odds teste: ${j.oddCasa} / ${j.oddEmpate} / ${j.oddFora}
+</div>
+
+</div>
+
+`;
+
+}).join("");
+
+</script></body>
+</html>
