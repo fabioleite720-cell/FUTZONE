@@ -802,13 +802,55 @@ const a=teamFromEvent(e,false);
 
 if(!h||!a)return null;
 
+const home=h.team.displayName;
+const away=a.team.displayName;
+
+let hf=Number(h.team?.rating||h.team?.power||h.rating||0);
+let af=Number(a.team?.rating||a.team?.power||a.rating||0);
+
+if(!hf&&!af){
 return{
-high:h.team.displayName+' ou empate (1X)',
+high:away+' ou empate (X2)',
+low:'Mais de 0,5 golos'
+};
+}
+
+const dif=hf-af;
+
+if(dif<=-25){
+return{
+high:'Vitória '+away,
+low:away+' ou empate (X2)'
+};
+}
+
+if(dif<=-15){
+return{
+high:away+' ou empate (X2)',
+low:away+' ou empate (X2)'
+};
+}
+
+if(dif>=25){
+return{
+high:'Vitória '+home,
+low:home+' ou empate (1X)'
+};
+}
+
+if(dif>=15){
+return{
+high:home+' ou empate (1X)',
+low:home+' ou empate (1X)'
+};
+}
+
+return{
+high:'Dupla possibilidade',
 low:'Mais de 0,5 golos'
 };
 
 }
-
 
 function suggestions(){
 
