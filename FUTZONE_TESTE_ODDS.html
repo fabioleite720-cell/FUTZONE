@@ -1,352 +1,215 @@
 <!doctype html>
+
 <html lang="pt-PT">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FUTZONE PREMIUM - TESTE ODDS REAIS</title>
-
-<style>
+<title>Teste Odds ESPN - FUTZONE</title><style>
 body{
-margin:0;
-padding:15px;
+font-family:Arial,sans-serif;
 background:#03060b;
 color:#fff;
-font-family:Arial,sans-serif
-}
-
-h1{
-text-align:center;
-color:#1683ff
-}
-
-button{
-width:100%;
 padding:15px;
-border:0;
-border-radius:10px;
-background:#1683ff;
-color:#fff;
-font-size:16px;
-font-weight:bold;
-margin-bottom:15px
+margin:0;
 }
-
+h2{color:#1683ff}
 .card{
 background:#0a111b;
-border:1px solid #26384d;
-border-radius:12px;
+border:1px solid #1c2b3a;
+border-radius:10px;
 padding:15px;
-margin-bottom:12px
+margin-bottom:15px;
 }
-
-.nome{
-font-size:18px;
+.ok{color:#35d07f}
+.erro{color:#ff5252}
+pre{
+white-space:pre-wrap;
+word-break:break-word;
+font-size:12px;
+background:#05080d;
+padding:10px;
+border-radius:8px;
+overflow:auto;
+}
+button{
+background:#1683ff;
+color:white;
+border:0;
+padding:12px 18px;
+border-radius:8px;
 font-weight:bold;
-margin-bottom:10px
+}
+</style></head><body><h2>⚽ FUTZONE — TESTE ODDS ESPN</h2><div id="estado">A testar ESPN...</div><div id="resultado"></div><script>
+
+const EVENT_ID="";
+
+async function getJSON(url){
+
+const r=await fetch(url);
+
+if(!r.ok)
+throw new Error("HTTP "+r.status);
+
+return await r.json();
+
 }
 
-.odds{
-color:#aaa;
-font-size:14px;
-margin-bottom:12px
-}
 
-.high{
-color:#ff9800;
-font-weight:bold;
-margin-top:8px
-}
-
-.low{
-color:#39d353;
-font-weight:bold;
-margin-top:8px
-}
-
-.ok{
-color:#39d353;
-font-weight:bold
-}
-
-.erro{
-color:#ff5252;
-font-weight:bold
-}
-</style>
-</head>
-
-<body>
-
-<h1>🔥 FUTZONE PREMIUM</h1>
-
-<button onclick="testarOdds()">
-TESTAR ODDS REAIS ESPN
-</button>
-
-<div id="resultado">
-Carrega no botão.
-</div>
-
-<script>
-
-async function testarOdds(){
+async function testar(){
 
 const box=document.getElementById("resultado");
-
-box.innerHTML=`
-<div class="card">
-⏳ A procurar jogos reais e odds no ESPN...
-</div>
-`;
+const estado=document.getElementById("estado");
 
 try{
+
+/*
+ Primeiro vamos buscar os jogos de hoje
+*/
 
 const hoje=new Date();
 
 const data=
-hoje.getFullYear()+
-String(hoje.getMonth()+1).padStart(2,"0")+
-String(hoje.getDate()).padStart(2,"0");
-
-
-/*
- Premier League
-*/
+hoje.getUTCFullYear()+
+String(hoje.getUTCMonth()+1).padStart(2,"0")+
+String(hoje.getUTCDate()).padStart(2,"0");
 
 const scoreboard=
 "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard?dates="+data;
 
+const jogos=await getJSON(scoreboard);
 
-const resposta=await fetch(scoreboard);
-
-
-if(!resposta.ok){
-
-throw new Error(
-"Scoreboard HTTP "+resposta.status
-);
-
-}
-
-
-const dados=await resposta.json();
-
-const eventos=dados.events||[];
-
+const eventos=jogos?.events||[];
 
 if(!eventos.length){
 
-box.innerHTML=`
-<div class="card">
-<div class="erro">
-⚠️ Não existem jogos da Premier League hoje.
-</div>
-</div>
-`;
+estado.innerHTML=
+'<span class="erro">Não foram encontrados jogos.</span>';
 
 return;
 
 }
 
 
-let html="";
+/*
+ Escolher o primeiro jogo
+*/
 
-let encontrados=0;
+const evento=eventos[0];
+
+const comp=evento?.competitions?.[0];
+
+const eventId=evento?.id;
+const compId=comp?.id;
+
+const home=
+comp?.competitors?.find(x=>x.homeAway==="home")
+?.team?.displayName||"Casa";
+
+const away=
+comp?.competitors?.find(x=>x.homeAway==="away")
+?.team?.displayName||"Fora";
 
 
-for(const evento of eventos.slice(0,10)){
-
-try{
-
-const competicao=
-evento.competitions?.[0];
-
-if(!competicao)continue;
+const league="eng.1";
 
 
-const eventId=evento.id;
-
-const competitionId=
-competicao.id || eventId;
-
-
-const oddsUrl=
-"https://sports.core.api.espn.com/v2/sports/soccer/leagues/eng.1/events/"
-+eventId+
-"/competitions/"
-+competitionId+
+const oddsURL=
+"https://sports.core.api.espn.com/v2/sports/soccer/leagues/"+
+league+
+"/events/"+
+eventId+
+"/competitions/"+
+compId+
 "/odds";
 
 
-const r=await fetch(oddsUrl);
+estado.innerHTML=
+'<span class="ok">✓ ESPN respondeu aos jogos</span>';
 
 
-if(!r.ok)continue;
-
-
-const oddsData=await r.json();
-
-const items=oddsData.items||[];
-
-
-if(!items.length)continue;
-
-
-const odd=items.find(x=>
-x.homeTeamOdds ||
-x.awayTeamOdds ||
-x.drawOdds
-) || items[0];
-
-
-if(!odd)continue;
-
-
-const casa=
-competicao.competitors?.find(x=>
-x.homeAway==="home"
-);
-
-
-const fora=
-competicao.competitors?.find(x=>
-x.homeAway==="away"
-);
-
-
-const nomeCasa=
-casa?.team?.displayName ||
-"Casa";
-
-
-const nomeFora=
-fora?.team?.displayName ||
-"Visitante";
-
-
-const oddCasa=
-odd.homeTeamOdds?.moneyLine;
-
-
-const oddFora=
-odd.awayTeamOdds?.moneyLine;
-
-
-const oddEmpate=
-odd.drawOdds?.moneyLine;
-
-
-html+=`
+box.innerHTML+=`
 
 <div class="card">
 
-<div class="nome">
-${nomeCasa}
-<br>
-vs
-<br>
-${nomeFora}
-</div>
+<b>Jogo escolhido</b><br><br>
 
-<div class="odds">
+${home} vs ${away}
 
-Casa: ${oddCasa ?? "—"}<br>
-Empate: ${oddEmpate ?? "—"}<br>
-Fora: ${oddFora ?? "—"}
+<br><br>
 
-</div>
+<b>Event ID:</b> ${eventId}<br>
 
-<div class="ok">
-✅ ODDS ESPN ENCONTRADAS
-</div>
+<b>Competition ID:</b> ${compId}<br>
 
-<div>
-Fornecedor:
-${odd.provider?.name || "ESPN"}
-</div>
+<b>URL das odds:</b><br>
 
-</div>
+<pre>${oddsURL}</pre></div>`;
 
-`;
+/*
+Agora buscar odds
+*/
 
-encontrados++;
+const odds=await getJSON(oddsURL);
 
-}catch(e){
+box.innerHTML+=`
 
-console.log(e);
+<div class="card"><b>Resposta original das odds:</b>
+
+<pre>${escapeHTML(
+JSON.stringify(odds,null,2)
+)}</pre></div>`;
+
+/*
+Analisar os items
+*/
+
+const items=Array.isArray(odds?.items)
+?odds.items
+:[];
+
+box.innerHTML+=`
+
+<div class="card"><b>Quantidade de items:</b> ${items.length}
+
+</div>`;
+
+for(let i=0;i<items.length;i++){
+
+const item=items[i];
+
+box.innerHTML+=`
+
+<div class="card"><b>ITEM ${i+1}</b>
+
+<pre>${escapeHTML(
+JSON.stringify(item,null,2)
+)}</pre></div>`;
+
+}
+
+}catch(err){
+
+estado.innerHTML=
+'<span class="erro">✗ Erro: '+
+escapeHTML(String(err))+
+'</span>';
 
 }
 
 }
 
+function escapeHTML(v){
 
-if(!encontrados){
-
-box.innerHTML=`
-
-<div class="card">
-
-<div class="erro">
-⚠️ Jogos encontrados, mas o ESPN não
-forneceu odds para estes jogos.
-</div>
-
-<div style="margin-top:10px;color:#aaa">
-Isto não significa que o código esteja errado.
-Alguns jogos/competições simplesmente não têm
-mercado de apostas disponível.
-</div>
-
-</div>
-
-`;
-
-return;
+return String(v)
+.replace(/&/g,"&")
+.replace(/</g,"<")
+.replace(/>/g,">")
+.replace(/"/g,""")
+.replace(/'/g,"'");
 
 }
 
+testar();
 
-box.innerHTML=`
-
-<div class="card">
-
-<div class="ok">
-✅ ODDS REAIS ESPN ENCONTRADAS
-</div>
-
-<div style="margin-top:8px">
-Foram encontrados ${encontrados} jogo(s) com odds.
-</div>
-
-</div>
-
-${html}
-
-`;
-
-}catch(erro){
-
-box.innerHTML=`
-
-<div class="card">
-
-<div class="erro">
-❌ ERRO
-</div>
-
-<div style="margin-top:10px">
-${erro.message}
-</div>
-
-</div>
-
-`;
-
-}
-
-}
-
-</script>
-
-</body>
+</script></body>
 </html>
