@@ -805,39 +805,92 @@ await Promise.all(lista.map(async e=>{
 
 try{
 
-const comp=e.competitions?.[0];
+const comp=e.competitions[0];
 
 const eventId=e.id;
-const competitionId=comp?.id;
 
-if(!eventId||!competitionId)return;
+if(!eventId)return;
+
+
+/*
+ O ESPN usa a liga do próprio evento.
+ Primeiro tentamos obter o slug da competição.
+*/
+
+const leagueSlug=
+e.league?.slug||
+e.league?.abbreviation||
+e.league?.id||
+'';
+
+
+if(!leagueSlug)return;
+
+
+/*
+ Endpoint real de odds do evento.
+*/
 
 const url=
 "https://sports.core.api.espn.com/v2/sports/soccer/leagues/"+
-encodeURIComponent(e.league?.slug||'')+
+encodeURIComponent(leagueSlug)+
 "/events/"+
 encodeURIComponent(eventId)+
 "/competitions/"+
-encodeURIComponent(competitionId)+
+encodeURIComponent(comp.id)+
 "/odds";
 
-const d=await jsonUrl(url,7000);
 
-const item=d?.items?.find(x=>
+const d=await jsonUrl(url,8000);
+
+const item=
+d?.items?.find(x=>
 x?.homeTeamOdds||
 x?.awayTeamOdds||
 x?.drawOdds
-)||d?.items?.[0];
+);
+
 
 if(!item)return;
 
+
+/*
+ Guardamos as odds no próprio evento.
+*/
+
+const homeOdd=
+Number(item.homeTeamOdds?.moneyLine);
+
+const awayOdd=
+Number(item.awayTeamOdds?.moneyLine);
+
+const drawOdd=
+Number(item.drawOdds?.moneyLine);
+
+
+if(
+Number.isFinite(homeOdd) &&
+Number.isFinite(drawOdd) &&
+Number.isFinite(awayOdd)
+){
+
 e._fzOdds={
-home:Number(item.homeTeamOdds?.moneyLine),
-draw:Number(item.drawOdds?.moneyLine),
-away:Number(item.awayTeamOdds?.moneyLine)
+home:homeOdd,
+draw:drawOdd,
+away:awayOdd
 };
 
-}catch(err){}
+}
+
+}catch(err){
+
+console.log(
+"FUTZONE odds:",
+e?.id,
+err
+);
+
+}
 
 }));
 
