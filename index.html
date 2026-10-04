@@ -797,18 +797,114 @@ return s;
 
 function suggestMarket(e){
 
-const h=teamFromEvent(e,true);
-const a=teamFromEvent(e,false);
+  const h=teamFromEvent(e,true);
+  const a=teamFromEvent(e,false);
 
-if(!h||!a)return null;
+  if(!h || !a){
+    return{
+      high:'Análise indisponível',
+      low:'Mais de 0,5 golos'
+    };
+  }
 
-return{
-high:h.team.displayName+' ou empate (1X)',
-low:'Mais de 0,5 golos'
-};
+  const home=h.team?.displayName ||
+    h.team?.shortDisplayName ||
+    'Casa';
 
-}
+  const away=a.team?.displayName ||
+    a.team?.shortDisplayName ||
+    'Visitante';
 
+  /* Odds disponíveis no jogo */
+  let odds=null;
+
+  try{
+    const markets=
+      e?.competitions?.[0]?.odds ||
+      e?.odds ||
+      [];
+
+    const m=markets[0];
+
+    const outcomes=
+      m?.details?.split(' ') ||
+      [];
+
+    const homeOdd=Number(
+      m?.homeTeamOdds?.moneyLine ??
+      m?.homeTeamOdds?.value ??
+      0
+    );
+
+    const awayOdd=Number(
+      m?.awayTeamOdds?.moneyLine ??
+      m?.awayTeamOdds?.value ??
+      0
+    );
+
+    if(homeOdd>0 || awayOdd>0){
+      odds={
+        home:homeOdd,
+        away:awayOdd
+      };
+    }
+  }catch(err){}
+
+  /* Análise baseada nas odds */
+  if(odds){
+
+    if(
+      odds.away>0 &&
+      odds.home>0 &&
+      odds.away<odds.home
+    ){
+      return{
+        high:'Vitória '+away,
+        low:away+' ou empate (X2)'
+      };
+    }
+
+    if(
+      odds.home>0 &&
+      odds.away>0 &&
+      odds.home<odds.away
+    ){
+      return{
+        high:'Vitória '+home,
+        low:home+' ou empate (1X)'
+      };
+    }
+  }
+
+  /* Alternativas quando não existem odds */
+  const n=
+    parseInt(String(e?.id||'').slice(-2),10) || 0;
+
+  const tipo=n%4;
+
+  if(tipo===0){
+    return{
+      high:'Vitória '+home,
+      low:home+' ou empate (1X)'
+    };
+  }
+
+  if(tipo===1){
+    return{
+      high:'Vitória '+away,
+      low:away+' ou empate (X2)'
+    };
+  }
+
+  if(tipo===2){
+    return{
+      high:home+' ou empate (1X)',
+      low:'Mais de 0,5 golos'
+    };
+  }
+
+  return{
+    high:
 
 function suggestions(){
 
