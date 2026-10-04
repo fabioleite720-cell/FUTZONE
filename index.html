@@ -979,7 +979,52 @@ e._fzOdds=null;
 }
 
 }
+async function testarUmaOdd(){
 
+try{
+
+const e=games[0];
+
+if(!e){
+
+console.log("FUTZONE TESTE: sem jogo");
+return;
+
+}
+
+const comp=e?.competitions?.[0];
+
+const league=e?._fzLeague;
+const eventId=e?.id;
+const compId=comp?.id;
+
+console.log("FUTZONE TESTE JOGO:",e);
+console.log("FUTZONE TESTE LIGA:",league,"EVENT:",eventId,"COMP:",compId);
+
+const url=
+"https://sports.core.api.espn.com/v2/sports/soccer/leagues/"+
+encodeURIComponent(league)+
+"/events/"+
+encodeURIComponent(eventId)+
+"/competitions/"+
+encodeURIComponent(compId)+
+"/odds";
+
+console.log("FUTZONE TESTE URL:",url);
+
+const d=await jsonUrl(url,10000);
+
+console.log("FUTZONE TESTE ODDS:",d);
+
+}catch(err){
+
+console.log("FUTZONE TESTE ERRO:",err);
+
+}
+
+}
+
+testarUmaOdd();
 
 function suggestions(){
 
