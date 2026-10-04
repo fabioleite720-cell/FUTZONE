@@ -477,7 +477,7 @@ Ainda não existem favoritos.
 
 </main>
 <script>
-const API='https://site.web.api.espn.com/apis/site/v2/sports/soccer/';
+const API='https://site.api.espn.com/apis/site/v2/sports/soccer/';
 const CORE='https://sports.core.api.espn.com/v2/sports/soccer/leagues/';
 const SOFA='https://www.sofascore.com/api/v1';
 
@@ -795,569 +795,87 @@ return s;
 }
 
 
-
-
-
-/* ============================================================
-   FUTZONE PREMIUM — SUGESTÕES DO DIA
-   10 JOGOS | MÉDIO-ALTO + MÉDIO-BAIXO
-   ANÁLISE INDIVIDUAL | SEM FAVORECER SEMPRE A CASA
-   ============================================================ */
-
-
-function fzSuggestionNumber(v){
-
-  if(v===undefined || v===null || v==='') return null;
-
-  const n=Number(
-    String(v)
-      .replace(',','.')
-      .replace(/[^\d.+-]/g,'')
-  );
-
-  return Number.isFinite(n)?n:null;
-
-}
-
-
-/* ------------------------------------------------------------
-   Lê odds que já estejam dentro do evento ESPN.
-   NÃO faz nenhum pedido adicional.
-   ------------------------------------------------------------ */
-
-function getSuggestionOdds(e){
-
-  const c=e?.competitions?.[0];
-
-  const sources=[
-    e?.odds,
-    c?.odds,
-    e?.competitions?.[0]?.odds
-  ];
-
-  for(const source of sources){
-
-    const list=Array.isArray(source)
-      ? source
-      : [source];
-
-    for(const item of list){
-
-      if(!item) continue;
-
-      const h=fzSuggestionNumber(
-        item?.homeTeamOdds?.moneyLine ??
-        item?.homeTeamOdds?.moneyline ??
-        item?.homeTeamOdds?.american ??
-        item?.home?.moneyLine ??
-        item?.home
-      );
-
-      const d=fzSuggestionNumber(
-        item?.drawOdds?.moneyLine ??
-        item?.drawOdds?.moneyline ??
-        item?.drawOdds?.american ??
-        item?.draw?.moneyLine ??
-        item?.draw
-      );
-
-      const a=fzSuggestionNumber(
-        item?.awayTeamOdds?.moneyLine ??
-        item?.awayTeamOdds?.moneyline ??
-        item?.awayTeamOdds?.american ??
-        item?.away?.moneyLine ??
-        item?.away
-      );
-
-      if(
-        h!==null &&
-        d!==null &&
-        a!==null
-      ){
-
-        return{
-          home:h,
-          draw:d,
-          away:a
-        };
-
-      }
-
-    }
-
-  }
-
-  return null;
-
-}
-
-
-/* ------------------------------------------------------------
-   Tenta encontrar o ranking ESPN da equipa.
-   ------------------------------------------------------------ */
-
-function fzTeamRank(c){
-
-  const values=[
-
-    c?.curatedRank?.current,
-    c?.curatedRank?.rank,
-    c?.rank,
-    c?.team?.curatedRank?.current,
-    c?.team?.rank
-
-  ];
-
-  for(const v of values){
-
-    const n=parseInt(v,10);
-
-    if(Number.isFinite(n) && n>0)
-      return n;
-
-  }
-
-  return null;
-
-}
-
-
-/* ------------------------------------------------------------
-   Tenta encontrar forma/registo da equipa.
-   ------------------------------------------------------------ */
-
-function fzTeamFormScore(c){
-
-  let score=0;
-
-  const form=
-    c?.form ||
-    c?.team?.form ||
-    '';
-
-  if(typeof form==='string' && form.length){
-
-    for(const x of form.toUpperCase()){
-
-      if(x==='W') score+=3;
-      else if(x==='D') score+=1;
-
-    }
-
-  }
-
-  const records=[
-    ...(Array.isArray(c?.records)?c.records:[]),
-    ...(Array.isArray(c?.team?.records)?c.team.records:[])
-  ];
-
-  for(const r of records){
-
-    const summary=String(
-      r?.summary ||
-      r?.displayValue ||
-      ''
-    );
-
-    const m=summary.match(
-      /(\d+)\s*-\s*(\d+)\s*-\s*(\d+)/
-    );
-
-    if(m){
-
-      score+=
-        Number(m[1])*3+
-        Number(m[2]);
-
-      break;
-
-    }
-
-  }
-
-  return score;
-
-}
-
-
-/* ------------------------------------------------------------
-   Análise sem odds.
-   Usa ranking / forma / vantagem de casa.
-   ------------------------------------------------------------ */
-
-function fzSuggestionFallback(e){
-
-  const h=teamFromEvent(e,true);
-  const a=teamFromEvent(e,false);
-
-  if(!h || !a){
-
-    return{
-      high:'Análise indisponível',
-      low:'Mais de 0,5 golos'
-    };
-
-  }
-
-  const home=
-    h.team?.displayName ||
-    h.team?.shortDisplayName ||
-    'Casa';
-
-  const away=
-    a.team?.displayName ||
-    a.team?.shortDisplayName ||
-    'Visitante';
-
-
-  const hr=fzTeamRank(h);
-  const ar=fzTeamRank(a);
-
-  const hf=fzTeamFormScore(h);
-  const af=fzTeamFormScore(a);
-
-
-  /* Ranking disponível */
-
-  if(hr!==null && ar!==null){
-
-    if(hr<ar){
-
-      return{
-        high:'Vitória '+home,
-        low:home+' ou empate (1X)'
-      };
-
-    }
-
-    if(ar<hr){
-
-      return{
-        high:'Vitória '+away,
-        low:away+' ou empate (X2)'
-      };
-
-    }
-
-  }
-
-
-  /* Forma disponível */
-
-  if(hf>af){
-
-    return{
-      high:home+' ou empate (1X)',
-      low:'Mais de 0,5 golos'
-    };
-
-  }
-
-  if(af>hf){
-
-    return{
-      high:away+' ou empate (X2)',
-      low:'Mais de 0,5 golos'
-    };
-
-  }
-
-
-  /* Último recurso:
-     não inventa favorito forte */
-
-  return{
-    high:'Dupla possibilidade',
-    low:'Mais de 0,5 golos'
-  };
-
-}
-
-
-/* ------------------------------------------------------------
-   ANÁLISE PRINCIPAL
-   ------------------------------------------------------------ */
-
 function suggestMarket(e){
 
-  const h=teamFromEvent(e,true);
-  const a=teamFromEvent(e,false);
+const h=teamFromEvent(e,true);
+const a=teamFromEvent(e,false);
 
-  if(!h || !a){
+if(!h||!a)return null;
 
-    return{
-      high:'Análise indisponível',
-      low:'Mais de 0,5 golos'
-    };
-
-  }
-
-  const home=
-    h.team?.displayName ||
-    h.team?.shortDisplayName ||
-    'Casa';
-
-  const away=
-    a.team?.displayName ||
-    a.team?.shortDisplayName ||
-    'Visitante';
-
-
-  const odds=getSuggestionOdds(e);
-
-
-  /* ==========================================================
-     1 — ODDS REAIS DISPONÍVEIS NO EVENTO
-     ========================================================== */
-
-  if(odds){
-
-    const homeOdd=odds.home;
-    const drawOdd=odds.draw;
-    const awayOdd=odds.away;
-
-
-    /* Favorito muito forte fora */
-
-    if(
-      awayOdd>0 &&
-      awayOdd<=1.50
-    ){
-
-      return{
-        high:'Vitória '+away,
-        low:away+' ou empate (X2)'
-      };
-
-    }
-
-
-    /* Favorito muito forte em casa */
-
-    if(
-      homeOdd>0 &&
-      homeOdd<=1.50
-    ){
-
-      return{
-        high:'Vitória '+home,
-        low:home+' ou empate (1X)'
-      };
-
-    }
-
-
-    /* Visitante com melhor odd */
-
-    if(
-      awayOdd>0 &&
-      awayOdd<homeOdd &&
-      awayOdd<drawOdd
-    ){
-
-      return{
-        high:away+' ou empate (X2)',
-        low:'Mais de 0,5 golos'
-      };
-
-    }
-
-
-    /* Casa com melhor odd */
-
-    if(
-      homeOdd>0 &&
-      homeOdd<awayOdd &&
-      homeOdd<drawOdd
-    ){
-
-      return{
-        high:home+' ou empate (1X)',
-        low:'Mais de 0,5 golos'
-      };
-
-    }
-
-
-    /* Sem favorito claro */
-
-    return{
-      high:'Dupla possibilidade',
-      low:'Mais de 0,5 golos'
-    };
-
-  }
-
-
-  /* ==========================================================
-     2 — SEM ODDS: USA DADOS ESPN JÁ EXISTENTES
-     ========================================================== */
-
-  return fzSuggestionFallback(e);
+return{
+high:h.team.displayName+' ou empate (1X)',
+low:'Mais de 0,5 golos'
+};
 
 }
 
-
-/* ------------------------------------------------------------
-   ESCOLHE OS 10 JOGOS
-   ------------------------------------------------------------ */
-
-function fzSuggestionGames(){
-
-  const now=Date.now();
-
-  return games
-
-    .filter(e=>e?.competitions?.[0])
-
-    /* elimina jogos terminados */
-
-    .filter(e=>{
-
-      const finished=
-        e?.status?.type?.completed===true ||
-        ['post','final','finished','completed']
-          .includes(
-            String(
-              e?.status?.type?.state||''
-            ).toLowerCase()
-          );
-
-      return !finished;
-
-    })
-
-    /* evita jogos muito antigos */
-
-    .filter(e=>{
-
-      const t=new Date(e.date).getTime();
-
-      return !Number.isFinite(t) || t>=now-30*60*1000;
-
-    })
-
-    /* mais próximos primeiro */
-
-    .sort((a,b)=>
-      new Date(a.date)-new Date(b.date)
-    )
-
-    .slice(0,10);
-
-}
-
-
-/* ------------------------------------------------------------
-   DESENHA AS 10 SUGESTÕES
-   ------------------------------------------------------------ */
 
 function suggestions(){
 
-  const box=document.getElementById('suggestions');
+const box=document.getElementById('suggestions');
 
-  if(!box)return;
+if(!box)return;
 
-  const valid=fzSuggestionGames();
+const valid=games
+.filter(e=>e.competitions?.[0])
+.slice(0,10);
 
-  if(!valid.length){
+if(!valid.length){
 
-    box.innerHTML=`
-      <div class="card">
-        <div class="loading">
-          Não existem sugestões disponíveis.
-        </div>
-      </div>
-    `;
+box.innerHTML='<div class="loading">Sem sugestões disponíveis.</div>';
+return;
 
-    return;
-  }
+}
 
-  box.innerHTML=valid.map((e)=>{
+box.innerHTML=valid.map((e,i)=>{
 
-    const h=teamFromEvent(e,true);
-    const a=teamFromEvent(e,false);
+const h=teamFromEvent(e,true);
+const a=teamFromEvent(e,false);
 
-    const s=suggestMarket(e);
+const s=suggestMarket(e);
 
-    const home=
-      h?.team?.displayName ||
-      h?.team?.shortDisplayName ||
-      'Casa';
+return`
 
-    const away=
-      a?.team?.displayName ||
-      a?.team?.shortDisplayName ||
-      'Visitante';
+<div class="card suggest game"
+onclick="openMatch('${esc(e.id)}')">
 
-    const competition=
-      e?.leagueName ||
-      e?.competitions?.[0]?.league?.name ||
-      'Futebol';
+<div class="match">
 
-    return`
+<span>${esc(h?.team?.displayName||'Casa')}</span>
 
-      <div
-        class="card suggest game"
-        onclick="openMatch('${esc(e.id)}')"
-      >
+<span>vs</span>
 
-        <div class="match">
+<span>${esc(a?.team?.displayName||'Visitante')}</span>
 
-          <span>${esc(home)}</span>
+</div>
 
-          <span>vs</span>
+<div class="market orange">
+Médio-alto
+</div>
 
-          <span>${esc(away)}</span>
+<div class="value">
+${esc(s?.high||'Análise Premium')}
+</div>
 
-        </div>
+<div class="market green">
+Médio-baixo
+</div>
 
-        <div class="market orange">
-          Médio-alto
-        </div>
+<div class="value">
+${esc(s?.low||'Mais de 0,5 golos')}
+</div>
 
-        <div class="value">
-          ${esc(
-            s?.high ||
-            'Dupla possibilidade'
-          )}
-        </div>
+<div class="status">
+${fmtDate(e.date)} ${fmtTime(e.date)}
+</div>
 
-        <div class="market green">
-          Médio-baixo
-        </div>
+</div>
 
-        <div class="value">
-          ${esc(
-            s?.low ||
-            'Mais de 0,5 golos'
-          )}
-        </div>
+`;
 
-        <div class="status">
+}).join('');
 
-          ${esc(competition)}
-          ·
-          ${fmtDate(e.date)}
-          ${fmtTime(e.date)}
-
-        </div>
-
-      </div>
-
-    `;
-
-  }).join('');
-
-  clearTimeout(window.fzSuggestionTimer);
-
-  window.fzSuggestionTimer=setTimeout(()=>{
-
-    suggestions();
-
-  },60000);
-
-   }
+}
 
 
 function render(list=games){
@@ -1454,40 +972,15 @@ sec('games');
 
 function showToday(){
 
-  const now = new Date();
+const now=new Date();
 
-  const start = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-    0,0,0,0
-  );
+const day=now.toISOString().slice(0,10);
 
-  const end = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-    23,59,59,999
-  );
+render(
+games.filter(e=>String(e.date||'').slice(0,10)===day)
+);
 
-  const todayGames =
-    (games || []).filter(e=>{
-
-      const d =
-        new Date(e?.date);
-
-      if(!Number.isFinite(d.getTime()))
-        return false;
-
-      return d >= start && d <= end;
-
-    });
-
-  render(todayGames);
-
-  sec('games');
-
-   }
+}
 
 
 function showLive(){
@@ -4907,22 +4400,9 @@ window.suggestions = function(){
           e,
           false
         );
-const homeTeam =
-  h?.team ||
-  e?.competitions?.[0]?.competitors?.find(
-    c => c.homeAway === 'home'
-  )?.team ||
-  e?.competitions?.[0]?.competitors?.[0]?.team ||
-  {};
 
-const awayTeam =
-  a?.team ||
-  e?.competitions?.[0]?.competitors?.find(
-    c => c.homeAway === 'away'
-  )?.team ||
-  e?.competitions?.[0]?.competitors?.[1]?.team ||
-  {};
-
+      if(!h || !a)
+        return;
 
 
       const s =
@@ -4992,157 +4472,97 @@ const awayTeam =
 
       `);
 
-window.suggestions = function(){
+    });
 
-  const box =
-    document.getElementById('suggestions');
 
-  if(!box) return;
+  /* ---------- 5 MÉDIO-BAIXO ---------- */
 
-  const valid =
-    (games || [])
-      .filter(e =>
-        e?.competitions?.[0]
-          ?.competitors
-          ?.length >= 2
-      )
-      .filter(e =>
-        !completed(e)
-      );
+  selected
+    .slice(5,10)
+    .forEach(e=>{
 
-  if(!valid.length){
+      const h =
+        teamFromEvent(
+          e,
+          true
+        );
 
-    box.innerHTML =
-      '<div class="loading">' +
-      'Sem sugestões disponíveis.' +
-      '</div>';
+      const a =
+        teamFromEvent(
+          e,
+          false
+        );
 
-    return;
-  }
+      if(!h || !a)
+        return;
 
-  const selected = [];
-  const ids = new Set();
 
-  for(const e of valid){
+      const s =
+        suggestMarket(e);
 
-    const id = String(e.id || '');
 
-    if(!id || ids.has(id))
-      continue;
+      cards.push(`
 
-    ids.add(id);
-    selected.push(e);
+        <div
+          class="card suggest game"
+          onclick="openMatch('${esc(e.id)}')"
+        >
 
-    if(selected.length >= 10)
-      break;
-  }
-
-  const cards = [];
-
-  /*
-    CADA JOGO TEM:
-    MÉDIO-ALTO
-    MÉDIO-BAIXO
-  */
-
-  selected.forEach(e=>{
-
-    const h =
-      teamFromEvent(e,true);
-
-    const a =
-      teamFromEvent(e,false);
-
-    if(!h || !a)
-      return;
-
-    const s =
-      suggestMarket(e);
-
-    const home =
-      h.team?.displayName ||
-      h.team?.shortDisplayName ||
-      'Casa';
-
-    const away =
-      a.team?.displayName ||
-      a.team?.shortDisplayName ||
-      'Visitante';
-
-    const high =
-      s?.high ||
-      'Dupla possibilidade';
-
-    const low =
-      s?.low ||
-      'Mais de 0,5 golos';
-
-    const competition =
-      e.leagueName ||
-      e.competitions?.[0]?.league?.name ||
-      'Futebol';
-
-    cards.push(`
-
-      <div
-        class="card suggest game"
-        onclick="openMatch('${esc(e.id)}')"
-      >
-
-        <div class="match">
-
-          <span>
-            ${esc(home)}
-          </span>
-
-          <span>
-            vs
-          </span>
-
-          <span>
-            ${esc(away)}
-          </span>
-
-        </div>
-
-        <div class="row">
-
-          <div class="label">
-            Médio-alto
-          </div>
-
-          <div class="value orange">
-            ${esc(high)}
-          </div>
-
-        </div>
-
-        <div class="row">
-
-          <div class="label">
+          <div class="market green">
             Médio-baixo
           </div>
 
-          <div class="value green">
-            ${esc(low)}
+          <div class="match">
+
+            <span>
+              ${esc(
+                h.team?.displayName ||
+                'Casa'
+              )}
+            </span>
+
+            <span>
+              vs
+            </span>
+
+            <span>
+              ${esc(
+                a.team?.displayName ||
+                'Visitante'
+              )}
+            </span>
+
+          </div>
+
+          <div class="value">
+
+            ${esc(
+              s?.low ||
+              'Mais de 0,5 golos'
+            )}
+
+          </div>
+
+          <div class="status">
+
+            ${esc(
+              e.leagueName ||
+              'Futebol'
+            )}
+
+            ·
+
+            ${fmtDate(e.date)}
+            ${fmtTime(e.date)}
+
           </div>
 
         </div>
 
-        <div class="status">
+      `);
 
-          ${esc(competition)}
-          ·
-          ${fmtDate(e.date)}
-          ${fmtTime(e.date)}
+    });
 
-        </div>
-
-      </div>
-
-    `);
-
-  });
 
   box.innerHTML =
     cards.length
@@ -5154,18 +4574,14 @@ window.suggestions = function(){
 
 };
 
+
 /* ---------------------------------------------------------
    4. CARREGAR TODAS AS LIGAS
    --------------------------------------------------------- */
 
 window.FZ_loadAllGames =
 async function(){
-  const now = new Date();
 
-  const today =
-    now.getFullYear() +
-    String(now.getMonth()+1).padStart(2,'0') +
-    String(now.getDate()).padStart(2,'0');
   const box =
     document.getElementById(
       'gamesList'
@@ -5216,9 +4632,7 @@ async function(){
                 await jsonUrl(
                   API+
                   league+
-                  '/scoreboard?dates=' +
-today +
-'&limit=100',
+                  '/scoreboard?limit=100',
                   15000
                 );
 
@@ -5298,13 +4712,7 @@ today +
 
 
   /* Mostrar as 10 sugestões */
-  setTimeout(function(){
-    try{
-      FZ_loadAllGames();
-    }catch(err){
-      console.warn('FUTZONE jogos:',err);
-    }
-  },500);
+
   window.suggestions();
 
 
@@ -5326,14 +4734,17 @@ today +
   }
 
 };
-/* =========================================================
-   FUTZONE — INICIAR CARREGAMENTO DOS JOGOS
-   ========================================================= */
 
 
-/* Mostrar as 10 sugestões */
+/* ---------------------------------------------------------
+   5. EXECUTAR A NOVA CARGA
+   --------------------------------------------------------- */
 
-window.suggestions();
+setTimeout(function(){
+
+  window.FZ_loadAllGames();
+
+},500);
 
 
 /* ---------------------------------------------------------
@@ -5347,30 +4758,15 @@ setTimeout(function(){
     window.games.length
   ){
 
-    if(
-      typeof window.suggestions === 'function'
-    ){
-
-      window.suggestions();
-
-    }
+    window.suggestions();
 
   }
 
 },3000);
 
 
-
 })();
-setTimeout(function(){
-  try{
-    if(typeof window.FZ_loadAllGames === 'function'){
-      window.FZ_loadAllGames();
-    }
-  }catch(err){
-    console.warn('FUTZONE arranque jogos:',err);
-  }
-},500);
+
 </script> 
 <script>
 
@@ -7145,410 +6541,360 @@ setInterval(function(){
 
   window.loadMatchDetails=FZ_LOAD_DETAILS_CLEAN;
 
-/* =========================================================
-   5 — CARREGAR TODOS OS JOGOS DE HOJE
-   ========================================================= */
 
-async function FZ_LOAD_ALL_GAMES_CLEAN(){
+  /* =========================================================
+     5 — CARREGAR TODOS OS JOGOS
+     NÃO USA O get() ANTIGO QUE ABORTAVA OS PEDIDOS
+     ========================================================= */
 
-  const box =
-    document.getElementById('gamesList');
+  async function FZ_LOAD_ALL_GAMES_CLEAN(){
 
-  if(box){
+    const box=document.getElementById('gamesList');
 
-    box.innerHTML =
-      '<div class="loading">A carregar jogos de hoje...</div>';
+    if(box){
+
+      box.innerHTML=
+        '<div class="loading">A carregar jogos...</div>';
+
+    }
+
+
+    const all=[];
+
+
+    /*
+      Carrega várias ligas ao mesmo tempo.
+      Isto evita que uma chamada cancele a anterior.
+    */
+
+    const batchSize=4;
+
+    for(
+      let start=0;
+      start<LEAGUES.length;
+      start+=batchSize
+    ){
+
+      const batch=LEAGUES.slice(
+        start,
+        start+batchSize
+      );
+
+
+      const results=await Promise.all(
+
+        batch.map(async pair=>{
+
+          const league=pair[0];
+          const name=pair[1];
+
+          try{
+
+            const d=await jsonUrl(
+              API+
+              league+
+              '/scoreboard?limit=100',
+              15000
+            );
+
+            return (d?.events||[]).map(e=>{
+
+              e.leagueName=name;
+
+              return e;
+
+            });
+
+          }catch(err){
+
+            console.warn(
+              'Liga FUTZONE:',
+              league,
+              err
+            );
+
+            return [];
+          }
+
+        })
+
+      );
+
+
+      results.forEach(arr=>{
+        arr.forEach(e=>all.push(e));
+      });
+
+    }
+
+
+    /*
+      Remove jogos duplicados
+    */
+
+    const seen=new Set();
+
+    const unique=all.filter(e=>{
+
+      const id=String(e?.id||'');
+
+      if(!id) return true;
+
+      if(seen.has(id)) return false;
+
+      seen.add(id);
+
+      return true;
+    });
+
+
+    unique.sort((a,b)=>
+      new Date(a?.date||0)-
+      new Date(b?.date||0)
+    );
+
+
+    games=unique;
+
+
+    if(typeof render==='function'){
+
+      try{
+        render(games);
+      }catch(err){
+        console.warn('Render FUTZONE:',err);
+      }
+
+    }
+
+
+    /*
+      Depois dos jogos carregados, cria as 10 sugestões.
+    */
+
+    setTimeout(()=>{
+
+      try{
+        FZ_SUGGESTIONS_CLEAN();
+      }catch(err){}
+
+    },100);
 
   }
 
-  const all = [];
-  const seen = new Set();
+
+  /* =========================================================
+     6 — 10 SUGESTÕES
+     5 MÉDIO-ALTO + 5 MÉDIO-BAIXO
+     ========================================================= */
+
+  function FZ_SUGGESTIONS_CLEAN(){
+
+    const box=
+      document.getElementById('suggestions') ||
+      document.getElementById('suggestionsList') ||
+      document.querySelector('[data-suggestions]');
 
 
-  /* DATA DE HOJE NO FUSO LOCAL */
-
-  const now = new Date();
-
-  const yyyy =
-    now.getFullYear();
-
-  const mm =
-    String(now.getMonth()+1).padStart(2,'0');
-
-  const dd =
-    String(now.getDate()).padStart(2,'0');
-
-  const today =
-    yyyy + mm + dd;
+    if(!box) return;
 
 
-  /*
-    Carregar todas as ligas em grupos.
-  */
+    let available=(games||[]).filter(e=>{
 
-  const batchSize = 4;
+      if(!e?.id) return false;
 
+      /*
+        Sugestões apenas para jogos que ainda não terminaram.
+      */
 
-  for(
-    let start = 0;
-    start < LEAGUES.length;
-    start += batchSize
-  ){
+      if(fzFinished(e)) return false;
 
-    const batch =
-      LEAGUES.slice(
-        start,
-        start + batchSize
-      );
-
-
-    const results =
-      await Promise.all(
-
-        batch.map(
-          async pair => {
-
-            const league = pair[0];
-            const name = pair[1];
-
-
-            try{
-
-              const url =
-                API +
-                league +
-                '/scoreboard?dates=' +
-                today +
-                '&limit=100';
-
-
-              const d =
-                await jsonUrl(
-                  url,
-                  15000
-                );
-
-
-              return (
-                d?.events || []
-              ).map(e => ({
-
-                ...e,
-
-                leagueName:
-                  name
-
-              }));
-
-
-            }catch(err){
-
-              console.warn(
-                'Liga FUTZONE:',
-                league,
-                err
-              );
-
-              return [];
-
-            }
-
-          }
-        )
-
-      );
-
-
-    results.forEach(arr => {
-
-      arr.forEach(e => {
-
-        const id =
-          String(e?.id || '');
-
-
-        if(
-          id &&
-          !seen.has(id)
-        ){
-
-          seen.add(id);
-
-          all.push(e);
-
-        }
-
-      });
+      return true;
 
     });
 
-  }
-
-
-  /*
-    Ordenar pela hora do jogo
-  */
-
-  all.sort(
-    (a,b) =>
-      new Date(a?.date || 0) -
-      new Date(b?.date || 0)
-  );
-
-
-  /*
-    Guardar os jogos
-  */
-
-  games = all;
-
-
-  /*
-    Mostrar os jogos
-  */
-
-  if(
-    typeof render === 'function'
-  ){
-
-    try{
-
-      render(games);
-
-    }catch(err){
-
-      console.warn(
-        'Render FUTZONE:',
-        err
-      );
-
-    }
-
-  }
-
-
-  /*
-    Atualizar contador
-  */
-
-  const count =
-    document.getElementById('count');
-
-  if(count){
-
-    count.textContent =
-      games.length +
-      (
-        games.length === 1
-          ? ' jogo'
-          : ' jogos'
-      );
-
-  }
-
-
-  /*
-    Criar sugestões
-  */
-
-  setTimeout(() => {
-
-    try{
-
-      if(
-        typeof FZ_SUGGESTIONS_CLEAN ===
-        'function'
-      ){
-
-        FZ_SUGGESTIONS_CLEAN();
-
-      }
-
-    }catch(err){
-
-      console.warn(
-        'Sugestões FUTZONE:',
-        err
-      );
-
-    }
-
-  },300);
-
-   }
-
-function FZ_SUGGESTIONS_CLEAN(){
-
-  const box =
-    document.getElementById('suggestions') ||
-    document.getElementById('suggestionsList') ||
-    document.querySelector('[data-suggestions]');
-
-  if(!box) return;
-
-  let available = (games || []).filter(e=>{
-
-    if(!e?.id) return false;
-
-    if(
-      typeof fzFinished === 'function' &&
-      fzFinished(e)
-    ){
-      return false;
-    }
-
-    return true;
-
-  });
-
-  /* Remover jogos duplicados */
-  const seen = new Set();
-
-  available = available.filter(e=>{
-
-    const id = String(e.id);
-
-    if(seen.has(id)) return false;
-
-    seen.add(id);
-
-    return true;
-
-  });
-
-  /* Apenas os primeiros 10 jogos */
-  available = available.slice(0,10);
-
-  if(!available.length){
-
-    box.innerHTML =
-      '<div class="muted">Sem jogos disponíveis para sugestões.</div>';
-
-    return;
-
-  }
-
-  let html = '';
-
-  available.forEach(e=>{
-
-    const home =
-      typeof teamFromEvent === 'function'
-      ? teamFromEvent(e,true)
-      : null;
-
-    const away =
-      typeof teamFromEvent === 'function'
-      ? teamFromEvent(e,false)
-      : null;
-
-    const homeName =
-      home?.team?.displayName ||
-      home?.team?.shortDisplayName ||
-      'Casa';
-
-    const awayName =
-      away?.team?.displayName ||
-      away?.team?.shortDisplayName ||
-      'Visitante';
 
     /*
-      Usar a análise individual do jogo.
-      Cada jogo recebe Médio-alto E Médio-baixo.
+      Remove duplicados.
     */
-    const analysis =
-      typeof suggestMarket === 'function'
-      ? suggestMarket(e)
-      : {
-          high:'Dupla possibilidade',
-          low:'Mais de 0,5 golos'
-        };
 
-    const high =
-      analysis?.high ||
-      'Dupla possibilidade';
+    const seen=new Set();
 
-    const low =
-      analysis?.low ||
-      'Mais de 0,5 golos';
+    available=available.filter(e=>{
 
-    const competition =
-      e?.leagueName ||
-      e?.competitions?.[0]?.league?.name ||
-      'Futebol';
+      const id=String(e.id);
 
-    html += `
+      if(seen.has(id)) return false;
 
-      <div
-        class="card suggest game"
-        onclick="openMatch('${esc(e.id)}')"
-        style="cursor:pointer"
-      >
+      seen.add(id);
 
-        <div class="match">
+      return true;
+    });
 
-          <span>
-            ${esc(homeName)}
-          </span>
 
-          <span>
-            vs
-          </span>
+    /*
+      Até 10 jogos diferentes.
+    */
 
-          <span>
-            ${esc(awayName)}
-          </span>
+    available=available.slice(0,10);
 
-        </div>
 
-        <div class="row">
+    if(!available.length){
 
-          <div class="label">
-            Médio-alto
-          </div>
+      box.innerHTML=
+        '<div class="muted">Sem jogos disponíveis para sugestões.</div>';
 
-          <div class="value orange">
-            ${esc(high)}
-          </div>
+      return;
+    }
 
-        </div>
 
-        <div class="row">
+    let html='';
 
-          <div class="label">
-            Médio-baixo
-          </div>
 
-          <div class="value green">
-            ${esc(low)}
-          </div>
+    /* ---------------------------------------------------------
+       5 MÉDIO-ALTO
+       --------------------------------------------------------- */
 
-        </div>
-
-        <div class="status">
-
-          ${esc(competition)}
-          ·
-          ${fmtDate(e.date)}
-          ${fmtTime(e.date)}
-
-        </div>
-
+    html+=`
+      <div class="fz-clean-level">
+        MÉDIO-ALTO
       </div>
-
     `;
 
-  });
 
-  box.innerHTML =
-  '<div class="fz-clean-suggestions">'+
-  html+
-  '</div>';
+    available.slice(0,5).forEach((e,i)=>{
 
-}
+      const home=
+        typeof teamFromEvent==='function'
+        ? teamFromEvent(e,true)
+        : null;
 
-/* FUTZONE — usar sempre o novo sistema de sugestões */
-window.suggestions = FZ_SUGGESTIONS_CLEAN; */
+      const away=
+        typeof teamFromEvent==='function'
+        ? teamFromEvent(e,false)
+        : null;
+
+
+      const homeName=
+        home?.team?.displayName ||
+        'Casa';
+
+      const awayName=
+        away?.team?.displayName ||
+        'Fora';
+
+
+      const market=
+        homeName+
+        ' ou empate (1X)';
+
+
+      html+=`
+
+        <div class="card"
+             onclick="openMatch('${esc(e.id)}')"
+             style="cursor:pointer">
+
+          <div class="value">
+            ${esc(homeName)}
+            <span class="muted"> vs </span>
+            ${esc(awayName)}
+          </div>
+
+          <div class="muted"
+               style="margin-top:5px">
+            Médio-Alto
+          </div>
+
+          <div style="
+            margin-top:8px;
+            font-weight:800;
+          ">
+            ${esc(market)}
+          </div>
+
+        </div>
+
+      `;
+
+    });
+
+
+    /* ---------------------------------------------------------
+       5 MÉDIO-BAIXO
+       --------------------------------------------------------- */
+
+    html+=`
+      <div class="fz-clean-level">
+        MÉDIO-BAIXO
+      </div>
+    `;
+
+
+    available.slice(5,10).forEach(e=>{
+
+      const home=
+        typeof teamFromEvent==='function'
+        ? teamFromEvent(e,true)
+        : null;
+
+      const away=
+        typeof teamFromEvent==='function'
+        ? teamFromEvent(e,false)
+        : null;
+
+
+      const homeName=
+        home?.team?.displayName ||
+        'Casa';
+
+      const awayName=
+        away?.team?.displayName ||
+        'Fora';
+
+
+      html+=`
+
+        <div class="card"
+             onclick="openMatch('${esc(e.id)}')"
+             style="cursor:pointer">
+
+          <div class="value">
+            ${esc(homeName)}
+            <span class="muted"> vs </span>
+            ${esc(awayName)}
+          </div>
+
+          <div class="muted"
+               style="margin-top:5px">
+            Médio-Baixo
+          </div>
+
+          <div style="
+            margin-top:8px;
+            font-weight:800;
+          ">
+            Mais de 0,5 golos
+          </div>
+
+        </div>
+
+      `;
+
+    });
+
+
+    box.innerHTML=
+      '<div class="fz-clean-suggestions">'+
+      html+
+      '</div>';
+
+  }
+
+
+  /* =========================================================
+     7 — NOTÍCIAS GERAIS EM PORTUGUÊS
+     ========================================================= */
 
   async function FZ_NEWS_PT_CLEAN(){
 
@@ -8411,10 +7757,10 @@ if(!document.getElementById(
    ============================================================ */
 
 try{
-  if(typeof FZ_LAST5_REAL==='function'){
+
     last5=FZ_LAST5_REAL;
-  }
-}catch(e){}
+
+<script>
 /* ============================================================
    FUTZONE PREMIUM — CORREÇÃO ÚNICA
    ÚLTIMOS 5 + ONDE VER + NOTÍCIAS PT
