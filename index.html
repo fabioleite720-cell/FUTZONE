@@ -1454,15 +1454,40 @@ sec('games');
 
 function showToday(){
 
-const now=new Date();
+  const now = new Date();
 
-const day=now.toISOString().slice(0,10);
+  const start = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    0,0,0,0
+  );
 
-render(
-games.filter(e=>String(e.date||'').slice(0,10)===day)
-);
+  const end = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    23,59,59,999
+  );
 
-}
+  const todayGames =
+    (games || []).filter(e=>{
+
+      const d =
+        new Date(e?.date);
+
+      if(!Number.isFinite(d.getTime()))
+        return false;
+
+      return d >= start && d <= end;
+
+    });
+
+  render(todayGames);
+
+  sec('games');
+
+   }
 
 
 function showLive(){
