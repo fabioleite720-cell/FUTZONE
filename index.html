@@ -884,7 +884,58 @@ async function loadSuggestionOdds(){
     }
 
   }
+async function testarGamePackageOdds(){
 
+  try{
+
+    const e=games[0];
+
+    if(!e){
+
+      alert("FUTZONE: sem jogos.");
+
+      return;
+
+    }
+
+    const url=
+      "https://cdn.espn.com/core/soccer/game?xhr=1&gameId="+
+      encodeURIComponent(e.id);
+
+    const d=await jsonUrl(url,5000);
+
+    const g=d?.gamepackageJSON||d;
+
+    const odds=
+      g?.odds||
+      g?.header?.competitions?.[0]?.odds||
+      g?.header?.competitions?.[0]?.odds?.items||
+      null;
+
+    alert(
+      "FUTZONE TESTE GAME PACKAGE\n\n"+
+      "Jogo: "+(e.name||"desconhecido")+
+      "\nID: "+e.id+
+      "\n\nODDS ENCONTRADAS:\n"+
+      (
+        odds
+        ? JSON.stringify(odds).slice(0,1800)
+        : "SEM ODDS"
+      )
+    );
+
+  }catch(err){
+
+    alert(
+      "FUTZONE GAME PACKAGE — ERRO\n\n"+
+      String(err)
+    );
+
+  }
+
+}
+
+setTimeout(testarGamePackageOdds,3000);
         
  function suggestMarket(e){
 
