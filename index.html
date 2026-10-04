@@ -805,37 +805,31 @@ await Promise.all(lista.map(async e=>{
 
 try{
 
-const comp=e.competitions[0];
+const comp=e.competitions?.[0];
 
-const eventId=e.id;
-
-if(!eventId)return;
+if(!comp?.id || !e?.id)return;
 
 
-/*
- O ESPN usa a liga do próprio evento.
- Primeiro tentamos obter o slug da competição.
-*/
+/* Liga usada para obter as odds */
 
 const leagueSlug=
-e.league?.slug||
-e.league?.abbreviation||
-e.league?.id||
+e._fzLeague ||
+e.league?.slug ||
+e.league?.abbreviation ||
+e.league?.id ||
 '';
 
 
 if(!leagueSlug)return;
 
 
-/*
- Endpoint real de odds do evento.
-*/
+/* Endpoint ESPN */
 
 const url=
 "https://sports.core.api.espn.com/v2/sports/soccer/leagues/"+
 encodeURIComponent(leagueSlug)+
 "/events/"+
-encodeURIComponent(eventId)+
+encodeURIComponent(e.id)+
 "/competitions/"+
 encodeURIComponent(comp.id)+
 "/odds";
@@ -843,30 +837,61 @@ encodeURIComponent(comp.id)+
 
 const d=await jsonUrl(url,8000);
 
-const item=
-d?.items?.find(x=>
-x?.homeTeamOdds||
-x?.awayTeamOdds||
-x?.drawOdds
-);
-
-
-if(!item)return;
+const items=
+Array.isArray(d?.items)
+?d.items
+:[];
 
 
 /*
- Guardamos as odds no próprio evento.
+ O ESPN pode devolver as odds através
+ de uma referência $ref.
 */
 
-const homeOdd=
-Number(item.homeTeamOdds?.moneyLine);
+for(const raw of items){
 
-const awayOdd=
-Number(item.awayTeamOdds?.moneyLine);
+let item=raw;
+
+
+/* Se for uma referência, abrir a referência */
+
+if(
+item?.$ref &&
+!item?.homeTeamOdds &&
+!item?.awayTeamOdds &&
+!item?.drawOdds
+){
+
+try{
+
+const ref=
+String(item.$ref)
+.replace(/^http:/,'https:');
+
+item=await jsonUrl(ref,8000);
+
+}catch(err){
+
+continue;
+
+}
+
+}
+
+
+/* Procurar uma resposta com 1X2 */
+
+const homeOdd=
+Number(item?.homeTeamOdds?.moneyLine);
 
 const drawOdd=
-Number(item.drawOdds?.moneyLine);
+Number(item?.drawOdds?.moneyLine);
 
+const awayOdd=
+Number(item?.awayTeamOdds?.moneyLine);
+
+
+/* Se encontramos as três odds, guardar */
 
 if(
 Number.isFinite(homeOdd) &&
@@ -875,10 +900,21 @@ Number.isFinite(awayOdd)
 ){
 
 e._fzOdds={
+
 home:homeOdd,
+
 draw:drawOdd,
+
 away:awayOdd
+
 };
+
+
+/* Parar depois de encontrar odds válidas */
+
+break;
+
+}
 
 }
 
@@ -895,7 +931,6 @@ err
 }));
 
 }
-
 
 function suggestMarket(e){
 
