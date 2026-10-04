@@ -1,0 +1,304 @@
+<!doctype html>
+
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FUTZONE PREMIUM — TESTE 2</title><style>
+body{
+margin:0;
+padding:15px;
+background:#03060b;
+color:#fff;
+font-family:Arial,sans-serif;
+}
+
+h1{
+color:#1683ff;
+font-size:21px;
+margin:5px 0;
+}
+
+.info{
+color:#9aa8b8;
+font-size:12px;
+margin-bottom:15px;
+}
+
+.card{
+background:#0a111b;
+border:1px solid #26384d;
+border-radius:12px;
+padding:14px;
+margin-bottom:12px;
+}
+
+.teams{
+font-size:17px;
+font-weight:bold;
+}
+
+.vs{
+font-size:11px;
+color:#718196;
+margin:5px 0;
+}
+
+.label{
+font-size:11px;
+font-weight:bold;
+margin-top:13px;
+}
+
+.orange{
+color:#ff9d00;
+}
+
+.green{
+color:#35d07f;
+}
+
+.value{
+font-size:15px;
+font-weight:bold;
+margin-top:5px;
+}
+
+.reason{
+border-top:1px solid #1d2a38;
+margin-top:10px;
+padding-top:9px;
+font-size:11px;
+color:#9aa8b8;
+}
+</style></head><body><h1>🔥 FUTZONE PREMIUM — TESTE 2</h1><div class="info">
+Análise individual — Médio-alto + Médio-baixo
+</div><div id="resultado"></div><script>
+
+/*
+=========================================================
+JOGOS DE TESTE
+
+A "forca" representa apenas os dados de teste.
+Não é rating ESPN e não será usado no FUTZONE.
+=========================================================
+*/
+
+const jogos=[
+
+{
+casa:"Índia",
+fora:"Brasil",
+forcaCasa:35,
+forcaFora:92
+},
+
+{
+casa:"Azerbaijan",
+fora:"Lithuania",
+forcaCasa:60,
+forcaFora:72
+},
+
+{
+casa:"Comoros",
+fora:"Senegal",
+forcaCasa:55,
+forcaFora:88
+},
+
+{
+casa:"Kyrgyz Republic",
+fora:"Lebanon",
+forcaCasa:68,
+forcaFora:65
+},
+
+{
+casa:"Kosovo",
+fora:"Austria",
+forcaCasa:70,
+forcaFora:86
+},
+
+{
+casa:"Portugal",
+fora:"Espanha",
+forcaCasa:84,
+forcaFora:86
+},
+
+{
+casa:"Sporting",
+fora:"Arouca",
+forcaCasa:88,
+forcaFora:61
+},
+
+{
+casa:"Liverpool",
+fora:"Arsenal",
+forcaCasa:90,
+forcaFora:88
+},
+
+{
+casa:"Real Madrid",
+fora:"Getafe",
+forcaCasa:93,
+forcaFora:62
+},
+
+{
+casa:"Escócia",
+fora:"França",
+forcaCasa:63,
+forcaFora:91
+}
+
+];
+
+
+/*
+=========================================================
+ANÁLISE
+=========================================================
+*/
+
+function analisar(jogo){
+
+const diferenca=jogo.forcaCasa-jogo.forcaFora;
+
+let high;
+let low;
+let motivo;
+
+
+/* VISITANTE MUITO SUPERIOR */
+
+if(diferenca<=-20){
+
+high="Vitória "+jogo.fora;
+low=jogo.fora+" ou empate (X2)";
+
+motivo=
+"Visitante claramente superior.";
+
+
+/* VISITANTE SUPERIOR */
+
+}else if(diferenca<=-8){
+
+high=jogo.fora+" ou empate (X2)";
+low="Mais de 0,5 golos";
+
+motivo=
+"Visitante com vantagem moderada.";
+
+
+/* CASA MUITO SUPERIOR */
+
+}else if(diferenca>=20){
+
+high="Vitória "+jogo.casa;
+low=jogo.casa+" ou empate (1X)";
+
+motivo=
+"Equipa da casa claramente superior.";
+
+
+/* CASA SUPERIOR */
+
+}else if(diferenca>=8){
+
+high=jogo.casa+" ou empate (1X)";
+low="Mais de 0,5 golos";
+
+motivo=
+"Equipa da casa com vantagem moderada.";
+
+
+/* EQUILIBRADO */
+
+}else{
+
+high="Dupla possibilidade";
+low="Mais de 0,5 golos";
+
+motivo=
+"Jogo equilibrado.";
+
+}
+
+
+return{
+high:high,
+low:low,
+motivo:motivo
+};
+
+}
+
+
+/*
+=========================================================
+MOSTRAR
+=========================================================
+*/
+
+function mostrar(){
+
+const box=document.getElementById("resultado");
+
+box.innerHTML=jogos.map(function(jogo){
+
+const r=analisar(jogo);
+
+return`
+
+<div class="card">
+
+<div class="teams">
+${jogo.casa}
+</div>
+
+<div class="vs">
+vs
+</div>
+
+<div class="teams">
+${jogo.fora}
+</div>
+
+<div class="label orange">
+MÉDIO-ALTO
+</div>
+
+<div class="value">
+${r.high}
+</div>
+
+<div class="label green">
+MÉDIO-BAIXO
+</div>
+
+<div class="value">
+${r.low}
+</div>
+
+<div class="reason">
+${r.motivo}
+</div>
+
+</div>
+
+`;
+
+}).join("");
+
+}
+
+mostrar();
+
+</script></body>
+</html>
