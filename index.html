@@ -802,77 +802,19 @@ const a=teamFromEvent(e,false);
 
 if(!h||!a)return null;
 
-const home=h.team;
-const away=a.team;
+const home=h.team.displayName;
+const away=a.team.displayName;
 
-const homeRating=Number(
-home?.rating ??
-home?.power ??
-h?.rating ??
-0
-);
+let hf=Number(h.team?.rating||h.team?.power||h.rating||0);
+let af=Number(a.team?.rating||a.team?.power||a.rating||0);
 
-const awayRating=Number(
-away?.rating ??
-away?.power ??
-a?.rating ??
-0
-);
-
-let high;
-let low;
-
-/* VISITANTE MUITO MAIS FORTE */
-
-if(awayRating>0 && homeRating>0 && awayRating-homeRating>=25){
-
-high='Vitória '+away.displayName;
-low=away.displayName+' ou empate (X2)';
-
-}
-
-/* VISITANTE MAIS FORTE */
-
-else if(awayRating>0 && homeRating>0 && awayRating-homeRating>=10){
-
-high=away.displayName+' ou empate (X2)';
-low='Mais de 0,5 golos';
-
-}
-
-/* CASA MUITO MAIS FORTE */
-
-else if(homeRating>0 && awayRating>0 && homeRating-awayRating>=25){
-
-high='Vitória '+home.displayName;
-low=home.displayName+' ou empate (1X)';
-
-}
-
-/* CASA MAIS FORTE */
-
-else if(homeRating>0 && awayRating>0 && homeRating-awayRating>=10){
-
-high=home.displayName+' ou empate (1X)';
-low='Mais de 0,5 golos';
-
-}
-
-/* SEM DADOS OU JOGO EQUILIBRADO */
-
-else{
-
-high='Dupla possibilidade';
-low='Mais de 0,5 golos';
-
-}
-
+if(!hf&&!af){
 return{
-high:high,
-low:low
+high:away+' ou empate (X2)',
+low:'Mais de 0,5 golos'
 };
-
 }
+
 const dif=hf-af;
 
 if(dif<=-25){
