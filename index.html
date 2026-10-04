@@ -794,7 +794,6 @@ return s;
 
 }
 
-
 async function loadSuggestionOdds(){
 
   const lista=games.slice(0,10);
@@ -822,17 +821,26 @@ async function loadSuggestionOdds(){
 
       const data=await jsonUrl(url,3000);
 
-      const items=Array.isArray(data?.items)?data.items:[];
+      let items=Array.isArray(data?.items)
+        ? data.items
+        : [];
 
       for(let item of items){
 
-        if(item?.$ref && !item.provider){
+        if(item?.$ref){
 
           try{
 
-            const ref=item.$ref.replace(/^http:/,"https:");
+            const ref=
+              String(item.$ref)
+              .replace(/^http:/,"https:");
 
-            item=await jsonUrl(ref,2500);
+            const refData=
+              await jsonUrl(ref,2500);
+
+            if(refData){
+              item=refData;
+            }
 
           }catch(err){
 
@@ -842,9 +850,14 @@ async function loadSuggestionOdds(){
 
         }
 
-        const h=Number(item?.homeTeamOdds?.moneyLine);
-        const d=Number(item?.drawOdds?.moneyLine);
-        const a=Number(item?.awayTeamOdds?.moneyLine);
+        const h=
+          Number(item?.homeTeamOdds?.moneyLine);
+
+        const d=
+          Number(item?.drawOdds?.moneyLine);
+
+        const a=
+          Number(item?.awayTeamOdds?.moneyLine);
 
         if(
           Number.isFinite(h)&&
@@ -872,7 +885,7 @@ async function loadSuggestionOdds(){
 
   }
 
-  }
+            }
  
 function suggestMarket(e){
 
