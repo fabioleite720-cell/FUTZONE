@@ -795,20 +795,161 @@ return s;
 }
 
 
-function suggestMarket(e){
+function getSuggestionOdds(e){
 
-const h=teamFromEvent(e,true);
-const a=teamFromEvent(e,false);
+  const c=e?.competitions?.[0];
 
-if(!h||!a)return null;
+  const sources=[
+    e?.odds,
+    c?.odds,
+    c?.odds?.[0],
+    e?.odds?.[0],
+    e?.competitions?.[0]?.odds?.[0]
+  ];
 
-return{
-high:h.team.displayName+' ou empate (1X)',
-low:'Mais de 0,5 golos'
-};
+  for(const o of sources){
+
+    if(!o) continue;
+
+    const item=Array.isArray(o)?o[0]:o;
+
+    const h=Number(
+      item?.homeTeamOdds?.moneyLine ??
+      item?.homeTeamOdds?.american ??
+      item?.home?.moneyLine ??
+      item?.home
+    );
+
+    const d=Number(
+      item?.drawOdds?.moneyLine ??
+      item?.drawOdds?.american ??
+      item?.draw?.moneyLine ??
+      item?.draw
+    );
+
+    const a=Number(
+      item?.awayTeamOdds?.moneyLine ??
+      item?.awayTeamOdds?.american ??
+      item?.away?.moneyLine ??
+      item?.away
+    );
+
+    if(
+      Number.isFinite(h)&&
+      Number.isFinite(d)&&
+      Number.isFinite(a)
+    ){
+
+      return{
+        home:h,
+        draw:d,
+        away:a
+      };
+
+    }
+
+  }
+
+  return null;
 
 }
 
+
+function suggestMarket(e){
+
+  const h=teamFromEvent(e,true);
+  const a=teamFromEvent(e,false);
+
+  if(!h||!a){
+
+    return{
+      high:'Análise indisponível',
+      low:'Mais de 0,5 golos'
+    };
+
+  }
+
+  const home=h.team.displayName;
+  const away=a.team.displayName;
+
+  const o=getSuggestionOdds(e);
+
+  if(!o){
+
+    return{
+      high:'Análise Premium',
+      low:'Mais de 0,5 golos'
+    };
+
+  }
+
+  const homeOdd=o.home;
+  const drawOdd=o.draw;
+  const awayOdd=o.away;
+
+
+  /* FAVORITO MUITO FORTE FORA */
+
+  if(awayOdd<=1.50){
+
+    return{
+      high:'Vitória '+away,
+      low:away+' ou empate (X2)'
+    };
+
+  }
+
+
+  /* FAVORITO MUITO FORTE EM CASA */
+
+  if(homeOdd<=1.50){
+
+    return{
+      high:'Vitória '+home,
+      low:home+' ou empate (1X)'
+    };
+
+  }
+
+
+  /* FORA É A MELHOR COTA ENTRE OS 3 RESULTADOS */
+
+  if(
+    awayOdd<homeOdd &&
+    awayOdd<drawOdd
+  ){
+
+    return{
+      high:away+' ou empate (X2)',
+      low:'Mais de 0,5 golos'
+    };
+
+  }
+
+
+  /* CASA É A MELHOR COTA ENTRE OS 3 RESULTADOS */
+
+  if(
+    homeOdd<awayOdd &&
+    homeOdd<drawOdd
+  ){
+
+    return{
+      high:home+' ou empate (1X)',
+      low:'Mais de 0,5 golos'
+    };
+
+  }
+
+
+  /* SEM FAVORITO CLARO */
+
+  return{
+    high:'Dupla possibilidade',
+    low:'Mais de 0,5 golos'
+  };
+
+}
 
 function suggestions(){
 
