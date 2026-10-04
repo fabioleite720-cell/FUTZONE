@@ -795,6 +795,55 @@ return s;
 }
 
 
+async function loadSuggestionOdds(){
+
+const lista=games
+.filter(e=>e?.competitions?.[0])
+.slice(0,10);
+
+await Promise.all(lista.map(async e=>{
+
+try{
+
+const comp=e.competitions?.[0];
+
+const eventId=e.id;
+const competitionId=comp?.id;
+
+if(!eventId||!competitionId)return;
+
+const url=
+"https://sports.core.api.espn.com/v2/sports/soccer/leagues/"+
+encodeURIComponent(e.league?.slug||'')+
+"/events/"+
+encodeURIComponent(eventId)+
+"/competitions/"+
+encodeURIComponent(competitionId)+
+"/odds";
+
+const d=await jsonUrl(url,7000);
+
+const item=d?.items?.find(x=>
+x?.homeTeamOdds||
+x?.awayTeamOdds||
+x?.drawOdds
+)||d?.items?.[0];
+
+if(!item)return;
+
+e._fzOdds={
+home:Number(item.homeTeamOdds?.moneyLine),
+draw:Number(item.drawOdds?.moneyLine),
+away:Number(item.awayTeamOdds?.moneyLine)
+};
+
+}catch(err){}
+
+}));
+
+}
+
+
 function suggestMarket(e){
 
 const h=teamFromEvent(e,true);
@@ -805,45 +854,74 @@ if(!h||!a)return null;
 const home=h.team.displayName;
 const away=a.team.displayName;
 
-let hf=Number(h.team?.rating||h.team?.power||h.rating||0);
-let af=Number(a.team?.rating||a.team?.power||a.rating||0);
+const o=e?._fzOdds;
 
-if(!hf&&!af){
+const homeOdd=Number(o?.home);
+const drawOdd=Number(o?.draw);
+const awayOdd=Number(o?.away);
+
+
+/* Sem odds: não inventar favorito */
+
+if(
+!Number.isFinite(homeOdd)||
+!Number.isFinite(drawOdd)||
+!Number.isFinite(awayOdd)
+){
+
 return{
-high:away+' ou empate (X2)',
+high:'Dupla possibilidade',
 low:'Mais de 0,5 golos'
 };
+
 }
 
-const dif=hf-af;
 
-if(dif<=-25){
+/* Favorito muito forte */
+
+if(awayOdd<=1.50){
+
 return{
 high:'Vitória '+away,
 low:away+' ou empate (X2)'
 };
+
 }
 
-if(dif<=-15){
-return{
-high:away+' ou empate (X2)',
-low:away+' ou empate (X2)'
-};
-}
 
-if(dif>=25){
+if(homeOdd<=1.50){
+
 return{
 high:'Vitória '+home,
 low:home+' ou empate (1X)'
 };
+
 }
 
-if(dif>=15){
+
+/* Favorito moderado */
+
+if(awayOdd<homeOdd && awayOdd<drawOdd){
+
+return{
+high:away+' ou empate (X2)',
+low:'Mais de 0,5 golos'
+};
+
+}
+
+
+if(homeOdd<awayOdd && homeOdd<drawOdd){
+
 return{
 high:home+' ou empate (1X)',
-low:home+' ou empate (1X)'
+low:'Mais de 0,5 golos'
 };
+
 }
+
+
+/* Jogo equilibrado */
 
 return{
 high:'Dupla possibilidade',
