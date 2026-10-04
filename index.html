@@ -1254,45 +1254,31 @@ function fzSuggestionGames(){
 
 function suggestions(){
 
-  const box=
-    document.getElementById('suggestions');
+  const box=document.getElementById('suggestions');
 
   if(!box)return;
 
-
   const valid=fzSuggestionGames();
-
 
   if(!valid.length){
 
     box.innerHTML=`
-
       <div class="card">
-
         <div class="loading">
           Não existem sugestões disponíveis.
         </div>
-
       </div>
-
     `;
 
     return;
-
   }
-
 
   box.innerHTML=valid.map((e)=>{
 
-    const h=
-      teamFromEvent(e,true);
+    const h=teamFromEvent(e,true);
+    const a=teamFromEvent(e,false);
 
-    const a=
-      teamFromEvent(e,false);
-
-    const s=
-      suggestMarket(e);
-
+    const s=suggestMarket(e);
 
     const home=
       h?.team?.displayName ||
@@ -1304,12 +1290,10 @@ function suggestions(){
       a?.team?.shortDisplayName ||
       'Visitante';
 
-
     const competition=
       e?.leagueName ||
       e?.competitions?.[0]?.league?.name ||
       'Futebol';
-
 
     return`
 
@@ -1320,54 +1304,35 @@ function suggestions(){
 
         <div class="match">
 
-          <span>
-            ${esc(home)}
-          </span>
+          <span>${esc(home)}</span>
 
-          <span>
-            vs
-          </span>
+          <span>vs</span>
 
-          <span>
-            ${esc(away)}
-          </span>
+          <span>${esc(away)}</span>
 
         </div>
-
 
         <div class="market orange">
-
           Médio-alto
-
         </div>
 
-
         <div class="value">
-
           ${esc(
             s?.high ||
             'Dupla possibilidade'
           )}
-
         </div>
-
 
         <div class="market green">
-
           Médio-baixo
-
         </div>
 
-
         <div class="value">
-
           ${esc(
             s?.low ||
             'Mais de 0,5 golos'
           )}
-
         </div>
-
 
         <div class="status">
 
@@ -1384,21 +1349,15 @@ function suggestions(){
 
   }).join('');
 
-
-  /* Atualiza automaticamente as sugestões.
-     Quando um jogo termina, sai da lista e
-     entra o próximo disponível. */
-
   clearTimeout(window.fzSuggestionTimer);
 
-  window.fzSuggestionTimer=
-    setTimeout(()=>{
+  window.fzSuggestionTimer=setTimeout(()=>{
 
-      suggestions();
+    suggestions();
 
-    },60000);
+  },60000);
 
-  }
+   }
 
 
 function render(list=games){
